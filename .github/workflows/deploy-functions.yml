@@ -31,7 +31,7 @@ jobs:
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
         with:
-          args: deploy --only functions
+          args: deploy --only functions --project moukaeritaid
         env:
           # You need to add this credential to your GitHub Repository Secrets
           # See: https://github.com/w9jds/firebase-action
