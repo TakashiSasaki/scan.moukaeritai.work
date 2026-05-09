@@ -68,6 +68,7 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
 - **Admin Panel**: An `admin` screen (`AdminPanel.tsx`) provides high-level system metrics to users with administrative privileges.
 
 ## 8. Cloud Functions & Deployment
+- **Generations (Gen 1 vs Gen 2)**: It is CRITICAL to use Cloud Functions **Gen 2** (e.g., `import { onCall, HttpsError } from "firebase-functions/v2/https"`). Attempting to deploy Gen 1 functions (e.g., `functions.https.onCall`) can result in deployment failures in GitHub Actions or Firebase CLI with errors like `Cannot set CPU on the functions ... because they are GCF gen 1`.
 - **Metrics & Backend Logic**: To perform sensitive operations (e.g., fetching Storage Bucket sizes or querying Cloud Monitoring API for read/write metrics), a Cloud Functions setup is present in `/functions/`. Admin privileges are verified within the function runtime.
 - **AI & Gemini Processing (Approach B)**: API keys are strictly hidden from the frontend. AI generation (matching images, description building) natively happens in Firebase Callable Functions using the `@google/genai` SDK and Firebase Secret Manager (`GEMINI_API_KEY`).
 - **CI/CD**: Firebase Functions deployment is handled automatically via a GitHub Actions workflow (`.github/workflows/deploy-functions.yml`) upon pushes to `main`.
