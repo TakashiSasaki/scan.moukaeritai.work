@@ -20,9 +20,10 @@ import SearchScreen from './components/SearchScreen';
 import CaptureForm from './components/CaptureForm';
 import Scanner from './components/Scanner';
 import Overview from './components/Overview';
+import AdminPanel from './components/AdminPanel';
 import { ConnectionStatus } from './components/ConnectionStatus';
 
-type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview';
+type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview' | 'admin';
 
 export default function App() {
   return (
@@ -225,19 +226,18 @@ function AppContent() {
                 >
                   <div className="p-4 border-b border-[var(--outline)] bg-[var(--surface)]/50">
                     <div className="font-bold text-sm text-[var(--on-surface)] truncate">{user.displayName || 'User'}</div>
-                    <div className="flex gap-2 mt-1">
-                      <div className="text-[10px] text-[var(--primary)] font-bold uppercase tracking-wider bg-[var(--primary)]/10 inline-block px-2 py-0.5 rounded-full">PRO Account</div>
-                      {isAdmin && (
+                    {isAdmin && (
+                      <div className="flex gap-2 mt-1">
                         <div className="text-[10px] text-amber-500 font-bold uppercase tracking-wider bg-amber-500/10 inline-block px-2 py-0.5 rounded-full">Admin</div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                   <div className="p-2">
                     {isAdmin && (
                       <button
                          onClick={() => {
                            setShowProfile(false);
-                           toast.success('Admin Panel launching feature coming soon!');
+                           setCurrentScreen('admin');
                          }}
                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
                       >
@@ -326,6 +326,11 @@ function AppContent() {
           {currentScreen === 'overview' && (
             <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <Overview />
+            </motion.div>
+          )}
+          {currentScreen === 'admin' && isAdmin && (
+            <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              <AdminPanel />
             </motion.div>
           )}
         </AnimatePresence>
