@@ -1,10 +1,15 @@
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import { GoogleGenAI } from "@google/genai";
 import { defineSecret } from "firebase-functions/params";
 
 // Initialize Firebase Admin globally
 admin.initializeApp();
+
+// Load the applet config to get the correct databaseId and storageBucket
+// Using require since this is a Node environment and it might not be in tsconfig.json includes
+const appletConfig = require("../../firebase-applet-config.json");
 
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
@@ -19,13 +24,14 @@ export const getAppMetrics = functions.https.onCall(async (request: any) => {
   }
 
   // 2. Verify Admin Status (ABAC)
-  const adminDoc = await admin.firestore().collection("admins").doc(request.auth.uid).get();
+  const db = getFirestore(admin.app(), appletConfig.firestoreDatabaseId);
+  const adminDoc = await db.collection("admins").doc(request.auth.uid).get();
   if (!adminDoc.exists) {
     throw new functions.https.HttpsError("permission-denied", "You do not have administrative privileges.");
   }
 
   try {
-    const bucket = admin.storage().bucket();
+    const bucket = admin.storage().bucket(appletConfig.storageBucket);
     
     // Simplistic Bucket Size Calculation (Iterates files, good for small/medium buckets)
     // For massive scale, replace with @google-cloud/monitoring API fetching 'storage.googleapis.com/storage/total_bytes'

@@ -3,10 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.describeImage = exports.identifyMatches = exports.getAppMetrics = void 0;
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const firestore_1 = require("firebase-admin/firestore");
 const genai_1 = require("@google/genai");
 const params_1 = require("firebase-functions/params");
 // Initialize Firebase Admin globally
 admin.initializeApp();
+// Load the applet config to get the correct databaseId and storageBucket
+// Using require since this is a Node environment and it might not be in tsconfig.json includes
+const appletConfig = require("../../firebase-applet-config.json");
 const geminiApiKey = (0, params_1.defineSecret)("GEMINI_API_KEY");
 /**
  * Callable function to securely fetch infrastructure metrics.
@@ -18,12 +22,13 @@ exports.getAppMetrics = functions.https.onCall(async (request) => {
         throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
     }
     // 2. Verify Admin Status (ABAC)
-    const adminDoc = await admin.firestore().collection("admins").doc(request.auth.uid).get();
+    const db = (0, firestore_1.getFirestore)(admin.app(), appletConfig.firestoreDatabaseId);
+    const adminDoc = await db.collection("admins").doc(request.auth.uid).get();
     if (!adminDoc.exists) {
         throw new functions.https.HttpsError("permission-denied", "You do not have administrative privileges.");
     }
     try {
-        const bucket = admin.storage().bucket();
+        const bucket = admin.storage().bucket(appletConfig.storageBucket);
         // Simplistic Bucket Size Calculation (Iterates files, good for small/medium buckets)
         // For massive scale, replace with @google-cloud/monitoring API fetching 'storage.googleapis.com/storage/total_bytes'
         const [files] = await bucket.getFiles();
