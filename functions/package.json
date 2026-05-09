@@ -15,8 +15,8 @@
   "main": "lib/index.js",
   "dependencies": {
     "@google-cloud/monitoring": "^4.1.0",
-    "firebase-admin": "^13.0.0",
-    "firebase-functions": "^6.0.0"
+    "firebase-admin": "^13.9.0",
+    "firebase-functions": "^7.2.5"
   },
   "devDependencies": {
     "typescript": "^4.9.0"

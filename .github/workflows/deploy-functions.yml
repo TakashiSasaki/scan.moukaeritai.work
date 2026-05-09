@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NODE_OPTIONS: "--no-deprecation"
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -24,7 +25,7 @@ jobs:
           node-version: '22'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm install --loglevel=error --no-fund --no-audit
         working-directory: ./functions
 
       - name: Build Functions
@@ -37,4 +38,4 @@ jobs:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}'
 
       - name: Deploy to Firebase
-        run: npx firebase-tools deploy --only functions:getAppMetrics --project moukaeritaid --non-interactive
+        run: npx --yes firebase-tools deploy --only functions:getAppMetrics --project moukaeritaid --non-interactive
