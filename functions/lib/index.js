@@ -1,10 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAppMetrics = void 0;
-const functions = require("firebase-functions");
+exports.describeImage = exports.identifyMatches = exports.getAppMetrics = void 0;
+const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const genai_1 = require("@google/genai");
+const params_1 = require("firebase-functions/params");
 // Initialize Firebase Admin globally
 admin.initializeApp();
+const geminiApiKey = (0, params_1.defineSecret)("GEMINI_API_KEY");
 /**
  * Callable function to securely fetch infrastructure metrics.
  * Since normal clients cannot access these GCP/Firebase backend metrics directly.
@@ -40,6 +43,115 @@ exports.getAppMetrics = functions.https.onCall(async (request) => {
     catch (error) {
         console.error("Failed to calculate metrics:", error);
         throw new functions.https.HttpsError("internal", "Failed to calculate infrastructure metrics.");
+    }
+});
+// Configure Gemini API inside the functions
+function getGeminiClient() {
+    const apiKey = geminiApiKey.value();
+    if (!apiKey) {
+        throw new functions.https.HttpsError("failed-precondition", "GEMINI_API_KEY is not set on the server.");
+    }
+    return new genai_1.GoogleGenAI({ apiKey });
+}
+/**
+ * Callable function to identify matching items from an image.
+ */
+exports.identifyMatches = functions.runWith({ secrets: [geminiApiKey] }).https.onCall(async (request) => {
+    if (!request.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+    }
+    const searchImageBase64 = request.data.searchImageBase64;
+    const items = request.data.items;
+    if (!searchImageBase64 || !items) {
+        throw new functions.https.HttpsError("invalid-argument", "searchImageBase64 and items are required.");
+    }
+    const ai = getGeminiClient();
+    const itemsContext = items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description
+    }));
+    const prompt = `
+    You are a visual search assistant. The user has uploaded an image (enclosed in the request).
+    The user also has a catalog of items they track.
+    Your task is to identify which items from the catalog below most likely match the object in the uploaded photo.
+    
+    Catalog Items:
+    ${JSON.stringify(itemsContext, null, 2)}
+    
+    Return a list of IDs of the matching items, in order of relevance.
+    If no item clearly matches, suggest 0 or more IDs that are most similar.
+    If you see a new item not in the catalog, mention that too.
+    
+    Response format: JUST a JSON array of item IDs.
+  `;
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents: {
+                parts: [
+                    {
+                        inlineData: {
+                            mimeType: "image/jpeg",
+                            data: searchImageBase64
+                        }
+                    },
+                    { text: prompt }
+                ]
+            },
+            config: {
+                responseMimeType: "application/json"
+            }
+        });
+        const result = JSON.parse(response.text || "[]");
+        return result;
+    }
+    catch (error) {
+        console.error("Gemini Search Error:", error);
+        throw new functions.https.HttpsError("internal", "Failed to identify matches from the image.");
+    }
+});
+/**
+ * Callable function to describe an image.
+ */
+exports.describeImage = functions.runWith({ secrets: [geminiApiKey] }).https.onCall(async (request) => {
+    if (!request.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+    }
+    const imageBase64 = request.data.imageBase64;
+    if (!imageBase64) {
+        throw new functions.https.HttpsError("invalid-argument", "imageBase64 is required.");
+    }
+    const ai = getGeminiClient();
+    const prompt = `
+    Describe this object concisely for a search engine. Include:
+    1. What the object is.
+    2. Color, material, and distinctive features.
+    3. Any text visible on it.
+    4. Possible categories (e.g. tools, electronics, kitchenware).
+    
+    Return as a short string of keywords.
+  `;
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents: {
+                parts: [
+                    {
+                        inlineData: {
+                            mimeType: "image/jpeg",
+                            data: imageBase64
+                        }
+                    },
+                    { text: prompt }
+                ]
+            }
+        });
+        return response.text;
+    }
+    catch (error) {
+        console.error("Gemini Describe Error:", error);
+        throw new functions.https.HttpsError("internal", "Failed to describe the image.");
     }
 });
 //# sourceMappingURL=index.js.map
