@@ -8,14 +8,14 @@ admin.initializeApp();
  * Callable function to securely fetch infrastructure metrics.
  * Since normal clients cannot access these GCP/Firebase backend metrics directly.
  */
-export const getAppMetrics = functions.https.onCall(async (data, context) => {
+export const getAppMetrics = functions.https.onCall(async (request: any) => {
   // 1. Verify Authentication
-  if (!context.auth) {
+  if (!request.auth) {
     throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
   }
 
   // 2. Verify Admin Status (ABAC)
-  const adminDoc = await admin.firestore().collection("admins").doc(context.auth.uid).get();
+  const adminDoc = await admin.firestore().collection("admins").doc(request.auth.uid).get();
   if (!adminDoc.exists) {
     throw new functions.https.HttpsError("permission-denied", "You do not have administrative privileges.");
   }
@@ -26,7 +26,7 @@ export const getAppMetrics = functions.https.onCall(async (data, context) => {
     // Simplistic Bucket Size Calculation (Iterates files, good for small/medium buckets)
     // For massive scale, replace with @google-cloud/monitoring API fetching 'storage.googleapis.com/storage/total_bytes'
     const [files] = await bucket.getFiles();
-    const totalBytes = files.reduce((sum, file) => sum + Number(file.metadata.size || 0), 0);
+    const totalBytes = files.reduce((sum: any, file: any) => sum + Number(file.metadata.size || 0), 0);
     const byteStringToMB = (totalBytes / (1024 * 1024)).toFixed(2);
 
     return {
