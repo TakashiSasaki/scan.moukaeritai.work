@@ -22,6 +22,7 @@ import Scanner from './components/Scanner';
 import Overview from './components/Overview';
 import AdminPanel from './components/AdminPanel';
 import { ConnectionStatus } from './components/ConnectionStatus';
+import { ImageMetadataDialog } from './components/ImageMetadataDialog';
 
 type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview' | 'admin';
 
@@ -41,6 +42,7 @@ export default function App() {
           } 
         }} 
       />
+      <ImageMetadataDialog />
       <AppContent />
     </ThemeProvider>
   );

@@ -6,6 +6,7 @@ import { handleFirestoreError } from '../lib/error-handler';
 import { Clock, MapPin, Tag, Package, Trash2, Filter, ArrowUpDown, ChevronDown } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { getImageFormatFromUrl } from '../lib/utils';
+import { ImageWithLongPress } from './ImageWithLongPress';
 
 interface DashboardProps {
   onSelectItem: (id: string) => void;
@@ -156,12 +157,16 @@ export default function Dashboard({ onSelectItem }: DashboardProps) {
                 className="m3-card p-3 flex gap-4 text-left active:scale-[0.98] transition-all cursor-pointer overflow-hidden"
               >
                 {item.mainImageUrl ? (
-                  <div className="relative w-24 h-24 flex-shrink-0">
-                    <img src={item.mainImageUrl} alt={item.name} className="w-full h-full rounded-2xl object-cover border border-[var(--outline)] shadow-sm" referrerPolicy="no-referrer" />
-                    <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded-md text-[8px] font-black tracking-wider text-white uppercase border border-white/10">
+                  <ImageWithLongPress 
+                    url={item.mainImageUrl} 
+                    alt={item.name} 
+                    className="w-full h-full rounded-2xl object-cover border border-[var(--outline)] shadow-sm"
+                    wrapperClassName="w-24 h-24 flex-shrink-0"
+                  >
+                    <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded-md text-[8px] font-black tracking-wider text-white uppercase border border-white/10 pointer-events-none">
                       {getImageFormatFromUrl(item.mainImageUrl)}
                     </div>
-                  </div>
+                  </ImageWithLongPress>
                 ) : (
                   <div className="w-24 h-24 bg-[var(--surface-container-high)] rounded-2xl flex items-center justify-center text-[var(--on-surface-variant)] flex-shrink-0">
                     <Package size={32} opacity={0.3} />

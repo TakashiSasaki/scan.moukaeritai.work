@@ -6,6 +6,7 @@ import { handleFirestoreError } from '../lib/error-handler';
 import { Search, Package, MapPin, Tag, Camera, Sparkles } from 'lucide-react';
 import { describeImage, identifyMatches } from '../lib/gemini';
 import { getImageFormatFromUrl } from '../lib/utils';
+import { ImageWithLongPress } from './ImageWithLongPress';
 
 interface SearchScreenProps {
   onSelectItem: (id: string) => void;
@@ -173,12 +174,15 @@ export default function SearchScreen({ onSelectItem }: SearchScreenProps) {
               >
                 <div className="w-20 h-20 rounded-xl bg-[var(--surface-container-high)] flex-shrink-0 overflow-hidden relative border border-[var(--outline)] shadow-inner">
                   {item.mainImageUrl ? (
-                    <div className="relative w-full h-full">
-                      <img src={item.mainImageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded-md text-[8px] font-black tracking-wider text-white uppercase border border-white/10 z-10">
+                    <ImageWithLongPress 
+                      url={item.mainImageUrl} 
+                      className="w-full h-full object-cover" 
+                      wrapperClassName="w-full h-full"
+                    >
+                      <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded-md text-[8px] font-black tracking-wider text-white uppercase border border-white/10 z-10 pointer-events-none">
                         {getImageFormatFromUrl(item.mainImageUrl)}
                       </div>
-                    </div>
+                    </ImageWithLongPress>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-[var(--on-surface-variant)] opacity-30">
                       <Package size={28} />

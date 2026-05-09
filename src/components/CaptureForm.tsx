@@ -11,6 +11,7 @@ import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
 import WebcamCapture from './WebcamCapture';
 import { getImageFormatFromUrl } from '../lib/utils';
+import { ImageWithLongPress } from './ImageWithLongPress';
 
 const UploadProgressDialog = ({ 
   isOpen, 
@@ -662,10 +663,15 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
             >
               {data.mainImageUrl ? (
                 <>
-                  <img src={data.mainImageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-md text-[10px] font-black tracking-wider text-white uppercase border border-white/10 z-10 pointer-events-none">
-                    {getImageFormatFromUrl(data.mainImageUrl)}
-                  </div>
+                  <ImageWithLongPress 
+                    url={data.mainImageUrl} 
+                    className="w-full h-full object-cover" 
+                    wrapperClassName="w-full h-full absolute inset-0"
+                  >
+                    <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-md text-[10px] font-black tracking-wider text-white uppercase border border-white/10 z-10 pointer-events-none">
+                      {getImageFormatFromUrl(data.mainImageUrl)}
+                    </div>
+                  </ImageWithLongPress>
                   <div className={`absolute inset-0 bg-black/60 transition-opacity flex flex-col items-center justify-center gap-3 ${activeImageMenu === 'main' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                     <button 
                       onClick={(e) => { e.stopPropagation(); mainImageUploadRef.current?.click(); setActiveImageMenu(null); }} 
@@ -718,12 +724,16 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
               <div className="absolute inset-0 flex flex-wrap gap-1 p-2 w-full h-full justify-center content-center pointer-events-none">
                 {data.contextImageUrls && data.contextImageUrls.length > 0 ? (
                   data.contextImageUrls.map((url, i) => (
-                    <div key={i} className="relative w-1/3 aspect-square">
-                      <img src={url} className="w-full h-full object-cover rounded-[12px] shadow-sm border border-white/50" referrerPolicy="no-referrer" />
+                    <ImageWithLongPress 
+                      key={i}
+                      url={url} 
+                      className="w-full h-full object-cover rounded-[12px] shadow-sm border border-white/50" 
+                      wrapperClassName="relative w-1/3 aspect-square pointer-events-auto"
+                    >
                       <div className="absolute bottom-1 right-1 px-1 py-0.5 bg-black/60 backdrop-blur-sm rounded-md text-[6px] font-black tracking-wider text-white uppercase border border-white/10 z-10 pointer-events-none">
                         {getImageFormatFromUrl(url)}
                       </div>
-                    </div>
+                    </ImageWithLongPress>
                   ))
                 ) : (
                   <div className={`absolute inset-0 flex flex-col items-center justify-center p-4 text-center transition-all ${activeImageMenu === 'context' ? 'hidden' : 'group-hover:hidden'}`}>
