@@ -22,6 +22,7 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
 ## 4. Feature-Specific Implementations
 
 ### Image Provisioning (`CaptureForm.tsx`)
+- **Specification Documentation**: See `IMAGE_SPEC.md` for detailed requirements regarding desktop vs. mobile image provisioning.
 - **Dual Input Strategy**: Uses separate `<input>` elements for file selection vs. camera capture (`capture="environment"`).
 - **Multi-Method Support**: Supports Click-to-dialog, Drag-and-drop, and Camera-direct.
 - **Interaction Model**:

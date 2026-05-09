@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import heic2any from 'heic2any';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
+import WebcamCapture from './WebcamCapture';
 
 const UploadProgressDialog = ({ 
   isOpen, 
@@ -153,6 +154,7 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
   const contextImageUploadRef = useRef<HTMLInputElement>(null);
   const contextImageCameraRef = useRef<HTMLInputElement>(null);
   const [activeImageMenu, setActiveImageMenu] = useState<'main' | 'context' | null>(null);
+  const [showWebcam, setShowWebcam] = useState<'main' | 'context' | null>(null);
   const [newTagName, setNewTagName] = useState('');
   const [dragTarget, setDragTarget] = useState<'main' | 'context' | null>(null);
   const [editingTagIndex, setEditingTagIndex] = useState<number | null>(null);
@@ -160,6 +162,22 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
   const toggleImageMenu = (slot: 'main' | 'context', e: React.MouseEvent) => {
     e.stopPropagation();
     setActiveImageMenu(prev => prev === slot ? null : slot);
+  };
+
+  const handleTakePhotoClick = (slot: 'main' | 'context', e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveImageMenu(null);
+    
+    // Check if device is likely mobile
+    // Mobile browsers usually have better native support for capture="environment"
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      if (slot === 'main') mainImageCameraRef.current?.click();
+      else contextImageCameraRef.current?.click();
+    } else {
+      setShowWebcam(slot);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent, target: 'main' | 'context') => {
@@ -570,6 +588,18 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
       className="bg-[var(--surface-container)] min-h-screen rounded-t-[32px] shadow-2xl overflow-hidden pb-32"
       onClick={() => activeImageMenu && setActiveImageMenu(null)}
     >
+      <AnimatePresence>
+        {showWebcam && (
+          <WebcamCapture 
+            onCapture={(file) => {
+              setShowWebcam(null);
+              handleImageUpload(file, showWebcam === 'context');
+            }}
+            onCancel={() => setShowWebcam(null)}
+          />
+        )}
+      </AnimatePresence>
+
       <div className="p-4 flex items-center justify-between border-b border-[var(--outline)] sticky top-0 bg-[var(--surface-container)]/90 backdrop-blur-md z-10">
         <button onClick={onClose} className="p-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] rounded-full transition-colors"><ChevronLeft size={24} /></button>
         <h2 className="font-bold text-lg tracking-tight text-[var(--on-surface)]">{itemId ? 'Edit Item' : 'Add New Item'}</h2>
@@ -640,7 +670,7 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
                        <ImageIcon size={14} /> Upload New
                     </button>
                     <button 
-                      onClick={(e) => { e.stopPropagation(); mainImageCameraRef.current?.click(); setActiveImageMenu(null); }} 
+                      onClick={(e) => handleTakePhotoClick('main', e)} 
                       className="bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-2 text-xs font-bold backdrop-blur-md flex items-center gap-2 transition-colors border border-white/20"
                     >
                        <Camera size={14} /> Take Photo
@@ -659,7 +689,7 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
                       <ImageIcon size={12} className="text-[var(--primary)]" /> Upload
                     </button>
                     <button 
-                      onClick={(e) => { e.stopPropagation(); mainImageCameraRef.current?.click(); setActiveImageMenu(null); }} 
+                      onClick={(e) => handleTakePhotoClick('main', e)} 
                       className="w-full bg-[var(--surface)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface)] rounded-full px-3 py-2 text-[10px] font-bold shadow-sm flex items-center justify-center gap-1.5 transition-colors border border-[var(--outline)]"
                     >
                       <Camera size={12} className="text-[var(--primary)]" /> Camera
@@ -701,7 +731,7 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
                    <ImageIcon size={12} /> Upload
                 </button>
                 <button 
-                  onClick={(e) => { e.stopPropagation(); contextImageCameraRef.current?.click(); setActiveImageMenu(null); }} 
+                  onClick={(e) => handleTakePhotoClick('context', e)} 
                   className="w-[80%] max-w-[120px] bg-white/20 hover:bg-white/30 text-white rounded-full px-3 py-2 text-[10px] font-bold backdrop-blur-md flex items-center justify-center gap-1.5 transition-colors border border-white/20"
                 >
                    <Camera size={12} /> Camera
