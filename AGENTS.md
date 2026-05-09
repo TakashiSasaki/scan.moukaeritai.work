@@ -40,6 +40,12 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
 - **Viewfinder**: Custom overlay with "Scanning" indicator (pings) and viewfinder focus frame.
 - **Layout**: The camera `video` element is forced to `object-cover` via `index.css` to match the UI's rounded-corner cards.
 
+### Image Interaction & Metadata
+- **Format Overlay**: All item images in the Dashboard, Search results, and Capture forms include a small, translucent overlay in the corner indicating the file format (e.g., JPEG, PNG). This is computed via `getImageFormatFromUrl` in `utils.ts`.
+- **Long Press Metadata**: Users can long-press (or right-click/press-and-hold) any item image to trigger an `ImageMetadataDialog`. 
+  - Implementation: Managed via the `useLongPress` hook and `triggerImageMetadata` event bus.
+  - Data: Displays secure Firebase Storage metadata including Content-Type, File Size (formatted), Created At, and the full Storage Path.
+
 ## 5. Development Constraints
 - **Port**: Always runs on port **3000**.
 - **HMR**: Disabled by platform. Rebuilds occur on file save/turn completion.
