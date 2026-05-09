@@ -1,4 +1,4 @@
-import * as functions from "firebase-functions/v1";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import { GoogleGenAI } from "@google/genai";
@@ -18,17 +18,17 @@ const geminiApiKey = defineSecret("GEMINI_API_KEY");
  * Callable function to securely fetch infrastructure metrics.
  * Since normal clients cannot access these GCP/Firebase backend metrics directly.
  */
-export const getAppMetrics = functions.https.onCall(async (request: any) => {
+export const getAppMetrics = onCall(async (request: any) => {
   // 1. Verify Authentication
   if (!request.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+    throw new HttpsError("unauthenticated", "You must be logged in.");
   }
 
   // 2. Verify Admin Status (ABAC)
   const db = getFirestore(admin.app(), appletConfig.firestoreDatabaseId);
   const adminDoc = await db.collection("admins").doc(request.auth.uid).get();
   if (!adminDoc.exists) {
-    throw new functions.https.HttpsError("permission-denied", "You do not have administrative privileges.");
+    throw new HttpsError("permission-denied", "You do not have administrative privileges.");
   }
 
   try {
@@ -52,7 +52,7 @@ export const getAppMetrics = functions.https.onCall(async (request: any) => {
     };
   } catch (error) {
     console.error("Failed to calculate metrics:", error);
-    throw new functions.https.HttpsError("internal", "Failed to calculate infrastructure metrics.");
+    throw new HttpsError("internal", "Failed to calculate infrastructure metrics.");
   }
 });
 
@@ -60,7 +60,7 @@ export const getAppMetrics = functions.https.onCall(async (request: any) => {
 function getGeminiClient() {
   const apiKey = geminiApiKey.value();
   if (!apiKey) {
-    throw new functions.https.HttpsError("failed-precondition", "GEMINI_API_KEY is not set on the server.");
+    throw new HttpsError("failed-precondition", "GEMINI_API_KEY is not set on the server.");
   }
   return new GoogleGenAI({ apiKey });
 }
@@ -68,16 +68,16 @@ function getGeminiClient() {
 /**
  * Callable function to identify matching items from an image.
  */
-export const identifyMatches = functions.runWith({ secrets: [geminiApiKey] }).https.onCall(async (request: any) => {
+export const identifyMatches = onCall({ secrets: [geminiApiKey] }, async (request: any) => {
   if (!request.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+    throw new HttpsError("unauthenticated", "You must be logged in.");
   }
 
   const searchImageBase64 = request.data.searchImageBase64;
   const items = request.data.items;
 
   if (!searchImageBase64 || !items) {
-    throw new functions.https.HttpsError("invalid-argument", "searchImageBase64 and items are required.");
+    throw new HttpsError("invalid-argument", "searchImageBase64 and items are required.");
   }
 
   const ai = getGeminiClient();
@@ -126,21 +126,21 @@ export const identifyMatches = functions.runWith({ secrets: [geminiApiKey] }).ht
     return result as string[];
   } catch (error) {
     console.error("Gemini Search Error:", error);
-    throw new functions.https.HttpsError("internal", "Failed to identify matches from the image.");
+    throw new HttpsError("internal", "Failed to identify matches from the image.");
   }
 });
 
 /**
  * Callable function to describe an image.
  */
-export const describeImage = functions.runWith({ secrets: [geminiApiKey] }).https.onCall(async (request: any) => {
+export const describeImage = onCall({ secrets: [geminiApiKey] }, async (request: any) => {
   if (!request.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+    throw new HttpsError("unauthenticated", "You must be logged in.");
   }
 
   const imageBase64 = request.data.imageBase64;
   if (!imageBase64) {
-    throw new functions.https.HttpsError("invalid-argument", "imageBase64 is required.");
+    throw new HttpsError("invalid-argument", "imageBase64 is required.");
   }
 
   const ai = getGeminiClient();
@@ -174,6 +174,6 @@ export const describeImage = functions.runWith({ secrets: [geminiApiKey] }).http
     return response.text;
   } catch (error) {
     console.error("Gemini Describe Error:", error);
-    throw new functions.https.HttpsError("internal", "Failed to describe the image.");
+    throw new HttpsError("internal", "Failed to describe the image.");
   }
 });
