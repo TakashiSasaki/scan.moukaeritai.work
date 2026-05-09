@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { auth, db, signInWithPopup, googleProvider, onAuthStateChanged, User, signOut } from './lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ThemeProvider, useTheme, ThemeColor, ThemeMode } from './context/ThemeContext';
 import { Moon, Sun, Palette, Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -69,10 +69,23 @@ function AppContent() {
       setUser(u);
       if (u) {
         try {
+          const userDocRef = doc(db, 'users', u.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (!userDoc.exists()) {
+            await setDoc(userDocRef, {
+              uid: u.uid,
+              displayName: u.displayName || '',
+              email: u.email || '',
+              photoURL: u.photoURL || '',
+              role: 'user'
+            });
+          }
+          
           const adminDoc = await getDoc(doc(db, 'admins', u.uid));
           setIsAdmin(adminDoc.exists());
         } catch (error) {
-          console.error("Failed to check admin status", error);
+          console.error("Failed to sync user or check admin status", error);
           setIsAdmin(false);
         }
       } else {
@@ -212,7 +225,12 @@ function AppContent() {
                 >
                   <div className="p-4 border-b border-[var(--outline)] bg-[var(--surface)]/50">
                     <div className="font-bold text-sm text-[var(--on-surface)] truncate">{user.displayName || 'User'}</div>
-                    <div className="text-[10px] text-[var(--primary)] font-bold uppercase tracking-wider mt-1 bg-[var(--primary)]/10 inline-block px-2 py-0.5 rounded-full">PRO Account</div>
+                    <div className="flex gap-2 mt-1">
+                      <div className="text-[10px] text-[var(--primary)] font-bold uppercase tracking-wider bg-[var(--primary)]/10 inline-block px-2 py-0.5 rounded-full">PRO Account</div>
+                      {isAdmin && (
+                        <div className="text-[10px] text-amber-500 font-bold uppercase tracking-wider bg-amber-500/10 inline-block px-2 py-0.5 rounded-full">Admin</div>
+                      )}
+                    </div>
                   </div>
                   <div className="p-2">
                     {isAdmin && (
