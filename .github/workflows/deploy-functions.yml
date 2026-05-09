@@ -38,4 +38,4 @@ jobs:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}'
 
       - name: Deploy to Firebase
-        run: npx --yes firebase-tools deploy --only functions --project moukaeritaid --non-interactive
+        run: npx --yes firebase-tools deploy --only "functions:getAppMetrics,functions:identifyMatches,functions:describeImage" --project moukaeritaid --non-interactive
