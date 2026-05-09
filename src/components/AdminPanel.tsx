@@ -1,13 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { collection, getCountFromServer } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../lib/firebase';
-import { Users, Database, Server, Activity, ShieldAlert, CloudCog, HardDrive, Cpu } from 'lucide-react';
+import { Users, Database, Server, Activity, ShieldAlert, CloudCog, HardDrive, Cpu, Loader2 } from 'lucide-react';
+
+interface ServerMetrics {
+  storageTotalMB: string;
+  storageFileCount: number;
+  firestoreReadsEstimated: string;
+}
 
 export default function AdminPanel() {
   const [userCount, setUserCount] = useState<number | null>(null);
   const [itemCount, setItemCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  const [metricsLoading, setMetricsLoading] = useState(true);
+  const [serverMetrics, setServerMetrics] = useState<ServerMetrics | null>(null);
+  const [metricsError, setMetricsError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchStats() {
@@ -24,6 +35,26 @@ export default function AdminPanel() {
       }
     }
     fetchStats();
+  }, []);
+
+  useEffect(() => {
+    async function fetchMetrics() {
+      try {
+        const functions = getFunctions();
+        const getAppMetricsFn = httpsCallable(functions, 'getAppMetrics');
+        const result = await getAppMetricsFn();
+        const data = result.data as any;
+        if (data.success && data.metrics) {
+          setServerMetrics(data.metrics);
+        }
+      } catch (error: any) {
+        console.error('Failed to fetch server metrics', error);
+        setMetricsError(error?.message || 'Failed to authenticate to Google Cloud');
+      } finally {
+        setMetricsLoading(false);
+      }
+    }
+    fetchMetrics();
   }, []);
 
   return (
@@ -71,48 +102,60 @@ export default function AdminPanel() {
       <div className="bg-[var(--surface-container-high)] rounded-3xl p-6 lg:p-8 mt-6">
         <h3 className="text-lg font-bold text-[var(--on-surface)] mb-4 flex items-center gap-2">
           <Activity size={20} className="text-rose-500" />
-          Billing & Infrastructure Metrics (Estimate)
+          Infrastructure Metrics (Live)
         </h3>
         <p className="text-sm text-[var(--on-surface-variant)] mb-6">
-          <strong className="text-[var(--on-surface)] font-bold text-base">Why are these estimates?</strong><br />
-          Client-side SDKs (like React frontend) cannot directly query Google Cloud Billing or Cloud Monitoring API to obtain read/write counts or raw storage byte usage due to security restrictions.
-          <br /><br />
-          To get *exact* metrics (e.g. daily active reads, storage bucket bytes, or Cloud Vision AI requests), we would need to deploy a <strong>Cloud Function</strong> or use a Node.js backend to query the Google Cloud Monitoring API securely using Admin SDKs, and expose those exact stats via a protected API endpoint.
+          These metrics are securely fetched from the backend using Firebase Cloud Functions, 
+          calculating exact byte usage for Google Cloud Storage and providing an overview of resource consumption.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl">
-            <div className="flex items-center gap-2 text-emerald-600 mb-2 font-bold text-xs">
-              <Server size={14} /> Firestore Reads
-            </div>
-            <div className="text-2xl font-black text-[var(--on-surface)]">N/A</div>
-            <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Requires Cloud Monitoring API</p>
+        {metricsError ? (
+          <div className="p-4 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded-xl border border-red-200 dark:border-red-800 text-sm font-medium">
+            Could not load metrics: {metricsError}
           </div>
-          
-          <div className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl">
-            <div className="flex items-center gap-2 text-blue-600 mb-2 font-bold text-xs">
-              <HardDrive size={14} /> Storage Size (Images)
-            </div>
-            <div className="text-2xl font-black text-[var(--on-surface)]">N/A</div>
-            <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Requires Bucket Metadata API</p>
+        ) : metricsLoading ? (
+          <div className="flex items-center gap-2 text-[var(--on-surface-variant)] p-4">
+            <Loader2 size={16} className="animate-spin" /> Fetching real-time statistics...
           </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl">
+              <div className="flex items-center gap-2 text-emerald-600 mb-2 font-bold text-xs">
+                <Server size={14} /> Total Images Stored
+              </div>
+              <div className="text-2xl font-black text-[var(--on-surface)]">
+                {serverMetrics?.storageFileCount || 0}
+              </div>
+              <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Files in Storage Bucket</p>
+            </div>
+            
+            <div className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl">
+              <div className="flex items-center gap-2 text-blue-600 mb-2 font-bold text-xs">
+                <HardDrive size={14} /> Storage Size (Images)
+              </div>
+              <div className="text-2xl font-black text-[var(--on-surface)]">
+                {serverMetrics?.storageTotalMB || '0.00'} MB
+              </div>
+              <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Total physical byte size</p>
+            </div>
 
-          <div className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl">
-            <div className="flex items-center gap-2 text-amber-600 mb-2 font-bold text-xs">
-              <CloudCog size={14} /> Cloud Storage Egress
+            <div className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl opacity-50">
+              <div className="flex items-center gap-2 text-amber-600 mb-2 font-bold text-xs">
+                <Activity size={14} /> Firestore Limits
+              </div>
+              <div className="text-2xl font-black text-[var(--on-surface)]">N/A</div>
+              <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Setup Cloud Monitoring API</p>
             </div>
-            <div className="text-2xl font-black text-[var(--on-surface)]">N/A</div>
-            <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Image download bandwidth</p>
-          </div>
 
-          <div className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl">
-            <div className="flex items-center gap-2 text-purple-600 mb-2 font-bold text-xs">
-              <Cpu size={14} /> Gemini Vision Invocations
+            <div className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl opacity-50">
+              <div className="flex items-center gap-2 text-purple-600 mb-2 font-bold text-xs">
+                <Cpu size={14} /> Gemini Invocations
+              </div>
+              <div className="text-2xl font-black text-[var(--on-surface)]">N/A</div>
+              <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Setup Cloud Monitoring API</p>
             </div>
-            <div className="text-2xl font-black text-[var(--on-surface)]">N/A</div>
-            <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Number of AI tagging requests</p>
           </div>
-        </div>
+        )}
 
       </div>
     </motion.div>
