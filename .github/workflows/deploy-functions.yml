@@ -1,6 +1,7 @@
 name: Deploy Firebase Functions
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
