@@ -27,9 +27,19 @@
         "uid": { "type": "string" },
         "displayName": { "type": "string" },
         "email": { "type": "string" },
-        "photoURL": { "type": "string" }
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "User role, usually not set by user directly." }
       },
       "required": ["uid"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Record to identify admin users securely.",
+      "type": "object",
+      "properties": {
+        "grantedAt": { "type": "string", "format": "date-time" },
+        "grantedBy": { "type": "string", "description": "UID of the user who granted this admin right" }
+      }
     }
   },
   "firestore": {
@@ -40,6 +50,10 @@
     "/users/{userId}": {
       "schema": "User",
       "description": "User profiles."
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "List of administrative users to enable RBAC."
     }
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "ItemTag",
+  "name": "photo.moukaeritai.work",
   "description": "Tag and track your items using QR codes, NFC, and photos with Firebase backend.",
   "requestFramePermissions": ["camera", "geolocation", "nfc", "bluetooth"],
   "majorCapabilities": []

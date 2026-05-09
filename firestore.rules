@@ -11,6 +11,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
     function isOwner(ownerId) {
       return isSignedIn() && request.auth.uid == ownerId;
     }
@@ -67,12 +71,30 @@ service cloud.firestore {
         && data.keys().hasAll(['uid'])
         && (data.get('displayName', '') is string && data.get('displayName', '').size() <= 100)
         && (data.get('email', '') is string && data.get('email', '').size() <= 100)
-        && (data.get('photoURL', '') is string && data.get('photoURL', '').size() <= 500);
+        && (data.get('photoURL', '') is string && data.get('photoURL', '').size() <= 500)
+        && (data.get('role', 'user') in ['user', 'admin']);
     }
 
     match /users/{userId} {
       allow get: if isSignedIn();
-      allow create, update: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
+      // Users can only update their own profile, but they cannot give themselves the admin role.
+      // Easiest is to only allow 'role' updates if they are already an admin, or force it to 'user'
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && incoming().get('role', 'user') == 'user';
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && (incoming().get('role', 'user') == existing().get('role', 'user') || isAdmin());
+    }
+
+    // --- ADMINS ---
+    function isValidAdmin(data) {
+      return data.keys().hasAny(['grantedAt', 'grantedBy']) 
+        && (!('grantedAt' in data) || data.grantedAt == request.time)
+        && (!('grantedBy' in data) || data.grantedBy == request.auth.uid);
+    }
+
+    match /admins/{adminId} {
+      // Only admins can see who else is an admin
+      allow read: if isAdmin() || request.auth.uid == adminId;
+      // Only existing admins can grant/revoke admin rights
+      allow write: if isAdmin() && isValidAdmin(incoming());
     }
   }
 }

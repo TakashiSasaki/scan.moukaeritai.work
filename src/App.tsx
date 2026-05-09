@@ -9,11 +9,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { auth, signInWithPopup, googleProvider, onAuthStateChanged, User, signOut } from './lib/firebase';
+import { auth, db, signInWithPopup, googleProvider, onAuthStateChanged, User, signOut } from './lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { ThemeProvider, useTheme, ThemeColor, ThemeMode } from './context/ThemeContext';
-import { Moon, Sun, Palette, Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X } from 'lucide-react';
+import { Moon, Sun, Palette, Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import Dashboard from './components/Dashboard';
 import SearchScreen from './components/SearchScreen';
 import CaptureForm from './components/CaptureForm';
@@ -46,10 +47,12 @@ export default function App() {
 
 function AppContent() {
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const { themeColor, setThemeColor, themeMode, setThemeMode } = useTheme();
 
   const themeOptions: { color: ThemeColor, bg: string }[] = [
@@ -62,8 +65,19 @@ function AppContent() {
   ];
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
+      if (u) {
+        try {
+          const adminDoc = await getDoc(doc(db, 'admins', u.uid));
+          setIsAdmin(adminDoc.exists());
+        } catch (error) {
+          console.error("Failed to check admin status", error);
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
       setLoading(false);
     });
     return unsubscribe;
@@ -116,7 +130,7 @@ function AppContent() {
               </div>
             </div>
             <div className="space-y-2">
-              <h1 className="text-5xl font-black tracking-tighter italic">ItemTag</h1>
+              <h1 className="text-4xl font-black tracking-tighter italic whitespace-nowrap">photo.moukaeritai.work</h1>
               <p className="text-neutral-400 font-medium">
                 Smart Asset Tracking with<br />
                 <span className="text-white">QR, NFC, and Gemini AI.</span>
@@ -149,7 +163,7 @@ function AppContent() {
           <div className="bg-[var(--primary)] p-1.5 rounded-lg text-[var(--primary-foreground)] transition-all">
             <Package size={20} />
           </div>
-          <span className="font-bold text-xl tracking-tight">ItemTag</span>
+          <span className="font-bold text-xl tracking-tight">photo.mw</span>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -169,30 +183,63 @@ function AppContent() {
           
           <ConnectionStatus />
 
-          <div className="hidden sm:flex flex-col items-end mr-1">
-            <span className="text-xs font-bold leading-none">{user.displayName || 'User'}</span>
-            <span className="text-[10px] text-neutral-400 font-medium font-mono uppercase tracking-wider">PRO Account</span>
+          <div className="relative">
+            <button 
+              onClick={() => setShowProfile(!showProfile)}
+              className="flex items-center outline-none ring-[var(--primary)] focus-visible:ring-2 rounded-full"
+            >
+              {user.photoURL ? (
+                <img 
+                  src={user.photoURL} 
+                  alt="Profile" 
+                  className="w-8 h-8 rounded-full border border-[var(--outline)] shadow-sm transition-transform hover:scale-105"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-[var(--surface-container-highest)] flex items-center justify-center border border-[var(--outline)] transition-transform hover:scale-105">
+                  <span className="text-xs font-bold text-[var(--on-surface-variant)]">{user.displayName?.[0] || 'U'}</span>
+                </div>
+              )}
+            </button>
+            <AnimatePresence>
+              {showProfile && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-3 w-56 bg-[var(--surface-container-high)] backdrop-blur-xl border border-[var(--outline)] shadow-2xl rounded-2xl overflow-hidden z-50 origin-top-right"
+                >
+                  <div className="p-4 border-b border-[var(--outline)] bg-[var(--surface)]/50">
+                    <div className="font-bold text-sm text-[var(--on-surface)] truncate">{user.displayName || 'User'}</div>
+                    <div className="text-[10px] text-[var(--primary)] font-bold uppercase tracking-wider mt-1 bg-[var(--primary)]/10 inline-block px-2 py-0.5 rounded-full">PRO Account</div>
+                  </div>
+                  <div className="p-2">
+                    {isAdmin && (
+                      <button
+                         onClick={() => {
+                           setShowProfile(false);
+                           toast.success('Admin Panel launching feature coming soon!');
+                         }}
+                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
+                      >
+                         <ShieldAlert size={16} className="text-amber-500" /> Admin Panel
+                      </button>
+                    )}
+                     <button
+                        onClick={() => {
+                          setShowProfile(false);
+                          handleLogout();
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-500/10 transition-colors"
+                     >
+                        <LogOut size={16} /> Log Out
+                     </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-          {user.photoURL ? (
-            <img 
-              src={user.photoURL} 
-              alt="Profile" 
-              className="w-8 h-8 rounded-full border border-neutral-200 shadow-sm"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center border border-neutral-200">
-              <span className="text-xs font-bold text-neutral-500">{user.displayName?.[0] || 'U'}</span>
-            </div>
-          )}
-          <div className="w-px h-4 bg-neutral-200 mx-1"></div>
-          <button 
-            onClick={handleLogout}
-            className="p-2 text-neutral-500 hover:text-red-500 transition-colors"
-            title="Logout"
-          >
-            <LogOut size={20} />
-          </button>
         </div>
       </header>
 
@@ -224,7 +271,7 @@ function AppContent() {
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] text-[var(--on-surface-variant)] font-medium">Select a theme color to personalize your ItemTag experience across all devices.</p>
+              <p className="text-[10px] text-[var(--on-surface-variant)] font-medium">Select a theme color to personalize your photo.mw experience across all devices.</p>
             </div>
           </motion.div>
         )}
