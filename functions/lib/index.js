@@ -8,9 +8,10 @@ const genai_1 = require("@google/genai");
 const params_1 = require("firebase-functions/params");
 // Initialize Firebase Admin globally
 admin.initializeApp();
-// Load the applet config to get the correct databaseId and storageBucket
-// Using require since this is a Node environment and it might not be in tsconfig.json includes
-const appletConfig = require("../../firebase-applet-config.json");
+const appletConfig = {
+    firestoreDatabaseId: "photo-moukaeritai-work",
+    storageBucket: "photo-moukaeritai-work"
+};
 const geminiApiKey = (0, params_1.defineSecret)("GEMINI_API_KEY");
 /**
  * Callable function to securely fetch infrastructure metrics.
