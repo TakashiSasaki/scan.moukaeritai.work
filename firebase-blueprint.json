@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "Item": {
+      "title": "Item",
+      "description": "A tracked item with photos, location, and identification tags.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID from QR, NFC, or generated." },
+        "name": { "type": "string", "description": "Short name of the item." },
+        "description": { "type": "string", "description": "Detailed description of the item." },
+        "ownerId": { "type": "string", "description": "UID of the user who owns this item." },
+        "location": { "type": "object", "description": "Geographical location (latitude/longitude)." },
+        "mainImageUrl": { "type": "string", "description": "URL of the primary photo." },
+        "contextImageUrls": { "type": "array", "description": "URLs of photos showing surroundings." },
+        "bluetoothTags": { "type": "array", "description": "List of nearby Bluetooth tags/beacons info." },
+        "tagType": { "type": "string", "enum": ["qr", "nfc", "none"], "description": "Type of tag used for identification." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "createdAt", "updatedAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" }
+      },
+      "required": ["uid"]
+    }
+  },
+  "firestore": {
+    "/items/{itemId}": {
+      "schema": "Item",
+      "description": "Collection of tracked items."
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles."
+    }
+  }
+}
