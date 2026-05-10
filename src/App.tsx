@@ -12,7 +12,7 @@ import React, { useState, useEffect } from 'react';
 import { auth, db, signInWithPopup, googleProvider, onAuthStateChanged, User, signOut } from './lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ThemeProvider, useTheme, ThemeColor, ThemeMode } from './context/ThemeContext';
-import { Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert } from 'lucide-react';
+import { Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert, Beaker, PlaySquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'react-hot-toast';
 import Dashboard from './components/Dashboard';
@@ -22,6 +22,8 @@ import Scanner from './components/Scanner';
 import Overview from './components/Overview';
 import AdminPanel from './components/AdminPanel';
 import UserSettingsPanel from './components/UserSettingsPanel';
+import TestScreen from './components/TestScreen';
+import DemoScreen from './components/DemoScreen';
 import { AppStatusDialog } from './components/AppStatusDialog';
 import { ImageMetadataDialog } from './components/ImageMetadataDialog';
 
@@ -229,6 +231,24 @@ function AppContent() {
                      <button
                         onClick={() => {
                           setShowProfile(false);
+                          navigate('/demo');
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
+                     >
+                        <PlaySquare size={16} className="text-blue-500" /> API Demos
+                     </button>
+                     <button
+                        onClick={() => {
+                          setShowProfile(false);
+                          navigate('/test');
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
+                     >
+                        <Beaker size={16} className="text-purple-500" /> Beta Tests
+                     </button>
+                     <button
+                        onClick={() => {
+                          setShowProfile(false);
                           navigate('/settings');
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
@@ -272,6 +292,20 @@ function AppContent() {
           <main className="flex-1 max-w-4xl mx-auto w-full">
             <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <UserSettingsPanel onClose={() => navigate('/')} />
+            </motion.div>
+          </main>
+        } />
+        <Route path="/test" element={
+          <main className="flex-1 max-w-4xl mx-auto w-full">
+            <motion.div key="test" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              <TestScreen />
+            </motion.div>
+          </main>
+        } />
+        <Route path="/demo" element={
+          <main className="flex-1 max-w-4xl mx-auto w-full">
+            <motion.div key="demo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              <DemoScreen />
             </motion.div>
           </main>
         } />

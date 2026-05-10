@@ -18,8 +18,7 @@ export default function UserSettingsPanel({ onClose }: UserSettingsPanelProps) {
     { color: 'violet', bg: 'bg-violet-600' },
     { color: 'emerald', bg: 'bg-emerald-600' },
     { color: 'rose', bg: 'bg-rose-600' },
-    { color: 'amber', bg: 'bg-amber-600' },
-    { color: 'slate', bg: 'bg-slate-600' }
+    { color: 'amber', bg: 'bg-amber-600' }
   ];
   const [localSettings, setLocalSettings] = React.useState(settings);
   const [saving, setSaving] = React.useState(false);
@@ -83,7 +82,7 @@ export default function UserSettingsPanel({ onClose }: UserSettingsPanelProps) {
                   onClick={onClose}
                   className="px-4 py-2 bg-[var(--surface)] border border-[var(--outline)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface)] rounded-xl font-bold text-sm transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
                 >
-                  Exit
+                  🚪 Exit
                 </button>
               )}
             </div>

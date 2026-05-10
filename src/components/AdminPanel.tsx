@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { collection, getCountFromServer } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../lib/firebase';
-import { Users, Database, Server, Activity, ShieldAlert, CloudCog, HardDrive, Cpu, Loader2, LayoutDashboard, Beaker, Bluetooth, Wifi } from 'lucide-react';
-import PipesDemo from './PipesDemo';
-import BluetoothDemo from './BluetoothDemo';
-import NetworkDemo from './NetworkDemo';
+import { Users, Database, Server, Activity, ShieldAlert, CloudCog, HardDrive, Cpu, Loader2, LayoutDashboard } from 'lucide-react';
 
 interface ServerMetrics {
   storageTotalMB: string;
@@ -16,7 +12,6 @@ interface ServerMetrics {
 }
 
 export default function AdminPanel({ onClose }: { onClose?: () => void }) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'test' | 'bluetooth' | 'network'>('overview');
   const [userCount, setUserCount] = useState<number | null>(null);
   const [itemCount, setItemCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,72 +77,15 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
                 onClick={onClose}
                 className="px-4 py-2 bg-[var(--surface)] border border-[var(--outline)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface)] rounded-xl font-bold text-sm transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
               >
-                Exit
+                🚪 Exit
               </button>
             )}
-          </div>
-          
-          {/* Horizontal Navigation Tabs */}
-          <div className="flex p-1 bg-[var(--surface-container)] rounded-2xl w-full overflow-x-auto no-scrollbar border border-[var(--surface-container-highest)] shadow-inner">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'overview'
-                  ? 'bg-[var(--primary)] text-[var(--on-primary)] shadow-md'
-                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
-              }`}
-            >
-              <LayoutDashboard size={18} />
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('test')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'test'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
-              }`}
-            >
-              <Beaker size={18} />
-              Beta Tests
-            </button>
-            <button
-              onClick={() => setActiveTab('bluetooth')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'bluetooth'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
-              }`}
-            >
-              <Bluetooth size={18} />
-              Bluetooth API
-            </button>
-            <button
-              onClick={() => setActiveTab('network')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
-                activeTab === 'network'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
-              }`}
-            >
-              <Wifi size={18} />
-              Network API
-            </button>
           </div>
         </div>
       </div>
 
       <div className="p-4 sm:p-6 pb-24 max-w-5xl mx-auto space-y-6">
-        <AnimatePresence mode="wait">
-        {activeTab === 'overview' ? (
-          <motion.div
-            key="overview"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-6"
-          >
+        <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Real Metrics from Firestore Counters */}
               <div className="bg-[var(--surface-container)] rounded-3xl p-6 border border-[var(--outline)] shadow-sm">
@@ -241,53 +179,7 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
                 </div>
               )}
             </div>
-          </motion.div>
-        ) : activeTab === 'test' ? (
-          <motion.div
-            key="test"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="w-full"
-          >
-            <div className="mb-6">
-              <h3 className="text-xl font-bold text-[var(--on-surface)] flex items-center gap-2">
-                <Beaker className="text-purple-500" />
-                Experimental Sandbox
-              </h3>
-              <p className="text-sm text-[var(--on-surface-variant)] mt-1">
-                A staging area for testing new UI components, animations, and technical validations before they enter production.
-              </p>
-            </div>
-            
-            <PipesDemo />
-
-          </motion.div>
-        ) : activeTab === 'bluetooth' ? (
-          <motion.div
-            key="bluetooth"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="w-full"
-          >
-            <BluetoothDemo />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="network"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="w-full"
-          >
-            <NetworkDemo />
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
       </div>
     </div>
   );
