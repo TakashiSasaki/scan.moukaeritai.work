@@ -3,6 +3,7 @@ import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import { GoogleGenAI } from "@google/genai";
 import { defineSecret } from "firebase-functions/params";
+import { MetricServiceClient } from "@google-cloud/monitoring";
 
 // Initialize Firebase Admin globally
 admin.initializeApp();
@@ -13,6 +14,7 @@ const appletConfig = {
 };
 
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
+const metricClient = new MetricServiceClient();
 
 /**
  * Callable function to securely fetch infrastructure metrics.
@@ -40,14 +42,52 @@ export const getAppMetrics = onCall(async (request: any) => {
     const totalBytes = files.reduce((sum: any, file: any) => sum + Number(file.metadata.size || 0), 0);
     const byteStringToMB = (totalBytes / (1024 * 1024)).toFixed(2);
 
+    let firestoreReadsEstimated: string | number = 0;
+    let geminiInvocations: string | number = 0;
+
+    const projectId = process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT || "moukaeritaid";
+    const now = Date.now();
+    const startTimeMillis = now - 1000 * 60 * 60 * 24 * 30; // 30 days
+    const startTime = { seconds: Math.floor(startTimeMillis / 1000) };
+    const endTime = { seconds: Math.floor(now / 1000) };
+
+    try {
+      const [timeSeries] = await metricClient.listTimeSeries({
+        name: metricClient.projectPath(projectId),
+        filter: 'metric.type="firestore.googleapis.com/document/read_count"',
+        interval: { startTime, endTime },
+      });
+      firestoreReadsEstimated = timeSeries.reduce((acc, ts) => {
+        const points = ts.points || [];
+        return acc + points.reduce((pAcc, point) => pAcc + Number(point.value?.int64Value || 0), 0);
+      }, 0);
+    } catch(e) {
+      console.warn("Could not fetch firestore metrics", e);
+      firestoreReadsEstimated = "Error";
+    }
+
+    try {
+      const [timeSeries] = await metricClient.listTimeSeries({
+        name: metricClient.projectPath(projectId),
+        filter: 'metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service="generativelanguage.googleapis.com"',
+        interval: { startTime, endTime },
+      });
+      geminiInvocations = timeSeries.reduce((acc, ts) => {
+        const points = ts.points || [];
+        return acc + points.reduce((pAcc, point) => pAcc + Number(point.value?.int64Value || 0), 0);
+      }, 0);
+    } catch(e) {
+      console.warn("Could not fetch gemini metrics", e);
+      geminiInvocations = "Error";
+    }
+
     return {
       success: true,
       metrics: {
         storageTotalMB: byteStringToMB,
         storageFileCount: files.length,
-        // Hint: You can expand this to use `@google-cloud/monitoring` 
-        // to retrieve Firestore read/write stats and Vision API invocations securely.
-        firestoreReadsEstimated: "Requires Cloud Monitoring API Setup",
+        firestoreReadsEstimated,
+        geminiInvocations,
       }
     };
   } catch (error) {

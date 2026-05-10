@@ -8,7 +8,8 @@ import { Users, Database, Server, Activity, ShieldAlert, CloudCog, HardDrive, Cp
 interface ServerMetrics {
   storageTotalMB: string;
   storageFileCount: number;
-  firestoreReadsEstimated: string;
+  firestoreReadsEstimated: string | number;
+  geminiInvocations: string | number;
 }
 
 export default function AdminPanel() {
@@ -139,20 +140,24 @@ export default function AdminPanel() {
               <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Total physical byte size</p>
             </div>
 
-            <div className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl opacity-50">
+            <div className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl">
               <div className="flex items-center gap-2 text-amber-600 mb-2 font-bold text-xs">
-                <Activity size={14} /> Firestore Limits
+                <Activity size={14} /> Firestore Reads
               </div>
-              <div className="text-2xl font-black text-[var(--on-surface)]">N/A</div>
-              <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Setup Cloud Monitoring API</p>
+              <div className="text-2xl font-black text-[var(--on-surface)]">
+                {serverMetrics?.firestoreReadsEstimated ?? 'N/A'}
+              </div>
+              <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Via Cloud Monitoring API</p>
             </div>
 
-            <div className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl opacity-50">
+            <div className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl">
               <div className="flex items-center gap-2 text-purple-600 mb-2 font-bold text-xs">
                 <Cpu size={14} /> Gemini Invocations
               </div>
-              <div className="text-2xl font-black text-[var(--on-surface)]">N/A</div>
-              <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Setup Cloud Monitoring API</p>
+              <div className="text-2xl font-black text-[var(--on-surface)]">
+                {serverMetrics?.geminiInvocations ?? 'N/A'}
+              </div>
+              <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Via Cloud Monitoring API</p>
             </div>
           </div>
         )}
