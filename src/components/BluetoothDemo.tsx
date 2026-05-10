@@ -9,6 +9,7 @@ export default function BluetoothDemo() {
   const [isConnected, setIsConnected] = useState(false);
   const [filterNamePrefix, setFilterNamePrefix] = useState('');
   const [filterName, setFilterName] = useState('');
+  const [hackFilterEnabled, setHackFilterEnabled] = useState(false);
   const [servicesInput, setServicesInput] = useState('battery_service, device_information');
   const [discoveredData, setDiscoveredData] = useState<any[]>([]);
 
@@ -59,19 +60,30 @@ export default function BluetoothDemo() {
     const optionalServices = parseServicesString(servicesInput);
     
     let options: any = {};
-    const filterObj: any = {};
-    if (filterName) filterObj.name = filterName;
-    if (filterNamePrefix) filterObj.namePrefix = filterNamePrefix;
+    let filters: any[] = [];
     
-    if (Object.keys(filterObj).length > 0) {
-      options.filters = [filterObj];
+    if (hackFilterEnabled) {
+      // 62 printable characters to force only devices with a name starting with A-Z, a-z, or 0-9
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.split('');
+      filters = chars.map(char => ({ namePrefix: char }));
+    } else {
+      const filterObj: any = {};
+      if (filterName) filterObj.name = filterName;
+      if (filterNamePrefix) filterObj.namePrefix = filterNamePrefix;
+      if (Object.keys(filterObj).length > 0) {
+        filters.push(filterObj);
+      }
+    }
+    
+    if (filters.length > 0) {
+      options.filters = filters;
       if (optionalServices.length > 0) options.optionalServices = optionalServices;
     } else {
       options.acceptAllDevices = true;
       if (optionalServices.length > 0) options.optionalServices = optionalServices;
     }
 
-    addLog('info', `Calling: requestDevice(${JSON.stringify(options)})`);
+    addLog('info', `Calling: requestDevice(${JSON.stringify(options, null, 2)})`);
 
     try {
       const nav = navigator as any;
@@ -208,27 +220,41 @@ export default function BluetoothDemo() {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                <div>
-                 <label className="block text-xs font-bold text-[var(--on-surface-variant)] mb-1">Name Prefix (Starts with...)</label>
+                 <label className={`block text-xs font-bold text-[var(--on-surface-variant)] mb-1 ${hackFilterEnabled ? 'opacity-50' : ''}`}>Name Prefix (Starts with...)</label>
                  <input 
                    type="text" 
                    value={filterNamePrefix} 
                    onChange={e => setFilterNamePrefix(e.target.value)} 
                    placeholder="e.g. Air, Galaxy, Bose" 
-                   disabled={isRequesting || isConnected}
-                   className="w-full bg-[var(--surface-container)] border border-[var(--outline)] rounded-lg px-3 py-1.5 text-sm text-[var(--on-surface)]" 
+                   disabled={isRequesting || isConnected || hackFilterEnabled}
+                   className="w-full bg-[var(--surface-container)] border border-[var(--outline)] rounded-lg px-3 py-1.5 text-sm text-[var(--on-surface)] disabled:opacity-50" 
                  />
                </div>
                <div>
-                 <label className="block text-xs font-bold text-[var(--on-surface-variant)] mb-1">Exact Name</label>
+                 <label className={`block text-xs font-bold text-[var(--on-surface-variant)] mb-1 ${hackFilterEnabled ? 'opacity-50' : ''}`}>Exact Name</label>
                  <input 
                    type="text" 
                    value={filterName} 
                    onChange={e => setFilterName(e.target.value)} 
                    placeholder="e.g. AirPods Pro" 
-                   disabled={isRequesting || isConnected}
-                   className="w-full bg-[var(--surface-container)] border border-[var(--outline)] rounded-lg px-3 py-1.5 text-sm text-[var(--on-surface)]" 
+                   disabled={isRequesting || isConnected || hackFilterEnabled}
+                   className="w-full bg-[var(--surface-container)] border border-[var(--outline)] rounded-lg px-3 py-1.5 text-sm text-[var(--on-surface)] disabled:opacity-50" 
                  />
                </div>
+          </div>
+          
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[var(--outline)]">
+            <input 
+              type="checkbox" 
+              id="hackFilter" 
+              checked={hackFilterEnabled}
+              onChange={e => setHackFilterEnabled(e.target.checked)}
+              disabled={isRequesting || isConnected}
+              className="w-4 h-4 rounded text-blue-600 border-[var(--outline)] focus:ring-blue-500"
+            />
+            <label htmlFor="hackFilter" className="text-xs font-bold text-amber-600 dark:text-amber-400 select-none cursor-pointer">
+              🧪 LAB: Force Show Only "Named" Devices (A-Z, a-z, 0-9 Array Prefix Hack)
+            </label>
           </div>
         </div>
 
@@ -406,6 +432,17 @@ export default function BluetoothDemo() {
               Many BLE devices broadcast purely random MACs or nameless payloads for background tasks (resulting in a list of "Unknown devices"). 
               While you cannot magically filter by "Has any name", you <strong>can</strong> apply a <code className="bg-[var(--surface-container-highest)] px-1 rounded">namePrefix</code> or <code className="bg-[var(--surface-container-highest)] px-1 rounded">name</code> filter. 
               Once a filter is applied, the OS dialog will <strong>hide all unknown devices</strong> and only show those matching the criteria.
+            </p>
+          </div>
+
+          <div className="space-y-2 lg:col-span-2">
+            <h5 className="font-bold text-sm text-[var(--on-surface)] border-b border-[var(--outline)] pb-2 flex items-center gap-2">
+               <span className="text-amber-500">🧪</span> 6. The "A-Z" Named Device Hack
+            </h5>
+            <p className="text-xs text-[var(--on-surface-variant)] leading-relaxed">
+              The <code className="bg-[var(--surface-container-highest)] px-1 rounded">filters</code> option accepts an array, acting as an <strong>OR condition</strong>. 
+              If you want to filter out all nameless "Unknown" devices and only show devices with a readable name, you can pass an array of 62 filters, each checking for a <code className="bg-[var(--surface-container-highest)] px-1 rounded">namePrefix</code> of a single printable character (A-Z, a-z, 0-9). 
+              Because at least one character must match, nameless devices are excluded. You can test this using the LAB toggle above!
             </p>
           </div>
         </div>
