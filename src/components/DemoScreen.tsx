@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { PlaySquare, Bluetooth, Wifi, Battery } from 'lucide-react';
+import { PlaySquare, Bluetooth, Wifi, Battery, Smartphone, Compass } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BluetoothDemo from './BluetoothDemo';
 import NetworkDemo from './NetworkDemo';
 import BatteryDemo from './BatteryDemo';
+import VibrationDemo from './VibrationDemo';
+import MotionDemo from './MotionDemo';
 import { AnimatePresence, motion } from 'motion/react';
 
 export default function DemoScreen() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'bluetooth' | 'network' | 'battery'>('bluetooth');
+  const [activeTab, setActiveTab] = useState<'bluetooth' | 'network' | 'battery' | 'vibration' | 'motion'>('bluetooth');
 
   return (
     <div className="w-full">
@@ -66,6 +68,28 @@ export default function DemoScreen() {
               <Battery size={18} />
               Battery API
             </button>
+            <button
+              onClick={() => setActiveTab('vibration')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+                activeTab === 'vibration'
+                  ? 'bg-pink-500 text-white shadow-md'
+                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
+              }`}
+            >
+              <Smartphone size={18} />
+              Vibration API
+            </button>
+            <button
+              onClick={() => setActiveTab('motion')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+                activeTab === 'motion'
+                  ? 'bg-emerald-500 text-white shadow-md'
+                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
+              }`}
+            >
+              <Compass size={18} />
+              Motion API
+            </button>
           </div>
         </div>
       </div>
@@ -94,7 +118,7 @@ export default function DemoScreen() {
             >
               <NetworkDemo />
             </motion.div>
-          ) : (
+          ) : activeTab === 'battery' ? (
             <motion.div
               key="battery"
               initial={{ opacity: 0, y: 10 }}
@@ -104,6 +128,28 @@ export default function DemoScreen() {
               className="w-full"
             >
               <BatteryDemo />
+            </motion.div>
+          ) : activeTab === 'vibration' ? (
+            <motion.div
+              key="vibration"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="w-full"
+            >
+              <VibrationDemo />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="motion"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="w-full"
+            >
+              <MotionDemo />
             </motion.div>
           )}
         </AnimatePresence>

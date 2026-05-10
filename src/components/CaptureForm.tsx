@@ -342,14 +342,40 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
         else if (error?.message) errorDetails = error.message;
         else if (typeof error === 'object' && error !== null) {
           const props: Record<string, any> = {};
-          for (const key in error) props[key] = (error as any)[key];
+          
+          // Safe property extraction to avoid throwing getters
+          try {
+            for (const key in error) {
+              if (key === 'src' && typeof (error as any)[key] === 'object') {
+                 props[key] = '[Complex src object omitted]';
+                 continue;
+              }
+              props[key] = (error as any)[key];
+            }
+          } catch (e) {
+             props._extractionError = String(e);
+          }
+
           if (error instanceof Event) {
             props.type = error.type;
             props.eventPhase = error.eventPhase;
           }
           if ((error as any).code) props.code = (error as any).code;
           if ((error as any).name) props.name = (error as any).name;
-          const str = JSON.stringify(props, null, 2);
+          
+          const getCircularReplacer = () => {
+            const seen = new WeakSet();
+            return (key: string, value: any) => {
+              if (typeof value === "object" && value !== null) {
+                if (seen.has(value)) {
+                  return "[Circular]";
+                }
+                seen.add(value);
+              }
+              return value;
+            };
+          };
+          const str = JSON.stringify(props, getCircularReplacer(), 2);
           if (str !== '{}') errorDetails = str;
         }
       } catch (e) {
