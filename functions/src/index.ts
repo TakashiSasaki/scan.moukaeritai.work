@@ -54,7 +54,7 @@ export const getAppMetrics = onCall(async (request: any) => {
     try {
       const [timeSeries] = await metricClient.listTimeSeries({
         name: metricClient.projectPath(projectId),
-        filter: 'metric.type="firestore.googleapis.com/document/read_count"',
+        filter: `metric.type="firestore.googleapis.com/document/read_count" AND resource.labels.database_id="${appletConfig.firestoreDatabaseId}"`,
         interval: { startTime, endTime },
       });
       firestoreReadsEstimated = timeSeries.reduce((acc, ts) => {
@@ -67,9 +67,10 @@ export const getAppMetrics = onCall(async (request: any) => {
     }
 
     try {
+      const dbApiKey = geminiApiKey.value() ?? "";
       const [timeSeries] = await metricClient.listTimeSeries({
         name: metricClient.projectPath(projectId),
-        filter: 'metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service="generativelanguage.googleapis.com"',
+        filter: `metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service="generativelanguage.googleapis.com" AND metric.labels.credential_id="apikey:${dbApiKey}"`,
         interval: { startTime, endTime },
       });
       geminiInvocations = timeSeries.reduce((acc, ts) => {

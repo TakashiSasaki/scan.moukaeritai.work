@@ -20,6 +20,7 @@ const metricClient = new monitoring_1.MetricServiceClient();
  * Since normal clients cannot access these GCP/Firebase backend metrics directly.
  */
 exports.getAppMetrics = (0, https_1.onCall)(async (request) => {
+    var _a;
     // 1. Verify Authentication
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "You must be logged in.");
@@ -47,7 +48,7 @@ exports.getAppMetrics = (0, https_1.onCall)(async (request) => {
         try {
             const [timeSeries] = await metricClient.listTimeSeries({
                 name: metricClient.projectPath(projectId),
-                filter: 'metric.type="firestore.googleapis.com/document/read_count"',
+                filter: `metric.type="firestore.googleapis.com/document/read_count" AND resource.labels.database_id="${appletConfig.firestoreDatabaseId}"`,
                 interval: { startTime, endTime },
             });
             firestoreReadsEstimated = timeSeries.reduce((acc, ts) => {
@@ -60,9 +61,10 @@ exports.getAppMetrics = (0, https_1.onCall)(async (request) => {
             firestoreReadsEstimated = "Error";
         }
         try {
+            const dbApiKey = (_a = geminiApiKey.value()) !== null && _a !== void 0 ? _a : "";
             const [timeSeries] = await metricClient.listTimeSeries({
                 name: metricClient.projectPath(projectId),
-                filter: 'metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service="generativelanguage.googleapis.com"',
+                filter: `metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service="generativelanguage.googleapis.com" AND metric.labels.credential_id="apikey:${dbApiKey}"`,
                 interval: { startTime, endTime },
             });
             geminiInvocations = timeSeries.reduce((acc, ts) => {
