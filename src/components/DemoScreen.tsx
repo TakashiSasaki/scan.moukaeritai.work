@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlaySquare, Bluetooth, Wifi, Battery, Smartphone, Compass, Navigation } from 'lucide-react';
+import { PlaySquare, Bluetooth, Wifi, Battery, Smartphone, Compass, Navigation, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BluetoothDemo from './BluetoothDemo';
 import NetworkDemo from './NetworkDemo';
@@ -7,11 +7,12 @@ import BatteryDemo from './BatteryDemo';
 import VibrationDemo from './VibrationDemo';
 import MotionDemo from './MotionDemo';
 import MagnetometerDemo from './MagnetometerDemo';
+import AmbientLightDemo from './AmbientLightDemo';
 import { AnimatePresence, motion } from 'motion/react';
 
 export default function DemoScreen() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'bluetooth' | 'network' | 'battery' | 'vibration' | 'motion' | 'magnetometer'>('bluetooth');
+  const [activeTab, setActiveTab] = useState<'bluetooth' | 'network' | 'battery' | 'vibration' | 'motion' | 'magnetometer' | 'ambientLight'>('bluetooth');
 
   return (
     <div className="w-full">
@@ -102,6 +103,17 @@ export default function DemoScreen() {
               <Navigation size={18} />
               Geomagnetic API
             </button>
+            <button
+              onClick={() => setActiveTab('ambientLight')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+                activeTab === 'ambientLight'
+                  ? 'bg-yellow-500 text-white shadow-md'
+                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
+              }`}
+            >
+              <Sun size={18} />
+              Ambient Light API
+            </button>
           </div>
         </div>
       </div>
@@ -162,6 +174,17 @@ export default function DemoScreen() {
               className="w-full"
             >
               <MagnetometerDemo />
+            </motion.div>
+          ) : activeTab === 'ambientLight' ? (
+            <motion.div
+              key="ambientLight"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="w-full"
+            >
+              <AmbientLightDemo />
             </motion.div>
           ) : (
             <motion.div
