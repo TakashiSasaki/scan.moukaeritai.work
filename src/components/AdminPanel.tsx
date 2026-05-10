@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { collection, getCountFromServer } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../lib/firebase';
-import { Users, Database, Server, Activity, ShieldAlert, CloudCog, HardDrive, Cpu, Loader2, LayoutDashboard, Beaker, Bluetooth } from 'lucide-react';
+import { Users, Database, Server, Activity, ShieldAlert, CloudCog, HardDrive, Cpu, Loader2, LayoutDashboard, Beaker, Bluetooth, Wifi } from 'lucide-react';
 import PipesDemo from './PipesDemo';
 import BluetoothDemo from './BluetoothDemo';
+import NetworkDemo from './NetworkDemo';
 
 interface ServerMetrics {
   storageTotalMB: string;
@@ -113,6 +114,17 @@ export default function AdminPanel() {
           >
             <Bluetooth size={18} />
             Bluetooth API
+          </button>
+          <button
+            onClick={() => setActiveTab('network')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+              activeTab === 'network'
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
+            }`}
+          >
+            <Wifi size={18} />
+            Network API
           </button>
         </div>
       </div>
@@ -243,7 +255,7 @@ export default function AdminPanel() {
             <PipesDemo />
 
           </motion.div>
-        ) : (
+        ) : activeTab === 'bluetooth' ? (
           <motion.div
             key="bluetooth"
             initial={{ opacity: 0, y: 10 }}
@@ -253,6 +265,17 @@ export default function AdminPanel() {
             className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-3xl p-6 space-y-6 shadow-sm"
           >
             <BluetoothDemo />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="network"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-3xl p-6 space-y-6 shadow-sm"
+          >
+            <NetworkDemo />
           </motion.div>
         )}
       </AnimatePresence>
