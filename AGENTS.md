@@ -113,3 +113,16 @@ For mobile environments, prioritize touch operation characteristics and OS stand
 ### Technical Implementation Notes
 - **Input Element Separation**: Separate input elements with the `capture` attribute (for camera) and without (for file selection) to ensure the user's intended action executes reliably.
 - **Reference Attribute**: Add `referrerPolicy="no-referrer"` to `img` tags to ensure reliable loading from Firebase Storage, etc.
+
+## 11. Admin Panel & Experimental Sandbox
+
+To facilitate testing and experimental feature development by the admin team, the `AdminPanel.tsx` is structured to support isolated test environments without cluttering the main UI.
+
+- **Overview**: The `AdminPanel.tsx` utilizes a horizontal tab navigation system to switch between main system metrics (the 'overview' tab) and an experimental sandbox area (the 'test' tab).
+- **Tab Architecture**:
+  - The currently visible tab is managed by the `activeTab` state (`'overview' | 'test'`).
+  - Smooth transitions between tabs are handled using `<AnimatePresence mode="wait">` and `<motion.div>` from `motion/react`.
+- **Adding New Test Components**:
+  - To add a new experimental feature or a sandbox component (like `PipesDemo.tsx`), developers should render it within the `test` tab's `<motion.div>` in `AdminPanel.tsx`.
+  - If a completely new and distinct category of tests is needed, expand the `activeTab` state (e.g., `'overview' | 'test' | 'new-category'`), add a corresponding navigation `<button>` to the horizontal scroll area, and create a new `<motion.div>` block inside the `<AnimatePresence>` dispatcher.
+  - This structure ensures that beta tests and technical validations can be quickly deployed and reviewed by admins without affecting the primary user flow.
