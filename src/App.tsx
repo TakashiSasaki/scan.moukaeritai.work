@@ -12,7 +12,7 @@ import React, { useState, useEffect } from 'react';
 import { auth, db, signInWithPopup, googleProvider, onAuthStateChanged, User, signOut } from './lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ThemeProvider, useTheme, ThemeColor, ThemeMode } from './context/ThemeContext';
-import { Moon, Sun, Palette, Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert } from 'lucide-react';
+import { Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'react-hot-toast';
 import Dashboard from './components/Dashboard';
@@ -25,7 +25,7 @@ import UserSettingsPanel from './components/UserSettingsPanel';
 import { AppStatusDialog } from './components/AppStatusDialog';
 import { ImageMetadataDialog } from './components/ImageMetadataDialog';
 
-type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview' | 'settings';
+type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview';
 
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
@@ -59,21 +59,10 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showAppStatus, setShowAppStatus] = useState(false);
-  const { themeColor, setThemeColor, themeMode, setThemeMode } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const themeOptions: { color: ThemeColor, bg: string }[] = [
-    { color: 'blue', bg: 'bg-blue-600' },
-    { color: 'indigo', bg: 'bg-indigo-600' },
-    { color: 'violet', bg: 'bg-violet-600' },
-    { color: 'emerald', bg: 'bg-emerald-600' },
-    { color: 'rose', bg: 'bg-rose-600' },
-    { color: 'amber', bg: 'bg-amber-600' },
-  ];
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
@@ -190,21 +179,6 @@ function AppContent() {
           <span className="font-bold text-xl tracking-tight">photo.mw</span>
         </div>
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
-            className="p-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] rounded-full transition-colors"
-            title="Toggle Dark Mode"
-          >
-            {themeMode === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-          </button>
-          <button 
-            onClick={() => setShowSettings(!showSettings)}
-            className="p-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] rounded-full transition-colors"
-            title="Theme Settings"
-          >
-            <Palette size={20} />
-          </button>
-
           <div className="relative">
             <button 
               onClick={() => setShowProfile(!showProfile)}
@@ -255,8 +229,7 @@ function AppContent() {
                      <button
                         onClick={() => {
                           setShowProfile(false);
-                          if (location.pathname !== '/') navigate('/');
-                          setCurrentScreen('settings');
+                          navigate('/settings');
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
                      >
@@ -279,40 +252,6 @@ function AppContent() {
         </div>
       </header>
 
-  <AnimatePresence>
-        {showSettings && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="bg-[var(--surface-container)] border-b border-[var(--outline)] overflow-hidden"
-          >
-            <div className="max-w-4xl mx-auto p-4 space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--on-surface-variant)] flex items-center gap-2">
-                  <Palette size={14} /> Appearance
-                </h3>
-                <button onClick={() => setShowSettings(false)} className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface)]">
-                  <X size={18} />
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-4">
-                {themeOptions.map((opt) => (
-                  <button
-                    key={opt.color}
-                    onClick={() => setThemeColor(opt.color)}
-                    className={`w-10 h-10 rounded-full ${opt.bg} flex items-center justify-center border-4 transition-all scale-100 hover:scale-110 active:scale-95 ${themeColor === opt.color ? 'border-[var(--on-surface)] shadow-lg' : 'border-[var(--surface)] shadow-sm'}`}
-                  >
-                    {themeColor === opt.color && <div className="w-2 h-2 bg-white rounded-full shadow-sm" />}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-[var(--on-surface-variant)] font-medium">Select a theme color to personalize your photo.mw experience across all devices.</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <Routes>
         <Route path="/admin" element={
           <main className="flex-1 max-w-4xl mx-auto w-full">
@@ -327,6 +266,13 @@ function AppContent() {
                  <p className="text-[var(--on-surface-variant)]">You do not have permission to view this page.</p>
                </div>
             )}
+          </main>
+        } />
+        <Route path="/settings" element={
+          <main className="flex-1 max-w-4xl mx-auto w-full">
+            <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              <UserSettingsPanel onClose={() => navigate('/')} />
+            </motion.div>
           </main>
         } />
         <Route path="*" element={
@@ -362,11 +308,6 @@ function AppContent() {
           {currentScreen === 'overview' && (
             <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <Overview />
-            </motion.div>
-          )}
-          {currentScreen === 'settings' && (
-            <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <UserSettingsPanel onClose={() => setCurrentScreen('dashboard')} />
             </motion.div>
           )}
         </AnimatePresence>

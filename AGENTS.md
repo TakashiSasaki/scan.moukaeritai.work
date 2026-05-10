@@ -10,6 +10,7 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
 
 ## 2. Tech Stack
 - **Frontend**: React 18+ (Vite), TypeScript, Tailwind CSS.
+- **PWA**: `vite-plugin-pwa` is used for service worker generation and manifest management. Do not manually create or edit `public/manifest.json` or `public/sw.js`.
 - **Backend/Database**: Firebase (Firestore, Authentication, Storage).
 - **Icons**: Lucide React.
 - **Scanning**: `html5-qrcode` for camera-based QR detection.
@@ -22,8 +23,10 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
   - Interactive elements must support both hover (PC) and tap (Mobile) states.
 - **Typography**: Clean sans-serif (Inter) for UI, high-contrast monospace for technical data (IDs, tags).
 - **App Layout & Navigation**:
-  - The entire application (including the Admin Panel) is built as a unified Single Page Application (SPA). We use a state-driven screen toggle approach (`type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview' | 'admin'`) rather than a traditional URL-based router (like `react-router`), maintaining state without hard page reloads or fragmented URL structures.
-  - Primary navigation is handled by a Sticky Bottom Navigation bar which provides quick access to core functions and is optimized for one-handed use on mobile devices.
+  - The main application flow is built as a unified Single Page Application (SPA) using a state-driven screen toggle approach (e.g., `type Screen = 'dashboard' | 'search' | 'capture' ...`) to maintain state seamlessly without internal URL fragmenting.
+  - **Dedicated Routes (Admin & Settings)**: The Admin Panel (`/admin`) and User Settings (`/settings`) are securely separated using `react-router-dom`. This provides strict access boundaries, dedicated entry points, and prevents the main SPA logic from becoming bloated.
+  - **Sticky Top Navigations for Sub-pages**: Dedicated pages like Admin and User Settings use a Sticky Top Navigation header (`sticky top-[57px] z-30 bg-[var(--surface-container-high)]/95 backdrop-blur-xl`) ensuring that critical actions (like "Save" or "Exit" buttons) and tab navigations remain accessible even when the content scrolls vertically.
+  - Primary navigation for regular users is handled by a Sticky Bottom Navigation bar which provides quick access to core functions and is optimized for one-handed use on mobile devices.
 
 ## 4. Feature-Specific Implementations
 
@@ -70,6 +73,7 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
 ## 8. Cloud Functions & Deployment
 - **Generations (Gen 1 vs Gen 2)**: It is CRITICAL to use Cloud Functions **Gen 2** (e.g., `import { onCall, HttpsError } from "firebase-functions/v2/https"`). Attempting to deploy Gen 1 functions (e.g., `functions.https.onCall`) can result in deployment failures in GitHub Actions or Firebase CLI with errors like `Cannot set CPU on the functions ... because they are GCF gen 1`.
 - **Metrics & Backend Logic**: To perform sensitive operations (e.g., fetching Storage Bucket sizes or querying Cloud Monitoring API for read/write metrics), a Cloud Functions setup is present in `/functions/`. Admin privileges are verified within the function runtime.
+- **Cloud Monitoring Constraints**: When using `@google-cloud/monitoring` to fetch metrics, specific dimension filters like `resource.labels.database_id` (Firestore) or `metric.labels.credential_id` (Gemini API) may be prohibited or unavailable depending on the GCP project's setup. The current implementation fetches **overall project-wide metrics**. UI elements displaying these metrics **MUST explicitly state** that they represent the entire GCP project (e.g., over the last 30 days) and indicate that costs/usage are combined if the project is shared with other apps.
 - **AI & Gemini Processing (Approach B)**: API keys are strictly hidden from the frontend. AI generation (matching images, description building) natively happens in Firebase Callable Functions using the `@google/genai` SDK and Firebase Secret Manager (`GEMINI_API_KEY`).
 - **CI/CD**: Firebase Functions deployment is handled automatically via a GitHub Actions workflow (`.github/workflows/deploy-functions.yml`) upon pushes to `main`.
 - **Deployment Strategy**: We intentionally retain older functions. Therefore, deployments should perform differential updates without forcefully deleting functions that exist in the cloud but are missing from the local source code.
@@ -118,11 +122,29 @@ For mobile environments, prioritize touch operation characteristics and OS stand
 
 To facilitate testing and experimental feature development by the admin team, the `AdminPanel.tsx` is structured to support isolated test environments without cluttering the main UI.
 
-- **Overview**: The `AdminPanel.tsx` utilizes a horizontal tab navigation system to switch between main system metrics (the 'overview' tab) and an experimental sandbox area (the 'test' tab).
+- **Overview**: The `AdminPanel.tsx` utilizes a horizontal tab navigation system to switch between main system metrics (the 'overview' tab) and experimental sandbox areas.
 - **Tab Architecture**:
-  - The currently visible tab is managed by the `activeTab` state (`'overview' | 'test'`).
+  - The currently visible tab is managed by the `activeTab` state (e.g., `'overview' | 'test' | 'bluetooth' | 'network'`).
   - Smooth transitions between tabs are handled using `<AnimatePresence mode="wait">` and `<motion.div>` from `motion/react`.
+  - The tab navigation bar itself uses a horizontal scrolling layout (`overflow-x-auto no-scrollbar`) to support an expanding number of testing APIs cleanly.
 - **Adding New Test Components**:
-  - To add a new experimental feature or a sandbox component (like `PipesDemo.tsx`), developers should render it within the `test` tab's `<motion.div>` in `AdminPanel.tsx`.
-  - If a completely new and distinct category of tests is needed, expand the `activeTab` state (e.g., `'overview' | 'test' | 'new-category'`), add a corresponding navigation `<button>` to the horizontal scroll area, and create a new `<motion.div>` block inside the `<AnimatePresence>` dispatcher.
+  - To add a new experimental feature or a sandbox component (like `PipesDemo.tsx`, `BluetoothDemo.tsx`, `NetworkDemo.tsx`), developers should expand the `activeTab` state, add a corresponding navigation `<button>` to the horizontal scroll area, and render the component within a new `<motion.div>` block inside the `<AnimatePresence>` dispatcher.
   - This structure ensures that beta tests and technical validations can be quickly deployed and reviewed by admins without affecting the primary user flow.
+
+## 12. Settings & Form State Management
+
+The User Settings area (`/settings`) serves as the centralized hub for account preferences, including **Theme Configuration** (Color and Dark/Light Mode) and **Image Capture Preferences**.
+
+When creating panels or pages where users edit settings (e.g., `UserSettingsPanel.tsx`), enforce the following robust UI/UX data entry patterns:
+- **Local State Buffer**: Always store pending user edits in a local state variable that is distinct from the globally active/committed settings (Except for visual themes which apply immediately via Context).
+- **Cancel/Exit Capability**: Provide an "Exit" or "Cancel" button to cleanly revert the local buffer back to the committed settings and return to the previous screen.
+- **Save Contextual Feedback**: The "Save" button MUST be disabled unless there are actual, unsaved changes detected (e.g., comparing local state vs global state).
+- **Auto-Close on Success**: Unless the setting dictates otherwise, configuration screens should automatically close (or navigate back) after successfully persisting changes to the backend or global state.
+
+## 13. PWA & App Status Monitoring
+
+- **Service Worker Generation**: Uses `vite-plugin-pwa` with Workbox for manifest and service worker injection. Do not manually author `public/manifest.json` or `public/sw.js`.
+- **Build Failure Avoidance (File Size Limit)**: By default, Workbox's `maximumFileSizeToCacheInBytes` is 2MB. Since React/Vite builds can exceed this in standard chunks (often > 2.5MB depending on imports), this limit has been explicitly increased to 5MB (`5000000` bytes) in `vite.config.ts`. Failing to keep this updated will result in build errors indicating assets won't be precached.
+- **Centralized Health Dialog**: The application surfaces real-time system health data via the `AppStatusDialog` (accessed by clicking the App Icon in the top-left header). This is the standard location for presenting:
+  - **Firebase Connection Status**: Shows online/offline state of the Firestore connection.
+  - **Local Cache Stats**: Exposes Workbox and PWA cache usage by polling the browser's native `caches` API (`getAppCacheSizes` util). This allows users to inspect the footprint of cached assets directly from the UI without dev tools.
