@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { PlaySquare, Bluetooth, Wifi } from 'lucide-react';
+import { PlaySquare, Bluetooth, Wifi, Battery } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BluetoothDemo from './BluetoothDemo';
 import NetworkDemo from './NetworkDemo';
+import BatteryDemo from './BatteryDemo';
 import { AnimatePresence, motion } from 'motion/react';
 
 export default function DemoScreen() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'bluetooth' | 'network'>('bluetooth');
+  const [activeTab, setActiveTab] = useState<'bluetooth' | 'network' | 'battery'>('bluetooth');
 
   return (
     <div className="w-full">
@@ -54,6 +55,17 @@ export default function DemoScreen() {
               <Wifi size={18} />
               Network API
             </button>
+            <button
+              onClick={() => setActiveTab('battery')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+                activeTab === 'battery'
+                  ? 'bg-amber-500 text-white shadow-md'
+                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
+              }`}
+            >
+              <Battery size={18} />
+              Battery API
+            </button>
           </div>
         </div>
       </div>
@@ -71,7 +83,7 @@ export default function DemoScreen() {
             >
               <BluetoothDemo />
             </motion.div>
-          ) : (
+          ) : activeTab === 'network' ? (
             <motion.div
               key="network"
               initial={{ opacity: 0, y: 10 }}
@@ -81,6 +93,17 @@ export default function DemoScreen() {
               className="w-full"
             >
               <NetworkDemo />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="battery"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="w-full"
+            >
+              <BatteryDemo />
             </motion.div>
           )}
         </AnimatePresence>

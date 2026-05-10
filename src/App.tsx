@@ -201,20 +201,30 @@ function AppContent() {
             </button>
             <AnimatePresence>
               {showProfile && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-3 w-56 bg-[var(--surface-container-high)] backdrop-blur-xl border border-[var(--outline)] shadow-2xl rounded-2xl overflow-hidden z-50 origin-top-right"
-                >
-                  <div className="p-4 border-b border-[var(--outline)] bg-[var(--surface)]/50">
-                    <div className="font-bold text-sm text-[var(--on-surface)] truncate">{user.displayName || 'User'}</div>
-                    {isAdmin && (
-                      <div className="flex gap-2 mt-1">
-                        <div className="text-[10px] text-amber-500 font-bold uppercase tracking-wider bg-amber-500/10 inline-block px-2 py-0.5 rounded-full">Admin</div>
-                      </div>
-                    )}
+                <>
+                  <div className="fixed inset-0 z-50 cursor-pointer" onClick={() => setShowProfile(false)} />
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-3 w-56 bg-[var(--surface-container-high)] backdrop-blur-xl border border-[var(--outline)] shadow-2xl rounded-2xl overflow-hidden z-[51] origin-top-right"
+                  >
+                  <div className="p-4 border-b border-[var(--outline)] bg-[var(--surface)]/50 flex justify-between items-start">
+                    <div className="overflow-hidden">
+                      <div className="font-bold text-sm text-[var(--on-surface)] truncate">{user.displayName || 'User'}</div>
+                      {isAdmin && (
+                        <div className="flex gap-2 mt-1">
+                          <div className="text-[10px] text-amber-500 font-bold uppercase tracking-wider bg-amber-500/10 inline-block px-2 py-0.5 rounded-full">Admin</div>
+                        </div>
+                      )}
+                    </div>
+                    <button 
+                      onClick={() => setShowProfile(false)}
+                      className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] p-1.5 -mr-1.5 -mt-1.5 rounded-full transition-colors flex-shrink-0"
+                    >
+                      <X size={16} />
+                    </button>
                   </div>
                   <div className="p-2">
                     {isAdmin && (
@@ -266,6 +276,7 @@ function AppContent() {
                      </button>
                   </div>
                 </motion.div>
+                </>
               )}
             </AnimatePresence>
           </div>
