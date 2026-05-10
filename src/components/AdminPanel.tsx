@@ -15,8 +15,8 @@ interface ServerMetrics {
   geminiInvocations: string | number;
 }
 
-export default function AdminPanel() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'test' | 'bluetooth'>('overview');
+export default function AdminPanel({ onClose }: { onClose?: () => void }) {
+  const [activeTab, setActiveTab] = useState<'overview' | 'test' | 'bluetooth' | 'network'>('overview');
   const [userCount, setUserCount] = useState<number | null>(null);
   const [itemCount, setItemCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,73 +63,82 @@ export default function AdminPanel() {
   }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className="p-6 pb-24 md:pb-6 space-y-6 max-w-5xl mx-auto"
-    >
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-amber-500 rounded-xl text-white">
-            <ShieldAlert size={28} />
+    <div className="w-full">
+      {/* Sticky Top Navigation & Header */}
+      <div className="sticky top-[57px] z-30 bg-[var(--surface-container-high)]/95 backdrop-blur-xl border-b border-[var(--outline)] px-4 sm:px-6 py-4 shadow-sm pb-4">
+        <div className="flex flex-col gap-4 max-w-5xl mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 sm:p-3 bg-amber-500 rounded-xl text-white shadow-sm">
+                <ShieldAlert className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black italic tracking-tight text-[var(--on-surface)]">Admin Control Panel</h2>
+                <p className="text-[var(--on-surface-variant)] text-[10px] sm:text-xs font-medium uppercase tracking-wider">System Settings & Metrics</p>
+              </div>
+            </div>
+            {onClose && (
+              <button 
+                onClick={onClose}
+                className="px-4 py-2 bg-[var(--surface)] border border-[var(--outline)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface)] rounded-xl font-bold text-sm transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
+              >
+                Exit
+              </button>
+            )}
           </div>
-          <div>
-            <h2 className="text-2xl font-black italic tracking-tight text-[var(--on-surface)]">Admin Control Panel</h2>
-            <p className="text-[var(--on-surface-variant)] text-sm font-medium">System Metrics & Overview</p>
+          
+          {/* Horizontal Navigation Tabs */}
+          <div className="flex p-1 bg-[var(--surface-container)] rounded-2xl w-full overflow-x-auto no-scrollbar border border-[var(--surface-container-highest)] shadow-inner">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+                activeTab === 'overview'
+                  ? 'bg-[var(--primary)] text-[var(--on-primary)] shadow-md'
+                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
+              }`}
+            >
+              <LayoutDashboard size={18} />
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('test')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+                activeTab === 'test'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
+              }`}
+            >
+              <Beaker size={18} />
+              Beta Tests
+            </button>
+            <button
+              onClick={() => setActiveTab('bluetooth')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+                activeTab === 'bluetooth'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
+              }`}
+            >
+              <Bluetooth size={18} />
+              Bluetooth API
+            </button>
+            <button
+              onClick={() => setActiveTab('network')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+                activeTab === 'network'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
+              }`}
+            >
+              <Wifi size={18} />
+              Network API
+            </button>
           </div>
-        </div>
-        
-        {/* Horizontal Navigation Tabs */}
-        <div className="flex p-1 bg-[var(--surface-container-high)] rounded-2xl w-full md:w-auto overflow-x-auto no-scrollbar">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
-              activeTab === 'overview'
-                ? 'bg-[var(--primary)] text-[var(--on-primary)] shadow-md'
-                : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
-            }`}
-          >
-            <LayoutDashboard size={18} />
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('test')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
-              activeTab === 'test'
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
-            }`}
-          >
-            <Beaker size={18} />
-            Beta Tests
-          </button>
-          <button
-            onClick={() => setActiveTab('bluetooth')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
-              activeTab === 'bluetooth'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
-            }`}
-          >
-            <Bluetooth size={18} />
-            Bluetooth API
-          </button>
-          <button
-            onClick={() => setActiveTab('network')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
-              activeTab === 'network'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
-            }`}
-          >
-            <Wifi size={18} />
-            Network API
-          </button>
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
+      <div className="p-4 sm:p-6 pb-24 max-w-5xl mx-auto space-y-6">
+        <AnimatePresence mode="wait">
         {activeTab === 'overview' ? (
           <motion.div
             key="overview"
@@ -240,9 +249,9 @@ export default function AdminPanel() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-3xl p-6 space-y-6 shadow-sm"
+            className="w-full"
           >
-            <div>
+            <div className="mb-6">
               <h3 className="text-xl font-bold text-[var(--on-surface)] flex items-center gap-2">
                 <Beaker className="text-purple-500" />
                 Experimental Sandbox
@@ -262,7 +271,7 @@ export default function AdminPanel() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-3xl p-6 space-y-6 shadow-sm"
+            className="w-full"
           >
             <BluetoothDemo />
           </motion.div>
@@ -273,12 +282,13 @@ export default function AdminPanel() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-3xl p-6 space-y-6 shadow-sm"
+            className="w-full"
           >
             <NetworkDemo />
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+      </div>
+    </div>
   );
 }

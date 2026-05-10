@@ -315,22 +315,13 @@ function AppContent() {
 
       <Routes>
         <Route path="/admin" element={
-          <main className="flex-1 max-w-4xl mx-auto w-full p-4 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-black text-[var(--on-surface)] tracking-tight">System Admin</h1>
-              <button 
-                onClick={() => navigate('/')} 
-                className="px-4 py-2 bg-[var(--surface-container-high)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface-variant)] rounded-xl font-bold transition-all"
-              >
-                Exit Admin
-              </button>
-            </div>
+          <main className="flex-1 max-w-4xl mx-auto w-full">
             {isAdmin ? (
                <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                 <AdminPanel />
+                 <AdminPanel onClose={() => navigate('/')} />
                </motion.div>
             ) : (
-               <div className="p-12 text-center bg-[var(--surface)] border border-red-500/20 rounded-2xl">
+               <div className="p-12 mt-4 text-center bg-[var(--surface)] border border-red-500/20 rounded-2xl mx-4">
                  <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
                  <h2 className="text-xl font-bold text-red-500 mb-2">Access Denied</h2>
                  <p className="text-[var(--on-surface-variant)]">You do not have permission to view this page.</p>

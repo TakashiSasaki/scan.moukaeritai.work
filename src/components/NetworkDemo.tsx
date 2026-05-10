@@ -75,7 +75,7 @@ export default function NetworkDemo() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Basic Status Screen */}
-        <div className={`p-6 rounded-3xl border ${isOnline ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-rose-500/10 border-rose-500/20'}`}>
+        <div className={`p-4 sm:p-6 rounded-3xl border ${isOnline ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-rose-500/10 border-rose-500/20'}`}>
           <div className="flex items-center gap-3 mb-4">
             {isOnline ? (
               <div className="p-3 bg-emerald-500 rounded-full text-white">
@@ -99,7 +99,7 @@ export default function NetworkDemo() {
         </div>
 
         {/* Network Information Screen */}
-        <div className="p-6 bg-[var(--surface-container)] rounded-3xl border border-[var(--outline)]">
+        <div className="p-4 sm:p-6 bg-[var(--surface-container)] rounded-3xl border border-[var(--outline)]">
           <h4 className="font-bold text-sm text-[var(--on-surface-variant)] flex items-center gap-2 mb-4">
             <Activity className="text-blue-500" size={18} />
             Network Information API
