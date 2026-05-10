@@ -19,8 +19,7 @@ const metricClient = new monitoring_1.MetricServiceClient();
  * Callable function to securely fetch infrastructure metrics.
  * Since normal clients cannot access these GCP/Firebase backend metrics directly.
  */
-exports.getAppMetrics = (0, https_1.onCall)(async (request) => {
-    var _a;
+exports.getAppMetrics = (0, https_1.onCall)({ secrets: [geminiApiKey] }, async (request) => {
     // 1. Verify Authentication
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "You must be logged in.");
@@ -48,7 +47,7 @@ exports.getAppMetrics = (0, https_1.onCall)(async (request) => {
         try {
             const [timeSeries] = await metricClient.listTimeSeries({
                 name: metricClient.projectPath(projectId),
-                filter: `metric.type="firestore.googleapis.com/document/read_count" AND resource.labels.database_id="${appletConfig.firestoreDatabaseId}"`,
+                filter: 'metric.type="firestore.googleapis.com/document/read_count"',
                 interval: { startTime, endTime },
             });
             firestoreReadsEstimated = timeSeries.reduce((acc, ts) => {
@@ -58,13 +57,12 @@ exports.getAppMetrics = (0, https_1.onCall)(async (request) => {
         }
         catch (e) {
             console.warn("Could not fetch firestore metrics", e);
-            firestoreReadsEstimated = "Error";
+            firestoreReadsEstimated = `Error: ${e instanceof Error ? e.message : String(e)}`;
         }
         try {
-            const dbApiKey = (_a = geminiApiKey.value()) !== null && _a !== void 0 ? _a : "";
             const [timeSeries] = await metricClient.listTimeSeries({
                 name: metricClient.projectPath(projectId),
-                filter: `metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service="generativelanguage.googleapis.com" AND metric.labels.credential_id="apikey:${dbApiKey}"`,
+                filter: 'metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service="generativelanguage.googleapis.com"',
                 interval: { startTime, endTime },
             });
             geminiInvocations = timeSeries.reduce((acc, ts) => {
@@ -74,7 +72,7 @@ exports.getAppMetrics = (0, https_1.onCall)(async (request) => {
         }
         catch (e) {
             console.warn("Could not fetch gemini metrics", e);
-            geminiInvocations = "Error";
+            geminiInvocations = `Error: ${e instanceof Error ? e.message : String(e)}`;
         }
         return {
             success: true,

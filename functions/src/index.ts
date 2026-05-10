@@ -20,7 +20,7 @@ const metricClient = new MetricServiceClient();
  * Callable function to securely fetch infrastructure metrics.
  * Since normal clients cannot access these GCP/Firebase backend metrics directly.
  */
-export const getAppMetrics = onCall(async (request: any) => {
+export const getAppMetrics = onCall({ secrets: [geminiApiKey] }, async (request: any) => {
   // 1. Verify Authentication
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
@@ -54,7 +54,7 @@ export const getAppMetrics = onCall(async (request: any) => {
     try {
       const [timeSeries] = await metricClient.listTimeSeries({
         name: metricClient.projectPath(projectId),
-        filter: `metric.type="firestore.googleapis.com/document/read_count" AND resource.labels.database_id="${appletConfig.firestoreDatabaseId}"`,
+        filter: 'metric.type="firestore.googleapis.com/document/read_count"',
         interval: { startTime, endTime },
       });
       firestoreReadsEstimated = timeSeries.reduce((acc, ts) => {
@@ -63,14 +63,13 @@ export const getAppMetrics = onCall(async (request: any) => {
       }, 0);
     } catch(e) {
       console.warn("Could not fetch firestore metrics", e);
-      firestoreReadsEstimated = "Error";
+      firestoreReadsEstimated = `Error: ${e instanceof Error ? e.message : String(e)}`;
     }
 
     try {
-      const dbApiKey = geminiApiKey.value() ?? "";
       const [timeSeries] = await metricClient.listTimeSeries({
         name: metricClient.projectPath(projectId),
-        filter: `metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service="generativelanguage.googleapis.com" AND metric.labels.credential_id="apikey:${dbApiKey}"`,
+        filter: 'metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service="generativelanguage.googleapis.com"',
         interval: { startTime, endTime },
       });
       geminiInvocations = timeSeries.reduce((acc, ts) => {
@@ -79,7 +78,7 @@ export const getAppMetrics = onCall(async (request: any) => {
       }, 0);
     } catch(e) {
       console.warn("Could not fetch gemini metrics", e);
-      geminiInvocations = "Error";
+      geminiInvocations = `Error: ${e instanceof Error ? e.message : String(e)}`;
     }
 
     return {
