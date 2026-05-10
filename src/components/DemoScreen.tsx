@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlaySquare, Bluetooth, Wifi, Battery, Smartphone, Compass, Navigation, Sun, MapPin } from 'lucide-react';
+import { PlaySquare, Bluetooth, Wifi, Battery, Smartphone, Compass, Navigation, Sun, MapPin, Radio } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BluetoothDemo from './BluetoothDemo';
 import NetworkDemo from './NetworkDemo';
@@ -9,11 +9,12 @@ import MotionDemo from './MotionDemo';
 import MagnetometerDemo from './MagnetometerDemo';
 import AmbientLightDemo from './AmbientLightDemo';
 import GeolocationDemo from './GeolocationDemo';
+import NfcDemo from './NfcDemo';
 import { AnimatePresence, motion } from 'motion/react';
 
 export default function DemoScreen() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'bluetooth' | 'network' | 'battery' | 'vibration' | 'motion' | 'magnetometer' | 'ambientLight' | 'geolocation'>('bluetooth');
+  const [activeTab, setActiveTab] = useState<'bluetooth' | 'network' | 'battery' | 'vibration' | 'motion' | 'magnetometer' | 'ambientLight' | 'geolocation' | 'nfc'>('bluetooth');
 
   return (
     <div className="w-full">
@@ -126,6 +127,17 @@ export default function DemoScreen() {
               <MapPin size={18} />
               Geolocation API
             </button>
+            <button
+              onClick={() => setActiveTab('nfc')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+                activeTab === 'nfc'
+                  ? 'bg-emerald-500 text-white shadow-md'
+                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
+              }`}
+            >
+              <Radio size={18} />
+              Web NFC API
+            </button>
           </div>
         </div>
       </div>
@@ -208,6 +220,17 @@ export default function DemoScreen() {
               className="w-full"
             >
               <GeolocationDemo />
+            </motion.div>
+          ) : activeTab === 'nfc' ? (
+            <motion.div
+              key="nfc"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="w-full"
+            >
+              <NfcDemo />
             </motion.div>
           ) : (
             <motion.div
