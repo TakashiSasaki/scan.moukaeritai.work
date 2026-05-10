@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { collection, getCountFromServer } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../lib/firebase';
-import { Users, Database, Server, Activity, ShieldAlert, CloudCog, HardDrive, Cpu, Loader2, LayoutDashboard, Beaker } from 'lucide-react';
+import { Users, Database, Server, Activity, ShieldAlert, CloudCog, HardDrive, Cpu, Loader2, LayoutDashboard, Beaker, Bluetooth } from 'lucide-react';
 import PipesDemo from './PipesDemo';
+import BluetoothDemo from './BluetoothDemo';
 
 interface ServerMetrics {
   storageTotalMB: string;
@@ -14,7 +15,7 @@ interface ServerMetrics {
 }
 
 export default function AdminPanel() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'test'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'test' | 'bluetooth'>('overview');
   const [userCount, setUserCount] = useState<number | null>(null);
   const [itemCount, setItemCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,6 +102,17 @@ export default function AdminPanel() {
           >
             <Beaker size={18} />
             Beta Tests
+          </button>
+          <button
+            onClick={() => setActiveTab('bluetooth')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+              activeTab === 'bluetooth'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
+            }`}
+          >
+            <Bluetooth size={18} />
+            Bluetooth API
           </button>
         </div>
       </div>
@@ -209,7 +221,7 @@ export default function AdminPanel() {
               )}
             </div>
           </motion.div>
-        ) : (
+        ) : activeTab === 'test' ? (
           <motion.div
             key="test"
             initial={{ opacity: 0, y: 10 }}
@@ -230,6 +242,17 @@ export default function AdminPanel() {
             
             <PipesDemo />
 
+          </motion.div>
+        ) : (
+          <motion.div
+            key="bluetooth"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-3xl p-6 space-y-6 shadow-sm"
+          >
+            <BluetoothDemo />
           </motion.div>
         )}
       </AnimatePresence>
