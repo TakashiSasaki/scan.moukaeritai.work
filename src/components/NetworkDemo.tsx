@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Wifi, WifiOff, Activity, Globe, Info, BookOpen } from 'lucide-react';
+import { Wifi, WifiOff, Activity, Globe, Info, BookOpen, Server, RefreshCw } from 'lucide-react';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from '../lib/firebase';
 
 export default function NetworkDemo() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [networkInfo, setNetworkInfo] = useState<any>(null);
+  const [clientIpInfo, setClientIpInfo] = useState<{ ip: string; reverseDns: string[] } | null>(null);
+  const [isFetchingIp, setIsFetchingIp] = useState(false);
   const [logs, setLogs] = useState<{ time: string, type: 'info' | 'error' | 'success', message: string }[]>([]);
 
   const addLog = (type: 'info' | 'error' | 'success', message: string) => {
@@ -63,6 +67,30 @@ export default function NetworkDemo() {
         conn.removeEventListener('change', updateNetworkInfo);
       }
     };
+  }, []);
+
+  const fetchClientIp = async () => {
+    setIsFetchingIp(true);
+    addLog('info', 'Fetching client IP address via Cloud Functions...');
+    try {
+      const functions = getFunctions(app, 'asia-east1'); // if the function is not deployed in asia-east1, change this or remove
+      // Wait, let's just use getFunctions(app) because the region is default (us-central1) usually, unless specified.
+      // Wait, let's use the same as the user's config. The instructions don't specify the region, so it might be default.
+      const getIp = httpsCallable(getFunctions(app), 'getClientIp');
+      const result = await getIp();
+      const data = result.data as { ip: string; reverseDns: string[] };
+      setClientIpInfo(data);
+      addLog('success', `Fetched IP: ${data.ip}`);
+    } catch (error: any) {
+      console.error(error);
+      addLog('error', `Failed to fetch client IP: ${error.message}`);
+    } finally {
+      setIsFetchingIp(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClientIp();
   }, []);
 
   return (
@@ -150,6 +178,58 @@ export default function NetworkDemo() {
             </p>
           )}
         </div>
+      </div>
+
+      {/* Client IP Information */}
+      <div className="p-4 sm:p-6 bg-[var(--surface-container)] rounded-3xl border border-[var(--outline)]">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="font-bold text-sm text-[var(--on-surface-variant)] flex items-center gap-2">
+            <Server className="text-emerald-500" size={18} />
+            Client IP Information
+          </h4>
+          <button
+            onClick={fetchClientIp}
+            disabled={isFetchingIp}
+            className="p-2 rounded-full hover:bg-[var(--surface-container-highest)] transition-colors disabled:opacity-50"
+            title="Refresh IP Info"
+          >
+            <RefreshCw size={16} className={isFetchingIp ? "animate-spin text-emerald-500" : "text-[var(--on-surface-variant)]"} />
+          </button>
+        </div>
+
+        {isFetchingIp && !clientIpInfo ? (
+          <div className="flex items-center gap-3 text-[var(--on-surface-variant)]">
+             <RefreshCw size={16} className="animate-spin" />
+             <span className="text-sm">Fetching from Firebase Functions...</span>
+          </div>
+        ) : clientIpInfo ? (
+          <div className="space-y-3">
+            <div className="flex justify-between items-center border-b border-[var(--outline)] pb-2">
+              <span className="text-sm font-bold text-[var(--on-surface)]">IP Address</span>
+              <span className="font-mono text-sm px-2 py-1 bg-[var(--primary)] text-white rounded-lg">
+                {clientIpInfo.ip}
+              </span>
+            </div>
+            <div>
+              <span className="text-sm font-bold text-[var(--on-surface)] block mb-2">Reverse DNS</span>
+              {clientIpInfo.reverseDns && clientIpInfo.reverseDns.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {clientIpInfo.reverseDns.map((dnsNode, idx) => (
+                    <span key={idx} className="font-mono text-xs px-2 py-1 bg-[var(--surface-container-highest)] rounded-lg">
+                      {dnsNode}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-sm text-[var(--on-surface-variant)] italic">
+                  No PTR records found.
+                </span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-rose-500 font-medium">Failed to load IP information.</p>
+        )}
       </div>
 
        {/* Event logs / Terminal */}

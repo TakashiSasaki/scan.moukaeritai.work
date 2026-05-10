@@ -4,6 +4,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import { GoogleGenAI } from "@google/genai";
 import { defineSecret } from "firebase-functions/params";
 import { MetricServiceClient } from "@google-cloud/monitoring";
+import * as dns from "dns/promises";
 
 // Initialize Firebase Admin globally
 admin.initializeApp();
@@ -217,3 +218,42 @@ export const describeImage = onCall({ secrets: [geminiApiKey] }, async (request:
     throw new HttpsError("internal", "Failed to describe the image.");
   }
 });
+
+/**
+ * Callable function to get the client's IP address and perform a reverse DNS lookup.
+ */
+export const getClientIp = onCall(async (request: any) => {
+  const req = request.rawRequest;
+
+  let ip = "";
+  const forwardedFor = req.headers["x-forwarded-for"];
+  if (forwardedFor) {
+    ip = typeof forwardedFor === "string" ? forwardedFor.split(",")[0].trim() : forwardedFor[0].split(",")[0].trim();
+  } else if (req.headers["fastly-client-ip"]) {
+    ip = typeof req.headers["fastly-client-ip"] === "string" ? req.headers["fastly-client-ip"] : req.headers["fastly-client-ip"][0];
+  } else if (req.ip) {
+    ip = req.ip;
+  } else if (req.socket && req.socket.remoteAddress) {
+    ip = req.socket.remoteAddress;
+  }
+
+  // Remove IPv6 mapped IPv4 prefix if present
+  if (ip && ip.startsWith("::ffff:")) {
+    ip = ip.substring(7);
+  }
+
+  let reverseDns: string[] = [];
+  if (ip) {
+    try {
+      reverseDns = await dns.reverse(ip);
+    } catch (e) {
+      console.warn(`Reverse DNS failed for IP: ${ip}`, e);
+    }
+  }
+
+  return {
+    ip: ip || "Unknown",
+    reverseDns: reverseDns,
+  };
+});
+

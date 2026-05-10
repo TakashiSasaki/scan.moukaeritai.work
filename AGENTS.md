@@ -124,9 +124,19 @@ For mobile environments, prioritize touch operation characteristics and OS stand
 
 To facilitate testing, experimental feature development, and device capability demonstrations, specific non-production features are separated into dedicated screens.
 
-- **Standalone Routes**: Features like `PipesDemo` or hardware API demonstrations (Bluetooth, Network) are NOT placed inside the main `AdminPanel`. Instead, they are given their own dedicated pages (`/test` for Experimental Sandbox, `/demo` for API Demos) and are accessible via the profile menu. This ensures the admin panel remains focused strictly on application management and metrics.
+- **Standalone Routes**: Features like `PipesDemo` or hardware API demonstrations (Bluetooth, Network, NFC, Geolocation, etc.) are NOT placed inside the main `AdminPanel`. Instead, they are given their own dedicated pages (`/test` for Experimental Sandbox, `/demo` for API Demos) and are accessible via the profile menu. This ensures the admin panel remains focused strictly on application management and metrics.
+- **Hardware API Demos (`/demo`)**: Contains comprehensive API test benches including:
+  - **Bluetooth & Web BLE** (`BluetoothDemo.tsx`)
+  - **Network Information & Offline Events** (`NetworkDemo.tsx`)
+  - **Battery Status API** (`BatteryDemo.tsx`)
+  - **Vibration API** (`VibrationDemo.tsx`)
+  - **Device Motion & Orientation** (`MotionDemo.tsx`)
+  - **Magnetometer & Geomagnetic APIs** (`MagnetometerDemo.tsx`)
+  - **Ambient Light Sensor** (`AmbientLightDemo.tsx`)
+  - **Geolocation API** (`GeolocationDemo.tsx`)
+  - **Web NFC (NDEF)** (`NfcDemo.tsx`)
 - **Adding New Test Components**:
-  - When adding new experimental features or device API tests (e.g., `BluetoothDemo.tsx`), add them to the appropriate screen (e.g., `DemoScreen.tsx` for hardware capabilities, `TestScreen.tsx` for UI/UX tests).
+  - When adding new experimental features or device API tests, add them to the appropriate screen (e.g., `DemoScreen.tsx` for hardware capabilities, `TestScreen.tsx` for UI/UX tests).
   - If a screen requires sub-navigation between different demos, a horizontal tab navigation system (`overflow-x-auto no-scrollbar`) is the standard pattern to select the active view via state.
   - Smooth transitions between sub-tabs should be handled using `<AnimatePresence mode="wait">` and `<motion.div>` from `motion/react`.
   - These sandbox areas may be accessed by any user (not restricted to admins) to test platform compatibility across different user devices.
