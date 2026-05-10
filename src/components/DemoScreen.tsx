@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlaySquare, Bluetooth, Wifi, Battery, Smartphone, Compass, Navigation, Sun } from 'lucide-react';
+import { PlaySquare, Bluetooth, Wifi, Battery, Smartphone, Compass, Navigation, Sun, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BluetoothDemo from './BluetoothDemo';
 import NetworkDemo from './NetworkDemo';
@@ -8,11 +8,12 @@ import VibrationDemo from './VibrationDemo';
 import MotionDemo from './MotionDemo';
 import MagnetometerDemo from './MagnetometerDemo';
 import AmbientLightDemo from './AmbientLightDemo';
+import GeolocationDemo from './GeolocationDemo';
 import { AnimatePresence, motion } from 'motion/react';
 
 export default function DemoScreen() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'bluetooth' | 'network' | 'battery' | 'vibration' | 'motion' | 'magnetometer' | 'ambientLight'>('bluetooth');
+  const [activeTab, setActiveTab] = useState<'bluetooth' | 'network' | 'battery' | 'vibration' | 'motion' | 'magnetometer' | 'ambientLight' | 'geolocation'>('bluetooth');
 
   return (
     <div className="w-full">
@@ -114,6 +115,17 @@ export default function DemoScreen() {
               <Sun size={18} />
               Ambient Light API
             </button>
+            <button
+              onClick={() => setActiveTab('geolocation')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+                activeTab === 'geolocation'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
+              }`}
+            >
+              <MapPin size={18} />
+              Geolocation API
+            </button>
           </div>
         </div>
       </div>
@@ -185,6 +197,17 @@ export default function DemoScreen() {
               className="w-full"
             >
               <AmbientLightDemo />
+            </motion.div>
+          ) : activeTab === 'geolocation' ? (
+            <motion.div
+              key="geolocation"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="w-full"
+            >
+              <GeolocationDemo />
             </motion.div>
           ) : (
             <motion.div
