@@ -1,7 +1,8 @@
 # Developer & AI Agent Guidelines
 
 > **🚨 CRITICAL DIRECTIVE FOR ALL AGENTS 🚨**
-> This `AGENTS.md` file acts as the primary memory and source of truth for all architectural, design, and UI decisions in this project. **You MUST keep this file consistently updated** whenever you make new design decisions, add new database collections/storage rules, or alter the UI/UX flows. Do not let this file fall out of sync with the codebase.
+> This `AGENTS.md` file acts as the primary memory and source of truth for all architectural, design, and UI decisions in this project. 
+> **AGENT BEHAVIOR RULE**: At the end of EVERY task where you make architectural, routing, database, or UI/UX changes, you MUST automatically review and update this file to reflect those changes. You do NOT need the user to explicitly ask you to update `AGENTS.md`; doing it proactively is your responsibility. Do not let this file fall out of sync with the codebase.
 
 This document outlines the core architectural decisions, design patterns, and conventions used in this project to ensure consistency during collaborative development.
 
@@ -24,8 +25,9 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
 - **Typography**: Clean sans-serif (Inter) for UI, high-contrast monospace for technical data (IDs, tags).
 - **App Layout & Navigation**:
   - The main application flow is built as a unified Single Page Application (SPA) using a state-driven screen toggle approach (e.g., `type Screen = 'dashboard' | 'search' | 'capture' ...`) to maintain state seamlessly without internal URL fragmenting.
-  - **Dedicated Routes (Admin & Settings)**: The Admin Panel (`/admin`) and User Settings (`/settings`) are securely separated using `react-router-dom`. This provides strict access boundaries, dedicated entry points, and prevents the main SPA logic from becoming bloated.
-  - **Sticky Top Navigations for Sub-pages**: Dedicated pages like Admin and User Settings use a Sticky Top Navigation header (`sticky top-[57px] z-30 bg-[var(--surface-container-high)]/95 backdrop-blur-xl`) ensuring that critical actions (like "Save" or "Exit" buttons) and tab navigations remain accessible even when the content scrolls vertically.
+  - **Dedicated Routes (Sub-pages)**: Pages like Admin (`/admin`), User Settings (`/settings`), Beta Tests (`/test`), and API Demos (`/demo`) are securely separated using `react-router-dom`. This provides strict access boundaries, dedicated entry points, and prevents the main SPA logic from becoming bloated.
+  - **Sticky Top Navigations for Sub-pages**: Dedicated pages use a Sticky Top Navigation header (`sticky top-[57px] z-30 bg-[var(--surface-container-high)]/95 backdrop-blur-xl`) ensuring that critical actions (like "Save" or "Exit" buttons) and tab navigations remain accessible even when the content scrolls vertically.
+  - **Exit Button Consistency**: Every sub-page MUST have an exit button to return to the main app flow (`/`). This button should be standardized visually across all pages, using the format `🚪 Exit` (using the door emoji instead of arrows for clear visual affordance and consistency).
   - Primary navigation for regular users is handled by a Sticky Bottom Navigation bar which provides quick access to core functions and is optimized for one-handed use on mobile devices.
 
 ## 4. Feature-Specific Implementations
@@ -118,18 +120,16 @@ For mobile environments, prioritize touch operation characteristics and OS stand
 - **Input Element Separation**: Separate input elements with the `capture` attribute (for camera) and without (for file selection) to ensure the user's intended action executes reliably.
 - **Reference Attribute**: Add `referrerPolicy="no-referrer"` to `img` tags to ensure reliable loading from Firebase Storage, etc.
 
-## 11. Admin Panel & Experimental Sandbox
+## 11. Experimental Sandbox & API Demos
 
-To facilitate testing and experimental feature development by the admin team, the `AdminPanel.tsx` is structured to support isolated test environments without cluttering the main UI.
+To facilitate testing, experimental feature development, and device capability demonstrations, specific non-production features are separated into dedicated screens.
 
-- **Overview**: The `AdminPanel.tsx` utilizes a horizontal tab navigation system to switch between main system metrics (the 'overview' tab) and experimental sandbox areas.
-- **Tab Architecture**:
-  - The currently visible tab is managed by the `activeTab` state (e.g., `'overview' | 'test' | 'bluetooth' | 'network'`).
-  - Smooth transitions between tabs are handled using `<AnimatePresence mode="wait">` and `<motion.div>` from `motion/react`.
-  - The tab navigation bar itself uses a horizontal scrolling layout (`overflow-x-auto no-scrollbar`) to support an expanding number of testing APIs cleanly.
+- **Standalone Routes**: Features like `PipesDemo` or hardware API demonstrations (Bluetooth, Network) are NOT placed inside the main `AdminPanel`. Instead, they are given their own dedicated pages (`/test` for Experimental Sandbox, `/demo` for API Demos) and are accessible via the profile menu. This ensures the admin panel remains focused strictly on application management and metrics.
 - **Adding New Test Components**:
-  - To add a new experimental feature or a sandbox component (like `PipesDemo.tsx`, `BluetoothDemo.tsx`, `NetworkDemo.tsx`), developers should expand the `activeTab` state, add a corresponding navigation `<button>` to the horizontal scroll area, and render the component within a new `<motion.div>` block inside the `<AnimatePresence>` dispatcher.
-  - This structure ensures that beta tests and technical validations can be quickly deployed and reviewed by admins without affecting the primary user flow.
+  - When adding new experimental features or device API tests (e.g., `BluetoothDemo.tsx`), add them to the appropriate screen (e.g., `DemoScreen.tsx` for hardware capabilities, `TestScreen.tsx` for UI/UX tests).
+  - If a screen requires sub-navigation between different demos, a horizontal tab navigation system (`overflow-x-auto no-scrollbar`) is the standard pattern to select the active view via state.
+  - Smooth transitions between sub-tabs should be handled using `<AnimatePresence mode="wait">` and `<motion.div>` from `motion/react`.
+  - These sandbox areas may be accessed by any user (not restricted to admins) to test platform compatibility across different user devices.
 
 ## 12. Settings & Form State Management
 
