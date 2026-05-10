@@ -28,7 +28,6 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
 ## 4. Feature-Specific Implementations
 
 ### Image Provisioning (`CaptureForm.tsx`)
-- **Specification Documentation**: See `IMAGE_SPEC.md` for detailed requirements regarding desktop vs. mobile image provisioning.
 - **Dual Input Strategy**: Uses separate `<input>` elements for file selection vs. camera capture (`capture="environment"`).
 - **Multi-Method Support**: Supports Click-to-dialog, Drag-and-drop, and Camera-direct.
 - **Compression & Settings**: WebP is the default format for optimal compression, falling back to JPEG if unsupported. Users can configure format, quality, and resolution in the User Settings panel (`UserSettingsPanel.tsx`) which is saved per-user in Firestore `/users/{uid}/settings`.
@@ -82,3 +81,38 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
 
 ## 9. Communication & Logs
 - Critical errors during Firestore operations should be logged using the JSON-structured error format defined in `CaptureForm.tsx` or similar utility handlers to allow for AI-driven diagnostics.
+
+## 10. Image Provisioning Specifications
+
+This section defines the specifications for adding "Main Photo" and "Surroundings" (Peripheral Photos) in the item creation/editing form.
+
+### Common Specifications
+- **Target Slots**: 2 types ("Main Photo" (1 image) and "Surroundings" (Multiple images)).
+- **Feedback**: Display progress indicator (spin animation) during upload.
+- **Data Consistency**: Restrict actions like "Save" until upload is complete, or update state after completion.
+- **Error Handling**: Notify users via toast etc. for non-image files or load failures.
+
+### Desktop Display (PC)
+For PC environments, support intuitive operations utilizing mouse controls and large screens.
+- **Drag & Drop**:
+  - Image files can be directly dropped into the area from outside the browser.
+  - Highlight the target area (border/background color) during drag to visually indicate drop availability.
+- **Hover Menu**:
+  - Display an overlay menu when the mouse cursor hovers over the image area.
+  - Provide options for "Upload (file selection dialog)" and "Take Photo (webcam activation)".
+- **Click Operation**:
+  - Clicking the area directly opens the file selection dialog or fixes the menu display.
+
+### Mobile Display (Smartphones/Tablets)
+For mobile environments, prioritize touch operation characteristics and OS standard camera/photo library integration.
+- **Tap to Select Menu**:
+  - Tapping the image area displays the menu as an overlay (since hover is not available, state toggles on tap).
+  - Tapping outside the menu closes it.
+- **Camera Integration**:
+  - When "Take Photo" is selected, launch the OS standard camera app (`capture="environment"`) and prioritize the rear camera.
+- **Library Integration**:
+  - When "Upload" is selected, images can be chosen from the device's photo library or file browser.
+
+### Technical Implementation Notes
+- **Input Element Separation**: Separate input elements with the `capture` attribute (for camera) and without (for file selection) to ensure the user's intended action executes reliably.
+- **Reference Attribute**: Add `referrerPolicy="no-referrer"` to `img` tags to ensure reliable loading from Firebase Storage, etc.
