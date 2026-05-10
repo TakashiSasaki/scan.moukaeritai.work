@@ -347,7 +347,7 @@ function AppContent() {
           )}
           {currentScreen === 'settings' && (
             <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <UserSettingsPanel />
+              <UserSettingsPanel onClose={() => setCurrentScreen('dashboard')} />
             </motion.div>
           )}
         </AnimatePresence>

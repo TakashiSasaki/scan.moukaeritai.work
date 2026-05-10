@@ -1,9 +1,13 @@
 import React from 'react';
 import { useUserSettings } from '../hooks/useUserSettings';
-import { Settings, Save, RefreshCw } from 'lucide-react';
+import { Settings, Save, RefreshCw, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-export default function UserSettingsPanel() {
+interface UserSettingsPanelProps {
+  onClose: () => void;
+}
+
+export default function UserSettingsPanel({ onClose }: UserSettingsPanelProps) {
   const { settings, updateSettings, loading } = useUserSettings();
   const [localSettings, setLocalSettings] = React.useState(settings);
   const [saving, setSaving] = React.useState(false);
@@ -17,6 +21,7 @@ export default function UserSettingsPanel() {
     try {
       await updateSettings(localSettings);
       toast.success('Settings saved successfully');
+      onClose(); // Close after saving
     } catch (e) {
       toast.error('Failed to save settings');
     } finally {
@@ -39,9 +44,17 @@ export default function UserSettingsPanel() {
 
   return (
     <div className="bg-[var(--surface-container)] rounded-[24px] border border-[var(--outline)] overflow-hidden shadow-xl">
-      <div className="px-6 py-4 border-b border-[var(--outline)] bg-[var(--surface)]/50 flex items-center gap-3">
-        <Settings size={20} className="text-[var(--primary)]" />
-        <h2 className="text-lg font-bold text-[var(--on-surface)]">User Settings</h2>
+      <div className="px-6 py-4 border-b border-[var(--outline)] bg-[var(--surface)]/50 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Settings size={20} className="text-[var(--primary)]" />
+          <h2 className="text-lg font-bold text-[var(--on-surface)]">User Settings</h2>
+        </div>
+        <button 
+          onClick={onClose}
+          className="p-2 hover:bg-[var(--surface-container-highest)] rounded-full transition-colors"
+        >
+          <X size={20} className="text-[var(--on-surface-variant)]" />
+        </button>
       </div>
       
       <div className="p-6 space-y-6">
@@ -96,15 +109,13 @@ export default function UserSettingsPanel() {
       </div>
 
       <div className="p-4 border-t border-[var(--outline)] bg-[var(--surface)]/50 flex justify-end gap-3">
-        {hasChanges && (
-          <button
-            onClick={() => setLocalSettings(settings)}
-            disabled={saving}
-            className="flex items-center gap-2 bg-[var(--surface-container-high)] text-[var(--on-surface)] px-6 py-2.5 rounded-xl font-bold transition-all hover:bg-[var(--surface-container-highest)] active:scale-95 disabled:opacity-50"
-          >
-            Cancel
-          </button>
-        )}
+        <button
+          onClick={onClose}
+          disabled={saving}
+          className="flex items-center gap-2 bg-[var(--surface-container-high)] text-[var(--on-surface)] px-6 py-2.5 rounded-xl font-bold transition-all hover:bg-[var(--surface-container-highest)] active:scale-95 disabled:opacity-50"
+        >
+          Cancel
+        </button>
         <button
           onClick={handleSave}
           disabled={saving || !hasChanges}
