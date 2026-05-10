@@ -25,7 +25,9 @@ import UserSettingsPanel from './components/UserSettingsPanel';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { ImageMetadataDialog } from './components/ImageMetadataDialog';
 
-type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview' | 'admin' | 'settings';
+type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview' | 'settings';
+
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
 export default function App() {
   return (
@@ -44,7 +46,9 @@ export default function App() {
         }} 
       />
       <ImageMetadataDialog />
-      <AppContent />
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
     </ThemeProvider>
   );
 }
@@ -58,6 +62,8 @@ function AppContent() {
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const { themeColor, setThemeColor, themeMode, setThemeMode } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const themeOptions: { color: ThemeColor, bg: string }[] = [
     { color: 'blue', bg: 'bg-blue-600' },
@@ -176,7 +182,10 @@ function AppContent() {
       <div className="app-container flex flex-col w-full transition-colors duration-300">
         <div className="h-1 bg-[var(--primary)]/20 w-1/3 mx-auto mt-2 rounded-full mb-1 sm:block hidden"></div>
         <header className="sticky top-0 z-40 bg-[var(--surface-container)]/80 backdrop-blur-md border-b border-[var(--outline)] px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentScreen('dashboard')}>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
+          if (location.pathname !== '/') navigate('/');
+          setCurrentScreen('dashboard');
+        }}>
           <div className="bg-[var(--primary)] p-1.5 rounded-lg text-[var(--primary-foreground)] transition-all">
             <Package size={20} />
           </div>
@@ -240,7 +249,7 @@ function AppContent() {
                       <button
                          onClick={() => {
                            setShowProfile(false);
-                           setCurrentScreen('admin');
+                           navigate('/admin');
                          }}
                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
                       >
@@ -250,6 +259,7 @@ function AppContent() {
                      <button
                         onClick={() => {
                           setShowProfile(false);
+                          if (location.pathname !== '/') navigate('/');
                           setCurrentScreen('settings');
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
@@ -307,6 +317,33 @@ function AppContent() {
         )}
       </AnimatePresence>
 
+      <Routes>
+        <Route path="/admin" element={
+          <main className="flex-1 max-w-4xl mx-auto w-full p-4 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-black text-[var(--on-surface)] tracking-tight">System Admin</h1>
+              <button 
+                onClick={() => navigate('/')} 
+                className="px-4 py-2 bg-[var(--surface-container-high)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface-variant)] rounded-xl font-bold transition-all"
+              >
+                Exit Admin
+              </button>
+            </div>
+            {isAdmin ? (
+               <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                 <AdminPanel />
+               </motion.div>
+            ) : (
+               <div className="p-12 text-center bg-[var(--surface)] border border-red-500/20 rounded-2xl">
+                 <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                 <h2 className="text-xl font-bold text-red-500 mb-2">Access Denied</h2>
+                 <p className="text-[var(--on-surface-variant)]">You do not have permission to view this page.</p>
+               </div>
+            )}
+          </main>
+        } />
+        <Route path="*" element={
+          <>
       <main className="flex-1 max-w-4xl mx-auto w-full p-4">
         <AnimatePresence mode="wait">
           {currentScreen === 'dashboard' && (
@@ -340,11 +377,6 @@ function AppContent() {
               <Overview />
             </motion.div>
           )}
-          {currentScreen === 'admin' && isAdmin && (
-            <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <AdminPanel />
-            </motion.div>
-          )}
           {currentScreen === 'settings' && (
             <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <UserSettingsPanel onClose={() => setCurrentScreen('dashboard')} />
@@ -367,6 +399,9 @@ function AppContent() {
         <NavButton active={currentScreen === 'overview'} onClick={() => setCurrentScreen('overview')} icon={<BarChart3 size={24} />} label="Stats" />
         <NavButton active={currentScreen === 'capture' && !selectedItemId} onClick={() => { setSelectedItemId(null); setCurrentScreen('capture'); }} icon={<PlusCircle size={24} />} label="New" />
       </nav>
+          </>
+        } />
+      </Routes>
     </div>
     </div>
   );

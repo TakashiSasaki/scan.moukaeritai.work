@@ -28,6 +28,7 @@
     "react-dom": "^19.0.1",
     "react-hot-toast": "^2.6.0",
     "react-qr-code": "^2.0.15",
+    "react-router-dom": "^7.15.0",
     "tailwind-merge": "^2.5.5",
     "uuid": "^14.0.0",
     "vite": "^6.2.3"
