@@ -147,7 +147,10 @@ export default function AdminPanel() {
               <div className="text-2xl font-black text-[var(--on-surface)]">
                 {serverMetrics?.firestoreReadsEstimated ?? 'N/A'}
               </div>
-              <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Via Cloud Monitoring API</p>
+              <p className="text-[10px] text-[var(--on-surface-variant)] mt-1 leading-tight">
+                プロジェクト全体 (過去30日間)<br/>
+                <span className="text-amber-600/80">※他アプリと共有時は合算されます</span>
+              </p>
             </div>
 
             <div className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl">
@@ -157,7 +160,10 @@ export default function AdminPanel() {
               <div className="text-2xl font-black text-[var(--on-surface)]">
                 {serverMetrics?.geminiInvocations ?? 'N/A'}
               </div>
-              <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">Via Cloud Monitoring API</p>
+              <p className="text-[10px] text-[var(--on-surface-variant)] mt-1 leading-tight">
+                プロジェクト全体 (過去30日間)<br/>
+                <span className="text-purple-600/80">※他アプリと共有時は合算されます</span>
+              </p>
             </div>
           </div>
         )}
