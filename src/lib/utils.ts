@@ -1,3 +1,59 @@
+export function formatSize(bytes: number) {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+export interface AppCacheInfo {
+  name: string;
+  size: number;
+}
+
+export async function getAppCacheSizes(): Promise<{ totalSize: number; caches: AppCacheInfo[] }> {
+  if (!('caches' in window)) {
+    return { totalSize: 0, caches: [] };
+  }
+
+  try {
+    const cacheNames = await caches.keys();
+    let totalSize = 0;
+    const cacheInfos: AppCacheInfo[] = [];
+
+    for (const name of cacheNames) {
+      const cache = await caches.open(name);
+      const requests = await cache.keys();
+      let size = 0;
+
+      for (const request of requests) {
+        try {
+          const response = await cache.match(request);
+          if (response) {
+            const contentLength = response.headers.get('Content-Length');
+            if (contentLength) {
+              size += parseInt(contentLength, 10);
+            } else {
+              const blob = await response.clone().blob();
+              size += blob.size;
+            }
+          }
+        } catch (err) {
+          console.warn(`Could not calculate size for request ${request.url}`, err);
+        }
+      }
+
+      cacheInfos.push({ name, size });
+      totalSize += size;
+    }
+
+    return { totalSize, caches: cacheInfos };
+  } catch (error) {
+    console.error('Error calculating cache sizes', error);
+    return { totalSize: 0, caches: [] };
+  }
+}
+
 export function getImageFormatFromUrl(url?: string): string {
   if (!url) return 'IMG';
   try {

@@ -22,7 +22,7 @@ import Scanner from './components/Scanner';
 import Overview from './components/Overview';
 import AdminPanel from './components/AdminPanel';
 import UserSettingsPanel from './components/UserSettingsPanel';
-import { ConnectionStatus } from './components/ConnectionStatus';
+import { AppStatusDialog } from './components/AppStatusDialog';
 import { ImageMetadataDialog } from './components/ImageMetadataDialog';
 
 type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview' | 'settings';
@@ -61,6 +61,7 @@ function AppContent() {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showAppStatus, setShowAppStatus] = useState(false);
   const { themeColor, setThemeColor, themeMode, setThemeMode } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -182,10 +183,7 @@ function AppContent() {
       <div className="app-container flex flex-col w-full transition-colors duration-300">
         <div className="h-1 bg-[var(--primary)]/20 w-1/3 mx-auto mt-2 rounded-full mb-1 sm:block hidden"></div>
         <header className="sticky top-0 z-40 bg-[var(--surface-container)]/80 backdrop-blur-md border-b border-[var(--outline)] px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
-          if (location.pathname !== '/') navigate('/');
-          setCurrentScreen('dashboard');
-        }}>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setShowAppStatus(true)}>
           <div className="bg-[var(--primary)] p-1.5 rounded-lg text-[var(--primary-foreground)] transition-all">
             <Package size={20} />
           </div>
@@ -206,8 +204,6 @@ function AppContent() {
           >
             <Palette size={20} />
           </button>
-          
-          <ConnectionStatus />
 
           <div className="relative">
             <button 
@@ -399,6 +395,11 @@ function AppContent() {
         <NavButton active={currentScreen === 'overview'} onClick={() => setCurrentScreen('overview')} icon={<BarChart3 size={24} />} label="Stats" />
         <NavButton active={currentScreen === 'capture' && !selectedItemId} onClick={() => { setSelectedItemId(null); setCurrentScreen('capture'); }} icon={<PlusCircle size={24} />} label="New" />
       </nav>
+      
+      <AppStatusDialog 
+        isOpen={showAppStatus} 
+        onClose={() => setShowAppStatus(false)} 
+      />
           </>
         } />
       </Routes>

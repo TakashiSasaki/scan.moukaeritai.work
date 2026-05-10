@@ -4,8 +4,9 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, listAll, getMetadata } from 'firebase/storage';
 import { Item, OperationType } from '../types';
 import { handleFirestoreError } from '../lib/error-handler';
-import { Database, HardDrive, FileImage, Tag, PieChart, Activity } from 'lucide-react';
+import { Database, HardDrive, FileImage, Tag, PieChart, Activity, Smartphone } from 'lucide-react';
 import { motion } from 'motion/react';
+import { getAppCacheSizes, AppCacheInfo, formatSize } from '../lib/utils';
 
 export default function Overview() {
   const [stats, setStats] = useState({
@@ -15,6 +16,8 @@ export default function Overview() {
     noneItems: 0,
     totalStorageSize: 0,
     fileCount: 0,
+    appCacheTotalSize: 0,
+    appCaches: [] as AppCacheInfo[],
     loading: true
   });
 
@@ -82,6 +85,9 @@ export default function Overview() {
         }
       }
 
+      // 3. Fetch App Cache Stats
+      const cacheStats = await getAppCacheSizes();
+
       setStats({
         totalItems: items.length,
         qrItems: qr,
@@ -89,6 +95,8 @@ export default function Overview() {
         noneItems: none,
         totalStorageSize: size,
         fileCount: count,
+        appCacheTotalSize: cacheStats.totalSize,
+        appCaches: cacheStats.caches,
         loading: false
       });
     } catch (error) {
@@ -97,14 +105,6 @@ export default function Overview() {
       // Optional: don't re-throw to avoid breaking the UI entirely if stats fail
       // handleFirestoreError(error, OperationType.LIST, 'stats');
     }
-  };
-
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   if (stats.loading) {
@@ -137,18 +137,35 @@ export default function Overview() {
           color="indigo"
         />
         <StatCard 
+          icon={<Smartphone size={20} className="text-amber-600" />} 
+          label="App Cache" 
+          value={formatSize(stats.appCacheTotalSize)} 
+          color="amber"
+        />
+        <StatCard 
           icon={<FileImage size={20} className="text-rose-600" />} 
           label="Photos" 
           value={stats.fileCount.toString()} 
           color="rose"
         />
-        <StatCard 
-          icon={<Activity size={20} className="text-emerald-600" />} 
-          label="NFC & QR" 
-          value={(stats.qrItems + stats.nfcItems).toString()} 
-          color="emerald"
-        />
       </div>
+
+      {stats.appCaches.length > 0 && (
+        <section className="bg-[var(--surface-container)] p-6 rounded-[32px] border border-[var(--outline)] shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <HardDrive size={18} className="text-[var(--on-surface-variant)]" />
+            <h3 className="font-bold text-[var(--on-surface)] tracking-tight">App Cache Details</h3>
+          </div>
+          <div className="space-y-3">
+            {stats.appCaches.map(cache => (
+              <div key={cache.name} className="flex justify-between items-center text-sm border-b border-[var(--outline)] pb-2 last:border-0 last:pb-0">
+                <span className="text-[var(--on-surface-variant)] font-mono text-xs truncate max-w-[70%]">{cache.name}</span>
+                <span className="font-bold">{formatSize(cache.size)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="bg-[var(--surface-container)] p-6 rounded-[32px] border border-[var(--outline)] shadow-sm">
         <div className="flex items-center gap-2 mb-6">
@@ -184,7 +201,8 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode, label:
     primary: 'bg-[var(--primary)]/10',
     indigo: 'bg-indigo-50',
     rose: 'bg-rose-50',
-    emerald: 'bg-emerald-50'
+    emerald: 'bg-emerald-50',
+    amber: 'bg-amber-50'
   };
 
   return (
