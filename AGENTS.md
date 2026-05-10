@@ -31,6 +31,7 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
 - **Specification Documentation**: See `IMAGE_SPEC.md` for detailed requirements regarding desktop vs. mobile image provisioning.
 - **Dual Input Strategy**: Uses separate `<input>` elements for file selection vs. camera capture (`capture="environment"`).
 - **Multi-Method Support**: Supports Click-to-dialog, Drag-and-drop, and Camera-direct.
+- **Compression & Settings**: WebP is the default format for optimal compression, falling back to JPEG if unsupported. Users can configure format, quality, and resolution in the User Settings panel (`UserSettingsPanel.tsx`) which is saved per-user in Firestore `/users/{uid}/settings`.
 - **Interaction Model**:
   - PC: Hover triggers action menus.
   - Mobile: Tap toggles action menus (state-managed via `activeImageMenu`).

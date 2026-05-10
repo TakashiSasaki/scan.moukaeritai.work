@@ -21,10 +21,11 @@ import CaptureForm from './components/CaptureForm';
 import Scanner from './components/Scanner';
 import Overview from './components/Overview';
 import AdminPanel from './components/AdminPanel';
+import UserSettingsPanel from './components/UserSettingsPanel';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { ImageMetadataDialog } from './components/ImageMetadataDialog';
 
-type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview' | 'admin';
+type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview' | 'admin' | 'settings';
 
 export default function App() {
   return (
@@ -249,6 +250,15 @@ function AppContent() {
                      <button
                         onClick={() => {
                           setShowProfile(false);
+                          setCurrentScreen('settings');
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
+                     >
+                        <Settings size={16} className="text-[var(--primary)]" /> Settings
+                     </button>
+                     <button
+                        onClick={() => {
+                          setShowProfile(false);
                           handleLogout();
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-500/10 transition-colors"
@@ -333,6 +343,11 @@ function AppContent() {
           {currentScreen === 'admin' && isAdmin && (
             <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <AdminPanel />
+            </motion.div>
+          )}
+          {currentScreen === 'settings' && (
+            <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              <UserSettingsPanel />
             </motion.div>
           )}
         </AnimatePresence>

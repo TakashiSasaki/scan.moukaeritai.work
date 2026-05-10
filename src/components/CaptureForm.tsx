@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import WebcamCapture from './WebcamCapture';
 import { getImageFormatFromUrl } from '../lib/utils';
 import { ImageWithLongPress } from './ImageWithLongPress';
+import { useUserSettings } from '../hooks/useUserSettings';
 
 const UploadProgressDialog = ({ 
   isOpen, 
@@ -135,6 +136,7 @@ interface CaptureFormProps {
 }
 
 export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
+  const { settings } = useUserSettings();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<Partial<Item>>({
     id: itemId || `ITEM-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
@@ -396,8 +398,18 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
               
               canvas.toBlob((b) => {
                 if (b) resolve(b);
-                else reject(new Error('Canvas toBlob failed'));
-              }, 'image/jpeg', 0.6);
+                else {
+                  if (settings.imageFormat === 'webp') {
+                    addLog('WebP failed, falling back to JPEG...');
+                    canvas.toBlob((b2) => {
+                      if (b2) resolve(b2);
+                      else reject(new Error('Canvas toBlob failed on fallback'));
+                    }, 'image/jpeg', settings.compressionQuality);
+                  } else {
+                    reject(new Error('Canvas toBlob failed'));
+                  }
+                }
+              }, `image/${settings.imageFormat}`, settings.compressionQuality);
             };
             
             img.onerror = async (e) => {
@@ -444,12 +456,20 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
 
       setUploadProgressState(prev => ({ ...prev, step: 'compressing' }));
       let finalBlobUpload: Blob;
+      let finalFileExtension = settings.imageFormat === 'webp' ? 'webp' : 'jpg';
+      let finalMimeType = `image/${settings.imageFormat}`;
       try {
-        finalBlobUpload = await compressImage(file, 1024); // max 1024px
-        addLog(`Image compressed. Size: ${(finalBlobUpload.size / 1024).toFixed(2)} KB`);
+        finalBlobUpload = await compressImage(file, settings.maxResolution);
+        finalMimeType = finalBlobUpload.type || finalMimeType;
+        if (finalMimeType === 'image/jpeg') finalFileExtension = 'jpg';
+        else if (finalMimeType === 'image/webp') finalFileExtension = 'webp';
+        
+        addLog(`Image compressed. Size: ${(finalBlobUpload.size / 1024).toFixed(2)} KB, Format: ${finalMimeType}`);
       } catch (e) {
          addLog(`Compression failed: ${e instanceof Error ? e.message : String(e)}. Proceeding with raw file...`);
          finalBlobUpload = file; // fallback
+         finalFileExtension = file.name.split('.').pop() || 'jpg';
+         finalMimeType = file.type || 'image/jpeg';
          addLog(`Fallback size: ${(finalBlobUpload.size / 1024).toFixed(2)} KB`);
       }
 
@@ -457,10 +477,10 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
       addLog('Initiating Firebase Storage upload...');
 
       const fileId = uuidv4();
-      const storageRef = ref(storage, `users/${auth.currentUser.uid}/items/${data.id}/${slot}/${fileId}.jpg`);
+      const storageRef = ref(storage, `users/${auth.currentUser.uid}/items/${data.id}/${slot}/${fileId}.${finalFileExtension}`);
 
       const snapshot = await new Promise<UploadTaskSnapshot>((resolve, reject) => {
-        const uploadTask = uploadBytesResumable(storageRef, finalBlobUpload, { contentType: 'image/jpeg' });
+        const uploadTask = uploadBytesResumable(storageRef, finalBlobUpload, { contentType: finalMimeType });
         
         const timeoutId = setTimeout(() => {
           // If no progress at all, or just overall slow upload, cancel it.
