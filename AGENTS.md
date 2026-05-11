@@ -30,6 +30,7 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
   - **Sticky Top Navigations for Sub-pages**: Dedicated pages use a Sticky Top Navigation header (`sticky top-[57px] z-30 bg-[var(--surface-container-high)]/95 backdrop-blur-xl`) ensuring that critical actions (like "Save" or "Exit" buttons) and tab navigations remain accessible even when the content scrolls vertically.
   - **Exit Button Consistency**: Every sub-page MUST have an exit button to return to the main app flow (`/`). This button should be standardized visually across all pages, using the format `🚪 Exit` (using the door emoji instead of arrows for clear visual affordance and consistency).
   - Primary navigation for regular users is handled by a Sticky Bottom Navigation bar which provides quick access to core functions and is optimized for one-handed use on mobile devices.
+- **Popups and Menus (Click Outside Pattern)**: As a standard UI pattern, any custom dropdowns, modal menus, or popups (e.g., the profile menu) MUST close when the user clicks or taps outside the element. This should be implemented using React's `useRef` and a `useEffect` hook listening to `mousedown` and `touchstart` events on the `document`, rather than relying on transparent full-screen overlay divs which can suffer from z-index and event-bubbling issues.
 
 ## 4. Feature-Specific Implementations
 
