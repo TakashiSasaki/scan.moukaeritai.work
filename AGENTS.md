@@ -46,6 +46,13 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
 - **Viewfinder**: Custom overlay with "Scanning" indicator (pings) and viewfinder focus frame.
 - **Layout**: The camera `video` element is forced to `object-cover` via `index.css` to match the UI's rounded-corner cards.
 
+### Bluetooth Tagging
+- **Device Filtering**: To prevent the native OS Bluetooth picker from being cluttered with unnamed/unknown devices, apply a wide alphanumeric `namePrefix` filter (`a-z`, `0-9`) when calling `navigator.bluetooth.requestDevice`.
+- **Historical Logging**: To retain a long-term history of Bluetooth tag associations without exceeding document limits, consider migrating from a bounded inline array (`bluetoothTags` on the item document) to a dedicated subcollection (e.g., `items/{itemId}/bluetooth_logs`) if events become frequent.
+- **RSSI & Timestamps**: 
+  - **Timestamps**: Always record the `timestamp` when a tag is detected or linked.
+  - **RSSI (Signal Strength)**: `requestDevice` does not return RSSI natively. To obtain signal strength, the browser must support and execute `device.watchAdvertisements()` to listen for `advertisementreceived` events. Model the `rssi` field as optional to gracefully handle browsers where this remains unsupported.
+
 ### Image Interaction & Metadata
 - **Format Overlay**: All item images in the Dashboard, Search results, and Capture forms include a small, translucent overlay in the corner indicating the file format (e.g., JPEG, PNG). This is computed via `getImageFormatFromUrl` in `utils.ts`.
 - **Long Press Metadata**: Users can long-press (or right-click/press-and-hold) any item image to trigger an `ImageMetadataDialog`. 
