@@ -12,7 +12,12 @@
   },
   "dependencies": {
     "@google-cloud/monitoring": "^5.3.2",
+    "@mediapipe/tasks-vision": "^0.10.35",
     "@tailwindcss/vite": "^4.1.14",
+    "@tensorflow-models/coco-ssd": "^2.2.3",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-cpu": "^4.22.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.22.0",
     "@vitejs/plugin-react": "^5.0.4",
     "browser-image-compression": "^2.0.2",
     "clsx": "^2.1.1",
