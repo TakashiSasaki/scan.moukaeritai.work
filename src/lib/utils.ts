@@ -75,3 +75,36 @@ export function getImageFormatFromUrl(url?: string): string {
   }
   return 'JPEG'; // Since all our uploads right now are forced to .jpg
 }
+
+/**
+ * Sanitize an item ID to ensure it contains only URL-safe characters
+ * that do not require percent-encoding.
+ */
+export function sanitizeItemId(id: string): string {
+  // Allow alphanumeric, dash, underscore, and period.
+  // These are standard unreserved characters in URIs.
+  return id.replace(/[^a-zA-Z0-9\-_.]/g, '');
+}
+
+/**
+ * Extract an item ID from a scanned text (which might be a URL),
+ * convert it to uppercase for case-insensitivity (to support alphanumeric QR codes),
+ * and sanitize it.
+ */
+export function extractItemId(scannedText: string): string {
+  let id = scannedText;
+  try {
+    const url = new URL(scannedText);
+    if (url.searchParams.has('id')) {
+      id = url.searchParams.get('id') || id;
+    } else {
+      const parts = url.pathname.split('/').filter(Boolean);
+      if (parts.length > 0) {
+        id = parts[parts.length - 1];
+      }
+    }
+  } catch (e) {
+    // Not a valid URL, treat the whole string as ID
+  }
+  return sanitizeItemId(id.toUpperCase());
+}

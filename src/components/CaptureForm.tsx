@@ -210,6 +210,7 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
     const newTag: BluetoothTag = {
       name: newTagName.trim(),
       id: `MANUAL-${uuidv4().split('-')[0].toUpperCase()}`,
+      linkedAt: Timestamp.now(),
     };
     setData(prev => ({
       ...prev,
@@ -593,6 +594,7 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
         const newTag: BluetoothTag = {
           name: device.name || 'Unknown Device',
           id: device.id,
+          linkedAt: Timestamp.now(),
         };
         
         setData(prev => ({
@@ -903,7 +905,15 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
                         </div>
                         <span className="font-bold text-sm truncate">{tag.name}</span>
                       </div>
-                      <span className="text-[10px] font-mono text-neutral-400 pl-8">{tag.id}</span>
+                      <div className="flex flex-col pl-8">
+                        <span className="text-[10px] font-mono text-neutral-400">{tag.id}</span>
+                        {tag.linkedAt && (
+                          <span className="text-[10px] text-neutral-400">Linked: {tag.linkedAt.toDate().toLocaleString()}</span>
+                        )}
+                        {tag.rssi !== undefined && (
+                          <span className="text-[10px] text-neutral-400">RSSI: {tag.rssi} dBm</span>
+                        )}
+                      </div>
                     </>
                   )}
                 </div>

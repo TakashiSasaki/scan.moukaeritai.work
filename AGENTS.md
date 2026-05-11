@@ -30,6 +30,7 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
   - **Sticky Top Navigations for Sub-pages**: Dedicated pages use a Sticky Top Navigation header (`sticky top-[57px] z-30 bg-[var(--surface-container-high)]/95 backdrop-blur-xl`) ensuring that critical actions (like "Save" or "Exit" buttons) and tab navigations remain accessible even when the content scrolls vertically.
   - **Exit Button Consistency**: Every sub-page MUST have an exit button to return to the main app flow (`/`). This button should be standardized visually across all pages, using the format `🚪 Exit` (using the door emoji instead of arrows for clear visual affordance and consistency).
   - Primary navigation for regular users is handled by a Sticky Bottom Navigation bar which provides quick access to core functions and is optimized for one-handed use on mobile devices.
+- **Popups and Menus (Click Outside Pattern)**: As a standard UI pattern, any custom dropdowns, modal menus, or popups (e.g., the profile menu) MUST close when the user clicks or taps outside the element. This should be implemented using React's `useRef` and a `useEffect` hook listening to `mousedown` and `touchstart` events on the `document`, rather than relying on transparent full-screen overlay divs which can suffer from z-index and event-bubbling issues.
 
 ## 4. Feature-Specific Implementations
 
@@ -181,3 +182,11 @@ To support real-time object identification on mobile devices (e.g., Pixel 8a) wi
 - **WASM Optimization**: Models use XNNPACK-optimized CPU delegates or GPU (WebGL/WebGPU) acceleration where available.
 - **Log Management**: Noisy internal library logs (e.g., `INFO: Created TensorFlow Lite XNNPACK delegate for CPU.`) are globally suppressed in library-heavy screens using a centralized console filtering override to maintain clean debug logs.
 - **State Management**: Animation frames (`requestAnimationFrame`) are strictly managed and cancelled on component unmount to prevent memory leaks and background CPU usage.
+
+## 15. Item Identifiers & QR Code Alphanumeric Mode
+
+To support the creation of small, efficient QR codes that link directly to items, the system utilizes QR Code Alphanumeric mode. Since alphanumeric mode only supports uppercase letters (and numbers/symbols), URLs encoded this way will be entirely uppercase (e.g., `HTTPS://APP.DOMAIN/ITEM/ITEM-123`).
+
+- **Case Insensitivity**: Firestore document IDs are inherently case-sensitive. Therefore, to ensure that scanned alphanumeric URLs correctly map to the existing items, **all item IDs in the system must be normalized and treated as uppercase**.
+- **URL Extraction**: When scanning a QR code, the result might be a full URL instead of a plain ID. The application must extract the ID from the URL (via query parameters or the final path segment) and convert it to uppercase (`.toUpperCase()`) before using it for routing or Firestore lookups.
+- **Generation**: Newly generated item IDs MUST always be exclusively uppercase (e.g., `ITEM-XYZ123`).
