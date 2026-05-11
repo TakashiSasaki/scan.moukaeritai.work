@@ -15,6 +15,7 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
 - **Backend/Database**: Firebase (Firestore, Authentication, Storage).
 - **Icons**: Lucide React.
 - **Scanning**: `html5-qrcode` for camera-based QR detection.
+- **Client-Side AI**: `@tensorflow/tfjs` and `@mediapipe/tasks-vision` for browser-based object identification.
 
 ## 3. Design System & UI Architecture
 - **Theme**: Utilizes Material Design 3 (M3) inspired CSS variables (found in `index.css`).
@@ -124,7 +125,7 @@ For mobile environments, prioritize touch operation characteristics and OS stand
 
 To facilitate testing, experimental feature development, and device capability demonstrations, specific non-production features are separated into dedicated screens.
 
-- **Standalone Routes**: Features like `PipesDemo` or hardware API demonstrations (Bluetooth, Network, NFC, Geolocation, etc.) are NOT placed inside the main `AdminPanel`. Instead, they are given their own dedicated pages (`/test` for Experimental Sandbox, `/demo` for API Demos) and are accessible via the profile menu. This ensures the admin panel remains focused strictly on application management and metrics.
+- **Standalone Routes**: Features like `PipesDemo`, hardware API demonstrations, or library-specific tests are NOT placed inside the main `AdminPanel`. Instead, they are given their own dedicated pages (`/test` for Experimental Sandbox, `/demo` for API Demos, `/library` for Library/AI Demos) and are accessible via the profile menu. This ensures the admin panel remains focused strictly on application management and metrics.
 - **Hardware API Demos (`/demo`)**: Contains comprehensive API test benches including:
   - **Bluetooth & Web BLE** (`BluetoothDemo.tsx`)
   - **Network Information & Offline Events** (`NetworkDemo.tsx`)
@@ -135,6 +136,10 @@ To facilitate testing, experimental feature development, and device capability d
   - **Ambient Light Sensor** (`AmbientLightDemo.tsx`)
   - **Geolocation API** (`GeolocationDemo.tsx`)
   - **Web NFC (NDEF)** (`NfcDemo.tsx`)
+  - **CacheStorage API** (`CacheDemo.tsx`)
+- **Library & AI Demos (`/library`)**: Demonstrates browser-based capabilities using heavy libraries:
+  - **TensorFlow.js (COCO-SSD)**: Real-time object detection using MobileNet V2.
+  - **MediaPipe Tasks Vision**: High-performance object detection using EfficientDet-Lite0.
 - **Adding New Test Components**:
   - When adding new experimental features or device API tests, add them to the appropriate screen (e.g., `DemoScreen.tsx` for hardware capabilities, `TestScreen.tsx` for UI/UX tests).
   - If a screen requires sub-navigation between different demos, a horizontal tab navigation system (`overflow-x-auto no-scrollbar`) is the standard pattern to select the active view via state.
@@ -158,3 +163,14 @@ When creating panels or pages where users edit settings (e.g., `UserSettingsPane
 - **Centralized Health Dialog**: The application surfaces real-time system health data via the `AppStatusDialog` (accessed by clicking the App Icon in the top-left header). This is the standard location for presenting:
   - **Firebase Connection Status**: Shows online/offline state of the Firestore connection.
   - **Local Cache Stats**: Exposes Workbox and PWA cache usage by polling the browser's native `caches` API (`getAppCacheSizes` util). This allows users to inspect the footprint of cached assets directly from the UI without dev tools.
+
+## 14. Client-Side AI & Computer Vision
+
+To support real-time object identification on mobile devices (e.g., Pixel 8a) without cloud latency, the application implements browser-based AI inference.
+
+- **Engine Selection**:
+  - **TensorFlow.js**: Used for its versatility and large community model zoo.
+  - **MediaPipe**: Preferred for production due to superior performance and specialized WASM delegates.
+- **WASM Optimization**: Models use XNNPACK-optimized CPU delegates or GPU (WebGL/WebGPU) acceleration where available.
+- **Log Management**: Noisy internal library logs (e.g., `INFO: Created TensorFlow Lite XNNPACK delegate for CPU.`) are globally suppressed in library-heavy screens using a centralized console filtering override to maintain clean debug logs.
+- **State Management**: Animation frames (`requestAnimationFrame`) are strictly managed and cancelled on component unmount to prevent memory leaks and background CPU usage.
