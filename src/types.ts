@@ -22,6 +22,7 @@ export interface BluetoothTag {
   name: string;
   id: string;
   rssi?: number;
+  linkedAt?: Timestamp;
 }
 
 export enum OperationType {
