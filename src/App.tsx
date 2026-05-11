@@ -8,7 +8,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { auth, db, signInWithPopup, googleProvider, onAuthStateChanged, User, signOut } from './lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ThemeProvider, useTheme, ThemeColor, ThemeMode } from './context/ThemeContext';
@@ -64,8 +64,27 @@ function AppContent() {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showAppStatus, setShowAppStatus] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setShowProfile(false);
+      }
+    }
+
+    if (showProfile) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showProfile]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
@@ -182,7 +201,7 @@ function AppContent() {
           <span className="font-bold text-xl tracking-tight">photo.mw</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="relative">
+          <div className="relative" ref={profileMenuRef}>
             <button 
               onClick={() => setShowProfile(!showProfile)}
               className="flex items-center outline-none ring-[var(--primary)] focus-visible:ring-2 rounded-full"
@@ -203,7 +222,6 @@ function AppContent() {
             <AnimatePresence>
               {showProfile && (
                 <>
-                  <div className="fixed inset-0 z-50 cursor-pointer" onClick={() => setShowProfile(false)} />
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
