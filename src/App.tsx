@@ -30,7 +30,8 @@ import { ImageMetadataDialog } from './components/ImageMetadataDialog';
 
 type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview';
 
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom';
+import { sanitizeItemId } from './lib/utils';
 
 export default function App() {
   return (
@@ -60,8 +61,6 @@ function AppContent() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showAppStatus, setShowAppStatus] = useState(false);
   const navigate = useNavigate();
@@ -109,16 +108,15 @@ function AppContent() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    setCurrentScreen('dashboard');
+    window.location.href = '/';
   };
 
   const handleDetected = (id: string) => {
-    setSelectedItemId(id);
-    setCurrentScreen('capture');
+    navigate(`/item/${sanitizeItemId(id)}`);
   };
 
   const handleCancelScanner = () => {
-    setCurrentScreen('dashboard');
+    navigate('/');
   };
 
   if (loading) {
@@ -338,63 +336,12 @@ function AppContent() {
           </main>
         } />
         <Route path="*" element={
-          <>
-      <main className="flex-1 max-w-4xl mx-auto w-full p-4">
-        <AnimatePresence mode="wait">
-          {currentScreen === 'dashboard' && (
-            <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <Dashboard onSelectItem={(id) => { setSelectedItemId(id); setCurrentScreen('capture'); }} />
-            </motion.div>
-          )}
-          {currentScreen === 'search' && (
-            <motion.div key="search" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <SearchScreen onSelectItem={(id) => { setSelectedItemId(id); setCurrentScreen('capture'); }} />
-            </motion.div>
-          )}
-          {currentScreen === 'capture' && (
-            <motion.div key="capture" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <CaptureForm 
-                itemId={selectedItemId} 
-                onClose={() => { setSelectedItemId(null); setCurrentScreen('dashboard'); }} 
-              />
-            </motion.div>
-          )}
-          {currentScreen === 'scanner' && (
-            <motion.div key="scanner" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <Scanner 
-                onDetected={handleDetected} 
-                onCancel={handleCancelScanner}
-              />
-            </motion.div>
-          )}
-          {currentScreen === 'overview' && (
-            <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <Overview />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
-
-      <nav className="sticky bottom-0 w-full bg-[var(--surface-container)]/90 backdrop-blur-lg border-t border-[var(--outline)] px-6 py-2 pb-safe flex justify-around items-center z-50">
-        <NavButton active={currentScreen === 'dashboard'} onClick={() => setCurrentScreen('dashboard')} icon={<Package size={24} />} label="Home" />
-        <NavButton active={currentScreen === 'search'} onClick={() => setCurrentScreen('search')} icon={<Search size={24} />} label="Search" />
-        <div className="relative -top-6">
-          <button 
-            onClick={() => setCurrentScreen('scanner')}
-            className="bg-[var(--primary)] text-[var(--primary-foreground)] p-4 rounded-[22px] shadow-xl shadow-[var(--primary)]/20 hover:scale-105 transition-all active:scale-95"
-          >
-            <Scan size={28} />
-          </button>
-        </div>
-        <NavButton active={currentScreen === 'overview'} onClick={() => setCurrentScreen('overview')} icon={<BarChart3 size={24} />} label="Stats" />
-        <NavButton active={currentScreen === 'capture' && !selectedItemId} onClick={() => { setSelectedItemId(null); setCurrentScreen('capture'); }} icon={<PlusCircle size={24} />} label="New" />
-      </nav>
-      
-      <AppStatusDialog 
-        isOpen={showAppStatus} 
-        onClose={() => setShowAppStatus(false)} 
-      />
-          </>
+          <MainLayout
+            onDetected={handleDetected}
+            onCancelScanner={handleCancelScanner}
+            showAppStatus={showAppStatus}
+            setShowAppStatus={setShowAppStatus}
+          />
         } />
       </Routes>
     </div>
@@ -416,3 +363,85 @@ function NavButton({ active, onClick, icon, label }: { active: boolean, onClick:
   );
 }
 
+
+function ItemCaptureRoute() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  return (
+    <CaptureForm
+      itemId={id ? sanitizeItemId(id) : null}
+      onClose={() => { navigate('/'); }}
+    />
+  );
+}
+
+function MainLayout({ onDetected, onCancelScanner, showAppStatus, setShowAppStatus }: any) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const currentPath = location.pathname;
+
+  return (
+    <>
+      <main className="flex-1 max-w-4xl mx-auto w-full p-4">
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={
+              <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                <Dashboard onSelectItem={(id) => { navigate(`/item/${encodeURIComponent(id)}`); }} />
+              </motion.div>
+            } />
+            <Route path="/search" element={
+              <motion.div key="search" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                <SearchScreen onSelectItem={(id) => { navigate(`/item/${encodeURIComponent(id)}`); }} />
+              </motion.div>
+            } />
+            <Route path="/item/new" element={
+              <motion.div key="capture-new" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                <ItemCaptureRoute />
+              </motion.div>
+            } />
+            <Route path="/item/:id" element={
+              <motion.div key="capture" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                <ItemCaptureRoute />
+              </motion.div>
+            } />
+            <Route path="/scanner" element={
+              <motion.div key="scanner" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                <Scanner
+                  onDetected={onDetected}
+                  onCancel={onCancelScanner}
+                />
+              </motion.div>
+            } />
+            <Route path="/overview" element={
+              <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                <Overview />
+              </motion.div>
+            } />
+          </Routes>
+        </AnimatePresence>
+      </main>
+
+      <nav className="sticky bottom-0 w-full bg-[var(--surface-container)]/90 backdrop-blur-lg border-t border-[var(--outline)] px-6 py-2 pb-safe flex justify-around items-center z-50">
+        <NavButton active={currentPath === '/'} onClick={() => navigate('/')} icon={<Package size={24} />} label="Home" />
+        <NavButton active={currentPath === '/search'} onClick={() => navigate('/search')} icon={<Search size={24} />} label="Search" />
+        <div className="relative -top-6">
+          <button
+            onClick={() => navigate('/scanner')}
+            className="bg-[var(--primary)] text-[var(--primary-foreground)] p-4 rounded-[22px] shadow-xl shadow-[var(--primary)]/20 hover:scale-105 transition-all active:scale-95"
+          >
+            <Scan size={28} />
+          </button>
+        </div>
+        <NavButton active={currentPath === '/overview'} onClick={() => navigate('/overview')} icon={<BarChart3 size={24} />} label="Stats" />
+        <NavButton active={currentPath === '/item/new'} onClick={() => navigate('/item/new')} icon={<PlusCircle size={24} />} label="New" />
+      </nav>
+
+      <AppStatusDialog
+        isOpen={showAppStatus}
+        onClose={() => setShowAppStatus(false)}
+      />
+    </>
+  );
+}
