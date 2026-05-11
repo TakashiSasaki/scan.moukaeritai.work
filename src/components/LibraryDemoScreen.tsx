@@ -8,6 +8,20 @@ import '@tensorflow/tfjs-backend-cpu';
 import '@tensorflow/tfjs-backend-webgl';
 import { ObjectDetector, FilesetResolver } from '@mediapipe/tasks-vision';
 
+// Suppress noisy XNNPACK info logs from WebAssembly globally for this module
+const origInfo = console.info;
+const origLog = console.log;
+const origWarn = console.warn;
+
+const filterXNNPACK = (origFn: any) => (...args: any[]) => {
+  if (args[0] && typeof args[0] === 'string' && args[0].includes('XNNPACK')) return;
+  origFn(...args);
+};
+
+console.info = filterXNNPACK(origInfo);
+console.log = filterXNNPACK(origLog);
+console.warn = filterXNNPACK(origWarn);
+
 export default function LibraryDemoScreen() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'qrcode' | 'object-detection' | 'mediapipe-detection'>('qrcode');
@@ -95,18 +109,6 @@ function MediaPipeObjectDetectionDemo() {
     setIsLoading(true);
     setError(null);
 
-    // Suppress noisy XNNPACK info logs from WebAssembly during initialization
-    const origInfo = console.info;
-    const origLog = console.log;
-    console.info = (...args) => {
-      if (typeof args[0] === 'string' && args[0].includes('XNNPACK')) return;
-      origInfo(...args);
-    };
-    console.log = (...args) => {
-      if (typeof args[0] === 'string' && args[0].includes('XNNPACK')) return;
-      origLog(...args);
-    };
-
     try {
       const vision = await FilesetResolver.forVisionTasks(
         "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
@@ -115,7 +117,7 @@ function MediaPipeObjectDetectionDemo() {
       const objectDetector = await ObjectDetector.createFromOptions(vision, {
         baseOptions: {
           modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite`,
-          delegate: "CPU"
+          delegate: "GPU"
         },
         scoreThreshold: 0.5,
         runningMode: 'VIDEO'
@@ -124,8 +126,6 @@ function MediaPipeObjectDetectionDemo() {
     } catch (e) {
       setError(String(e));
     } finally {
-      console.info = origInfo;
-      console.log = origLog;
       setIsLoading(false);
     }
   };
@@ -162,7 +162,7 @@ function MediaPipeObjectDetectionDemo() {
     setIsDetecting(false);
   };
 
-  let lastVideoTime = -1;
+  const lastVideoTimeRef = useRef<number>(-1);
   const detectFrame = async () => {
     if (!detector || !videoRef.current || !canvasRef.current) return;
     const video = videoRef.current;
@@ -174,8 +174,8 @@ function MediaPipeObjectDetectionDemo() {
     }
 
     let startTimeMs = performance.now();
-    if (video.currentTime !== lastVideoTime) {
-      lastVideoTime = video.currentTime;
+    if (video.currentTime !== lastVideoTimeRef.current) {
+      lastVideoTimeRef.current = video.currentTime;
       try {
         const detections = detector.detectForVideo(video, startTimeMs);
         const ctx = canvasRef.current.getContext('2d');
@@ -315,18 +315,6 @@ function ObjectDetectionDemo() {
     setIsLoading(true);
     setError(null);
 
-    // Suppress noisy XNNPACK info logs from WebAssembly during initialization
-    const origInfo = console.info;
-    const origLog = console.log;
-    console.info = (...args) => {
-      if (typeof args[0] === 'string' && args[0].includes('XNNPACK')) return;
-      origInfo(...args);
-    };
-    console.log = (...args) => {
-      if (typeof args[0] === 'string' && args[0].includes('XNNPACK')) return;
-      origLog(...args);
-    };
-
     try {
       await tf.ready();
       const loadedModel = await cocoSsd.load({ base: 'lite_mobilenet_v2' });
@@ -334,8 +322,6 @@ function ObjectDetectionDemo() {
     } catch (e) {
       setError(String(e));
     } finally {
-      console.info = origInfo;
-      console.log = origLog;
       setIsLoading(false);
     }
   };
