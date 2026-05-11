@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Database, HardDrive, Smartphone, X, Info } from 'lucide-react';
+import { Database, HardDrive, Smartphone, X, Info, Globe } from 'lucide-react';
 import { getAppCacheSizes, AppCacheInfo, formatSize } from '../lib/utils';
 import { ConnectionStatus } from './ConnectionStatus';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from '../lib/firebase';
 
 interface AppStatusDialogProps {
   isOpen: boolean;
@@ -12,6 +14,9 @@ interface AppStatusDialogProps {
 export function AppStatusDialog({ isOpen, onClose }: AppStatusDialogProps) {
   const [cacheStats, setCacheStats] = useState<{ totalSize: number; caches: AppCacheInfo[] } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [ipInfo, setIpInfo] = useState<{ ip: string; reverseDns: string[] } | null>(null);
+  const [ipLoading, setIpLoading] = useState(true);
+  const [ipError, setIpError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -20,6 +25,24 @@ export function AppStatusDialog({ isOpen, onClose }: AppStatusDialogProps) {
         setCacheStats(stats);
         setLoading(false);
       });
+
+      setIpLoading(true);
+      setIpError(null);
+      const functions = getFunctions(app);
+      const getClientIp = httpsCallable(functions, 'getClientIp');
+      getClientIp()
+        .then((result: any) => {
+          setIpInfo({
+            ip: result.data.ip,
+            reverseDns: result.data.reverseDns || [],
+          });
+          setIpLoading(false);
+        })
+        .catch((error) => {
+          console.error('Failed to get IP:', error);
+          setIpError('Failed to load IP data');
+          setIpLoading(false);
+        });
     }
   }, [isOpen]);
 
@@ -51,8 +74,46 @@ export function AppStatusDialog({ isOpen, onClose }: AppStatusDialogProps) {
           <div className="p-6 space-y-6">
             <section>
               <h3 className="text-sm font-bold text-[var(--on-surface-variant)] uppercase tracking-wider mb-3">Firebase Connections</h3>
-              <div className="bg-[var(--surface-container-highest)] p-4 rounded-2xl flex justify-center border border-[var(--outline)]">
+              <div className="bg-[var(--surface-container-highest)] p-4 rounded-2xl flex justify-center border border-[var(--outline)] w-full">
                 <ConnectionStatus />
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-sm font-bold text-[var(--on-surface-variant)] uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Globe size={16} />
+                Network Identity
+              </h3>
+              <div className="bg-[var(--surface-container-highest)] p-4 rounded-2xl border border-[var(--outline)] text-sm">
+                {ipLoading ? (
+                  <div className="flex items-center gap-2 text-[var(--on-surface-variant)]">
+                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
+                      <Globe size={16} />
+                    </motion.div>
+                    <span>Detecting IP address...</span>
+                  </div>
+                ) : ipError ? (
+                  <div className="text-red-500">{ipError}</div>
+                ) : ipInfo ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center border-b border-[var(--outline)] pb-2">
+                      <span className="text-[var(--on-surface-variant)]">IP Address</span>
+                      <span className="font-mono font-medium">{ipInfo.ip}</span>
+                    </div>
+                    {ipInfo.reverseDns.length > 0 && (
+                      <div className="pt-1">
+                        <span className="text-[var(--on-surface-variant)] text-xs block mb-1">Reverse DNS</span>
+                        <div className="space-y-1">
+                          {ipInfo.reverseDns.map((rdns, idx) => (
+                            <span key={idx} className="block font-mono text-xs text-[var(--primary)] truncate" title={rdns}>
+                              {rdns}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
               </div>
             </section>
 
