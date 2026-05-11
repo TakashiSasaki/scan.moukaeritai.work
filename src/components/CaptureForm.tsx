@@ -581,8 +581,12 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
     if ('bluetooth' in navigator) {
       try {
         // @ts-ignore - experimental API
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.split('');
+        const filters = chars.map(char => ({ namePrefix: char }));
+
+        // @ts-ignore - experimental API
         const device = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
+          filters: filters,
           optionalServices: ['battery_service']
         });
         
