@@ -75,3 +75,13 @@ export function getImageFormatFromUrl(url?: string): string {
   }
   return 'JPEG'; // Since all our uploads right now are forced to .jpg
 }
+
+/**
+ * Sanitize an item ID to ensure it contains only URL-safe characters
+ * that do not require percent-encoding.
+ */
+export function sanitizeItemId(id: string): string {
+  // Allow alphanumeric, dash, underscore, and period.
+  // These are standard unreserved characters in URIs.
+  return id.replace(/[^a-zA-Z0-9\-_.]/g, '');
+}
