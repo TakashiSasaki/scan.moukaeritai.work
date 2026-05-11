@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlaySquare, Bluetooth, Wifi, Battery, Smartphone, Compass, Navigation, Sun, MapPin, Radio } from 'lucide-react';
+import { PlaySquare, Bluetooth, Wifi, Battery, Smartphone, Compass, Navigation, Sun, MapPin, Radio, Database } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BluetoothDemo from './BluetoothDemo';
 import NetworkDemo from './NetworkDemo';
@@ -10,11 +10,12 @@ import MagnetometerDemo from './MagnetometerDemo';
 import AmbientLightDemo from './AmbientLightDemo';
 import GeolocationDemo from './GeolocationDemo';
 import NfcDemo from './NfcDemo';
+import CacheDemo from './CacheDemo';
 import { AnimatePresence, motion } from 'motion/react';
 
 export default function DemoScreen() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'bluetooth' | 'network' | 'battery' | 'vibration' | 'motion' | 'magnetometer' | 'ambientLight' | 'geolocation' | 'nfc'>('bluetooth');
+  const [activeTab, setActiveTab] = useState<'bluetooth' | 'network' | 'battery' | 'vibration' | 'motion' | 'magnetometer' | 'ambientLight' | 'geolocation' | 'nfc' | 'cache'>('bluetooth');
 
   return (
     <div className="w-full">
@@ -138,6 +139,17 @@ export default function DemoScreen() {
               <Radio size={18} />
               Web NFC API
             </button>
+            <button
+              onClick={() => setActiveTab('cache')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap scroll-mr-4 min-w-max ${
+                activeTab === 'cache'
+                  ? 'bg-indigo-500 text-white shadow-md'
+                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] hover:text-[var(--on-surface)]'
+              }`}
+            >
+              <Database size={18} />
+              CacheStorage API
+            </button>
           </div>
         </div>
       </div>
@@ -231,6 +243,17 @@ export default function DemoScreen() {
               className="w-full"
             >
               <NfcDemo />
+            </motion.div>
+          ) : activeTab === 'cache' ? (
+            <motion.div
+              key="cache"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="w-full"
+            >
+              <CacheDemo />
             </motion.div>
           ) : (
             <motion.div
