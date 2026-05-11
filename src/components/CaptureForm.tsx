@@ -350,7 +350,15 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
                  props[key] = '[Complex src object omitted]';
                  continue;
               }
-              props[key] = (error as any)[key];
+              const val = (error as any)[key];
+              // Avoid pulling in DOM elements or the window object which can crash JSON.stringify
+              if (val && typeof val === 'object') {
+                if (val instanceof Node || val instanceof Window || val instanceof EventTarget) {
+                  props[key] = `[${val.constructor.name} omitted]`;
+                  continue;
+                }
+              }
+              props[key] = val;
             }
           } catch (e) {
              props._extractionError = String(e);

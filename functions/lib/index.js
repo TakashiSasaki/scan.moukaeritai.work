@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.describeImage = exports.identifyMatches = exports.getAppMetrics = void 0;
+exports.getClientIp = exports.describeImage = exports.identifyMatches = exports.getAppMetrics = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const firestore_1 = require("firebase-admin/firestore");
 const genai_1 = require("@google/genai");
 const params_1 = require("firebase-functions/params");
 const monitoring_1 = require("@google-cloud/monitoring");
+const dns = require("dns/promises");
 // Initialize Firebase Admin globally
 admin.initializeApp();
 const appletConfig = {
@@ -197,5 +198,42 @@ exports.describeImage = (0, https_1.onCall)({ secrets: [geminiApiKey] }, async (
         console.error("Gemini Describe Error:", error);
         throw new https_1.HttpsError("internal", "Failed to describe the image.");
     }
+});
+/**
+ * Callable function to get the client's IP address and perform a reverse DNS lookup.
+ */
+exports.getClientIp = (0, https_1.onCall)(async (request) => {
+    const req = request.rawRequest;
+    let ip = "";
+    const forwardedFor = req.headers["x-forwarded-for"];
+    if (forwardedFor) {
+        ip = typeof forwardedFor === "string" ? forwardedFor.split(",")[0].trim() : forwardedFor[0].split(",")[0].trim();
+    }
+    else if (req.headers["fastly-client-ip"]) {
+        ip = typeof req.headers["fastly-client-ip"] === "string" ? req.headers["fastly-client-ip"] : req.headers["fastly-client-ip"][0];
+    }
+    else if (req.ip) {
+        ip = req.ip;
+    }
+    else if (req.socket && req.socket.remoteAddress) {
+        ip = req.socket.remoteAddress;
+    }
+    // Remove IPv6 mapped IPv4 prefix if present
+    if (ip && ip.startsWith("::ffff:")) {
+        ip = ip.substring(7);
+    }
+    let reverseDns = [];
+    if (ip) {
+        try {
+            reverseDns = await dns.reverse(ip);
+        }
+        catch (e) {
+            console.warn(`Reverse DNS failed for IP: ${ip}`, e);
+        }
+    }
+    return {
+        ip: ip || "Unknown",
+        reverseDns: reverseDns,
+    };
 });
 //# sourceMappingURL=index.js.map

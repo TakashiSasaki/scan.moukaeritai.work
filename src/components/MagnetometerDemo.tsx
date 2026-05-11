@@ -84,10 +84,10 @@ export default function MagnetometerDemo() {
     // Fallback to Device Orientation if Magnetometer is absent/denied
     setUseFallback(true);
     if ('ondeviceorientationabsolute' in window) {
-      window.addEventListener('deviceorientationabsolute', handleOrientation as any);
+      (window as any).addEventListener('deviceorientationabsolute', handleOrientation);
       setSupported(true);
     } else if ('ondeviceorientation' in window) {
-      window.addEventListener('deviceorientation', handleOrientation as any);
+      (window as any).addEventListener('deviceorientation', handleOrientation);
       setSupported(true);
     } else {
       setSupported(false);

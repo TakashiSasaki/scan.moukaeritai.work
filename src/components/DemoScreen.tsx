@@ -26,7 +26,7 @@ export default function DemoScreen() {
                 <PlaySquare className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <h2 className="text-xl sm:text-2xl font-black italic tracking-tight text-[var(--on-surface)]">API Demos</h2>
+                <h2 className="text-xl sm:text-2xl font-black italic tracking-tight text-[var(--on-surface)]">Browser API Demo</h2>
                 <p className="text-[var(--on-surface-variant)] text-[10px] sm:text-xs font-medium uppercase tracking-wider">Device Features</p>
               </div>
             </div>

@@ -269,7 +269,16 @@ export default function NfcDemo() {
                         {rec.mediaType && <span className="text-xs bg-[var(--surface-container-highest)] px-2 py-0.5 rounded-full">{rec.mediaType}</span>}
                       </div>
                       <div className="font-mono text-sm bg-[var(--surface-container-highest)] p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-all">
-                        {typeof rec.data === 'object' ? JSON.stringify(rec.data, null, 2) : String(rec.data)}
+                        {typeof rec.data === 'object' ? (() => {
+                          const seen = new WeakSet();
+                          return JSON.stringify(rec.data, (k, v) => {
+                            if (v !== null && typeof v === 'object') {
+                              if (seen.has(v)) return '[Circular]';
+                              seen.add(v);
+                            }
+                            return v;
+                          }, 2);
+                        })() : String(rec.data)}
                       </div>
                     </div>
                   ))}

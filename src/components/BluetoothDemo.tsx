@@ -83,7 +83,16 @@ export default function BluetoothDemo() {
       if (optionalServices.length > 0) options.optionalServices = optionalServices;
     }
 
-    addLog('info', `Calling: requestDevice(${JSON.stringify(options, null, 2)})`);
+    addLog('info', `Calling: requestDevice(${(() => {
+      const seen = new WeakSet();
+      return JSON.stringify(options, (k, v) => {
+        if (v !== null && typeof v === 'object') {
+          if (seen.has(v)) return '[Circular]';
+          seen.add(v);
+        }
+        return v;
+      }, 2);
+    })()})`);
 
     try {
       const nav = navigator as any;

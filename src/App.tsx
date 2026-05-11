@@ -18,6 +18,7 @@ import { Toaster, toast } from 'react-hot-toast';
 import Dashboard from './components/Dashboard';
 import SearchScreen from './components/SearchScreen';
 import CaptureForm from './components/CaptureForm';
+import LibraryDemoScreen from './components/LibraryDemoScreen';
 import Scanner from './components/Scanner';
 import Overview from './components/Overview';
 import AdminPanel from './components/AdminPanel';
@@ -245,7 +246,16 @@ function AppContent() {
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
                      >
-                        <PlaySquare size={16} className="text-blue-500" /> API Demos
+                        <PlaySquare size={16} className="text-blue-500" /> Browser API Demo
+                     </button>
+                     <button
+                        onClick={() => {
+                          setShowProfile(false);
+                          navigate('/library-demo');
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
+                     >
+                        <PlaySquare size={16} className="text-purple-500" /> Library API Demo
                      </button>
                      <button
                         onClick={() => {
@@ -317,6 +327,13 @@ function AppContent() {
           <main className="flex-1 max-w-4xl mx-auto w-full">
             <motion.div key="demo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <DemoScreen />
+            </motion.div>
+          </main>
+        } />
+        <Route path="/library-demo" element={
+          <main className="flex-1 max-w-4xl mx-auto w-full">
+            <motion.div key="library-demo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              <LibraryDemoScreen />
             </motion.div>
           </main>
         } />
