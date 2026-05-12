@@ -43,4 +43,4 @@ jobs:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}'
 
       - name: Deploy to Firebase Hosting
-        run: npx --yes firebase-tools deploy --only hosting:photo-moukaeritai-work --project moukaeritaid --non-interactive
+        run: npx --yes firebase-tools deploy --only hosting:scout-moukaeritai-work --project moukaeritaid --non-interactive
