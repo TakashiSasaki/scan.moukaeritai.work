@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Database, HardDrive, Smartphone, X, Info, Globe } from 'lucide-react';
+import { Database, HardDrive, Smartphone, X, Info, Globe, Tag } from 'lucide-react';
 import { getAppCacheSizes, AppCacheInfo, formatSize } from '../lib/utils';
 import { ConnectionStatus } from './ConnectionStatus';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -72,6 +72,23 @@ export function AppStatusDialog({ isOpen, onClose }: AppStatusDialogProps) {
           </div>
 
           <div className="p-6 space-y-6">
+            <section>
+              <h3 className="text-sm font-bold text-[var(--on-surface-variant)] uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Tag size={16} />
+                App Version
+              </h3>
+              <div className="bg-[var(--surface-container-highest)] p-4 rounded-2xl border border-[var(--outline)] text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-[var(--on-surface-variant)]">Build Date</span>
+                  <span className="font-mono font-medium">
+                    {typeof __APP_VERSION__ !== 'undefined'
+                      ? new Date(__APP_VERSION__).toLocaleString()
+                      : 'Unknown'}
+                  </span>
+                </div>
+              </div>
+            </section>
+
             <section>
               <h3 className="text-sm font-bold text-[var(--on-surface-variant)] uppercase tracking-wider mb-3">Firebase Connections</h3>
               <div className="bg-[var(--surface-container-highest)] p-4 rounded-2xl flex justify-center border border-[var(--outline)] w-full">
