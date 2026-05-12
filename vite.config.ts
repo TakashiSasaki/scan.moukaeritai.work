@@ -66,7 +66,6 @@ export default defineConfig(({mode}) => {
       })
     ],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       '__APP_VERSION__': JSON.stringify(new Date().toISOString()),
     },
     resolve: {
