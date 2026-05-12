@@ -31,7 +31,7 @@ import { ImageMetadataDialog } from './components/ImageMetadataDialog';
 type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview';
 
 import { BrowserRouter, Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom';
-import { sanitizeItemId } from './lib/utils';
+import { sanitizeItemId, extractItemId } from './lib/utils';
 
 export default function App() {
   return (
@@ -131,7 +131,7 @@ function AppContent() {
   };
 
   const handleDetected = (id: string) => {
-    navigate(`/item/${sanitizeItemId(id)}`);
+    navigate(`/item/${extractItemId(id)}`);
   };
 
   const handleCancelScanner = () => {
@@ -403,6 +403,7 @@ function MainLayout({ onDetected, onCancelScanner, showAppStatus, setShowAppStat
     <>
       <main className="flex-1 max-w-4xl mx-auto w-full p-4">
         <AnimatePresence mode="wait">
+          {/* @ts-ignore */}
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={
               <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>

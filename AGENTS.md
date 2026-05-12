@@ -182,3 +182,11 @@ To support real-time object identification on mobile devices (e.g., Pixel 8a) wi
 - **WASM Optimization**: Models use XNNPACK-optimized CPU delegates or GPU (WebGL/WebGPU) acceleration where available.
 - **Log Management**: Noisy internal library logs (e.g., `INFO: Created TensorFlow Lite XNNPACK delegate for CPU.`) are globally suppressed in library-heavy screens using a centralized console filtering override to maintain clean debug logs.
 - **State Management**: Animation frames (`requestAnimationFrame`) are strictly managed and cancelled on component unmount to prevent memory leaks and background CPU usage.
+
+## 15. Item Identifiers & QR Code Alphanumeric Mode
+
+To support the creation of small, efficient QR codes that link directly to items, the system utilizes QR Code Alphanumeric mode. Since alphanumeric mode only supports uppercase letters (and numbers/symbols), URLs encoded this way will be entirely uppercase (e.g., `HTTPS://APP.DOMAIN/ITEM/ITEM-123`).
+
+- **Case Insensitivity**: Firestore document IDs are inherently case-sensitive. Therefore, to ensure that scanned alphanumeric URLs correctly map to the existing items, **all item IDs in the system must be normalized and treated as uppercase**.
+- **URL Extraction**: When scanning a QR code, the result might be a full URL instead of a plain ID. The application must extract the ID from the URL (via query parameters or the final path segment) and convert it to uppercase (`.toUpperCase()`) before using it for routing or Firestore lookups.
+- **Generation**: Newly generated item IDs MUST always be exclusively uppercase (e.g., `ITEM-XYZ123`).
