@@ -682,6 +682,21 @@ export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
             <span className="font-mono font-bold text-[var(--primary)]">{data.id}</span>
             <span className="text-[10px] bg-[var(--primary)]/10 text-[var(--primary)] font-bold px-2 py-1 rounded-full uppercase border border-[var(--primary)]/10">{data.tagType}</span>
           </div>
+          <div className="mt-2 pt-2 border-t border-[var(--outline)] flex items-center justify-between gap-2">
+            <span className="text-xs text-[var(--on-surface-variant)] truncate font-mono">
+              {window.location.origin}/item/{data.id}
+            </span>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/item/${data.id}`);
+                toast.success('URL copied to clipboard');
+              }}
+              className="p-1.5 bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] rounded-lg border border-[var(--outline)] hover:text-[var(--primary)] transition-colors active:scale-95 flex-shrink-0"
+              title="Copy URL"
+            >
+              <Copy size={14} />
+            </button>
+          </div>
         </div>
 
         {/* Name & Description */}
