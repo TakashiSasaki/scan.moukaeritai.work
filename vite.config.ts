@@ -14,8 +14,8 @@ export default defineConfig(({mode}) => {
         registerType: 'autoUpdate',
         includeAssets: ['icon.svg'],
         manifest: {
-          name: 'photo.moukaeritai.work',
-          short_name: 'PhotoApp',
+          name: 'scout.moukaeritai.work',
+          short_name: 'Scout',
           start_url: '/',
           display: 'standalone',
           background_color: '#ffffff',
