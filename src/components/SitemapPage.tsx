@@ -19,7 +19,7 @@ export default function SitemapPage({ onClose }: SitemapPageProps) {
           onClick={onClose}
           className="px-4 py-2 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors flex items-center gap-2"
         >
-          <LogOut size={16} /> <span className="hidden sm:inline">Exit</span>
+          <span className="hidden sm:inline">🚪 Exit</span>
         </button>
       </div>
 

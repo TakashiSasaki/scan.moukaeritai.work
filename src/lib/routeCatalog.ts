@@ -117,12 +117,12 @@ export const routeGroups: RouteGroup[] = [
     groupName: 'System',
     routes: [
       {
-        path: 'top-level fallback *',
+        path: '*',
         component: 'MainLayout',
         access: 'all',
         navigation: 'none',
         purpose: 'delegates main app routes to nested Routes',
-        notes: 'delegates main app routes to nested Routes'
+        notes: 'Top-level fallback. Delegates main app routes to nested Routes.'
       }
     ]
   }
