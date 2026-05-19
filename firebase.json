@@ -6,7 +6,7 @@
     ]
   },
   "hosting": {
-    "target": "scout-moukaeritai-work",
+    "target": "scan-moukaeritai-work",
     "public": "dist",
     "ignore": [
       "firebase.json",

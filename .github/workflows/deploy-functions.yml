@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - scan.moukaeritai.work
     paths:
       - 'functions/**'
       - '.github/workflows/deploy-functions.yml'
