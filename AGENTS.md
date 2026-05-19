@@ -162,7 +162,16 @@ To facilitate testing, experimental feature development, and device capability d
   - Smooth transitions between sub-tabs should be handled using `<AnimatePresence mode="wait">` and `<motion.div>` from `motion/react`.
   - These sandbox areas may be accessed by any user (not restricted to admins) to test platform compatibility across different user devices.
 
-## 12. Settings & Form State Management
+## 12. Routing & Sitemap Documentation
+
+To maintain clarity for administrators and developers, the application includes a built-in, human-readable route map.
+- The human-readable admin route map lives at `/admin/sitemap`.
+- It is for administrators/developers, not SEO (it is not a sitemap.xml).
+- Whenever routes are added, renamed, or removed in the application, you MUST update `src/lib/routeCatalog.ts` (and by extension `SitemapPage.tsx`).
+- Keep the route map strictly synchronized with `App.tsx`.
+- The `/admin/sitemap` route is admin-only and should never appear in the bottom navigation.
+
+## 13. Settings & Form State Management
 
 The User Settings area (`/settings`) serves as the centralized hub for account preferences, including **Theme Configuration** (Color and Dark/Light Mode) and **Image Capture Preferences**.
 - **Data Storage**: User settings (such as image format, compression quality, and max resolution) are stored directly inside the `users/{uid}` document under the `settings` field as a nested object.
@@ -173,7 +182,7 @@ When creating panels or pages where users edit settings (e.g., `UserSettingsPane
 - **Save Contextual Feedback**: The "Save" button MUST be disabled unless there are actual, unsaved changes detected (e.g., comparing local state vs global state).
 - **Auto-Close on Success**: Unless the setting dictates otherwise, configuration screens should automatically close (or navigate back) after successfully persisting changes to the backend or global state.
 
-## 13. PWA & App Status Monitoring
+## 14. PWA & App Status Monitoring
 
 - **Service Worker Generation**: Uses `vite-plugin-pwa` with Workbox for manifest and service worker injection. Do not manually author `public/manifest.json` or `public/sw.js`.
 - **Build Failure Avoidance (File Size Limit)**: By default, Workbox's `maximumFileSizeToCacheInBytes` is 2MB. Since React/Vite builds can exceed this in standard chunks (often > 2.5MB depending on imports), this limit has been explicitly increased to 5MB (`5000000` bytes) in `vite.config.ts`. Failing to keep this updated will result in build errors indicating assets won't be precached.
@@ -181,7 +190,7 @@ When creating panels or pages where users edit settings (e.g., `UserSettingsPane
   - **Firebase Connection Status**: Shows online/offline state of the Firestore connection.
   - **Local Cache Stats**: Exposes Workbox and PWA cache usage by polling the browser's native `caches` API (`getAppCacheSizes` util). This allows users to inspect the footprint of cached assets directly from the UI without dev tools.
 
-## 14. Client-Side AI & Computer Vision
+## 15. Client-Side AI & Computer Vision
 
 To support real-time object identification on mobile devices (e.g., Pixel 8a) without cloud latency, the application implements browser-based AI inference.
 
@@ -192,7 +201,7 @@ To support real-time object identification on mobile devices (e.g., Pixel 8a) wi
 - **Log Management**: Noisy internal library logs (e.g., `INFO: Created TensorFlow Lite XNNPACK delegate for CPU.`) are globally suppressed in library-heavy screens using a centralized console filtering override to maintain clean debug logs.
 - **State Management**: Animation frames (`requestAnimationFrame`) are strictly managed and cancelled on component unmount to prevent memory leaks and background CPU usage.
 
-## 15. Item Identifiers & QR Code Alphanumeric Mode
+## 16. Item Identifiers & QR Code Alphanumeric Mode
 
 To support the creation of small, efficient QR codes that link directly to items, the system utilizes QR Code Alphanumeric mode. Since alphanumeric mode only supports uppercase letters (and numbers/symbols), URLs encoded this way will be entirely uppercase (e.g., `HTTPS://APP.DOMAIN/ITEM/ITEM-123`).
 
