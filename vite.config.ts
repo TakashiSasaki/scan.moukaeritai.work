@@ -14,8 +14,8 @@ export default defineConfig(({mode}) => {
         registerType: 'autoUpdate',
         includeAssets: ['icon.svg'],
         manifest: {
-          name: 'scout.moukaeritai.work',
-          short_name: 'Scout',
+          name: 'scan.moukaeritai.work',
+          short_name: 'Scan',
           start_url: '/',
           display: 'standalone',
           background_color: '#ffffff',

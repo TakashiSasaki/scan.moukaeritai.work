@@ -9,8 +9,15 @@ This document outlines the core architectural decisions, design patterns, and co
 ## 1. Project Overview
 A cloud-based item tracking and inventory management application with QR/NFC scanning capabilities and image-based item identification.
 
+### Naming & Identification
+To prevent confusion across systems, note the following distinct identifiers used in this project:
+- **User-Facing Brand**: `scan.moukaeritai.work`
+- **Firebase Hosting Target**: `scan-moukaeritai-work`
+- **Backend Firebase Resources (Firestore/Storage)**: `photo-moukaeritai-work` (Legacy identifier retained for the datastore)
+- **Firebase Project ID**: `moukaeritaid`
+
 ## 2. Tech Stack
-- **Frontend**: React 18+ (Vite), TypeScript, Tailwind CSS.
+- **Frontend**: React 19 (Vite), TypeScript, Tailwind CSS.
 - **PWA**: `vite-plugin-pwa` is used for service worker generation and manifest management. Do not manually create or edit `public/manifest.json` or `public/sw.js`.
 - **Backend/Database**: Firebase (Firestore, Authentication, Storage).
 - **Icons**: Lucide React.
@@ -63,7 +70,7 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
 ## 5. Development Constraints
 - **Port**: Always runs on port **3000**.
 - **HMR**: Disabled by platform. Rebuilds occur on file save/turn completion.
-- **Environment Variables**: Use `.env.example` as a template. Note that `VITE_` prefixes are not strictly enforced due to custom Vite environment loading, allowing variables like `APP_URL` to be used.
+- **Environment Variables**: Use `.env.example` as a template.
 
 ## 6. Firebase Configuration (Database & Storage)
 - **Firestore Schema Architecture**:
@@ -134,7 +141,7 @@ For mobile environments, prioritize touch operation characteristics and OS stand
 
 To facilitate testing, experimental feature development, and device capability demonstrations, specific non-production features are separated into dedicated screens.
 
-- **Standalone Routes**: Features like `PipesDemo`, hardware API demonstrations, or library-specific tests are NOT placed inside the main `AdminPanel`. Instead, they are given their own dedicated pages (`/test` for Experimental Sandbox, `/demo` for API Demos, `/library` for Library/AI Demos) and are accessible via the profile menu. This ensures the admin panel remains focused strictly on application management and metrics.
+- **Standalone Routes**: Features like `PipesDemo`, hardware API demonstrations, or library-specific tests are NOT placed inside the main `AdminPanel`. Instead, they are given their own dedicated pages (`/test` for Experimental Sandbox, `/demo` for API Demos, `/library-demo` for Library/AI Demos) and are accessible via the profile menu. This ensures the admin panel remains focused strictly on application management and metrics.
 - **Hardware API Demos (`/demo`)**: Contains comprehensive API test benches including:
   - **Bluetooth & Web BLE** (`BluetoothDemo.tsx`)
   - **Network Information & Offline Events** (`NetworkDemo.tsx`)
@@ -146,7 +153,7 @@ To facilitate testing, experimental feature development, and device capability d
   - **Geolocation API** (`GeolocationDemo.tsx`)
   - **Web NFC (NDEF)** (`NfcDemo.tsx`)
   - **CacheStorage API** (`CacheDemo.tsx`)
-- **Library & AI Demos (`/library`)**: Demonstrates browser-based capabilities using heavy libraries:
+- **Library & AI Demos (`/library-demo`)**: Demonstrates browser-based capabilities using heavy libraries:
   - **TensorFlow.js (COCO-SSD)**: Real-time object detection using MobileNet V2.
   - **MediaPipe Tasks Vision**: High-performance object detection using EfficientDet-Lite0.
 - **Adding New Test Components**:
@@ -158,6 +165,7 @@ To facilitate testing, experimental feature development, and device capability d
 ## 12. Settings & Form State Management
 
 The User Settings area (`/settings`) serves as the centralized hub for account preferences, including **Theme Configuration** (Color and Dark/Light Mode) and **Image Capture Preferences**.
+- **Data Storage**: User settings (such as image format, compression quality, and max resolution) are stored directly inside the `users/{uid}` document under the `settings` field as a nested object.
 
 When creating panels or pages where users edit settings (e.g., `UserSettingsPanel.tsx`), enforce the following robust UI/UX data entry patterns:
 - **Local State Buffer**: Always store pending user edits in a local state variable that is distinct from the globally active/committed settings (Except for visual themes which apply immediately via Context).
