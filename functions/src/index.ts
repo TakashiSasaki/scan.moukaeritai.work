@@ -21,7 +21,7 @@ const metricClient = new MetricServiceClient();
  * Callable function to securely fetch infrastructure metrics.
  * Since normal clients cannot access these GCP/Firebase backend metrics directly.
  */
-export const getAppMetrics = onCall({ secrets: [geminiApiKey] }, async (request: any) => {
+export const getAppMetrics = onCall(async (request: any) => {
   // 1. Verify Authentication
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");

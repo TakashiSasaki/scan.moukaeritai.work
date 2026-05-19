@@ -28,7 +28,16 @@
         "displayName": { "type": "string" },
         "email": { "type": "string" },
         "photoURL": { "type": "string" },
-        "role": { "type": "string", "enum": ["user", "admin"], "description": "User role, usually not set by user directly." }
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "User role, usually not set by user directly." },
+        "settings": {
+          "type": "object",
+          "description": "User specific settings including image capture preferences.",
+          "properties": {
+            "imageFormat": { "type": "string", "enum": ["webp", "jpeg"] },
+            "compressionQuality": { "type": "number", "minimum": 0.1, "maximum": 1.0 },
+            "maxResolution": { "type": "number", "enum": [512, 1024, 2048] }
+          }
+        }
       },
       "required": ["uid"]
     },

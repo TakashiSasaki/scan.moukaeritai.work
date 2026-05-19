@@ -66,13 +66,20 @@ service cloud.firestore {
     }
 
     // --- USER PROFILE ---
+    function isValidSettings(settings) {
+      return (!('imageFormat' in settings) || settings.imageFormat in ['webp', 'jpeg'])
+        && (!('compressionQuality' in settings) || (settings.compressionQuality is number && settings.compressionQuality >= 0.1 && settings.compressionQuality <= 1.0))
+        && (!('maxResolution' in settings) || settings.maxResolution in [512, 1024, 2048]);
+    }
+
     function isValidUser(data) {
       return data.uid == request.auth.uid
         && data.keys().hasAll(['uid'])
         && (data.get('displayName', '') is string && data.get('displayName', '').size() <= 100)
         && (data.get('email', '') is string && data.get('email', '').size() <= 100)
         && (data.get('photoURL', '') is string && data.get('photoURL', '').size() <= 500)
-        && (data.get('role', 'user') in ['user', 'admin']);
+        && (data.get('role', 'user') in ['user', 'admin'])
+        && (!('settings' in data) || isValidSettings(data.settings));
     }
 
     match /users/{userId} {

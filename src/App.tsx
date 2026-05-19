@@ -163,7 +163,7 @@ function AppContent() {
               </div>
             </div>
             <div className="space-y-2">
-              <h1 className="text-4xl font-black tracking-tighter italic whitespace-nowrap">scout.moukaeritai.work</h1>
+              <h1 className="text-4xl font-black tracking-tighter italic whitespace-nowrap">scan.moukaeritai.work</h1>
               <p className="text-neutral-400 font-medium">
                 Smart Asset Tracking with<br />
                 <span className="text-white">QR, NFC, and Gemini AI.</span>
@@ -387,7 +387,7 @@ function ItemCaptureRoute() {
   const navigate = useNavigate();
   return (
     <CaptureForm
-      itemId={id ? sanitizeItemId(id) : null}
+      itemId={id ? sanitizeItemId(id.toUpperCase()) : null}
       onClose={() => { navigate('/'); }}
     />
   );
