@@ -1,9 +1,10 @@
 name: Deploy to Firebase Hosting
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - main
+      - scan.moukaeritai.work
     paths:
       - 'src/**'
       - 'public/**'
@@ -43,4 +44,4 @@ jobs:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}'
 
       - name: Deploy to Firebase Hosting
-        run: npx --yes firebase-tools deploy --only hosting:scout-moukaeritai-work --project moukaeritaid --non-interactive
+        run: npx --yes firebase-tools deploy --only hosting:scan-moukaeritai-work --project moukaeritaid --non-interactive

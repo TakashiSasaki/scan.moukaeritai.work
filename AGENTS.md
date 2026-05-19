@@ -70,7 +70,7 @@ A cloud-based item tracking and inventory management application with QR/NFC sca
   - `users/{uid}`: Synchronized from Firebase Auth. Stores user profiles.
   - `admins/{uid}`: Handles Role-Based Access Control (RBAC). The presence of a document grants admin privileges.
   - `items/{itemId}`: The core inventory document storing metadata, image URLs, QR/NFC references, and tags.
-- **Legacy Identifiers for Backend Resources**: The frontend deployment target uses the current domain name (`scout-moukaeritai-work`), but backend Firebase resources (Firestore Database, Storage Bucket) intentionally retain the legacy identifier `photo-moukaeritai-work`. This is reflected in `firebase-applet-config.json` and must not be altered to match the hosting name.
+- **Legacy Identifiers for Backend Resources**: The frontend deployment target uses the current domain name (`scan-moukaeritai-work`), but backend Firebase resources (Firestore Database, Storage Bucket) intentionally retain the legacy identifier `photo-moukaeritai-work`. This is reflected in `firebase-applet-config.json` and must not be altered to match the hosting name.
 - **Cloud Storage Strategy**:
   - Images captured via the application are stored in the designated Firebase Storage bucket (`photo-moukaeritai-work`).
   - Storage quotas and capacities are monitored by checking bucket metadata server-side (via Cloud Functions), surfacing infrastructure usage safely without exposing it to standard clients.

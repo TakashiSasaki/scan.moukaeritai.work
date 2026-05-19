@@ -5,8 +5,8 @@
   "targets": {
     "moukaeritaid": {
       "hosting": {
-        "scout-moukaeritai-work": [
-          "scout-moukaeritai-work"
+        "scan-moukaeritai-work": [
+          "scan-moukaeritai-work"
         ]
       }
     }
