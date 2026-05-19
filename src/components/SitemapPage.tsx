@@ -28,14 +28,14 @@ export default function SitemapPage({ onClose }: SitemapPageProps) {
           This is a human-readable routing overview for administrators and developers. It is not an SEO sitemap.xml.
         </div>
 
-        {routeGroups.map((group, groupIdx) => (
-          <div key={groupIdx} className="space-y-4">
+        {routeGroups.map((group) => (
+          <div key={group.groupName} className="space-y-4">
             <h3 className="text-md font-bold text-[var(--primary)] border-b border-[var(--outline)] pb-2">
               {group.groupName}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {group.routes.map((route, routeIdx) => (
-                <div key={routeIdx} className="bg-[var(--surface-container)] rounded-xl p-4 border border-[var(--outline-variant)] shadow-sm hover:shadow-md transition-shadow">
+              {group.routes.map((route) => (
+                <div key={route.path} className="bg-[var(--surface-container)] rounded-xl p-4 border border-[var(--outline-variant)] shadow-sm hover:shadow-md transition-shadow">
                   <div className="font-mono text-sm font-bold text-[var(--on-surface)] mb-2 bg-[var(--surface-container-high)] inline-block px-2 py-1 rounded">
                     {route.path}
                   </div>
