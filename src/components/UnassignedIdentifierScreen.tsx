@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Package, PlusCircle, Scan, ArrowRight, Link as LinkIcon, Search } from 'lucide-react';
-import { collection, query, where, getDocs, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, writeBatch, serverTimestamp, getDoc } from 'firebase/firestore';
+import { toast } from 'react-hot-toast';
 import { db, auth } from '../lib/firebase';
-import { ObjectRecord } from '../types';
+import { ObjectRecord, IdentifierRecord } from '../types';
 import { buildIdentifierKey } from '../lib/identifiers';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 
@@ -38,19 +39,31 @@ export default function UnassignedIdentifierScreen() {
   }, [mode]);
 
   const handleCreateNew = () => {
-    navigate('/capture', { state: { initialIdentifier: state } });
+    navigate('/object/new', { state: { identifier: state } });
   };
 
   const handleAttach = async (obj: ObjectRecord) => {
      if (!auth.currentUser || !state.kind || !state.scheme || !state.canonicalValue) return;
      setIsAttaching(true);
      try {
-        const batch = writeBatch(db);
         const objectId = obj.objectId;
         const idKey = buildIdentifierKey(state.kind, state.scheme, state.canonicalValue);
+        const idRef = doc(db, 'identifiers', idKey);
+
+        const idSnap = await getDoc(idRef);
+        let existingId: IdentifierRecord | null = null;
+        if (idSnap.exists()) {
+           existingId = idSnap.data() as IdentifierRecord;
+           if (existingId.ownerId === auth.currentUser.uid && existingId.objectId && existingId.objectId !== objectId && existingId.status === 'active') {
+               toast.error('This identifier is already attached to another object.');
+               setIsAttaching(false);
+               return;
+           }
+        }
+
+        const batch = writeBatch(db);
 
         // 1. Update/Create Identifier
-        const idRef = doc(db, 'identifiers', idKey);
         batch.set(idRef, {
            identifierKey: idKey,
            ownerId: auth.currentUser.uid,
@@ -63,8 +76,8 @@ export default function UnassignedIdentifierScreen() {
            updatedAt: serverTimestamp()
         }, { merge: true });
 
-        // 2. Create Binding
-        const bindingId = `\${objectId}__\${idKey}__active`;
+        // 2. Create Binding (use merge in case we are refreshing an existing binding)
+        const bindingId = `${objectId}__${idKey}__active`;
         const bindingRef = doc(db, 'objectIdentifierBindings', bindingId);
         batch.set(bindingRef, {
            bindingId: bindingId,
@@ -76,38 +89,59 @@ export default function UnassignedIdentifierScreen() {
            attachedBy: auth.currentUser.uid,
            createdAt: serverTimestamp(),
            updatedAt: serverTimestamp()
-        });
+        }, { merge: true });
 
-        // 3. Create Event
-        const eventRef = doc(collection(db, 'objectEvents'));
-        batch.set(eventRef, {
-           eventId: eventRef.id,
-           ownerId: auth.currentUser.uid,
-           objectId: objectId,
-           identifierKey: idKey,
-           type: 'identifier_attached',
-           occurredAt: serverTimestamp(),
-           actorUid: auth.currentUser.uid,
-           source: 'manual'
-        });
+        // 3. Create Event (only if it wasn't already actively bound to this object)
+        if (!existingId || existingId.objectId !== objectId || existingId.status !== 'active') {
+            const eventRef = doc(collection(db, 'objectEvents'));
+            batch.set(eventRef, {
+               eventId: eventRef.id,
+               ownerId: auth.currentUser.uid,
+               objectId: objectId,
+               identifierKey: idKey,
+               type: 'identifier_attached',
+               occurredAt: serverTimestamp(),
+               actorUid: auth.currentUser.uid,
+               source: 'manual'
+            });
+        }
 
         // 4. Update Object Summary
-        // Use computeIdentifierSummary for clean logic
-        // First we'd need to fetch all current identifiers to be perfect, but to avoid extra reads we can just simulate it based on existing summary
-        const summary = obj.identifierSummary || { activeKinds: [], activeIdentifierCount: 0, hasQr: false, hasNfc: false };
-        if (!summary.activeKinds.includes(state.kind)) {
-           summary.activeKinds.push(state.kind);
+        const q = query(
+            collection(db, 'identifiers'),
+            where('ownerId', '==', auth.currentUser.uid),
+            where('objectId', '==', objectId)
+        );
+        const existingIdsSnap = await getDocs(q);
+        const allIdentifiers = existingIdsSnap.docs.map(d => d.data() as IdentifierRecord);
+
+        // Add the new/updated one to the array if it's not already in it, or update it
+        const currentIdx = allIdentifiers.findIndex(i => i.identifierKey === idKey);
+        const newIdentifier: IdentifierRecord = {
+           identifierKey: idKey,
+           ownerId: auth.currentUser.uid,
+           objectId: objectId,
+           kind: state.kind,
+           scheme: state.scheme,
+           canonicalValue: state.canonicalValue,
+           status: 'active',
+           createdAt: existingId?.createdAt || (new Date() as any),
+           updatedAt: new Date() as any
+        };
+
+        if (currentIdx > -1) {
+            allIdentifiers[currentIdx] = newIdentifier;
+        } else {
+            allIdentifiers.push(newIdentifier);
         }
-        summary.activeIdentifierCount += 1;
-        if (state.kind === 'qr') summary.hasQr = true;
-        if (state.kind === 'nfc') summary.hasNfc = true;
-        // In a real app we would do: const allIds = await fetch... ; const summary = computeIdentifierSummary(allIds);
+
+        const summary = computeIdentifierSummary(allIdentifiers);
 
         const objectRef = doc(db, 'objects', objectId);
         batch.update(objectRef, { identifierSummary: summary, updatedAt: serverTimestamp() });
 
         await batch.commit();
-        navigate(`/object/\${objectId}`);
+        navigate(`/object/${objectId}`);
      } catch (error) {
         console.error("Error attaching identifier:", error);
      } finally {

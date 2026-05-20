@@ -221,7 +221,7 @@ To support real-time object identification on mobile devices (e.g., Pixel 8a) wi
 
 ## 16. Identifiers & QR Code Alphanumeric Mode
 
-To support the creation of small, efficient QR codes that link directly to items, the system utilizes QR Code Alphanumeric mode. Since alphanumeric mode only supports uppercase letters (and numbers/symbols), URLs encoded this way will be entirely uppercase (e.g., `HTTPS://APP.DOMAIN/ITEM/ITEM-123`).
+To support the creation of small, efficient QR codes, the system utilizes QR Code Alphanumeric mode. QR/NFC payloads should link to inventory objects through identifier tokens and the `identifiers/{identifierKey}` lookup table. Since alphanumeric mode only supports uppercase letters (and numbers/symbols), URLs encoded this way will be entirely uppercase (e.g., `HTTPS://APP.DOMAIN/ITEM/ITEM-123`).
 
 - **Terminology Distinctions**:
   - `objectId`: ID of the real-world object document.

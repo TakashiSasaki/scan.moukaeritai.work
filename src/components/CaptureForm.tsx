@@ -332,7 +332,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
             await setDoc(doc(db, 'objectImages', imageId), imgRecord);
 
             if (slot === 'main') {
-              setData(prev => ({ ...prev, primaryImageId: imageId }));
+              setData(prev => ({ ...prev, primaryImageId: imageId, primaryImageUrl: downloadUrl }));
             }
 
             // Refetch images

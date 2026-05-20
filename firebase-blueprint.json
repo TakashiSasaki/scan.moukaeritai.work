@@ -32,7 +32,22 @@
         },
         "currentLocation": {
           "type": "object",
-          "description": "Geographical location (latitude/longitude/address)."
+          "description": "Geographical location (latitude/longitude/address).",
+          "properties": {
+            "latitude": {
+              "type": "number"
+            },
+            "longitude": {
+              "type": "number"
+            },
+            "address": {
+              "type": "string"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
         },
         "primaryImageId": {
           "type": "string",
@@ -40,7 +55,24 @@
         },
         "identifierSummary": {
           "type": "object",
-          "description": "Denormalized UI summary."
+          "description": "Denormalized UI summary.",
+          "properties": {
+            "activeKinds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "activeIdentifierCount": {
+              "type": "number"
+            },
+            "hasQr": {
+              "type": "boolean"
+            },
+            "hasNfc": {
+              "type": "boolean"
+            }
+          }
         },
         "createdAt": {
           "type": "string",
