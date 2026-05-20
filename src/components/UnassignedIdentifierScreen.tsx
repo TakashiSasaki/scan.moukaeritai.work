@@ -5,6 +5,7 @@ import { collection, query, where, getDocs, doc, writeBatch, serverTimestamp } f
 import { db, auth } from '../lib/firebase';
 import { ObjectRecord } from '../types';
 import { buildIdentifierKey } from '../lib/identifiers';
+import { computeIdentifierSummary } from '../lib/objectSummaries';
 
 export default function UnassignedIdentifierScreen() {
   const navigate = useNavigate();
@@ -193,7 +194,7 @@ export default function UnassignedIdentifierScreen() {
                   >
                      <div className="w-12 h-12 bg-[var(--surface-container-highest)] rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden">
                         {obj.primaryImageUrl ? (
-                           <img src={obj.primaryImageUrl} alt={obj.name || 'Object'} className="w-full h-full object-cover" />
+                           <img src={obj.primaryImageUrl} alt="" className="w-full h-full object-cover" />
                         ) : (
                            <Package className="text-[var(--on-surface-variant)]" size={20} />
                         )}
