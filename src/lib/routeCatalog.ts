@@ -21,29 +21,44 @@ export const routeGroups: RouteGroup[] = [
         component: 'Dashboard',
         access: 'signed-in user',
         navigation: 'bottom Home',
-        purpose: 'item dashboard'
+        purpose: 'object dashboard'
       },
       {
         path: '/search',
         component: 'SearchScreen',
         access: 'signed-in user',
         navigation: 'bottom Search',
-        purpose: 'text/photo item search'
+        purpose: 'text/photo object search'
       },
       {
-        path: '/item/new',
+        path: '/object/new',
         component: 'CaptureForm',
         access: 'signed-in user',
         navigation: 'bottom New',
-        purpose: 'create item'
+        purpose: 'create object'
       },
       {
-        path: '/item/:id',
+        path: '/object/:id',
         component: 'CaptureForm',
         access: 'signed-in user',
         navigation: 'dashboard/search/scanner/direct URL',
-        purpose: 'view/edit item by ID',
+        purpose: 'view/edit object by ID',
         notes: 'ID normalization rules apply'
+      },
+      {
+        path: '/item/:id',
+        component: 'Navigate',
+        access: 'all',
+        navigation: 'legacy URL',
+        purpose: 'Redirect to /object/:id',
+        notes: 'Legacy support for old QR codes'
+      },
+      {
+        path: '/unassigned',
+        component: 'UnassignedIdentifierScreen',
+        access: 'signed-in user',
+        navigation: 'scanner',
+        purpose: 'handle scanned tags that are not yet bound to an object'
       },
       {
         path: '/scanner',
@@ -77,6 +92,13 @@ export const routeGroups: RouteGroup[] = [
         access: 'admin only',
         navigation: 'profile menu',
         purpose: 'human-readable route map'
+      },
+      {
+        path: '/admin/migration',
+        component: 'MigrationScreen',
+        access: 'admin only',
+        navigation: 'profile menu',
+        purpose: 'admin database migration tool'
       },
       {
         path: '/settings',

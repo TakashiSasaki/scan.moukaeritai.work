@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { Item, OperationType } from '../types';
+import { ObjectRecord, OperationType } from '../types';
 import { handleFirestoreError } from '../lib/error-handler';
 import { Search, Package, MapPin, Tag, Camera, Sparkles } from 'lucide-react';
 import { describeImage, identifyMatches } from '../lib/gemini';
@@ -14,7 +14,7 @@ interface SearchScreenProps {
 
 export default function SearchScreen({ onSelectItem }: SearchScreenProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [results, setResults] = useState<Item[]>([]);
+  const [results, setResults] = useState<ObjectRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [isVisualSearching, setIsVisualSearching] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,38 +37,39 @@ export default function SearchScreen({ onSelectItem }: SearchScreenProps) {
     setLoading(true);
     try {
       const q = query(
-        collection(db, 'items'),
+        collection(db, 'objects'),
         where('ownerId', '==', auth.currentUser.uid)
       );
       const snap = await getDocs(q);
-      const allItems = snap.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Item[];
+      const allObjects = snap.docs.map(doc => ({ ...doc.data(), objectId: doc.id })) as ObjectRecord[];
       
-      allItems.sort((a, b) => {
+      allObjects.sort((a, b) => {
          const aTime = a.updatedAt?.toMillis ? a.updatedAt.toMillis() : 0;
          const bTime = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : 0;
          return bTime - aTime;
       });
 
-      let filtered = allItems;
+      let filtered = allObjects;
       
       if (searchTerm.length >= 2) {
-        filtered = allItems.filter(item => 
-          item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-          item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.id.toLowerCase().includes(searchTerm.toLowerCase())
+        filtered = allObjects.filter(obj =>
+          obj.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          obj.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          obj.objectId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          obj.identifierSummary?.activeKinds.some(k => k.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       }
 
       // If we have AI matched IDs, prioritize them
       if (idsToBoost.length > 0) {
-        const boosted = allItems.filter(item => idsToBoost.includes(item.id));
-        const others = filtered.filter(item => !idsToBoost.includes(item.id));
+        const boosted = allObjects.filter(obj => idsToBoost.includes(obj.objectId));
+        const others = filtered.filter(obj => !idsToBoost.includes(obj.objectId));
         filtered = [...boosted, ...others];
       }
       
       setResults(filtered);
     } catch (error) {
-      handleFirestoreError(error, OperationType.LIST, 'items');
+      handleFirestoreError(error, OperationType.LIST, 'objects');
     } finally {
       setLoading(false);
     }
@@ -94,14 +95,14 @@ export default function SearchScreen({ onSelectItem }: SearchScreenProps) {
       reader.readAsDataURL(file);
       const base64 = await base64Promise;
 
-      // 2. Get all user items for matching
-      const q = query(collection(db, 'items'), where('ownerId', '==', auth.currentUser.uid));
+      // 2. Get all user objects for matching
+      const q = query(collection(db, 'objects'), where('ownerId', '==', auth.currentUser.uid));
       const snap = await getDocs(q);
-      const allItems = snap.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Item[];
+      const allObjects = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as unknown)) as ObjectRecord[]; // Note: id property mapping needed for legacy identifyMatches
 
       // 3. Gemini Visual Match + Description
       const [matchedIds, description] = await Promise.all([
-        identifyMatches(base64, allItems),
+        identifyMatches(base64, allObjects),
         describeImage(base64)
       ]);
 
@@ -162,10 +163,10 @@ export default function SearchScreen({ onSelectItem }: SearchScreenProps) {
           </div>
         ) : results.length > 0 ? (
           <div className="grid grid-cols-1 gap-3">
-            {results.map((item, index) => (
+            {results.map((obj, index) => (
               <button
-                key={item.id}
-                onClick={() => onSelectItem(item.id)}
+                key={obj.objectId}
+                onClick={() => onSelectItem(obj.objectId)}
                 className={`p-3 rounded-[24px] border flex gap-4 items-center text-left transition-all ${
                   isVisualSearching && index === 0 
                   ? 'border-[var(--primary)] ring-2 ring-[var(--primary)]/10 shadow-md scale-[1.02] bg-[var(--primary)]/5' 
@@ -173,21 +174,10 @@ export default function SearchScreen({ onSelectItem }: SearchScreenProps) {
                 }`}
               >
                 <div className="w-20 h-20 rounded-xl bg-[var(--surface-container-high)] flex-shrink-0 overflow-hidden relative border border-[var(--outline)] shadow-inner">
-                  {item.mainImageUrl ? (
-                    <ImageWithLongPress 
-                      url={item.mainImageUrl} 
-                      className="w-full h-full object-cover" 
-                      wrapperClassName="w-full h-full"
-                    >
-                      <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded-md text-[8px] font-black tracking-wider text-white uppercase border border-white/10 z-10 pointer-events-none">
-                        {getImageFormatFromUrl(item.mainImageUrl)}
-                      </div>
-                    </ImageWithLongPress>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-[var(--on-surface-variant)] opacity-30">
-                      <Package size={28} />
-                    </div>
-                  )}
+                  {/* Image fallback for unmigrated objects */}
+                  <div className="w-full h-full flex items-center justify-center text-[var(--on-surface-variant)] opacity-30">
+                    <Package size={28} />
+                  </div>
                   {isVisualSearching && index === 0 && (
                     <div className="absolute top-1 right-1 bg-[var(--primary)] text-[var(--primary-foreground)] p-1 rounded-full shadow-lg">
                       <Sparkles size={10} />
@@ -196,12 +186,12 @@ export default function SearchScreen({ onSelectItem }: SearchScreenProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <h4 className="font-bold truncate text-lg text-[var(--on-surface)] tracking-tight">{item.name || 'Untitled'}</h4>
+                    <h4 className="font-bold truncate text-lg text-[var(--on-surface)] tracking-tight">{obj.name || 'Untitled'}</h4>
                   </div>
-                  <p className="text-xs text-[var(--on-surface-variant)] line-clamp-1 mb-2 opacity-70">{item.description}</p>
+                  <p className="text-xs text-[var(--on-surface-variant)] line-clamp-1 mb-2 opacity-70">{obj.description}</p>
                   <div className="flex flex-wrap gap-2">
-                    <span className="text-[10px] font-mono font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-0.5 rounded-full border border-[var(--primary)]/10">{item.id}</span>
-                    {item.location && (
+                    <span className="text-[10px] font-mono font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-0.5 rounded-full border border-[var(--primary)]/10">{obj.objectId}</span>
+                    {obj.currentLocation && (
                       <span className="flex items-center gap-1 text-[10px] text-[var(--on-surface-variant)] font-bold bg-[var(--surface-container-high)] px-2 py-0.5 rounded-full border border-[var(--outline)]">
                         <MapPin size={10} />
                         PINNED

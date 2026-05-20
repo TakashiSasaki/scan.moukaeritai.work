@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db, storage, auth } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, listAll, getMetadata } from 'firebase/storage';
-import { Item, OperationType } from '../types';
+import { ObjectRecord, OperationType } from '../types';
 import { handleFirestoreError } from '../lib/error-handler';
 import { Database, HardDrive, FileImage, Tag, PieChart, Activity, Smartphone } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -10,10 +10,10 @@ import { getAppCacheSizes, AppCacheInfo, formatSize } from '../lib/utils';
 
 export default function Overview() {
   const [stats, setStats] = useState({
-    totalItems: 0,
-    qrItems: 0,
-    nfcItems: 0,
-    noneItems: 0,
+    totalObjects: 0,
+    qrObjects: 0,
+    nfcObjects: 0,
+    noneObjects: 0,
     totalStorageSize: 0,
     fileCount: 0,
     appCacheTotalSize: 0,
@@ -32,24 +32,24 @@ export default function Overview() {
     try {
       // 1. Fetch Firestore Stats
       const q = query(
-        collection(db, 'items'),
+        collection(db, 'objects'),
         where('ownerId', '==', auth.currentUser.uid)
       );
       const snap = await getDocs(q);
-      const items = snap.docs.map(doc => doc.data() as Item);
+      const objects = snap.docs.map(doc => doc.data() as ObjectRecord);
 
-      const qr = items.filter(i => i.tagType === 'qr').length;
-      const nfc = items.filter(i => i.tagType === 'nfc').length;
-      const none = items.filter(i => i.tagType === 'none').length;
+      const qr = objects.filter(i => i.identifierSummary?.activeKinds.includes('qr')).length;
+      const nfc = objects.filter(i => i.identifierSummary?.activeKinds.includes('nfc')).length;
+      const none = objects.filter(i => !i.identifierSummary || i.identifierSummary.activeKinds.length === 0).length;
 
       // 2. Fetch Storage Stats (Optimized)
       let size = 0;
       let count = 0;
 
-      if (items.length > 0) {
+      if (objects.length > 0) {
         try {
           const timeout = (ms: number) => new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms));
-          const storageRoot = ref(storage, `users/${auth.currentUser.uid}/items`);
+          const storageRoot = ref(storage, `users/${auth.currentUser.uid}/objects`);
           
           async function calculateDirSize(dirRef: any) {
             // Add a safety check to listAll
@@ -89,10 +89,10 @@ export default function Overview() {
       const cacheStats = await getAppCacheSizes();
 
       setStats({
-        totalItems: items.length,
-        qrItems: qr,
-        nfcItems: nfc,
-        noneItems: none,
+        totalObjects: objects.length,
+        qrObjects: qr,
+        nfcObjects: nfc,
+        noneObjects: none,
         totalStorageSize: size,
         fileCount: count,
         appCacheTotalSize: cacheStats.totalSize,
@@ -120,14 +120,14 @@ export default function Overview() {
     <div className="space-y-6">
       <header className="px-1">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-[var(--on-surface)] to-[var(--on-surface-variant)] bg-clip-text text-transparent">Usage Stats</h2>
-        <p className="text-[var(--on-surface-variant)] text-sm">Overview of your items and cloud storage.</p>
+        <p className="text-[var(--on-surface-variant)] text-sm">Overview of your objects and cloud storage.</p>
       </header>
 
       <div className="grid grid-cols-2 gap-4">
         <StatCard 
           icon={<Database size={20} className="text-[var(--primary)]" />} 
-          label="Total Items" 
-          value={stats.totalItems.toString()} 
+          label="Total Objects"
+          value={stats.totalObjects.toString()}
           color="primary"
         />
         <StatCard 
@@ -174,9 +174,9 @@ export default function Overview() {
         </div>
         
         <div className="space-y-4">
-          <TagBar label="QR Codes" count={stats.qrItems} total={stats.totalItems} color="bg-[var(--primary)]" />
-          <TagBar label="NFC Tags" count={stats.nfcItems} total={stats.totalItems} color="bg-indigo-500" />
-          <TagBar label="Generic (Manual)" count={stats.noneItems} total={stats.totalItems} color="bg-[var(--on-surface-variant)]/20" />
+          <TagBar label="QR Codes" count={stats.qrObjects} total={stats.totalObjects} color="bg-[var(--primary)]" />
+          <TagBar label="NFC Tags" count={stats.nfcObjects} total={stats.totalObjects} color="bg-indigo-500" />
+          <TagBar label="Generic (Manual)" count={stats.noneObjects} total={stats.totalObjects} color="bg-[var(--on-surface-variant)]/20" />
         </div>
       </section>
 

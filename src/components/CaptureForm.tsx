@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, storage, auth } from '../lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { ref, getDownloadURL, uploadBytesResumable, UploadTaskSnapshot } from 'firebase/storage';
-import { Item, BluetoothTag, OperationType } from '../types';
+import { ObjectRecord, IdentifierRecord, ObjectEventRecord, ObjectImageRecord, OperationType, BluetoothTag } from '../types';
 import { handleFirestoreError } from '../lib/error-handler';
-import { Camera, MapPin, Bluetooth, Trash2, Save, X, ChevronLeft, Image as ImageIcon, Plus, Edit2, Tag, AlertTriangle, Copy, Check, Pause } from 'lucide-react';
+import { Camera, MapPin, Bluetooth, Trash2, Save, X, ChevronLeft, Image as ImageIcon, Plus, Edit2, Tag, AlertTriangle, Copy, Check, Pause, Activity } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import heic2any from 'heic2any';
 import { toast } from 'react-hot-toast';
@@ -13,952 +13,606 @@ import WebcamCapture from './WebcamCapture';
 import { getImageFormatFromUrl } from '../lib/utils';
 import { ImageWithLongPress } from './ImageWithLongPress';
 import { useUserSettings } from '../hooks/useUserSettings';
+import { buildIdentifierKey } from '../lib/identifiers';
+import { formatDistanceToNow } from 'date-fns';
 
-const UploadProgressDialog = ({ 
-  isOpen, 
-  step, 
-  logs, 
-  onClose,
-  error
-}: { 
-  isOpen: boolean; 
-  step: 'idle' | 'compressing' | 'uploading' | 'getting_url' | 'done' | 'error';
+interface UploadProgressState {
+  isOpen: boolean;
+  step: string;
   logs: string[];
-  onClose: () => void;
-  error?: string | null;
-}) => {
-  const [copied, setCopied] = useState(false);
+  error?: string;
+}
 
+function UploadProgressDialog({ isOpen, step, logs, error, onClose }: any) {
   if (!isOpen) return null;
-
-  const handleCopyLogs = async () => {
-    try {
-      const logText = logs.join('\n');
-      await navigator.clipboard.writeText(`Upload Logs:\n${logText}\n\nError: ${error || 'None'}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy text', err);
-    }
-  };
-
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-      >
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="bg-[var(--surface-container-high)] border border-[var(--outline)] rounded-[32px] p-6 max-w-sm w-full shadow-2xl relative overflow-hidden flex flex-col gap-4"
-        >
-          <div className="flex items-center gap-3 border-b border-[var(--outline)] pb-3">
-            <div className="w-10 h-10 bg-[var(--primary)]/10 text-[var(--primary)] rounded-full flex items-center justify-center">
-              {step === 'error' ? <AlertTriangle size={24} className="text-red-500" /> : <ImageIcon size={24} />}
-            </div>
-            <div>
-              <h3 className="font-bold text-[var(--on-surface)] leading-tight">Image Upload</h3>
-              <p className="text-xs text-[var(--on-surface-variant)]">
-                {step === 'compressing' && 'Compressing image...'}
-                {step === 'uploading' && 'Uploading to cloud...'}
-                {step === 'getting_url' && 'Finalizing...'}
-                {step === 'done' && 'Upload complete'}
-                {step === 'error' && 'Upload failed'}
-              </p>
-            </div>
-            {step !== 'error' && step !== 'done' && (
-              <div className="ml-auto">
-                <div className="w-5 h-5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            )}
-            {(step === 'error' || step === 'done') && (
-              <button 
-                onClick={onClose}
-                className="ml-auto p-2 bg-[var(--surface)] text-[var(--on-surface)] rounded-full border border-[var(--outline)] hover:bg-[var(--surface-container-highest)]"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-          
-          <div className="relative">
-            <div className="bg-[var(--surface)] p-3 rounded-2xl border border-[var(--outline)] max-h-40 overflow-y-auto font-mono text-[10px] text-[var(--on-surface-variant)] flex flex-col gap-1">
-              {logs.map((log, i) => (
-                <div key={i} className="flex gap-2">
-                  <span className="opacity-50 text-[var(--primary)]">{'>'}</span>
-                  <span>{log}</span>
-                </div>
-              ))}
-              {step !== 'error' && step !== 'done' && (
-                <div className="flex gap-2 animate-pulse">
-                  <span className="opacity-50 text-[var(--primary)]">{'>'}</span>
-                  <span>_</span>
-                </div>
-              )}
-            </div>
-            <button 
-              onClick={handleCopyLogs}
-              className="absolute top-2 right-2 p-1.5 bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] rounded-lg border border-[var(--outline)] hover:text-[var(--primary)] transition-colors active:scale-95"
-              title="Copy details"
-            >
-              {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
-            </button>
-          </div>
-
-          {error && (
-             <div className="bg-red-500/10 text-red-500 p-3 rounded-2xl text-xs whitespace-pre-wrap overflow-hidden max-h-40 overflow-y-auto">
-                {error}
-             </div>
-          )}
-
-          {(step === 'error' || step === 'done') && (
-            <button
-              onClick={onClose}
-              className="w-full py-3 bg-[var(--surface)] text-[var(--on-surface)] font-bold rounded-2xl hover:bg-[var(--surface-container-highest)] transition-colors border border-[var(--outline)] active:scale-[0.98]"
-            >
-              Close
-            </button>
-          )}
-
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-[var(--surface-container)] rounded-[24px] p-6 w-full max-w-sm border border-[var(--outline)] shadow-xl">
+        <h3 className="font-bold text-lg mb-4 text-[var(--on-surface)] flex items-center gap-2">
+          {error ? <AlertTriangle className="text-red-500" /> : <div className="w-4 h-4 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>}
+          {error ? 'Upload Error' : 'Uploading...'}
+        </h3>
+        <p className="text-sm font-bold text-[var(--primary)] mb-4">{step}</p>
+        <div className="bg-black/90 rounded-xl p-4 h-32 overflow-y-auto flex flex-col-reverse font-mono text-[10px] leading-tight">
+          {logs.map((log: string, i: number) => (
+            <div key={i} className={`${log.startsWith('Error') ? 'text-red-400 font-bold' : 'text-green-400'} opacity-90`}>{log}</div>
+          ))}
+        </div>
+        {error && (
+          <button onClick={onClose} className="mt-4 w-full bg-[var(--surface-container-highest)] text-[var(--on-surface)] font-bold py-3 rounded-xl">Dismiss</button>
+        )}
+      </div>
+    </div>
   );
-};
+}
 
 interface CaptureFormProps {
-  itemId: string | null;
+  objectId: string | null;
+  initialIdentifier?: { kind: any, scheme: string, canonicalValue: string };
   onClose: () => void;
 }
 
-export default function CaptureForm({ itemId, onClose }: CaptureFormProps) {
+export default function CaptureForm({ objectId, initialIdentifier, onClose }: CaptureFormProps) {
   const { settings } = useUserSettings();
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<Partial<Item>>({
-    id: itemId || `ITEM-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+
+  const [data, setData] = useState<Partial<ObjectRecord>>({
+    objectId: objectId || `OBJ-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
     name: '',
     description: '',
-    contextImageUrls: [],
-    bluetoothTags: [],
-    tagType: itemId ? 'qr' : 'none',
+    status: 'active',
   });
-  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
-  const [uploadProgressState, setUploadProgressState] = useState<{
-    isOpen: boolean;
-    step: 'idle' | 'compressing' | 'uploading' | 'getting_url' | 'done' | 'error';
-    error?: string;
-    logs: string[];
-  }>({ isOpen: false, step: 'idle', logs: [] });
+
+  // State for associated data
+  const [identifiers, setIdentifiers] = useState<IdentifierRecord[]>([]);
+  const [events, setEvents] = useState<ObjectEventRecord[]>([]);
+  const [images, setImages] = useState<ObjectImageRecord[]>([]);
+
+  // Legacy support for bluetooth
+  const [bluetoothTags, setBluetoothTags] = useState<BluetoothTag[]>([]);
+
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(!!objectId);
+  const [showWebcam, setShowWebcam] = useState<'main' | 'context' | null>(null);
+  const [uploadingImage, setUploadingImage] = useState<'main' | 'context' | null>(null);
+
+  const [uploadProgressState, setUploadProgressState] = useState<UploadProgressState>({
+    isOpen: false,
+    step: '',
+    logs: [],
+  });
+
+  const [newTagName, setNewTagName] = useState('');
+  const [editingTagIndex, setEditingTagIndex] = useState<number | null>(null);
+
+  const [activeImageMenu, setActiveImageMenu] = useState<'main' | 'context' | null>(null);
+
   const mainImageUploadRef = useRef<HTMLInputElement>(null);
   const mainImageCameraRef = useRef<HTMLInputElement>(null);
   const contextImageUploadRef = useRef<HTMLInputElement>(null);
   const contextImageCameraRef = useRef<HTMLInputElement>(null);
-  const [activeImageMenu, setActiveImageMenu] = useState<'main' | 'context' | null>(null);
-  const [showWebcam, setShowWebcam] = useState<'main' | 'context' | null>(null);
-  const [newTagName, setNewTagName] = useState('');
-  const [dragTarget, setDragTarget] = useState<'main' | 'context' | null>(null);
-  const [editingTagIndex, setEditingTagIndex] = useState<number | null>(null);
 
-  const toggleImageMenu = (slot: 'main' | 'context', e: React.MouseEvent) => {
-    e.stopPropagation();
-    setActiveImageMenu(prev => prev === slot ? null : slot);
-  };
-
-  const handleTakePhotoClick = (slot: 'main' | 'context', e: React.MouseEvent) => {
-    e.stopPropagation();
-    setActiveImageMenu(null);
-    
-    // Check if device is likely mobile
-    // Mobile browsers usually have better native support for capture="environment"
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-      if (slot === 'main') mainImageCameraRef.current?.click();
-      else contextImageCameraRef.current?.click();
-    } else {
-      setShowWebcam(slot);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent, target: 'main' | 'context') => {
-    e.preventDefault();
-    setDragTarget(target);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragTarget(null);
-  };
-
-  const handleDrop = async (e: React.DragEvent, isContext: boolean) => {
-    e.preventDefault();
-    setDragTarget(null);
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      await handleImageUpload(file, isContext);
-    } else if (file) {
-      toast.error('Please drop an image file.');
-    }
-  };
-
-  const handleAddManualTag = () => {
-    if (!newTagName.trim()) return;
-    const newTag: BluetoothTag = {
-      name: newTagName.trim(),
-      id: `MANUAL-${uuidv4().split('-')[0].toUpperCase()}`,
-      linkedAt: Timestamp.now(),
-    };
-    setData(prev => ({
-      ...prev,
-      bluetoothTags: [...(prev.bluetoothTags || []), newTag]
-    }));
-    setNewTagName('');
-  };
-
-  const handleRemoveTag = (index: number) => {
-    setData(prev => ({
-      ...prev,
-      bluetoothTags: prev.bluetoothTags?.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleUpdateTag = (index: number, name: string) => {
-    setData(prev => ({
-      ...prev,
-      bluetoothTags: prev.bluetoothTags?.map((tag, i) => i === index ? { ...tag, name } : tag)
-    }));
-    setEditingTagIndex(null);
-  };
-
+  const addLog = (msg: string) => setUploadProgressState(prev => ({ ...prev, logs: [msg, ...prev.logs] }));
 
   useEffect(() => {
-    if (itemId) {
-      loadItem(itemId);
+    if (objectId) {
+      loadObjectData(objectId);
     }
-  }, [itemId]);
+  }, [objectId]);
 
-  const loadItem = async (id: string) => {
-    setLoading(true);
+  const loadObjectData = async (id: string) => {
+    if (!auth.currentUser) return;
     try {
-      const docRef = doc(db, 'items', id);
+      // 1. Load Object
+      const docRef = doc(db, 'objects', id);
       const snap = await getDoc(docRef);
       if (snap.exists()) {
-        setData(snap.data() as Item);
+        setData(snap.data() as ObjectRecord);
       } else {
-        // If it doesn't exist, it might be a new ID from a scan
-        setData(prev => ({ ...prev, id }));
+        // Migration fallback: check if it's in items
+        const oldRef = doc(db, 'items', id);
+        const oldSnap = await getDoc(oldRef);
+        if (oldSnap.exists()) {
+          toast('Migrating item data to view...', { icon: '🔄' });
+          // In a real app we'd redirect to migration or handle on the fly.
+          // For now, let's just show an alert that this needs migration first.
+          toast.error('This is a legacy item. Please run the migration in the admin panel.');
+          onClose();
+          return;
+        }
       }
+
+      // 2. Load Identifiers
+      const idQ = query(
+        collection(db, 'identifiers'),
+        where('ownerId', '==', auth.currentUser.uid),
+        where('objectId', '==', id)
+      );
+      const idSnap = await getDocs(idQ);
+      setIdentifiers(idSnap.docs.map(d => d.data() as IdentifierRecord));
+
+      // 3. Load Images
+      const imgQ = query(
+        collection(db, 'objectImages'),
+        where('ownerId', '==', auth.currentUser.uid),
+        where('objectId', '==', id)
+      );
+      const imgSnap = await getDocs(imgQ);
+      setImages(imgSnap.docs.map(d => d.data() as ObjectImageRecord));
+
+      // 4. Load Events (recent)
+      const evQ = query(
+        collection(db, 'objectEvents'),
+        where('ownerId', '==', auth.currentUser.uid),
+        where('objectId', '==', id)
+      );
+      const evSnap = await getDocs(evQ);
+      let evs = evSnap.docs.map(d => d.data() as ObjectEventRecord);
+      evs.sort((a,b) => {
+        const timeA = a.occurredAt?.toMillis ? a.occurredAt.toMillis() : Date.now();
+        const timeB = b.occurredAt?.toMillis ? b.occurredAt.toMillis() : Date.now();
+        return timeB - timeA;
+      });
+      setEvents(evs.slice(0, 5));
+
     } catch (error) {
-      handleFirestoreError(error, OperationType.GET, `items/${id}`);
+      console.error("Error loading object:", error);
+      handleFirestoreError(error, OperationType.GET, `objects/${id}`);
     } finally {
-      setLoading(false);
+      setFetching(false);
+    }
+  };
+
+  const recordEvent = async (type: ObjectEventRecord['type'], metadata?: Record<string, unknown>) => {
+    if (!auth.currentUser) return;
+    try {
+      const eventId = uuidv4();
+      const payload: ObjectEventRecord = {
+        eventId,
+        ownerId: auth.currentUser.uid,
+        objectId: data.objectId,
+        type,
+        occurredAt: serverTimestamp() as any,
+        actorUid: auth.currentUser.uid,
+        source: 'system',
+        metadata
+      };
+      await setDoc(doc(db, 'objectEvents', eventId), payload);
+    } catch (e) {
+      console.error("Failed to record event:", e);
     }
   };
 
   const handleCaptureLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error('Location is not supported in this browser.');
-      return;
-    }
-
-    toast.promise(
-      new Promise<void>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            const { latitude, longitude } = pos.coords;
-            let address: string | undefined = undefined;
-
-            try {
-              const response = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
-                {
-                  headers: {
-                    'Accept-Language': 'ja,en',
-                    'User-Agent': 'InventoryManagerApp/1.0'
-                  }
-                }
-              );
-
-              if (response.ok) {
-                const data = await response.json();
-                if (data && data.display_name) {
-                  address = data.display_name;
-                }
-              }
-            } catch (err) {
-              console.error("Reverse geocoding failed", err);
-            }
-
-            setData(prev => ({
-              ...prev,
-              location: {
-                latitude,
-                longitude,
-                address,
-              }
-            }));
-            resolve();
-          },
-          (error) => {
-            console.error('Location error:', error);
-            reject(error);
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      }),
-      {
-        loading: 'Getting location & address...',
-        success: 'Location captured!',
-        error: 'Failed to get location.',
-      }
-    );
-  };
-
-  const handleImageUpload = async (file: File | undefined, isContext: boolean = false) => {
-    if (!file || !auth.currentUser) return;
-
-    const slot = isContext ? 'context' : 'main';
-    setUploadingImage(slot);
-    setUploadProgressState({
-      isOpen: true,
-      step: 'compressing',
-      logs: [`Started upload process for ${slot} image`],
-    });
-
-    const addLog = (log: string) => {
-      console.log(`[Upload] ${log}`);
-      setUploadProgressState(prev => ({ ...prev, logs: [...prev.logs, log] }));
-    };
-
-    const handleError = (error: any) => {
-      console.error('Upload error:', error);
-      let errorDetails = String(error);
-      
-      try {
-        if (error instanceof Error) errorDetails = error.message;
-        else if (error?.message) errorDetails = error.message;
-        else if (typeof error === 'object' && error !== null) {
-          const props: Record<string, any> = {};
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
           
-          // Safe property extraction to avoid throwing getters
+          let address = undefined;
           try {
-            for (const key in error) {
-              if (key === 'src' && typeof (error as any)[key] === 'object') {
-                 props[key] = '[Complex src object omitted]';
-                 continue;
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+              headers: { 'Accept-Language': 'en' }
+            });
+            if (response.ok) {
+              const geoData = await response.json();
+              if (geoData && geoData.display_name) {
+                address = geoData.display_name;
               }
-              const val = (error as any)[key];
-              // Avoid pulling in DOM elements or the window object which can crash JSON.stringify
-              if (val && typeof val === 'object') {
-                if (val instanceof Node || val instanceof Window || val instanceof EventTarget) {
-                  props[key] = `[${val.constructor.name} omitted]`;
-                  continue;
-                }
-              }
-              props[key] = val;
             }
           } catch (e) {
-             props._extractionError = String(e);
+            console.warn("Reverse geocoding failed", e);
           }
 
-          if (error instanceof Event) {
-            props.type = error.type;
-            props.eventPhase = error.eventPhase;
-          }
-          if ((error as any).code) props.code = (error as any).code;
-          if ((error as any).name) props.name = (error as any).name;
-          
-          const getCircularReplacer = () => {
-            const seen = new WeakSet();
-            return (key: string, value: any) => {
-              if (typeof value === "object" && value !== null) {
-                if (seen.has(value)) {
-                  return "[Circular]";
-                }
-                seen.add(value);
-              }
-              return value;
-            };
-          };
-          const str = JSON.stringify(props, getCircularReplacer(), 2);
-          if (str !== '{}') errorDetails = str;
-        }
-      } catch (e) {
-        errorDetails = String(error);
-      }
+          setData(prev => ({
+            ...prev,
+            currentLocation: {
+              latitude: lat,
+              longitude: lng,
+              address,
+              updatedAt: serverTimestamp() as any
+            }
+          }));
+          toast.success('Location updated');
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          toast.error("Could not get location. Check permissions.");
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      toast.error('Geolocation is not supported by your browser');
+    }
+  };
 
-      setUploadProgressState(prev => ({ ...prev, step: 'error', error: errorDetails }));
-    };
+  const uploadToStorage = async (file: File, slot: 'main' | 'context') => {
+    if (!auth.currentUser || !data.objectId) return;
+
+    setUploadProgressState({ isOpen: true, step: 'Preparing...', logs: [`Started upload process for ${slot} image`] });
+    setUploadingImage(slot);
 
     try {
-      addLog('Processing image for upload...');
-      
-      const compressImage = async (inputFile: File, maxSize: number): Promise<Blob> => {
-        let fileOrBlob: File | Blob = inputFile;
-        let isConvertAttempted = false;
+      let finalFile = file;
+      let finalFileExtension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const targetFormat = settings?.imageFormat || 'webp';
+      const isHeic = file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic');
 
-        const attemptImgLoad = (blob: Blob): Promise<Blob> => {
-          return new Promise((resolve, reject) => {
-            const img = new Image();
-            const objectUrl = URL.createObjectURL(blob);
-            
-            img.onload = () => {
-              URL.revokeObjectURL(objectUrl);
-              const canvas = document.createElement('canvas');
-              let width = img.width;
-              let height = img.height;
+      addLog(`File selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB, type: ${file.type})`);
 
-              if (width > height) {
-                if (width > maxSize) {
-                  height *= maxSize / width;
-                  width = maxSize;
-                }
-              } else {
-                if (height > maxSize) {
-                  width *= maxSize / height;
-                  height = maxSize;
-                }
-              }
-
-              canvas.width = width;
-              canvas.height = height;
-              const ctx = canvas.getContext('2d');
-              ctx?.drawImage(img, 0, 0, width, height);
-              
-              addLog('Image resized successfully.');
-              
-              canvas.toBlob((b) => {
-                if (b) resolve(b);
-                else {
-                  if (settings.imageFormat === 'webp') {
-                    addLog('WebP failed, falling back to JPEG...');
-                    canvas.toBlob((b2) => {
-                      if (b2) resolve(b2);
-                      else reject(new Error('Canvas toBlob failed on fallback'));
-                    }, 'image/jpeg', settings.compressionQuality);
-                  } else {
-                    reject(new Error('Canvas toBlob failed'));
-                  }
-                }
-              }, `image/${settings.imageFormat}`, settings.compressionQuality);
-            };
-            
-            img.onerror = async (e) => {
-              URL.revokeObjectURL(objectUrl);
-              reject(new Error(`Failed to load image. Type: ${inputFile.type}`));
-            };
-            
-            img.src = objectUrl;
-          });
-        };
-
-        const isHeic = inputFile.type === 'image/heic' || inputFile.type === 'image/heif' || inputFile.name.toLowerCase().endsWith('.heic') || inputFile.name.toLowerCase().endsWith('.heif');
-        
-        if (isHeic) {
-          addLog('HEIC format detected, converting to JPEG...');
-          try {
-            const converted = await heic2any({ blob: inputFile, toType: 'image/jpeg', quality: 0.6 });
-            fileOrBlob = Array.isArray(converted) ? converted[0] : converted;
-            isConvertAttempted = true;
-            addLog('HEIC conversion successful.');
-          } catch (heicErr) {
-            addLog('HEIC conversion failed, proceeding with original...');
-          }
-        }
-
+      if (isHeic) {
+        setUploadProgressState(prev => ({ ...prev, step: 'Converting HEIC to JPEG...' }));
+        addLog('HEIC format detected. Starting conversion...');
         try {
-          return await attemptImgLoad(fileOrBlob);
-        } catch (err) {
-          if (!isConvertAttempted) {
-             addLog('Browser failed to load image. Attempting HEIC fallback just in case...');
-             try {
-                const converted = await heic2any({ blob: inputFile, toType: 'image/jpeg', quality: 0.6 });
-                fileOrBlob = Array.isArray(converted) ? converted[0] : converted;
-                addLog('HEIC fallback successful.');
-                return await attemptImgLoad(fileOrBlob);
-             } catch (fallbackErr) {
-                addLog('HEIC fallback failed.');
-                throw err;
-             }
-          }
-          throw err;
+          const convertedBlob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.8 }) as Blob;
+          finalFile = new File([convertedBlob], file.name.replace(/\.heic$/i, '.jpeg'), { type: 'image/jpeg' });
+          finalFileExtension = 'jpeg';
+          addLog(`Conversion successful. New size: ${(finalFile.size / 1024 / 1024).toFixed(2)} MB`);
+        } catch (convErr) {
+          addLog(`Warning: HEIC conversion failed: ${convErr}. Proceeding with original file.`);
         }
-      };
-
-      setUploadProgressState(prev => ({ ...prev, step: 'compressing' }));
-      let finalBlobUpload: Blob;
-      let finalFileExtension = settings.imageFormat === 'webp' ? 'webp' : 'jpg';
-      let finalMimeType = `image/${settings.imageFormat}`;
-      try {
-        finalBlobUpload = await compressImage(file, settings.maxResolution);
-        finalMimeType = finalBlobUpload.type || finalMimeType;
-        if (finalMimeType === 'image/jpeg') finalFileExtension = 'jpg';
-        else if (finalMimeType === 'image/webp') finalFileExtension = 'webp';
-        
-        addLog(`Image compressed. Size: ${(finalBlobUpload.size / 1024).toFixed(2)} KB, Format: ${finalMimeType}`);
-      } catch (e) {
-         addLog(`Compression failed: ${e instanceof Error ? e.message : String(e)}. Proceeding with raw file...`);
-         finalBlobUpload = file; // fallback
-         finalFileExtension = file.name.split('.').pop() || 'jpg';
-         finalMimeType = file.type || 'image/jpeg';
-         addLog(`Fallback size: ${(finalBlobUpload.size / 1024).toFixed(2)} KB`);
       }
 
-      setUploadProgressState(prev => ({ ...prev, step: 'uploading' }));
-      addLog('Initiating Firebase Storage upload...');
+      setUploadProgressState(prev => ({ ...prev, step: 'Compressing image...' }));
+      const maxRes = settings?.maxResolution || 1024;
+      const compQual = settings?.compressionQuality || 0.8;
 
+      const compressedFile = await new Promise<File>((resolve) => {
+         const reader = new FileReader();
+         reader.onload = (e) => {
+           const img = new Image();
+           img.onload = () => {
+             const canvas = document.createElement('canvas');
+             let width = img.width;
+             let height = img.height;
+
+             if (width > height) {
+               if (width > maxRes) { height *= maxRes / width; width = maxRes; }
+             } else {
+               if (height > maxRes) { width *= maxRes / height; height = maxRes; }
+             }
+
+             canvas.width = width;
+             canvas.height = height;
+             const ctx = canvas.getContext('2d');
+             ctx?.drawImage(img, 0, 0, width, height);
+
+             canvas.toBlob((blob) => {
+               if (blob) resolve(new File([blob], `image.${targetFormat}`, { type: `image/${targetFormat}` }));
+               else resolve(finalFile);
+             }, `image/${targetFormat}`, compQual);
+           };
+           img.src = e.target?.result as string;
+         };
+         reader.readAsDataURL(finalFile);
+      });
+
+      finalFile = compressedFile;
+      finalFileExtension = targetFormat;
+      addLog(`Compression complete. Final size: ${(finalFile.size / 1024 / 1024).toFixed(2)} MB`);
+
+      setUploadProgressState(prev => ({ ...prev, step: 'Uploading to cloud...' }));
       const fileId = uuidv4();
-      const storageRef = ref(storage, `users/${auth.currentUser.uid}/items/${data.id}/${slot}/${fileId}.${finalFileExtension}`);
+      const storageRef = ref(storage, `users/${auth.currentUser.uid}/objects/${data.objectId}/images/${fileId}.${finalFileExtension}`);
 
-      const snapshot = await new Promise<UploadTaskSnapshot>((resolve, reject) => {
-        const uploadTask = uploadBytesResumable(storageRef, finalBlobUpload, { contentType: finalMimeType });
-        
-        const timeoutId = setTimeout(() => {
-          // If no progress at all, or just overall slow upload, cancel it.
-          uploadTask.cancel();
-          reject(new Error('Upload timed out. Is Firebase Storage enabled? Please go to the Firebase Console -> Storage -> "Get Started" and ensure your rules allow uploads.'));
-        }, 15000);
+      const uploadTask = uploadBytesResumable(storageRef, finalFile);
 
-        let lastProgressLog = 0;
+      return new Promise<void>((resolve, reject) => {
         uploadTask.on('state_changed', 
-          (snapshot) => {
+          (snapshot: UploadTaskSnapshot) => {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            if (progress - lastProgressLog >= 25 || progress === 100) {
-              addLog(`Upload progress: ${Math.round(progress)}%`);
-              lastProgressLog = progress;
-            }
-          }, 
+            if (progress === 100) addLog('Upload 100% complete. Waiting for download URL...');
+          },
           (error) => {
-            clearTimeout(timeoutId);
+            addLog(`Error during upload: ${error.message}`);
+            setUploadProgressState(prev => ({ ...prev, error: error.message, step: 'Failed' }));
+            setUploadingImage(null);
             reject(error);
-          }, 
-          () => {
-            clearTimeout(timeoutId);
-            resolve(uploadTask.snapshot);
+          },
+          async () => {
+            addLog(`File uploaded to storage: ${uploadTask.snapshot.metadata.fullPath}`);
+            const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+            addLog('Download URL generated successfully.');
+
+            // Create ObjectImageRecord
+            const imageId = fileId;
+            const imgRecord: ObjectImageRecord = {
+              imageId,
+              ownerId: auth.currentUser!.uid,
+              objectId: data.objectId!,
+              role: slot === 'main' ? 'primary' : 'context',
+              storagePath: uploadTask.snapshot.metadata.fullPath,
+              downloadUrl,
+              contentType: `image/${finalFileExtension}`,
+              sizeBytes: finalFile.size,
+              createdAt: serverTimestamp() as any,
+              createdBy: auth.currentUser!.uid
+            };
+
+            await setDoc(doc(db, 'objectImages', imageId), imgRecord);
+
+            if (slot === 'main') {
+              setData(prev => ({ ...prev, primaryImageId: imageId }));
+            }
+
+            // Refetch images
+            const imgQ = query(
+              collection(db, 'objectImages'),
+              where('ownerId', '==', auth.currentUser!.uid),
+              where('objectId', '==', data.objectId)
+            );
+            const imgSnap = await getDocs(imgQ);
+            setImages(imgSnap.docs.map(d => d.data() as ObjectImageRecord));
+
+            await recordEvent('image_added', { role: slot, imageId });
+            setUploadingImage(null);
+            setUploadProgressState(prev => ({ ...prev, isOpen: false }));
+            resolve();
           }
         );
       });
 
-      addLog(`File uploaded to storage: ${snapshot.metadata.fullPath}`);
-
-      setUploadProgressState(prev => ({ ...prev, step: 'getting_url' }));
-      addLog('Retrieving download URL...');
-      const url = await getDownloadURL(snapshot.ref);
-      addLog('URL retrieved successfully.');
-
-      // Update appropriate field in the form state
-      if (isContext) {
-        setData(prev => ({
-          ...prev,
-          contextImageUrls: [...(prev.contextImageUrls || []), url]
-        }));
-      } else {
-        setData(prev => ({ ...prev, mainImageUrl: url }));
-      }
-
-      setUploadProgressState(prev => ({ ...prev, step: 'done' }));
-      setTimeout(() => {
-        setUploadProgressState(prev => ({ ...prev, isOpen: false }));
-      }, 2000); // auto-close after 2s on success
-
-    } catch (error) {
-      handleError(error);
-    } finally {
-      if (mainImageUploadRef.current) mainImageUploadRef.current.value = '';
-      if (mainImageCameraRef.current) mainImageCameraRef.current.value = '';
-      if (contextImageUploadRef.current) contextImageUploadRef.current.value = '';
-      if (contextImageCameraRef.current) contextImageCameraRef.current.value = '';
+    } catch (err: any) {
+      setUploadProgressState(prev => ({ ...prev, error: err.message || 'Unknown error', step: 'Failed' }));
       setUploadingImage(null);
     }
   };
 
-  const handleBluetoothScan = async () => {
-    // Web Bluetooth API is limited. Most browsers only support requestDevice which is 1-by-1.
-    // For a real "nearby tags" app, we'd ideally use a native bridge, but here we'll mock or try availability.
-    if ('bluetooth' in navigator) {
-      try {
-        // @ts-ignore - experimental API
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.split('');
-        const filters = chars.map(char => ({ namePrefix: char }));
-
-        // @ts-ignore - experimental API
-        const device = await navigator.bluetooth.requestDevice({
-          filters: filters,
-          optionalServices: ['battery_service']
-        });
-        
-        const newTag: BluetoothTag = {
-          name: device.name || 'Unknown Device',
-          id: device.id,
-          linkedAt: Timestamp.now(),
-        };
-        
-        setData(prev => ({
-          ...prev,
-          bluetoothTags: [...(prev.bluetoothTags || []), newTag]
-        }));
-        } catch (error) {
-          console.error('Bluetooth error:', error);
-          toast.error('Failed to connect to Bluetooth device.');
-        }
-      } else {
-        toast.error('Bluetooth is not supported in this browser.');
-      }
-    };
+  const handleImageUpload = (file: File | undefined, isContext: boolean) => {
+    if (file) {
+      setActiveImageMenu(null);
+      uploadToStorage(file, isContext ? 'context' : 'main');
+    }
+  };
 
   const handleSave = async () => {
     if (!auth.currentUser) return;
     setLoading(true);
 
     try {
-      const docRef = doc(db, 'items', data.id!);
+      const docRef = doc(db, 'objects', data.objectId!);
+
+      // Compute summary
+      // Include the initialIdentifier in the summary if we are creating it now
+      const currentKinds = identifiers.map(i => i.kind);
+      if (initialIdentifier && !objectId) {
+        currentKinds.push(initialIdentifier.kind);
+      }
+
+      const activeKinds = Array.from(new Set(currentKinds));
+      const activeIdentifierCount = identifiers.length + (initialIdentifier && !objectId ? 1 : 0);
+
+      const identifierSummary = {
+        activeKinds,
+        activeIdentifierCount,
+        hasQr: activeKinds.includes('qr'),
+        hasNfc: activeKinds.includes('nfc')
+      };
+
       const payload = {
         ...data,
         ownerId: auth.currentUser.uid,
+        identifierSummary,
         updatedAt: serverTimestamp(),
       };
 
-      if (!itemId) {
-        // New item
+      if (!objectId) {
+        // New object
         await setDoc(docRef, {
           ...payload,
           createdAt: serverTimestamp(),
         });
+        await recordEvent('created');
+
+        // If we came from scanning an unassigned tag, bind it now
+        if (initialIdentifier) {
+           const idKey = buildIdentifierKey(initialIdentifier.kind, initialIdentifier.scheme, initialIdentifier.canonicalValue);
+           const idRef = doc(db, 'identifiers', idKey);
+           await setDoc(idRef, {
+             identifierKey: idKey,
+             ownerId: auth.currentUser.uid,
+             objectId: data.objectId,
+             kind: initialIdentifier.kind,
+             scheme: initialIdentifier.scheme,
+             canonicalValue: initialIdentifier.canonicalValue,
+             status: 'active',
+             createdAt: serverTimestamp(),
+             updatedAt: serverTimestamp()
+           });
+
+           const bindId = uuidv4();
+           await setDoc(doc(db, 'objectIdentifierBindings', bindId), {
+             bindingId: bindId,
+             ownerId: auth.currentUser.uid,
+             objectId: data.objectId,
+             identifierKey: idKey,
+             status: 'active',
+             attachedAt: serverTimestamp(),
+             attachedBy: auth.currentUser.uid,
+             createdAt: serverTimestamp(),
+             updatedAt: serverTimestamp()
+           });
+           await recordEvent('identifier_attached', { identifierKey: idKey });
+        }
       } else {
         // Update
         await updateDoc(docRef, payload);
+        await recordEvent('updated');
       }
+
+      toast.success('Saved successfully');
       onClose();
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, `items/${data.id}`);
+      console.error("Error saving object:", error);
+      handleFirestoreError(error, OperationType.WRITE, `objects/${data.objectId}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const removeItem = async () => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
-    // Simple delete logic
-  };
+  const primaryImage = images.find(img => img.imageId === data.primaryImageId) || images.find(img => img.role === 'primary');
+  const contextImages = images.filter(img => img.role === 'context');
+
+  if (fetching) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+         <div className="w-10 h-10 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
+         <p className="font-bold text-[var(--on-surface-variant)] uppercase tracking-widest text-xs">Loading Object...</p>
+      </div>
+    );
+  }
 
   return (
-    <div 
-      className="bg-[var(--surface-container)] min-h-screen rounded-t-[32px] shadow-2xl overflow-hidden pb-32"
-      onClick={() => activeImageMenu && setActiveImageMenu(null)}
-    >
-      <AnimatePresence>
-        {showWebcam && (
-          <WebcamCapture 
-            onCapture={(file) => {
-              setShowWebcam(null);
-              handleImageUpload(file, showWebcam === 'context');
-            }}
-            onCancel={() => setShowWebcam(null)}
-          />
-        )}
-      </AnimatePresence>
-
+    <div className="max-w-2xl mx-auto pb-24 relative bg-[var(--surface)] min-h-screen">
       <div className="p-4 flex items-center justify-between border-b border-[var(--outline)] sticky top-0 bg-[var(--surface-container)]/90 backdrop-blur-md z-10">
-        <button onClick={onClose} className="p-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] rounded-full transition-colors"><ChevronLeft size={24} /></button>
-        <h2 className="font-bold text-lg tracking-tight text-[var(--on-surface)]">{itemId ? 'Edit Item' : 'Add New Item'}</h2>
-        <button 
-          onClick={handleSave} 
-          disabled={loading}
-          className="bg-[var(--primary)] text-[var(--primary-foreground)] px-6 py-2 rounded-full font-bold shadow-lg shadow-[var(--primary)]/20 disabled:opacity-50 active:scale-95 transition-all"
-        >
-          {loading ? 'Saving...' : 'Save'}
-        </button>
+        <h2 className="font-bold text-lg tracking-tight text-[var(--on-surface)]">{objectId ? 'Edit Object' : 'New Object'}</h2>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onClose}
+            className="p-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] rounded-xl transition-all"
+          >
+            <X size={24} />
+          </button>
+        </div>
       </div>
 
-      <div className="p-6 space-y-8">
-        {/* ID Section */}
-        <div className="bg-[var(--surface)] p-4 rounded-[24px] space-y-2 border border-[var(--outline)]">
-          <label className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest px-1">Identification ID</label>
-          <div className="flex items-center justify-between">
-            <span className="font-mono font-bold text-[var(--primary)]">{data.id}</span>
-            <span className="text-[10px] bg-[var(--primary)]/10 text-[var(--primary)] font-bold px-2 py-1 rounded-full uppercase border border-[var(--primary)]/10">{data.tagType}</span>
+      <div className="p-4 space-y-6">
+        {/* Basic Info */}
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-widest">Name</label>
+            <input 
+              className="w-full bg-[var(--surface)] border border-[var(--outline)] text-[var(--on-surface)] rounded-2xl p-4 text-lg font-bold focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all outline-none mt-1"
+              value={data.name || ''}
+              onChange={e => setData({...data, name: e.target.value})}
+              placeholder="What is this?" 
+            />
           </div>
-          <div className="mt-2 pt-2 border-t border-[var(--outline)] flex items-center justify-between gap-2">
-            <span className="text-xs text-[var(--on-surface-variant)] truncate font-mono">
-              {window.location.origin}/item/{data.id}
-            </span>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/item/${data.id}`);
-                toast.success('URL copied to clipboard');
-              }}
-              className="p-1.5 bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] rounded-lg border border-[var(--outline)] hover:text-[var(--primary)] transition-colors active:scale-95 flex-shrink-0"
-              title="Copy URL"
-            >
-              <Copy size={14} />
-            </button>
+          <div>
+            <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-widest">Description</label>
+            <textarea 
+              className="w-full bg-[var(--surface)] border border-[var(--outline)] text-[var(--on-surface)] rounded-2xl p-4 min-h-[100px] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all outline-none mt-1 resize-none"
+              value={data.description || ''}
+              onChange={e => setData({...data, description: e.target.value})}
+              placeholder="Add details, condition, contents..."
+            />
           </div>
         </div>
 
-        {/* Name & Description */}
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-[var(--on-surface-variant)] ml-1">Name</label>
-            <input 
-              type="text" 
-              placeholder="What is this?" 
-              value={data.name} 
-              onChange={e => setData(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full text-2xl font-bold border-none focus:ring-0 placeholder:text-[var(--on-surface-variant)]/30 p-0 bg-transparent text-[var(--on-surface)]"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-[var(--on-surface-variant)] ml-1">Description</label>
-            <textarea 
-              placeholder="Add details, features, or context..." 
-              value={data.description} 
-              onChange={e => setData(prev => ({ ...prev, description: e.target.value }))}
-              rows={4}
-              className="w-full border-2 border-[var(--outline)] rounded-2xl p-3 focus:border-[var(--primary)] transition-colors outline-none bg-[var(--surface)] text-[var(--on-surface)]"
-            />
-          </div>
+        {/* Identifiers Read-Only View */}
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-widest">Identifiers</label>
+          {identifiers.length > 0 ? (
+             <div className="grid grid-cols-1 gap-2">
+               {identifiers.map(idr => (
+                 <div key={idr.identifierKey} className="flex items-center gap-3 bg-[var(--surface-container)] p-3 rounded-xl border border-[var(--outline)]">
+                   <div className="w-8 h-8 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center">
+                     <Tag size={16} />
+                   </div>
+                   <div className="flex-1 min-w-0">
+                     <div className="text-sm font-bold uppercase">{idr.kind} <span className="text-[10px] text-neutral-500 lowercase ml-1">({idr.scheme})</span></div>
+                     <div className="text-xs font-mono text-neutral-500 truncate">{idr.canonicalValue}</div>
+                   </div>
+                 </div>
+               ))}
+             </div>
+          ) : (
+            <div className="bg-[var(--surface-container)] p-4 rounded-xl border border-[var(--outline)] text-center text-sm text-neutral-500">
+               {initialIdentifier ? (
+                 <p>Will be linked to {initialIdentifier.kind.toUpperCase()} on save.</p>
+               ) : (
+                 <p>No identifiers linked.</p>
+               )}
+            </div>
+          )}
         </div>
 
         {/* Photos Section */}
-        <div className="space-y-4">
+        <div className="space-y-2">
           <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-widest">Photos</label>
-          <div className="grid grid-cols-2 gap-4">
-            <div 
-              className={`relative aspect-square bg-[var(--surface-container-high)] rounded-[28px] border-2 border-dashed overflow-hidden group transition-all cursor-pointer ${
-                dragTarget === 'main' ? 'border-[var(--primary)] bg-[var(--primary)]/5' : 'border-[var(--outline)] hover:border-[var(--primary)]/50'
-              }`}
-              onClick={(e) => toggleImageMenu('main', e)}
-              onDragOver={(e) => handleDragOver(e, 'main')}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, false)}
-            >
-              {data.mainImageUrl ? (
-                <>
-                  <ImageWithLongPress 
-                    url={data.mainImageUrl} 
-                    className="w-full h-full object-cover" 
-                    wrapperClassName="w-full h-full absolute inset-0"
-                  >
-                    <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-md text-[10px] font-black tracking-wider text-white uppercase border border-white/10 z-10 pointer-events-none">
-                      {getImageFormatFromUrl(data.mainImageUrl)}
-                    </div>
-                  </ImageWithLongPress>
-                  <div className={`absolute inset-0 bg-black/60 transition-opacity flex flex-col items-center justify-center gap-3 ${activeImageMenu === 'main' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); mainImageUploadRef.current?.click(); setActiveImageMenu(null); }} 
-                      className="bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-2 text-xs font-bold backdrop-blur-md flex items-center gap-2 transition-colors border border-white/20"
-                    >
-                       <ImageIcon size={14} /> Upload New
-                    </button>
-                    <button 
-                      onClick={(e) => handleTakePhotoClick('main', e)} 
-                      className="bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-2 text-xs font-bold backdrop-blur-md flex items-center gap-2 transition-colors border border-white/20"
-                    >
-                       <Camera size={14} /> Take Photo
-                    </button>
-                  </div>
-                </>
+          <div className="grid grid-cols-3 gap-3">
+            {/* Main Photo */}
+            <div className={`col-span-2 relative group bg-[var(--surface-container)] rounded-[24px] aspect-square overflow-hidden cursor-pointer transition-all border-2 ${activeImageMenu === 'main' ? 'border-[var(--primary)] ring-4 ring-[var(--primary)]/10' : 'border-[var(--outline)] hover:border-[var(--primary)]/50'}`} onClick={() => setActiveImageMenu(activeImageMenu === 'main' ? null : 'main')}>
+              {primaryImage ? (
+                <img src={primaryImage.downloadUrl} className="w-full h-full object-cover" alt="Main" />
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                  <Camera className={`text-[var(--on-surface-variant)] opacity-30 mb-2 transition-all ${activeImageMenu === 'main' ? 'hidden' : 'group-hover:hidden'}`} size={32} />
-                  <span className={`text-[10px] font-bold text-[var(--on-surface-variant)] uppercase opacity-60 mb-4 block ${activeImageMenu === 'main' ? 'hidden' : 'group-hover:hidden'}`}>Main Photo</span>
-                  <div className={`flex-col gap-2 w-full px-2 ${activeImageMenu === 'main' ? 'flex' : 'hidden group-hover:flex'} transition-opacity`}>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); mainImageUploadRef.current?.click(); setActiveImageMenu(null); }} 
-                      className="w-full bg-[var(--surface)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface)] rounded-full px-3 py-2 text-[10px] font-bold shadow-sm flex items-center justify-center gap-1.5 transition-colors border border-[var(--outline)]"
-                    >
-                      <ImageIcon size={12} className="text-[var(--primary)]" /> Upload
-                    </button>
-                    <button 
-                      onClick={(e) => handleTakePhotoClick('main', e)} 
-                      className="w-full bg-[var(--surface)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface)] rounded-full px-3 py-2 text-[10px] font-bold shadow-sm flex items-center justify-center gap-1.5 transition-colors border border-[var(--outline)]"
-                    >
-                      <Camera size={12} className="text-[var(--primary)]" /> Camera
-                    </button>
-                  </div>
+                <div className={`absolute inset-0 flex flex-col items-center justify-center p-4 text-center transition-all ${activeImageMenu === 'main' ? 'hidden' : 'group-hover:hidden'}`}>
+                  <ImageIcon className="text-[var(--on-surface-variant)] opacity-30 mb-2" size={48} />
+                  <span className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase opacity-60 mb-1 block">Main Photo</span>
                 </div>
               )}
+              {/* Upload Overlay */}
+              <div className={`absolute inset-0 bg-black/60 transition-opacity flex flex-col items-center justify-center gap-3 z-10 ${activeImageMenu === 'main' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                  <button onClick={(e) => { e.stopPropagation(); mainImageUploadRef.current?.click(); setActiveImageMenu(null); }} className="bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-2 text-xs font-bold backdrop-blur-md flex items-center gap-2">
+                    <ImageIcon size={16} /> Upload
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); setShowWebcam('main'); setActiveImageMenu(null); }} className="bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-2 text-xs font-bold backdrop-blur-md flex items-center gap-2">
+                    <Camera size={16} /> Camera
+                  </button>
+              </div>
               <input type="file" accept="image/*" hidden ref={mainImageUploadRef} onChange={e => handleImageUpload(e.target.files?.[0], false)} />
-              <input type="file" accept="image/*" capture="environment" hidden ref={mainImageCameraRef} onChange={e => handleImageUpload(e.target.files?.[0], false)} />
-              {uploadingImage === 'main' && <div className="absolute inset-0 bg-[var(--surface-container)]/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-2"><div className="w-6 h-6 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div><span className="text-[10px] font-bold text-[var(--primary)]">Uploading...</span></div>}
             </div>
 
-            <div 
-              className={`relative aspect-square bg-[var(--surface-container-high)] rounded-[28px] border-2 border-dashed overflow-hidden group transition-all cursor-pointer ${
-                dragTarget === 'context' ? 'border-[var(--primary)] bg-[var(--primary)]/5' : 'border-[var(--outline)] hover:border-[var(--primary)]/50'
-              }`}
-              onClick={(e) => toggleImageMenu('context', e)}
-              onDragOver={(e) => handleDragOver(e, 'context')}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, true)}
-            >
-              <div className="absolute inset-0 flex flex-wrap gap-1 p-2 w-full h-full justify-center content-center pointer-events-none">
-                {data.contextImageUrls && data.contextImageUrls.length > 0 ? (
-                  data.contextImageUrls.map((url, i) => (
-                    <ImageWithLongPress 
-                      key={i}
-                      url={url} 
-                      className="w-full h-full object-cover rounded-[12px] shadow-sm border border-white/50" 
-                      wrapperClassName="relative w-1/3 aspect-square pointer-events-auto"
-                    >
-                      <div className="absolute bottom-1 right-1 px-1 py-0.5 bg-black/60 backdrop-blur-sm rounded-md text-[6px] font-black tracking-wider text-white uppercase border border-white/10 z-10 pointer-events-none">
-                        {getImageFormatFromUrl(url)}
-                      </div>
-                    </ImageWithLongPress>
-                  ))
-                ) : (
-                  <div className={`absolute inset-0 flex flex-col items-center justify-center p-4 text-center transition-all ${activeImageMenu === 'context' ? 'hidden' : 'group-hover:hidden'}`}>
-                    <ImageIcon className="text-[var(--on-surface-variant)] opacity-30 mb-2" size={32} />
-                    <span className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase opacity-60 mb-4 block">Surroundings</span>
+            {/* Context Photos */}
+            <div className="col-span-1 flex flex-col gap-3">
+               {contextImages.slice(0, 2).map(img => (
+                  <div key={img.imageId} className="relative aspect-square rounded-[20px] overflow-hidden bg-[var(--surface-container)] border border-[var(--outline)]">
+                    <img src={img.downloadUrl} className="w-full h-full object-cover" />
                   </div>
-                )}
-              </div>
-              <div className={`absolute inset-0 bg-black/60 transition-opacity flex flex-col items-center justify-center gap-2 overflow-hidden px-2 z-10 ${activeImageMenu === 'context' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); contextImageUploadRef.current?.click(); setActiveImageMenu(null); }} 
-                  className="w-[80%] max-w-[120px] bg-white/20 hover:bg-white/30 text-white rounded-full px-3 py-2 text-[10px] font-bold backdrop-blur-md flex items-center justify-center gap-1.5 transition-colors border border-white/20"
-                >
-                   <ImageIcon size={12} /> Upload
-                </button>
-                <button 
-                  onClick={(e) => handleTakePhotoClick('context', e)} 
-                  className="w-[80%] max-w-[120px] bg-white/20 hover:bg-white/30 text-white rounded-full px-3 py-2 text-[10px] font-bold backdrop-blur-md flex items-center justify-center gap-1.5 transition-colors border border-white/20"
-                >
-                   <Camera size={12} /> Camera
-                </button>
-              </div>
-              
-              <input type="file" accept="image/*" hidden ref={contextImageUploadRef} onChange={e => handleImageUpload(e.target.files?.[0], true)} />
-              <input type="file" accept="image/*" capture="environment" hidden ref={contextImageCameraRef} onChange={e => handleImageUpload(e.target.files?.[0], true)} />
-              {uploadingImage === 'context' && <div className="absolute inset-0 bg-[var(--surface-container)]/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center gap-2"><div className="w-6 h-6 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div><span className="text-[10px] font-bold text-[var(--primary)]">Uploading...</span></div>}
+               ))}
+               <div className="relative aspect-square rounded-[20px] overflow-hidden bg-[var(--surface-container)] border border-[var(--outline)] hover:border-[var(--primary)] flex items-center justify-center cursor-pointer" onClick={() => contextImageUploadRef.current?.click()}>
+                 <Plus className="text-neutral-400" />
+               </div>
+               <input type="file" accept="image/*" hidden ref={contextImageUploadRef} onChange={e => handleImageUpload(e.target.files?.[0], true)} />
             </div>
           </div>
         </div>
 
-        {/* Location & Sensors */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-          <button 
-            onClick={handleCaptureLocation}
-            className={`flex items-center gap-3 p-4 rounded-3xl border-2 transition-all active:scale-[0.98] ${
-              data.location ? 'bg-[var(--primary)]/5 border-[var(--primary)] text-[var(--primary)]' : 'bg-[var(--surface)] border-[var(--outline)] text-[var(--on-surface-variant)] hover:border-[var(--on-surface-variant)]'
-            }`}
-          >
-            <div className={`p-2 rounded-2xl ${data.location ? 'bg-[var(--primary)]/10' : 'bg-[var(--surface)]'}`}>
-              <MapPin size={24} />
-            </div>
+        {/* Location Section */}
+        <div className="grid grid-cols-1 gap-4 mb-8">
+          <button onClick={handleCaptureLocation} className={`flex items-center gap-3 p-4 rounded-3xl border-2 transition-all ${data.currentLocation ? 'bg-[var(--primary)]/5 border-[var(--primary)] text-[var(--primary)]' : 'bg-[var(--surface)] border-[var(--outline)] text-[var(--on-surface-variant)]'}`}>
+            <MapPin size={24} />
             <div className="text-left flex-1 min-w-0">
-              <span className="block text-sm font-bold tracking-tight">Geo Location</span>
-              <div className="text-xs opacity-70 flex flex-col gap-0.5 mt-0.5 w-full min-w-0">
-                {data.location ? (
-                  <>
-                    {data.location.address && <span className="block truncate w-full">{data.location.address}</span>}
-                    <span className="block font-mono text-[10px] tracking-wider opacity-60 truncate w-full">
-                      {data.location.latitude.toFixed(6)}, {data.location.longitude.toFixed(6)}
-                    </span>
-                  </>
-                ) : (
-                  <span className="block truncate w-full">Capture current spot</span>
-                )}
-              </div>
+              <span className="block text-sm font-bold">Geo Location</span>
+              <span className="block text-xs opacity-70 truncate">{data.currentLocation?.address || 'Capture current spot'}</span>
             </div>
           </button>
         </div>
 
-        {/* Bluetooth Tags Management */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-widest px-1">Connection Tags</label>
-            <button 
-              onClick={handleBluetoothScan}
-              className="text-[10px] font-bold text-[var(--primary)] bg-[var(--primary)]/10 border border-[var(--primary)]/10 px-3 py-1.5 rounded-full flex items-center gap-1 active:scale-95 transition-all"
-            >
-              <Bluetooth size={12} />
-              Pair BLE
-            </button>
+        {/* Events History View */}
+        {events.length > 0 && (
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-widest">Recent Activity</label>
+            <div className="bg-[var(--surface-container)] rounded-2xl p-4 border border-[var(--outline)] space-y-3">
+               {events.map(ev => (
+                 <div key={ev.eventId} className="flex items-start gap-3 text-sm">
+                   <div className="mt-0.5 opacity-50"><Activity size={14} /></div>
+                   <div>
+                     <span className="font-bold text-[var(--on-surface)] capitalize">{ev.type.replace('_', ' ')}</span>
+                     <span className="text-xs text-neutral-500 block">{formatDistanceToNow(ev.occurredAt.toDate())} ago</span>
+                   </div>
+                 </div>
+               ))}
+            </div>
           </div>
+        )}
 
-          <div className="flex gap-2">
-            <input 
-              type="text" 
-              placeholder="Tag name (e.g. Tile, AirTag...)" 
-              value={newTagName} 
-              onChange={e => setNewTagName(e.target.value)}
-              className="flex-1 bg-[var(--surface)] border border-[var(--outline)] rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all outline-none"
-              onKeyDown={e => e.key === 'Enter' && handleAddManualTag()}
-            />
-            <button 
-              onClick={handleAddManualTag}
-              className="bg-[var(--primary)] text-[var(--primary-foreground)] p-3 rounded-2xl active:scale-95 disabled:opacity-50 shadow-lg shadow-[var(--primary)]/10 transition-all"
-              disabled={!newTagName.trim()}
-            >
-              <Plus size={24} />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-2">
-            {data.bluetoothTags?.map((tag, i) => (
-              <div key={i} className="flex items-center justify-between bg-[var(--surface)] border border-[var(--outline)] p-4 rounded-[20px] shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex-1 min-w-0 pr-4">
-                  {editingTagIndex === i ? (
-                    <input 
-                      autoFocus
-                      className="w-full text-base font-bold border-b-2 border-[var(--primary)] focus:outline-none bg-transparent"
-                      value={tag.name}
-                      onChange={e => handleUpdateTag(i, e.target.value)}
-                      onBlur={() => setEditingTagIndex(null)}
-                      onKeyDown={e => e.key === 'Enter' && setEditingTagIndex(null)}
-                    />
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <div className="w-6 h-6 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)]">
-                          <Tag size={10} />
-                        </div>
-                        <span className="font-bold text-sm truncate">{tag.name}</span>
-                      </div>
-                      <div className="flex flex-col pl-8">
-                        <span className="text-[10px] font-mono text-neutral-400">{tag.id}</span>
-                        {tag.linkedAt && (
-                          <span className="text-[10px] text-neutral-400">Linked: {tag.linkedAt.toDate().toLocaleString()}</span>
-                        )}
-                        {tag.rssi !== undefined && (
-                          <span className="text-[10px] text-neutral-400">RSSI: {tag.rssi} dBm</span>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-1">
-                  <button 
-                    onClick={() => setEditingTagIndex(i)}
-                    className="p-2 text-neutral-400 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-all"
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  <button 
-                    onClick={() => handleRemoveTag(i)}
-                    className="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="pt-6 border-t border-[var(--outline)]">
+          <button
+            onClick={handleSave}
+            disabled={loading}
+            className="w-full bg-[var(--primary)] text-[var(--primary-foreground)] font-bold py-4 rounded-2xl shadow-lg shadow-[var(--primary)]/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {loading ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <><Save size={20} /> Save Object</>}
+          </button>
         </div>
-        {/* Add Error Dialog for upload errors */}
-        <UploadProgressDialog 
-          isOpen={uploadProgressState.isOpen}
-          step={uploadProgressState.step}
-          logs={uploadProgressState.logs}
-          error={uploadProgressState.error}
-          onClose={() => setUploadProgressState(prev => ({ ...prev, isOpen: false }))}
-        />
       </div>
+
+      <AnimatePresence>
+        {showWebcam && (
+          <WebcamCapture onCapture={(file) => { setShowWebcam(null); uploadToStorage(file, showWebcam); }} onCancel={() => setShowWebcam(null)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

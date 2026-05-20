@@ -12,17 +12,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import { auth, db, signInWithPopup, googleProvider, onAuthStateChanged, User, signOut } from './lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ThemeProvider, useTheme, ThemeColor, ThemeMode } from './context/ThemeContext';
-import { Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert, Beaker, PlaySquare, Route as RouteIcon } from 'lucide-react';
+import { Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert, Beaker, PlaySquare, Route as RouteIcon, Database } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'react-hot-toast';
 import Dashboard from './components/Dashboard';
 import SearchScreen from './components/SearchScreen';
 import CaptureForm from './components/CaptureForm';
+import UnassignedIdentifierScreen from './components/UnassignedIdentifierScreen';
 import LibraryDemoScreen from './components/LibraryDemoScreen';
 import Scanner from './components/Scanner';
 import Overview from './components/Overview';
 import AdminPanel from './components/AdminPanel';
+import { Navigate } from 'react-router-dom';
 import SitemapPage from './components/SitemapPage';
+import MigrationScreen from './components/MigrationScreen';
 import UserSettingsPanel from './components/UserSettingsPanel';
 import TestScreen from './components/TestScreen';
 import DemoScreen from './components/DemoScreen';
@@ -132,7 +135,7 @@ function AppContent() {
   };
 
   const handleDetected = (id: string) => {
-    navigate(`/item/${extractItemId(id)}`);
+    navigate(`/object/${extractItemId(id)}`);
   };
 
   const handleCancelScanner = () => {
@@ -257,6 +260,15 @@ function AppContent() {
                            <ShieldAlert size={16} className="text-amber-500" /> Admin Panel
                         </button>
                         <button
+                        onClick={() => {
+                          setShowProfile(false);
+                          navigate('/admin/migration');
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors mb-1"
+                     >
+                        <Database size={16} /> Data Migration
+                     </button>
+                     <button
                           onClick={() => {
                              setShowProfile(false);
                              navigate('/admin/sitemap');
@@ -327,6 +339,21 @@ function AppContent() {
             {isAdmin ? (
                <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                  <AdminPanel onClose={() => navigate('/')} />
+               </motion.div>
+            ) : (
+               <div className="p-12 mt-4 text-center bg-[var(--surface)] border border-red-500/20 rounded-2xl mx-4">
+                 <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                 <h2 className="text-xl font-bold text-red-500 mb-2">Access Denied</h2>
+                 <p className="text-[var(--on-surface-variant)]">You do not have permission to view this page.</p>
+               </div>
+            )}
+          </main>
+        } />
+        <Route path="/admin/migration" element={
+          <main className="flex-1 max-w-4xl mx-auto w-full">
+            {isAdmin ? (
+               <motion.div key="admin-migration" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                 <MigrationScreen onClose={() => navigate('/')} />
                </motion.div>
             ) : (
                <div className="p-12 mt-4 text-center bg-[var(--surface)] border border-red-500/20 rounded-2xl mx-4">
@@ -409,15 +436,24 @@ function NavButton({ active, onClick, icon, label }: { active: boolean, onClick:
 }
 
 
-function ItemCaptureRoute() {
+function ObjectCaptureRoute() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as { identifier?: any };
+
   return (
     <CaptureForm
-      itemId={id ? sanitizeItemId(id.toUpperCase()) : null}
+      objectId={id ? sanitizeItemId(id.toUpperCase()) : null}
+      initialIdentifier={state?.identifier}
       onClose={() => { navigate('/'); }}
     />
   );
+}
+
+function LegacyItemRedirect() {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/object/${id}`} replace />;
 }
 
 function MainLayout({ onDetected, onCancelScanner, showAppStatus, setShowAppStatus }: any) {
@@ -434,22 +470,28 @@ function MainLayout({ onDetected, onCancelScanner, showAppStatus, setShowAppStat
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={
               <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <Dashboard onSelectItem={(id) => { navigate(`/item/${encodeURIComponent(id)}`); }} />
+                <Dashboard onSelectItem={(id) => { navigate(`/object/${encodeURIComponent(id)}`); }} />
               </motion.div>
             } />
             <Route path="/search" element={
               <motion.div key="search" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <SearchScreen onSelectItem={(id) => { navigate(`/item/${encodeURIComponent(id)}`); }} />
+                <SearchScreen onSelectItem={(id) => { navigate(`/object/${encodeURIComponent(id)}`); }} />
               </motion.div>
             } />
-            <Route path="/item/new" element={
+            <Route path="/item/:id" element={<LegacyItemRedirect />} />
+            <Route path="/object/new" element={
               <motion.div key="capture-new" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <ItemCaptureRoute />
+                <ObjectCaptureRoute />
               </motion.div>
             } />
-            <Route path="/item/:id" element={
+            <Route path="/object/:id" element={
               <motion.div key="capture" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <ItemCaptureRoute />
+                <ObjectCaptureRoute />
+              </motion.div>
+            } />
+            <Route path="/unassigned" element={
+              <motion.div key="unassigned" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                <UnassignedIdentifierScreen />
               </motion.div>
             } />
             <Route path="/scanner" element={
@@ -481,7 +523,7 @@ function MainLayout({ onDetected, onCancelScanner, showAppStatus, setShowAppStat
           </button>
         </div>
         <NavButton active={currentPath === '/overview'} onClick={() => navigate('/overview')} icon={<BarChart3 size={24} />} label="Stats" />
-        <NavButton active={currentPath === '/item/new'} onClick={() => navigate('/item/new')} icon={<PlusCircle size={24} />} label="New" />
+        <NavButton active={currentPath === '/object/new'} onClick={() => navigate('/object/new')} icon={<PlusCircle size={24} />} label="New" />
       </nav>
 
       <AppStatusDialog
