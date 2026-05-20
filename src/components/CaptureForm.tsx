@@ -484,8 +484,15 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
     setLoading(true);
     try {
       const idRef = doc(db, 'identifiers', idr.identifierKey);
-      const bindId = buildActiveBindingId(objectId, idr.identifierKey);
-      const bindRef = doc(db, 'objectIdentifierBindings', bindId);
+
+      // We search for the current active binding because previous bindings might have used uuidv4
+      const q = query(
+        collection(db, 'objectIdentifierBindings'),
+        where('objectId', '==', objectId),
+        where('identifierKey', '==', idr.identifierKey),
+        where('status', '==', 'active')
+      );
+      const bindDocs = await getDocs(q);
 
       // Update identifier status to unassigned, remove objectId
       await updateDoc(idRef, {
@@ -495,12 +502,20 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       });
 
       // Update binding status to detached
-      await updateDoc(bindRef, {
-        status: 'detached',
-        detachedAt: serverTimestamp(),
-        detachedBy: auth.currentUser.uid,
-        updatedAt: serverTimestamp()
-      });
+      if (!bindDocs.empty) {
+        // Update existing active binding
+        const bindDoc = bindDocs.docs[0];
+        await updateDoc(bindDoc.ref, {
+          status: 'detached',
+          detachedAt: serverTimestamp(),
+          detachedBy: auth.currentUser.uid,
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        // If we didn't find an active one, it means there wasn't one recorded or it was lost in migration.
+        // We can just log an event to keep history consistent.
+        console.warn(`No active binding found to detach for ${idr.identifierKey}`);
+      }
 
       await recordEvent('identifier_detached', { identifierKey: idr.identifierKey });
 
