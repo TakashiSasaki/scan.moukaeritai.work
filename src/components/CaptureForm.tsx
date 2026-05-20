@@ -408,17 +408,27 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         if (initialIdentifier) {
            const idKey = buildIdentifierKey(initialIdentifier.kind, initialIdentifier.scheme, initialIdentifier.canonicalValue);
            const idRef = doc(db, 'identifiers', idKey);
-           await setDoc(idRef, {
-             identifierKey: idKey,
-             ownerId: auth.currentUser.uid,
-             objectId: data.objectId,
-             kind: initialIdentifier.kind,
-             scheme: initialIdentifier.scheme,
-             canonicalValue: initialIdentifier.canonicalValue,
-             status: 'active',
-             createdAt: serverTimestamp(),
-             updatedAt: serverTimestamp()
-           });
+
+           const idSnap = await getDoc(idRef);
+           if (idSnap.exists()) {
+             await updateDoc(idRef, {
+               objectId: data.objectId,
+               status: 'active',
+               updatedAt: serverTimestamp()
+             });
+           } else {
+             await setDoc(idRef, {
+               identifierKey: idKey,
+               ownerId: auth.currentUser.uid,
+               objectId: data.objectId,
+               kind: initialIdentifier.kind,
+               scheme: initialIdentifier.scheme,
+               canonicalValue: initialIdentifier.canonicalValue,
+               status: 'active',
+               createdAt: serverTimestamp(),
+               updatedAt: serverTimestamp()
+             });
+           }
 
            const bindId = uuidv4();
            await setDoc(doc(db, 'objectIdentifierBindings', bindId), {
