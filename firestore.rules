@@ -38,7 +38,9 @@ service cloud.firestore {
         && data.ownerId == request.auth.uid
         && (data.get('name', '') is string && data.get('name', '').size() <= 200)
         && (data.get('description', '') is string && data.get('description', '').size() <= 2000)
-        && data.get('status', 'active') in ['active', 'archived', 'lost', 'disposed'];
+        && data.get('status', 'active') in ['active', 'archived', 'lost', 'disposed']
+        && (!('currentLocation' in data) || (data.currentLocation is map && 'latitude' in data.currentLocation && 'longitude' in data.currentLocation))
+        && (!('identifierSummary' in data) || (data.identifierSummary is map && 'activeKinds' in data.identifierSummary && 'activeIdentifierCount' in data.identifierSummary));
     }
 
     match /objects/{objectId} {
@@ -49,6 +51,7 @@ service cloud.firestore {
         && isValidId(objectId)
         && incoming().objectId == objectId
         && isValidObjectBase(incoming())
+        && incoming().keys().hasOnly(['objectId', 'ownerId', 'name', 'description', 'status', 'currentLocation', 'primaryImageId', 'identifierSummary', 'legacy', 'createdAt', 'updatedAt'])
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
 
@@ -57,7 +60,8 @@ service cloud.firestore {
         && incoming().ownerId == existing().ownerId
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time
-        && isValidObjectBase(incoming());
+        && isValidObjectBase(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'status', 'currentLocation', 'primaryImageId', 'identifierSummary', 'updatedAt']);
 
       allow delete: if isOwner(existing().ownerId);
     }

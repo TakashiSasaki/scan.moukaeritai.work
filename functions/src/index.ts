@@ -312,6 +312,15 @@ export const migrateInventoryModel = onCall(async (request: any) => {
       if (!dryRun) {
         // 1. Create Object
         const objectRef = db.collection("objects").doc(itemId);
+
+        // Compute identifierSummary for migrated items to keep UI correct
+        const identifierSummary = {
+          activeKinds: ['qr'], // We create at least a QR for all legacy items
+          activeIdentifierCount: 1,
+          hasQr: true,
+          hasNfc: false // In this simplified migration we skipped NFC extraction
+        };
+
         batch.set(objectRef, {
           objectId: itemId,
           ownerId: item.ownerId,
@@ -319,6 +328,7 @@ export const migrateInventoryModel = onCall(async (request: any) => {
           description: item.description || '',
           status: 'active',
           currentLocation: item.location || null,
+          identifierSummary,
           createdAt: item.createdAt || admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: item.updatedAt || admin.firestore.FieldValue.serverTimestamp(),
           legacy: {
