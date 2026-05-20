@@ -61,8 +61,9 @@ export function extractIdentifierFromUrlOrText(scannedText: string): { kind: Ide
 }
 
 export function normalizeIdentifierInput(input: string, kind: IdentifierKind = 'qr', scheme: string = 'qr-plain-token'): { kind: IdentifierKind, scheme: string, canonicalValue: string } {
-  // Use extract for URLs, otherwise fallback to plain text.
-  if (kind === 'qr' && scheme.includes('url')) {
+  // Always attempt URL extraction for QR codes to handle legacy app URLs properly.
+  // extractIdentifierFromUrlOrText already handles falling back to plain-token format if it's not a valid URL.
+  if (kind === 'qr') {
     const extracted = extractIdentifierFromUrlOrText(input);
     if (extracted) {
       return extracted;
