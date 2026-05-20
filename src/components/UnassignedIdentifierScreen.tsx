@@ -64,20 +64,29 @@ export default function UnassignedIdentifierScreen() {
         const batch = writeBatch(db);
 
         // 1. Update/Create Identifier
-        batch.set(idRef, {
-           identifierKey: idKey,
-           ownerId: auth.currentUser.uid,
-           objectId: objectId,
-           kind: state.kind,
-           scheme: state.scheme,
-           canonicalValue: state.canonicalValue,
-           status: 'active',
-           createdAt: serverTimestamp(),
-           updatedAt: serverTimestamp()
-        }, { merge: true });
+        if (existingId) {
+            batch.update(idRef, {
+                objectId: objectId,
+                status: 'active',
+                updatedAt: serverTimestamp()
+            });
+        } else {
+            batch.set(idRef, {
+               identifierKey: idKey,
+               ownerId: auth.currentUser.uid,
+               objectId: objectId,
+               kind: state.kind,
+               scheme: state.scheme,
+               canonicalValue: state.canonicalValue,
+               status: 'active',
+               createdAt: serverTimestamp(),
+               updatedAt: serverTimestamp()
+            });
+        }
 
-        // 2. Create Binding (use merge in case we are refreshing an existing binding)
-        const bindingId = `${objectId}__${idKey}__active`;
+        // 2. Create Binding
+        // Create a unique bindingId to ensure we create a new append-only history record.
+        const bindingId = doc(collection(db, 'objectIdentifierBindings')).id;
         const bindingRef = doc(db, 'objectIdentifierBindings', bindingId);
         batch.set(bindingRef, {
            bindingId: bindingId,
@@ -89,7 +98,7 @@ export default function UnassignedIdentifierScreen() {
            attachedBy: auth.currentUser.uid,
            createdAt: serverTimestamp(),
            updatedAt: serverTimestamp()
-        }, { merge: true });
+        });
 
         // 3. Create Event (only if it wasn't already actively bound to this object)
         if (!existingId || existingId.objectId !== objectId || existingId.status !== 'active') {
@@ -117,17 +126,15 @@ export default function UnassignedIdentifierScreen() {
 
         // Add the new/updated one to the array if it's not already in it, or update it
         const currentIdx = allIdentifiers.findIndex(i => i.identifierKey === idKey);
-        const newIdentifier: IdentifierRecord = {
+        const newIdentifier = {
            identifierKey: idKey,
            ownerId: auth.currentUser.uid,
            objectId: objectId,
            kind: state.kind,
            scheme: state.scheme,
            canonicalValue: state.canonicalValue,
-           status: 'active',
-           createdAt: existingId?.createdAt || (new Date() as any),
-           updatedAt: new Date() as any
-        };
+           status: 'active' as const,
+        } as IdentifierRecord;
 
         if (currentIdx > -1) {
             allIdentifiers[currentIdx] = newIdentifier;
@@ -142,8 +149,9 @@ export default function UnassignedIdentifierScreen() {
 
         await batch.commit();
         navigate(`/object/${objectId}`);
-     } catch (error) {
+     } catch (error: any) {
         console.error("Error attaching identifier:", error);
+        toast.error(error?.message || "Failed to attach identifier");
      } finally {
         setIsAttaching(false);
      }
