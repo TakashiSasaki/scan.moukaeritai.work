@@ -81,8 +81,10 @@ service cloud.firestore {
         && incoming().canonicalValue is string && incoming().canonicalValue.size() <= 1000
         && (!('rawValue' in incoming()) || (incoming().rawValue is string && incoming().rawValue.size() <= 1000))
         && (!('label' in incoming()) || (incoming().label is string && incoming().label.size() <= 1000))
+        && (!('lastSeenAt' in incoming()) || incoming().lastSeenAt is timestamp)
         && incoming().status in ['active', 'unassigned', 'retired', 'lost', 'replaced']
         && (incoming().status in ['unassigned', 'retired', 'lost', 'replaced'] || ('objectId' in incoming() && incoming().objectId is string && incoming().objectId.size() <= 128))
+        && incoming().keys().hasOnly(['identifierKey', 'ownerId', 'objectId', 'kind', 'scheme', 'canonicalValue', 'rawValue', 'label', 'status', 'createdAt', 'updatedAt', 'lastSeenAt'])
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
 
@@ -95,6 +97,7 @@ service cloud.firestore {
         && incoming().canonicalValue == existing().canonicalValue
         && (!('rawValue' in incoming()) || (incoming().rawValue is string && incoming().rawValue.size() <= 1000))
         && (!('label' in incoming()) || (incoming().label is string && incoming().label.size() <= 1000))
+        && (!('lastSeenAt' in incoming()) || incoming().lastSeenAt is timestamp)
         && incoming().status in ['active', 'unassigned', 'retired', 'lost', 'replaced']
         && (incoming().status in ['unassigned', 'retired', 'lost', 'replaced'] || ('objectId' in incoming() && incoming().objectId is string && incoming().objectId.size() <= 128))
         && incoming().createdAt == existing().createdAt
@@ -116,6 +119,8 @@ service cloud.firestore {
         && incoming().attachedAt is timestamp
         && incoming().attachedBy is string
         && (incoming().status == 'active' || ('detachedAt' in incoming() && incoming().detachedAt is timestamp && 'detachedBy' in incoming() && incoming().detachedBy is string))
+        && (!('note' in incoming()) || (incoming().note is string && incoming().note.size() <= 2000))
+        && incoming().keys().hasOnly(['bindingId', 'ownerId', 'objectId', 'identifierKey', 'status', 'attachedAt', 'attachedBy', 'detachedAt', 'detachedBy', 'note', 'createdAt', 'updatedAt'])
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
       allow update: if isSignedIn()
@@ -139,12 +144,15 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && incoming().eventId == eventId
         && incoming().ownerId == request.auth.uid
+        && (!('objectId' in incoming()) || (incoming().objectId is string && incoming().objectId.size() <= 128))
+        && (!('identifierKey' in incoming()) || (incoming().identifierKey is string && incoming().identifierKey.size() <= 128))
         && incoming().actorUid == request.auth.uid
         && incoming().occurredAt == request.time
         && incoming().type in ['created', 'updated', 'scanned', 'located', 'image_added', 'image_removed', 'identifier_attached', 'identifier_detached', 'identifier_replaced', 'migrated']
         && (!('source' in incoming()) || incoming().source in ['qr', 'nfc', 'manual', 'camera', 'system', 'migration'])
         && (!('location' in incoming()) || (incoming().location is map && 'latitude' in incoming().location && incoming().location.latitude is number && incoming().location.latitude >= -90 && incoming().location.latitude <= 90 && 'longitude' in incoming().location && incoming().location.longitude is number && incoming().location.longitude >= -180 && incoming().location.longitude <= 180 && (!('address' in incoming().location) || (incoming().location.address is string && incoming().location.address.size() <= 1000))))
-        && (!('metadata' in incoming()) || incoming().metadata is map);
+        && (!('metadata' in incoming()) || incoming().metadata is map)
+        && incoming().keys().hasOnly(['eventId', 'ownerId', 'objectId', 'identifierKey', 'type', 'occurredAt', 'actorUid', 'source', 'location', 'metadata']);
       // Append only by default, but allow updates if needed for some logic (mostly no).
       allow update, delete: if isAdmin();
     }
