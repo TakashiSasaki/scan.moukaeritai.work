@@ -193,7 +193,7 @@ export default function UnassignedIdentifierScreen() {
                   >
                      <div className="w-12 h-12 bg-[var(--surface-container-highest)] rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden">
                         {obj.primaryImageUrl ? (
-                           <img src={obj.primaryImageUrl} alt="" className="w-full h-full object-cover" />
+                           <img src={obj.primaryImageUrl} alt={obj.name || 'Object'} className="w-full h-full object-cover" />
                         ) : (
                            <Package className="text-[var(--on-surface-variant)]" size={20} />
                         )}
