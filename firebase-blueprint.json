@@ -10,8 +10,8 @@
           "description": "The unique ID matching the document ID."
         },
         "name": {
-          "type": "string",
-          "description": "Short name of the object."
+          "description": "Short name of the object.",
+          "type": "string"
         },
         "description": {
           "type": "string",
@@ -53,6 +53,20 @@
         "primaryImageUrl": {
           "type": "string",
           "description": "Denormalized URL for fast list view rendering."
+        },
+        "legacy": {
+          "type": "object",
+          "properties": {
+            "sourceCollection": {
+              "type": "string",
+              "enum": [
+                "items"
+              ]
+            },
+            "legacyItemId": {
+              "type": "string"
+            }
+          }
         }
       },
       "required": [
@@ -312,6 +326,21 @@
         },
         "createdBy": {
           "type": "string"
+        },
+        "legacy": {
+          "type": "object",
+          "properties": {
+            "sourceField": {
+              "type": "string",
+              "enum": [
+                "mainImageUrl",
+                "contextImageUrls"
+              ]
+            },
+            "sourceUrl": {
+              "type": "string"
+            }
+          }
         }
       },
       "required": [
@@ -415,8 +444,8 @@
       "description": "Storage metadata for images."
     },
     "/items/{itemId}": {
-      "schema": "Item",
-      "description": "Legacy items collection, preserved for migration and backward compatibility."
+      "schema": "LegacyItem",
+      "description": "Legacy collection retained only for migration and backward compatibility."
     },
     "/users/{userId}": {
       "schema": "User",
