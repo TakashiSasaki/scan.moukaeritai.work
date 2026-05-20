@@ -242,9 +242,9 @@ The application has transitioned from a simple `items` collection to a normalize
     - `objects.identifierSummary` is denormalized and should be recomputed from active identifiers when needed.
     - `objects.primaryImageUrl` is denormalized and should be kept in sync with the primary `objectImages` record.
   - **`identifiers`**: Represents a physical tag (QR, NFC) or a logical code (barcode, manual). One object can have zero or more identifiers. One identifier can have at most one active object.
-  - **`objectIdentifierBindings`**: Historical log of attachments, replacements, or detachments between objects and identifiers. Active binding records use deterministic IDs formatted as `${objectId}__${identifierKey}__active` to prevent accumulating duplicate active rows.
+  - **`objectIdentifierBindings`**: Stores canonical relationship state between objects and identifiers. Active binding records use deterministic IDs formatted as `${objectId}__${identifierKey}__active`. There must be at most one active binding for a given `(objectId, identifierKey)` pair. Repeated attach of the same identifier to the same object should be idempotent. Reassignment to another object must be explicit and must record events. *Note: Client code should not rely on direct missing-document reads (`getDoc()`) for `objectIdentifierBindings` without checking rules, instead use owner-scoped queries.*
   - **`objectImages`**: The normalized image metadata collection, replacing embedded arrays of URLs.
-  - **`objectEvents`**: An append-only event log for normal clients tracking operations like creation, updates, and scanning.
+  - **`objectEvents`**: An append-only event log for normal clients tracking operations like creation, updates, scanning, migration, image attachment, and historical log of attachments, replacements, or detachments between objects and identifiers.
 
 - **Identifier Management**:
   - `CaptureForm` is now responsible for active identifier management (Adding and Detaching).
@@ -253,6 +253,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - Direct NFC attachment is scanner-driven, handled outside of `CaptureForm`. Users should be directed to the scanner flow for NFC identifiers.
 - **Migration**:
   - A dedicated admin-only Cloud Function (`migrateInventoryModel`) safely translates legacy `items` into the normalized collections: `objects`, `identifiers`, `objectIdentifierBindings`, `objectImages`, and `objectEvents`.
+  - Missing `currentLocation` is represented by field absence, not by `null`.
   - The UI provides a `/admin/migration` page to run a Dry Run and an Execute phase.
   - **Non-destructive**: Migration does not delete legacy items or Storage files. Legacy `items` are kept intact. If the app tries to load a legacy item that isn't migrated, the user is warned to run the migration first.
   - **Idempotency**: Migration should be idempotent per target record, allowing safe re-runs.

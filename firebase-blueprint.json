@@ -187,7 +187,7 @@
     },
     "ObjectIdentifierBindingRecord": {
       "title": "Object Identifier Binding Record",
-      "description": "Historical record of identifier attachment/detachment.",
+      "description": "Canonical active relationship state linking an object to an identifier.",
       "type": "object",
       "properties": {
         "bindingId": {
@@ -466,7 +466,7 @@
     },
     "/objectIdentifierBindings/{bindingId}": {
       "schema": "ObjectIdentifierBindingRecord",
-      "description": "Historical attachments of identifiers to objects."
+      "description": "Canonical relationship state between objects and identifiers."
     },
     "/objectEvents/{eventId}": {
       "schema": "ObjectEventRecord",
