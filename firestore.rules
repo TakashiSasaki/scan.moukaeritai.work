@@ -39,8 +39,8 @@ service cloud.firestore {
         && (data.get('name', '') is string && data.get('name', '').size() <= 200)
         && (data.get('description', '') is string && data.get('description', '').size() <= 2000)
         && data.get('status', 'active') in ['active', 'archived', 'lost', 'disposed']
-        && (!('currentLocation' in data) || (data.currentLocation is map && 'latitude' in data.currentLocation && 'longitude' in data.currentLocation))
-        && (!('identifierSummary' in data) || (data.identifierSummary is map && 'activeKinds' in data.identifierSummary && 'activeIdentifierCount' in data.identifierSummary));
+        && (!('currentLocation' in data) || (data.currentLocation is map && 'latitude' in data.currentLocation && data.currentLocation.latitude is number && data.currentLocation.latitude >= -90 && data.currentLocation.latitude <= 90 && 'longitude' in data.currentLocation && data.currentLocation.longitude is number && data.currentLocation.longitude >= -180 && data.currentLocation.longitude <= 180 && (!('address' in data.currentLocation) || (data.currentLocation.address is string && data.currentLocation.address.size() <= 1000)) && (!('updatedAt' in data.currentLocation) || data.currentLocation.updatedAt is timestamp)))
+        && (!('identifierSummary' in data) || (data.identifierSummary is map && 'activeKinds' in data.identifierSummary && data.identifierSummary.activeKinds is list && 'activeIdentifierCount' in data.identifierSummary && data.identifierSummary.activeIdentifierCount is number && data.identifierSummary.activeIdentifierCount >= 0 && (!('hasQr' in data.identifierSummary) || data.identifierSummary.hasQr is bool) && (!('hasNfc' in data.identifierSummary) || data.identifierSummary.hasNfc is bool)));
     }
 
     match /objects/{objectId} {
@@ -51,7 +51,7 @@ service cloud.firestore {
         && isValidId(objectId)
         && incoming().objectId == objectId
         && isValidObjectBase(incoming())
-        && incoming().keys().hasOnly(['objectId', 'ownerId', 'name', 'description', 'status', 'currentLocation', 'primaryImageId', 'identifierSummary', 'legacy', 'createdAt', 'updatedAt'])
+        && incoming().keys().hasOnly(['objectId', 'ownerId', 'name', 'description', 'status', 'currentLocation', 'primaryImageId', 'primaryImageUrl', 'identifierSummary', 'legacy', 'createdAt', 'updatedAt'])
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
 
@@ -61,7 +61,7 @@ service cloud.firestore {
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time
         && isValidObjectBase(incoming())
-        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'status', 'currentLocation', 'primaryImageId', 'identifierSummary', 'updatedAt']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'status', 'currentLocation', 'primaryImageId', 'primaryImageUrl', 'identifierSummary', 'updatedAt']);
 
       allow delete: if isOwner(existing().ownerId);
     }
@@ -76,17 +76,29 @@ service cloud.firestore {
         && incoming().identifierKey == identifierKey
         && incoming().ownerId == request.auth.uid
         && incoming().kind in ['qr', 'nfc', 'manual', 'barcode', 'bluetooth']
-        && incoming().scheme is string
-        && incoming().canonicalValue is string
+        && incoming().scheme is string && incoming().scheme.size() <= 1000
+        && incoming().canonicalValue is string && incoming().canonicalValue.size() <= 1000
+        && (!('rawValue' in incoming()) || (incoming().rawValue is string && incoming().rawValue.size() <= 1000))
+        && (!('label' in incoming()) || (incoming().label is string && incoming().label.size() <= 1000))
         && incoming().status in ['active', 'unassigned', 'retired', 'lost', 'replaced']
+        && (incoming().status in ['unassigned', 'retired', 'lost', 'replaced'] || ('objectId' in incoming() && incoming().objectId is string && incoming().objectId.size() <= 128))
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
 
       allow update: if isSignedIn()
         && isOwner(existing().ownerId)
+        && incoming().identifierKey == identifierKey
         && incoming().ownerId == existing().ownerId
+        && incoming().kind == existing().kind
+        && incoming().scheme == existing().scheme
+        && incoming().canonicalValue == existing().canonicalValue
+        && (!('rawValue' in incoming()) || (incoming().rawValue is string && incoming().rawValue.size() <= 1000))
+        && (!('label' in incoming()) || (incoming().label is string && incoming().label.size() <= 1000))
+        && incoming().status in ['active', 'unassigned', 'retired', 'lost', 'replaced']
+        && (incoming().status in ['unassigned', 'retired', 'lost', 'replaced'] || ('objectId' in incoming() && incoming().objectId is string && incoming().objectId.size() <= 128))
         && incoming().createdAt == existing().createdAt
-        && incoming().updatedAt == request.time;
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['objectId', 'status', 'label', 'rawValue', 'updatedAt', 'lastSeenAt']);
 
       allow delete: if isOwner(existing().ownerId);
     }
@@ -95,24 +107,43 @@ service cloud.firestore {
     match /objectIdentifierBindings/{bindingId} {
       allow read: if isOwner(existing().ownerId);
       allow create: if isSignedIn()
+        && incoming().bindingId == bindingId
         && incoming().ownerId == request.auth.uid
+        && incoming().objectId is string
+        && incoming().identifierKey is string
         && incoming().status in ['active', 'detached', 'replaced']
+        && incoming().attachedAt is timestamp
+        && incoming().attachedBy is string
+        && (incoming().status == 'active' || ('detachedAt' in incoming() && incoming().detachedAt is timestamp && 'detachedBy' in incoming() && incoming().detachedBy is string))
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
       allow update: if isSignedIn()
         && isOwner(existing().ownerId)
+        && incoming().bindingId == bindingId
         && incoming().ownerId == existing().ownerId
+        && incoming().objectId == existing().objectId
+        && incoming().identifierKey == existing().identifierKey
+        && incoming().attachedAt == existing().attachedAt
+        && incoming().attachedBy == existing().attachedBy
+        && incoming().status in ['active', 'detached', 'replaced']
+        && (incoming().status == 'active' || ('detachedAt' in incoming() && incoming().detachedAt is timestamp && 'detachedBy' in incoming() && incoming().detachedBy is string))
         && incoming().createdAt == existing().createdAt
-        && incoming().updatedAt == request.time;
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'detachedAt', 'detachedBy', 'note', 'updatedAt']);
     }
 
     // --- OBJECT EVENTS ---
     match /objectEvents/{eventId} {
       allow read: if isOwner(existing().ownerId);
       allow create: if isSignedIn()
+        && incoming().eventId == eventId
         && incoming().ownerId == request.auth.uid
         && incoming().actorUid == request.auth.uid
-        && incoming().occurredAt == request.time;
+        && incoming().occurredAt == request.time
+        && incoming().type in ['created', 'updated', 'scanned', 'located', 'image_added', 'image_removed', 'identifier_attached', 'identifier_detached', 'identifier_replaced', 'migrated']
+        && (!('source' in incoming()) || incoming().source in ['qr', 'nfc', 'manual', 'camera', 'system', 'migration'])
+        && (!('location' in incoming()) || (incoming().location is map && 'latitude' in incoming().location && incoming().location.latitude is number && incoming().location.latitude >= -90 && incoming().location.latitude <= 90 && 'longitude' in incoming().location && incoming().location.longitude is number && incoming().location.longitude >= -180 && incoming().location.longitude <= 180 && (!('address' in incoming().location) || (incoming().location.address is string && incoming().location.address.size() <= 1000))))
+        && (!('metadata' in incoming()) || incoming().metadata is map);
       // Append only by default, but allow updates if needed for some logic (mostly no).
       allow update, delete: if isAdmin();
     }
@@ -121,13 +152,26 @@ service cloud.firestore {
     match /objectImages/{imageId} {
       allow read: if isOwner(existing().ownerId);
       allow create: if isSignedIn()
+        && incoming().imageId == imageId
         && incoming().ownerId == request.auth.uid
+        && incoming().objectId is string && incoming().objectId.size() <= 128
         && incoming().role in ['primary', 'context', 'label', 'detail']
-        && incoming().createdAt == request.time;
+        && (('storagePath' in incoming() && incoming().storagePath is string && incoming().storagePath.size() <= 1000) || ('downloadUrl' in incoming() && incoming().downloadUrl is string && incoming().downloadUrl.size() <= 1000))
+        && (!('contentType' in incoming()) || (incoming().contentType is string && incoming().contentType.size() <= 100))
+        && (!('sizeBytes' in incoming()) || incoming().sizeBytes is number)
+        && (!('width' in incoming()) || incoming().width is number)
+        && (!('height' in incoming()) || incoming().height is number)
+        && (!('sortOrder' in incoming()) || incoming().sortOrder is number)
+        && incoming().createdAt == request.time
+        && incoming().createdBy == request.auth.uid;
       allow update: if isSignedIn()
         && isOwner(existing().ownerId)
+        && incoming().imageId == imageId
         && incoming().ownerId == existing().ownerId
-        && incoming().createdAt == existing().createdAt;
+        && incoming().objectId == existing().objectId
+        && incoming().createdAt == existing().createdAt
+        && incoming().createdBy == existing().createdBy
+        && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'storagePath', 'downloadUrl', 'contentType', 'sizeBytes', 'width', 'height', 'sortOrder']);
       allow delete: if isOwner(existing().ownerId);
     }
 

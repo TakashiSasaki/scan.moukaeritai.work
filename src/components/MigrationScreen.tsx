@@ -121,7 +121,7 @@ export default function MigrationScreen({ onClose }: { onClose?: () => void }) {
             </div>
 
             <h4 className="font-bold text-sm text-[var(--on-surface-variant)] uppercase tracking-widest mt-6">Records Created {hasDryRun && !stats.objectsCreated ? '(Planned)' : ''}</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="bg-[var(--surface)] p-4 rounded-2xl border border-[var(--outline)] flex flex-col justify-between">
                 <span className="text-xs font-bold text-[var(--on-surface-variant)]">Objects</span>
                 <span className="text-2xl font-black text-blue-500">{stats.objectsCreated}</span>
@@ -129,6 +129,10 @@ export default function MigrationScreen({ onClose }: { onClose?: () => void }) {
               <div className="bg-[var(--surface)] p-4 rounded-2xl border border-[var(--outline)] flex flex-col justify-between">
                 <span className="text-xs font-bold text-[var(--on-surface-variant)]">Identifiers</span>
                 <span className="text-2xl font-black text-emerald-500">{stats.identifiersCreated}</span>
+              </div>
+              <div className="bg-[var(--surface)] p-4 rounded-2xl border border-[var(--outline)] flex flex-col justify-between">
+                <span className="text-xs font-bold text-[var(--on-surface-variant)]">Bindings</span>
+                <span className="text-2xl font-black text-cyan-500">{stats.bindingsCreated || 0}</span>
               </div>
               <div className="bg-[var(--surface)] p-4 rounded-2xl border border-[var(--outline)] flex flex-col justify-between">
                 <span className="text-xs font-bold text-[var(--on-surface-variant)]">Images</span>

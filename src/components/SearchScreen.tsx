@@ -174,10 +174,18 @@ export default function SearchScreen({ onSelectItem }: SearchScreenProps) {
                 }`}
               >
                 <div className="w-20 h-20 rounded-xl bg-[var(--surface-container-high)] flex-shrink-0 overflow-hidden relative border border-[var(--outline)] shadow-inner">
-                  {/* Image fallback for unmigrated objects */}
-                  <div className="w-full h-full flex items-center justify-center text-[var(--on-surface-variant)] opacity-30">
-                    <Package size={28} />
-                  </div>
+                  {obj.primaryImageUrl ? (
+                    <img
+                      src={obj.primaryImageUrl}
+                      alt={obj.name || 'Object'}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[var(--on-surface-variant)] opacity-30">
+                      <Package size={28} />
+                    </div>
+                  )}
                   {isVisualSearching && index === 0 && (
                     <div className="absolute top-1 right-1 bg-[var(--primary)] text-[var(--primary-foreground)] p-1 rounded-full shadow-lg">
                       <Sparkles size={10} />

@@ -1,3 +1,4 @@
+import { normalizeObjectId } from './objectSummaries';
 export type IdentifierKind = 'qr' | 'nfc' | 'manual' | 'barcode' | 'bluetooth';
 
 export function buildIdentifierKey(kind: IdentifierKind, scheme: string, canonicalValue: string): string {
@@ -19,7 +20,7 @@ export function extractIdentifierFromUrlOrText(scannedText: string): { kind: Ide
 
       // Handle /item/:id
       if (pathSegments.length >= 2 && pathSegments[0] === 'item') {
-        const itemId = pathSegments[1].toUpperCase();
+        const itemId = normalizeObjectId(pathSegments[1]);
         return {
           kind: 'qr',
           scheme: 'qr-url-token',
@@ -29,7 +30,7 @@ export function extractIdentifierFromUrlOrText(scannedText: string): { kind: Ide
 
       // Handle /object/:id
       if (pathSegments.length >= 2 && pathSegments[0] === 'object') {
-        const objectId = pathSegments[1].toUpperCase();
+        const objectId = normalizeObjectId(pathSegments[1]);
         return {
           kind: 'qr',
           scheme: 'qr-url-token',

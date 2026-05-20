@@ -158,11 +158,18 @@ export default function Dashboard({ onSelectItem }: DashboardProps) {
                 tabIndex={0}
                 className="m3-card p-3 flex gap-4 text-left active:scale-[0.98] transition-all cursor-pointer overflow-hidden"
               >
-                {/* Fallback to legacy primaryImageUrl if it exists until all are fully migrated */}
-                {/* For fully migrated objects, we would resolve the ObjectImageRecord but for list view, we might need a denormalized URL */}
-                <div className="w-24 h-24 bg-[var(--surface-container-high)] rounded-2xl flex items-center justify-center text-[var(--on-surface-variant)] flex-shrink-0">
-                  <Package size={32} opacity={0.3} />
-                </div>
+                {obj.primaryImageUrl ? (
+                  <img
+                    src={obj.primaryImageUrl}
+                    alt={obj.name || 'Object'}
+                    className="w-24 h-24 object-cover rounded-2xl bg-[var(--surface-container-high)] flex-shrink-0"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-24 h-24 bg-[var(--surface-container-high)] rounded-2xl flex items-center justify-center text-[var(--on-surface-variant)] flex-shrink-0">
+                    <Package size={32} opacity={0.3} />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
                   <div className="flex justify-between items-start">
                     <div className="min-w-0 pr-2">
