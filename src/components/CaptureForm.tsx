@@ -583,10 +583,10 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         });
         await recordEvent('created');
 
-        // If we came from scanning an unassigned tag, bind it now
-        if (initialIdentifier) {
-           const idKey = buildIdentifierKey(initialIdentifier.kind, initialIdentifier.scheme, initialIdentifier.canonicalValue);
-           const idRef = doc(db, 'identifiers', idKey);
+        // Bind any identifiers that were added while in "New Object" mode
+        // including the initialIdentifier (which is already added to activeIdentifiers list above)
+        for (const idr of activeIdentifiers) {
+           const idRef = doc(db, 'identifiers', idr.identifierKey);
 
            const idSnap = await getDoc(idRef);
            if (idSnap.exists()) {
@@ -597,25 +597,25 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
              });
            } else {
              await setDoc(idRef, {
-               identifierKey: idKey,
+               identifierKey: idr.identifierKey,
                ownerId: auth.currentUser.uid,
                objectId: data.objectId,
-               kind: initialIdentifier.kind,
-               scheme: initialIdentifier.scheme,
-               canonicalValue: initialIdentifier.canonicalValue,
+               kind: idr.kind,
+               scheme: idr.scheme,
+               canonicalValue: idr.canonicalValue,
                status: 'active',
                createdAt: serverTimestamp(),
                updatedAt: serverTimestamp()
              });
            }
 
-           const bindId = buildActiveBindingId(data.objectId, idKey);
+           const bindId = buildActiveBindingId(data.objectId!, idr.identifierKey);
            await setDoc(
              doc(db, 'objectIdentifierBindings', bindId),
-             buildActiveBindingRecord(bindId, auth.currentUser.uid, data.objectId, idKey, auth.currentUser.uid),
+             buildActiveBindingRecord(bindId, auth.currentUser.uid, data.objectId!, idr.identifierKey, auth.currentUser.uid),
              { merge: true }
            );
-           await recordEvent('identifier_attached', { identifierKey: idKey });
+           await recordEvent('identifier_attached', { identifierKey: idr.identifierKey });
         }
       } else {
         // Update
