@@ -443,7 +443,7 @@
       "description": "Storage metadata for images."
     },
     "/items/{itemId}": {
-      "schema": "Item",
+      "schema": "LegacyItem",
       "description": "Legacy collection retained only for migration and backward compatibility."
     },
     "/users/{userId}": {

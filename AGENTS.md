@@ -246,7 +246,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - **`objectImages`**: The normalized image metadata collection, replacing embedded arrays of URLs.
   - **`objectEvents`**: An append-only event log for normal clients tracking operations like creation, updates, and scanning.
 - **Migration**:
-  - A dedicated admin-only Cloud Function (`migrateInventoryModel`) safely translates legacy `items` into the normalized collections: `objects`, `identifiers`, `bindings`, `images`, and `events`.
+  - A dedicated admin-only Cloud Function (`migrateInventoryModel`) safely translates legacy `items` into the normalized collections: `objects`, `identifiers`, `objectIdentifierBindings`, `objectImages`, and `objectEvents`.
   - The UI provides a `/admin/migration` page to run a Dry Run and an Execute phase.
   - **Non-destructive**: Migration does not delete legacy items or Storage files. Legacy `items` are kept intact. If the app tries to load a legacy item that isn't migrated, the user is warned to run the migration first.
   - **Idempotency**: Migration should be idempotent per target record, allowing safe re-runs.
