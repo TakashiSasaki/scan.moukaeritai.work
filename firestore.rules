@@ -31,7 +31,107 @@ service cloud.firestore {
       return resource.data;
     }
 
-    // --- ITEM VALIDATION ---
+    // --- OBJECTS ---
+    function isValidObjectBase(data) {
+      return data.keys().hasAll(['objectId', 'ownerId', 'createdAt', 'updatedAt'])
+        && data.objectId is string && data.objectId.size() <= 128
+        && data.ownerId == request.auth.uid
+        && (data.get('name', '') is string && data.get('name', '').size() <= 200)
+        && (data.get('description', '') is string && data.get('description', '').size() <= 2000)
+        && data.get('status', 'active') in ['active', 'archived', 'lost', 'disposed']
+        && (!('currentLocation' in data) || (data.currentLocation is map && 'latitude' in data.currentLocation && 'longitude' in data.currentLocation))
+        && (!('identifierSummary' in data) || (data.identifierSummary is map && 'activeKinds' in data.identifierSummary && 'activeIdentifierCount' in data.identifierSummary));
+    }
+
+    match /objects/{objectId} {
+      allow get: if isOwner(existing().ownerId);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(objectId)
+        && incoming().objectId == objectId
+        && isValidObjectBase(incoming())
+        && incoming().keys().hasOnly(['objectId', 'ownerId', 'name', 'description', 'status', 'currentLocation', 'primaryImageId', 'identifierSummary', 'legacy', 'createdAt', 'updatedAt'])
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn()
+        && isOwner(existing().ownerId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isValidObjectBase(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'status', 'currentLocation', 'primaryImageId', 'identifierSummary', 'updatedAt']);
+
+      allow delete: if isOwner(existing().ownerId);
+    }
+
+    // --- IDENTIFIERS ---
+    match /identifiers/{identifierKey} {
+      allow get: if isSignedIn() && (existing() == null || existing().ownerId == request.auth.uid);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(identifierKey)
+        && incoming().identifierKey == identifierKey
+        && incoming().ownerId == request.auth.uid
+        && incoming().kind in ['qr', 'nfc', 'manual', 'barcode', 'bluetooth']
+        && incoming().scheme is string
+        && incoming().canonicalValue is string
+        && incoming().status in ['active', 'unassigned', 'retired', 'lost', 'replaced']
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn()
+        && isOwner(existing().ownerId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time;
+
+      allow delete: if isOwner(existing().ownerId);
+    }
+
+    // --- OBJECT IDENTIFIER BINDINGS ---
+    match /objectIdentifierBindings/{bindingId} {
+      allow read: if isOwner(existing().ownerId);
+      allow create: if isSignedIn()
+        && incoming().ownerId == request.auth.uid
+        && incoming().status in ['active', 'detached', 'replaced']
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isOwner(existing().ownerId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time;
+    }
+
+    // --- OBJECT EVENTS ---
+    match /objectEvents/{eventId} {
+      allow read: if isOwner(existing().ownerId);
+      allow create: if isSignedIn()
+        && incoming().ownerId == request.auth.uid
+        && incoming().actorUid == request.auth.uid
+        && incoming().occurredAt == request.time;
+      // Append only by default, but allow updates if needed for some logic (mostly no).
+      allow update, delete: if isAdmin();
+    }
+
+    // --- OBJECT IMAGES ---
+    match /objectImages/{imageId} {
+      allow read: if isOwner(existing().ownerId);
+      allow create: if isSignedIn()
+        && incoming().ownerId == request.auth.uid
+        && incoming().role in ['primary', 'context', 'label', 'detail']
+        && incoming().createdAt == request.time;
+      allow update: if isSignedIn()
+        && isOwner(existing().ownerId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt;
+      allow delete: if isOwner(existing().ownerId);
+    }
+
+    // --- LEGACY ITEMS (Read-only or admin for migration, or owner for backward compat) ---
     function isValidItemBase(data) {
       return data.keys().hasAll(['id', 'ownerId', 'createdAt', 'updatedAt'])
         && data.id is string && data.id.size() <= 1024
@@ -45,8 +145,8 @@ service cloud.firestore {
     }
 
     match /items/{itemId} {
-      allow get: if isOwner(existing().ownerId);
-      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow get: if isOwner(existing().ownerId) || isAdmin();
+      allow list: if (isSignedIn() && resource.data.ownerId == request.auth.uid) || isAdmin();
       
       allow create: if isSignedIn() 
         && isValidId(itemId)
@@ -62,7 +162,7 @@ service cloud.firestore {
         && isValidItemBase(incoming())
         && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'mainImageUrl', 'contextImageUrls', 'bluetoothTags', 'tagType', 'updatedAt', 'location']);
 
-      allow delete: if isOwner(existing().ownerId);
+      allow delete: if isOwner(existing().ownerId) || isAdmin();
     }
 
     // --- USER PROFILE ---
@@ -84,8 +184,6 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if isSignedIn();
-      // Users can only update their own profile, but they cannot give themselves the admin role.
-      // Easiest is to only allow 'role' updates if they are already an admin, or force it to 'user'
       allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && incoming().get('role', 'user') == 'user';
       allow update: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && (incoming().get('role', 'user') == existing().get('role', 'user') || isAdmin());
     }
@@ -98,9 +196,7 @@ service cloud.firestore {
     }
 
     match /admins/{adminId} {
-      // Only admins can see who else is an admin
       allow read: if isAdmin() || request.auth.uid == adminId;
-      // Only existing admins can grant/revoke admin rights
       allow write: if isAdmin() && isValidAdmin(incoming());
     }
   }

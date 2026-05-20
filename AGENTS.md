@@ -208,3 +208,21 @@ To support the creation of small, efficient QR codes that link directly to items
 - **Case Insensitivity**: Firestore document IDs are inherently case-sensitive. Therefore, to ensure that scanned alphanumeric URLs correctly map to the existing items, **all item IDs in the system must be normalized and treated as uppercase**.
 - **URL Extraction**: When scanning a QR code, the result might be a full URL instead of a plain ID. The application must extract the ID from the URL (via query parameters or the final path segment) and convert it to uppercase (`.toUpperCase()`) before using it for routing or Firestore lookups.
 - **Generation**: Newly generated item IDs MUST always be exclusively uppercase (e.g., `ITEM-XYZ123`).
+
+## 17. Data Model Redesign (Objects & Identifiers)
+
+The application has transitioned from a simple `items` collection to a normalized data model separating physical objects from their identifiers.
+
+- **Data Model Core Principles**:
+  - **`objects`**: Represents a real-world physical entity. (Replaces legacy `items`).
+  - **`identifiers`**: Represents a physical tag (QR, NFC) or a logical code (barcode, manual). A single object can have multiple active identifiers. An identifier can point to at most one active object.
+  - **`objectIdentifierBindings`**: Historical log of attachments, replacements, or detachments between objects and identifiers.
+  - **`objectImages`**: Centralized tracking for all object images (primary, context, etc.), replacing embedded arrays of URLs.
+  - **`objectEvents`**: An append-only event log tracking operations like creation, updates, and scanning.
+- **Migration**:
+  - A dedicated admin-only Cloud Function (`migrateInventoryModel`) safely translates legacy `items` into the normalized collections.
+  - The UI provides a `/admin/migration` page to run a Dry Run and an Execute phase.
+  - Legacy `items` are kept intact during the migration. If the app tries to load a legacy item that isn't migrated, the user is warned to run the migration first.
+- **Source of Truth**:
+  - `firebase-blueprint.json` defines the new schema boundaries.
+  - Always prefer resolving an identifier via the `identifiers` collection rather than blindly treating a scanned payload as an `objectId`.

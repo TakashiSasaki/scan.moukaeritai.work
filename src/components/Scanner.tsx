@@ -1,13 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { X, Camera, Nfc, RefreshCw } from 'lucide-react';
+import { db, auth } from '../lib/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import { normalizeIdentifierInput, buildIdentifierKey } from '../lib/identifiers';
+import { ObjectEventRecord } from '../types';
+import { v4 as uuidv4 } from 'uuid';
+import toast from 'react-hot-toast';
 
 interface ScannerProps {
-  onDetected: (id: string) => void;
+  onDetected?: (id: string) => void; // Legacy callback, we will handle internally
   onCancel: () => void;
 }
 
-export default function Scanner({ onDetected, onCancel }: ScannerProps) {
+export default function Scanner({ onCancel }: ScannerProps) {
+  const navigate = useNavigate();
   const [useNfc, setUseNfc] = useState(false);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const qrCodeRef = useRef<Html5Qrcode | null>(null);
@@ -36,7 +44,7 @@ export default function Scanner({ onDetected, onCancel }: ScannerProps) {
               qrbox: { width: 250, height: 250 }
             },
             (decodedText) => {
-              if (isMounted) onDetected(decodedText);
+              if (isMounted) handleDetected(decodedText, 'qr');
             },
             () => {
               // Error callback for non-scans (ignore)
@@ -94,7 +102,7 @@ export default function Scanner({ onDetected, onCancel }: ScannerProps) {
       // Adding a small delay to ensure DOM is available for video to handle its own cleanup internally
       setTimeout(cleanup, 100);
     };
-  }, [onDetected]);
+  }, []);
 
   const handleNfcScan = async () => {
     if ('NDEFReader' in window) {
@@ -105,7 +113,7 @@ export default function Scanner({ onDetected, onCancel }: ScannerProps) {
         await ndef.scan();
         
         ndef.addEventListener("reading", ({ serialNumber }: any) => {
-          onDetected(serialNumber);
+          handleDetected(serialNumber, 'nfc', 'nfc-uid');
           setUseNfc(false);
         });
       } catch (error) {
@@ -115,6 +123,75 @@ export default function Scanner({ onDetected, onCancel }: ScannerProps) {
       }
     } else {
       alert("NFC is not supported on this browser or device.");
+    }
+  };
+
+  const handleDetected = async (scannedValue: string, kind: 'qr' | 'nfc', defaultScheme?: string) => {
+    if (!auth.currentUser) return;
+
+    // Attempt to stop the scanner to prevent double-reads
+    try {
+      if (qrCodeRef.current?.isScanning) {
+        await qrCodeRef.current.stop();
+      }
+    } catch (e) {
+      // Ignore stop errors
+    }
+
+    toast.loading('Resolving tag...', { id: 'resolveTag' });
+
+    try {
+      // 1. Normalize the identifier
+      const schemeToUse = defaultScheme || (kind === 'qr' ? 'qr-plain-token' : 'nfc-uid');
+      const identifierData = normalizeIdentifierInput(scannedValue, kind, schemeToUse);
+      const identifierKey = buildIdentifierKey(identifierData.kind, identifierData.scheme, identifierData.canonicalValue);
+
+      // 2. Lookup in Identifiers Collection
+      const idRef = doc(db, 'identifiers', identifierKey);
+      const idSnap = await getDoc(idRef);
+
+      if (idSnap.exists()) {
+        const idRecord = idSnap.data();
+
+        if (idRecord.status === 'active' && idRecord.objectId) {
+          // Log scan event
+          const eventId = uuidv4();
+          await setDoc(doc(db, 'objectEvents', eventId), {
+            eventId,
+            ownerId: auth.currentUser.uid,
+            objectId: idRecord.objectId,
+            identifierKey,
+            type: 'scanned',
+            occurredAt: serverTimestamp(),
+            actorUid: auth.currentUser.uid,
+            source: kind
+          } as ObjectEventRecord);
+
+          toast.success('Found matching object!', { id: 'resolveTag' });
+          navigate(`/object/${idRecord.objectId}`);
+          return;
+        }
+      }
+
+      // 3. Fallback: Lookup in legacy `items` if it looks like an old URL mapping
+      if (identifierData.scheme === 'qr-url-token') {
+         const oldItemRef = doc(db, 'items', identifierData.canonicalValue);
+         const oldItemSnap = await getDoc(oldItemRef);
+         if (oldItemSnap.exists()) {
+           toast.success('Found legacy item!', { id: 'resolveTag' });
+           // Redirect to object route which will handle legacy redirect/fetch
+           navigate(`/object/${identifierData.canonicalValue}`);
+           return;
+         }
+      }
+
+      // 4. Identifier is unassigned or not found
+      toast.dismiss('resolveTag');
+      navigate('/unassigned', { state: identifierData });
+
+    } catch (error) {
+      console.error('Resolution error:', error);
+      toast.error('Failed to resolve tag.', { id: 'resolveTag' });
     }
   };
 

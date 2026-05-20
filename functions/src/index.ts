@@ -257,3 +257,197 @@ export const getClientIp = onCall(async (request: any) => {
   };
 });
 
+
+/**
+ * Callable function to migrate legacy `items` to the new normalized `objects` model.
+ */
+export const migrateInventoryModel = onCall(async (request: any) => {
+  // 1. Verify Authentication and Admin Status
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const db = getFirestore(admin.app(), appletConfig.firestoreDatabaseId);
+  const adminDoc = await db.collection("admins").doc(request.auth.uid).get();
+  if (!adminDoc.exists) {
+    throw new HttpsError("permission-denied", "You do not have administrative privileges.");
+  }
+
+  const data = request.data || {};
+  const dryRun = data.dryRun !== false; // default true
+  const limit = data.limit || 500;
+
+  let stats = {
+    processed: 0,
+    objectsCreated: 0,
+    identifiersCreated: 0,
+    imagesCreated: 0,
+    eventsCreated: 0,
+    skipped: 0,
+    errors: 0
+  };
+
+  try {
+    const itemsSnapshot = await db.collection("items").limit(limit).get();
+
+    if (itemsSnapshot.empty) {
+      return { success: true, message: "No legacy items found.", stats, dryRun };
+    }
+
+    let batch = db.batch();
+    let batchWrites = 0;
+
+    for (const doc of itemsSnapshot.docs) {
+      stats.processed++;
+      const item = doc.data();
+      const itemId = doc.id;
+
+      // Check if already migrated
+      const existingObject = await db.collection("objects").doc(itemId).get();
+      if (existingObject.exists) {
+        stats.skipped++;
+        continue;
+      }
+
+      if (!dryRun) {
+        // 1. Create Object
+        const objectRef = db.collection("objects").doc(itemId);
+
+        // Compute identifierSummary for migrated items to keep UI correct
+        const identifierSummary = {
+          activeKinds: ['qr'], // We create at least a QR for all legacy items
+          activeIdentifierCount: 1,
+          hasQr: true,
+          hasNfc: false // In this simplified migration we skipped NFC extraction
+        };
+
+        batch.set(objectRef, {
+          objectId: itemId,
+          ownerId: item.ownerId,
+          name: item.name || '',
+          description: item.description || '',
+          status: 'active',
+          currentLocation: item.location || null,
+          identifierSummary,
+          createdAt: item.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: item.updatedAt || admin.firestore.FieldValue.serverTimestamp(),
+          legacy: {
+            sourceCollection: 'items',
+            legacyItemId: itemId
+          }
+        });
+        stats.objectsCreated++;
+        batchWrites++;
+
+        // 2. Create Identifier if QR or NFC
+        // To be safe, we create a QR token for ALL legacy items since they were accessed via URLs using their ID.
+        const idKey = `QR:QR-URL-TOKEN:${itemId.toUpperCase()}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const idRef = db.collection("identifiers").doc(idKey);
+
+        batch.set(idRef, {
+          identifierKey: idKey,
+          ownerId: item.ownerId,
+          objectId: itemId,
+          kind: 'qr',
+          scheme: 'qr-url-token',
+          canonicalValue: itemId.toUpperCase(),
+          status: 'active',
+          createdAt: item.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: item.updatedAt || admin.firestore.FieldValue.serverTimestamp()
+        });
+        stats.identifiersCreated++;
+        batchWrites++;
+
+        // 3. Migrate Primary Image
+        if (item.mainImageUrl) {
+          const imageId = `${itemId}-primary`;
+          const imageRef = db.collection("objectImages").doc(imageId);
+          batch.set(imageRef, {
+            imageId,
+            ownerId: item.ownerId,
+            objectId: itemId,
+            role: 'primary',
+            downloadUrl: item.mainImageUrl,
+            createdAt: item.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+            createdBy: item.ownerId,
+            legacy: {
+              sourceField: 'mainImageUrl',
+              sourceUrl: item.mainImageUrl
+            }
+          });
+
+          // Update object to point to primary image
+          batch.update(objectRef, { primaryImageId: imageId });
+          stats.imagesCreated++;
+          batchWrites++;
+        }
+
+        // Context images (simplified for batch limits, skip if array is too large, but usually small)
+        if (Array.isArray(item.contextImageUrls)) {
+          item.contextImageUrls.forEach((url: string, idx: number) => {
+            const imageId = `${itemId}-context-${idx}`;
+            const imageRef = db.collection("objectImages").doc(imageId);
+            batch.set(imageRef, {
+              imageId,
+              ownerId: item.ownerId,
+              objectId: itemId,
+              role: 'context',
+              downloadUrl: url,
+              sortOrder: idx,
+              createdAt: item.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+              createdBy: item.ownerId,
+              legacy: {
+                sourceField: 'contextImageUrls',
+                sourceUrl: url
+              }
+            });
+            stats.imagesCreated++;
+            batchWrites++;
+          });
+        }
+
+        // 4. Create Migration Event
+        const eventId = db.collection("objectEvents").doc().id;
+        batch.set(db.collection("objectEvents").doc(eventId), {
+          eventId,
+          ownerId: item.ownerId,
+          objectId: itemId,
+          type: 'migrated',
+          occurredAt: admin.firestore.FieldValue.serverTimestamp(),
+          actorUid: request.auth.uid,
+          source: 'migration'
+        });
+        stats.eventsCreated++;
+        batchWrites++;
+
+        // Execute batch if near limit
+        if (batchWrites > 400) {
+           await batch.commit();
+           batch = db.batch();
+           batchWrites = 0;
+        }
+      } else {
+        // DRY RUN mode: just increment stats
+        stats.objectsCreated++;
+        stats.identifiersCreated++;
+        if (item.mainImageUrl) stats.imagesCreated++;
+        if (Array.isArray(item.contextImageUrls)) stats.imagesCreated += item.contextImageUrls.length;
+        stats.eventsCreated++;
+      }
+    }
+
+    if (!dryRun && batchWrites > 0) {
+      await batch.commit();
+    }
+
+    return {
+      success: true,
+      dryRun,
+      stats
+    };
+
+  } catch (error) {
+    console.error("Migration error:", error);
+    throw new HttpsError("internal", "Migration failed.");
+  }
+});

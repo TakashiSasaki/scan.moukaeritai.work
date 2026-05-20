@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth, deleteDoc, doc } from '../lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { Item, OperationType } from '../types';
+import { ObjectRecord, OperationType } from '../types';
 import { handleFirestoreError } from '../lib/error-handler';
 import { Clock, MapPin, Tag, Package, Trash2, Filter, ArrowUpDown, ChevronDown } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -13,7 +13,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onSelectItem }: DashboardProps) {
-  const [items, setItems] = useState<Item[]>([]);
+  const [objects, setObjects] = useState<ObjectRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'updatedAt' | 'createdAt' | 'name'>('updatedAt');
   const [filterTag, setFilterTag] = useState<'all' | 'qr' | 'nfc' | 'none'>('all');
@@ -22,21 +22,25 @@ export default function Dashboard({ onSelectItem }: DashboardProps) {
     if (!auth.currentUser) return;
 
     let q = query(
-      collection(db, 'items'),
+      collection(db, 'objects'),
       where('ownerId', '==', auth.currentUser.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      let newItems = snapshot.docs.map(doc => ({
+      let newObjects = snapshot.docs.map(doc => ({
         ...doc.data(),
-        id: doc.id
-      })) as Item[];
+        objectId: doc.id
+      })) as ObjectRecord[];
 
       if (filterTag !== 'all') {
-        newItems = newItems.filter(item => item.tagType === filterTag);
+        if (filterTag === 'none') {
+          newObjects = newObjects.filter(obj => !obj.identifierSummary || obj.identifierSummary.activeKinds.length === 0);
+        } else {
+          newObjects = newObjects.filter(obj => obj.identifierSummary?.activeKinds.includes(filterTag));
+        }
       }
 
-      newItems.sort((a, b) => {
+      newObjects.sort((a, b) => {
         if (sortBy === 'name') {
            return (a.name || '').localeCompare(b.name || '');
         } else if (sortBy === 'updatedAt') {
@@ -50,25 +54,23 @@ export default function Dashboard({ onSelectItem }: DashboardProps) {
         }
       });
 
-      setItems(newItems.slice(0, 20));
+      setObjects(newObjects.slice(0, 20));
       setLoading(false);
     }, (error) => {
-      // If index is missing, Firestore usually provides a URL to create it.
-      // We catch it and show a helpful error if possible.
-      handleFirestoreError(error, OperationType.LIST, 'items');
+      handleFirestoreError(error, OperationType.LIST, 'objects');
     });
 
     return unsubscribe;
   }, [sortBy, filterTag]);
 
-  const handleDeleteItem = async (e: React.MouseEvent, itemId: string) => {
+  const handleDeleteItem = async (e: React.MouseEvent, objectId: string) => {
     e.stopPropagation();
-    if (!confirm('Are you sure you want to delete this item? This action cannot be undone.')) return;
+    if (!confirm('Are you sure you want to delete this object? This action cannot be undone.')) return;
 
     try {
-      await deleteDoc(doc(db, 'items', itemId));
+      await deleteDoc(doc(db, 'objects', objectId));
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `items/${itemId}`);
+      handleFirestoreError(error, OperationType.DELETE, `objects/${objectId}`);
     }
   };
 
@@ -125,63 +127,52 @@ export default function Dashboard({ onSelectItem }: DashboardProps) {
       <section>
         <div className="flex items-center justify-between mb-4 px-1">
           <h2 className="text-sm font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider">
-            {filterTag === 'all' ? 'All Items' : `${filterTag.toUpperCase()} Items`}
+            {filterTag === 'all' ? 'All Objects' : `${filterTag.toUpperCase()} Objects`}
           </h2>
           <span className="text-[10px] bg-[var(--primary)]/10 text-[var(--primary)] font-bold px-2 py-0.5 rounded-full">
-            {items.length} TOTAL
+            {objects.length} TOTAL
           </span>
         </div>
         
-        {items.length === 0 ? (
+        {objects.length === 0 ? (
           <div className="bg-[var(--surface-container)] border-2 border-dashed border-[var(--outline)] rounded-[32px] p-8 text-center text-[var(--on-surface-variant)]">
             <div className="bg-[var(--surface-container-high)] w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
               <Clock size={24} />
             </div>
-            <p className="font-bold">No items yet</p>
-            <p className="text-xs opacity-60">Start by scanning a QR code or adding a new item.</p>
+            <p className="font-bold">No objects yet</p>
+            <p className="text-xs opacity-60">Start by scanning a QR code or adding a new object.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {items.map((item) => (
+            {objects.map((obj) => (
               <div
-                key={item.id}
-                onClick={() => onSelectItem(item.id)}
+                key={obj.objectId}
+                onClick={() => onSelectItem(obj.objectId)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    onSelectItem(item.id);
+                    onSelectItem(obj.objectId);
                   }
                 }}
                 role="button"
                 tabIndex={0}
                 className="m3-card p-3 flex gap-4 text-left active:scale-[0.98] transition-all cursor-pointer overflow-hidden"
               >
-                {item.mainImageUrl ? (
-                  <ImageWithLongPress 
-                    url={item.mainImageUrl} 
-                    alt={item.name} 
-                    className="w-full h-full rounded-2xl object-cover border border-[var(--outline)] shadow-sm"
-                    wrapperClassName="w-24 h-24 flex-shrink-0"
-                  >
-                    <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded-md text-[8px] font-black tracking-wider text-white uppercase border border-white/10 pointer-events-none">
-                      {getImageFormatFromUrl(item.mainImageUrl)}
-                    </div>
-                  </ImageWithLongPress>
-                ) : (
-                  <div className="w-24 h-24 bg-[var(--surface-container-high)] rounded-2xl flex items-center justify-center text-[var(--on-surface-variant)] flex-shrink-0">
-                    <Package size={32} opacity={0.3} />
-                  </div>
-                )}
+                {/* Fallback to legacy primaryImageUrl if it exists until all are fully migrated */}
+                {/* For fully migrated objects, we would resolve the ObjectImageRecord but for list view, we might need a denormalized URL */}
+                <div className="w-24 h-24 bg-[var(--surface-container-high)] rounded-2xl flex items-center justify-center text-[var(--on-surface-variant)] flex-shrink-0">
+                  <Package size={32} opacity={0.3} />
+                </div>
                 <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
                   <div className="flex justify-between items-start">
                     <div className="min-w-0 pr-2">
-                      <h3 className="font-bold text-lg text-[var(--on-surface)] truncate tracking-tight">{item.name || 'Untitled Item'}</h3>
-                      <p className="text-[var(--on-surface-variant)] text-xs line-clamp-1 opacity-70">{item.description}</p>
+                      <h3 className="font-bold text-lg text-[var(--on-surface)] truncate tracking-tight">{obj.name || 'Untitled Object'}</h3>
+                      <p className="text-[var(--on-surface-variant)] text-xs line-clamp-1 opacity-70">{obj.description}</p>
                     </div>
                     <button
-                      onClick={(e) => handleDeleteItem(e, item.id)}
+                      onClick={(e) => handleDeleteItem(e, obj.objectId)}
                       className="p-2 text-[var(--on-surface-variant)] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all flex-shrink-0"
-                      title="Delete item"
+                      title="Delete object"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -189,9 +180,9 @@ export default function Dashboard({ onSelectItem }: DashboardProps) {
                   <div className="flex flex-wrap gap-4 text-[10px] font-bold text-[var(--on-surface-variant)] mt-2 uppercase tracking-wide">
                     <span className="flex items-center gap-1">
                       <Clock size={12} />
-                      {formatDistanceToNow(item.updatedAt.toDate())} ago
+                      {formatDistanceToNow(obj.updatedAt.toDate())} ago
                     </span>
-                    {item.location && (
+                    {obj.currentLocation && (
                       <span className="flex items-center gap-1 text-[var(--primary)]">
                         <MapPin size={12} />
                         Nearby
@@ -199,7 +190,7 @@ export default function Dashboard({ onSelectItem }: DashboardProps) {
                     )}
                     <span className="flex items-center gap-1 font-mono text-[var(--primary)]">
                       <Tag size={12} />
-                      {item.tagType.toUpperCase()}
+                      {obj.identifierSummary?.activeKinds.join(', ') || 'UNTAGGED'}
                     </span>
                   </div>
                 </div>
