@@ -4,7 +4,8 @@ import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, whe
 import { ref, getDownloadURL, uploadBytesResumable, UploadTaskSnapshot } from 'firebase/storage';
 import { ObjectRecord, IdentifierRecord, ObjectEventRecord, ObjectImageRecord, OperationType, BluetoothTag } from '../types';
 import { handleFirestoreError } from '../lib/error-handler';
-import { Camera, MapPin, Bluetooth, Trash2, Save, X, ChevronLeft, Image as ImageIcon, Plus, Edit2, Tag, AlertTriangle, Copy, Check, Pause, Activity } from 'lucide-react';
+import { Camera, MapPin, Bluetooth, Trash2, Save, X, ChevronLeft, Image as ImageIcon, Plus, Edit2, Tag, AlertTriangle, Copy, Check, Pause, Activity, QrCode } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import heic2any from 'heic2any';
 import { toast } from 'react-hot-toast';
@@ -13,7 +14,9 @@ import WebcamCapture from './WebcamCapture';
 import { getImageFormatFromUrl } from '../lib/utils';
 import { ImageWithLongPress } from './ImageWithLongPress';
 import { useUserSettings } from '../hooks/useUserSettings';
-import { buildIdentifierKey } from '../lib/identifiers';
+import { buildIdentifierKey, normalizeIdentifierInput } from '../lib/identifiers';
+import { buildActiveBindingId, buildActiveBindingRecord } from '../lib/identifierBindings';
+import { computeIdentifierSummary } from '../lib/objectSummaries';
 import { formatDistanceToNow } from 'date-fns';
 
 interface UploadProgressState {
@@ -54,6 +57,7 @@ interface CaptureFormProps {
 
 export default function CaptureForm({ objectId, initialIdentifier, onClose }: CaptureFormProps) {
   const { settings } = useUserSettings();
+  const navigate = useNavigate();
 
   const [data, setData] = useState<Partial<ObjectRecord>>({
     objectId: objectId || `OBJ-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
@@ -90,6 +94,11 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
   const mainImageCameraRef = useRef<HTMLInputElement>(null);
   const contextImageUploadRef = useRef<HTMLInputElement>(null);
   const contextImageCameraRef = useRef<HTMLInputElement>(null);
+
+  // Identifier Add UI state
+  const [showAddIdentifier, setShowAddIdentifier] = useState(false);
+  const [newIdentifierKind, setNewIdentifierKind] = useState<'manual' | 'qr'>('manual');
+  const [newIdentifierValue, setNewIdentifierValue] = useState('');
 
   const addLog = (msg: string) => setUploadProgressState(prev => ({ ...prev, logs: [msg, ...prev.logs] }));
 
@@ -365,6 +374,154 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
     }
   };
 
+  const handleAddIdentifier = async () => {
+    if (!newIdentifierValue.trim() || !auth.currentUser || !data.objectId) return;
+
+    setLoading(true);
+    try {
+      const { kind, scheme, canonicalValue } = normalizeIdentifierInput(newIdentifierValue, newIdentifierKind, newIdentifierKind === 'qr' ? 'qr-plain-token' : 'manual-code');
+      const idKey = buildIdentifierKey(kind, scheme, canonicalValue);
+
+      // Check if identifier already exists and is active
+      const idRef = doc(db, 'identifiers', idKey);
+      const idSnap = await getDoc(idRef);
+
+      let isNewIdentifier = true;
+      let existingId: IdentifierRecord | null = null;
+
+      if (idSnap.exists()) {
+        isNewIdentifier = false;
+        existingId = idSnap.data() as IdentifierRecord;
+
+        if (existingId.status === 'active') {
+          if (existingId.objectId === data.objectId) {
+            toast.success('Identifier is already attached to this object.');
+            setShowAddIdentifier(false);
+            setNewIdentifierValue('');
+            return;
+          } else {
+            toast.error('Identifier is already active on another object.');
+            return;
+          }
+        }
+      }
+
+      // Add to local state
+      const newIdRecord: IdentifierRecord = {
+        identifierKey: idKey,
+        ownerId: auth.currentUser.uid,
+        objectId: data.objectId,
+        kind,
+        scheme,
+        canonicalValue,
+        status: 'active',
+        createdAt: serverTimestamp() as any,
+        updatedAt: serverTimestamp() as any
+      };
+
+      setIdentifiers(prev => {
+        const filtered = prev.filter(i => i.identifierKey !== idKey);
+        return [...filtered, newIdRecord];
+      });
+
+      // We don't save to firestore right away, we let handleSave do it,
+      // EXCEPT if the object already exists, then we save it directly to keep it simple and consistent with detach
+      if (objectId) {
+        // Save directly if we are editing an existing object
+        const bindId = buildActiveBindingId(objectId, idKey);
+
+        if (isNewIdentifier) {
+           await setDoc(idRef, newIdRecord);
+        } else {
+           await updateDoc(idRef, {
+             objectId: objectId,
+             status: 'active',
+             updatedAt: serverTimestamp()
+           });
+        }
+
+        await setDoc(
+          doc(db, 'objectIdentifierBindings', bindId),
+          buildActiveBindingRecord(bindId, auth.currentUser.uid, objectId, idKey, auth.currentUser.uid),
+          { merge: true }
+        );
+
+        await recordEvent('identifier_attached', { identifierKey: idKey });
+
+        // Recompute summary and update object
+        const newIdentifiers = [...identifiers.filter(i => i.identifierKey !== idKey), newIdRecord];
+        const summary = computeIdentifierSummary(newIdentifiers);
+
+        await updateDoc(doc(db, 'objects', objectId), {
+          identifierSummary: summary,
+          updatedAt: serverTimestamp()
+        });
+
+        toast.success('Identifier added.');
+      }
+
+      setShowAddIdentifier(false);
+      setNewIdentifierValue('');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to add identifier');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDetachIdentifier = async (idr: IdentifierRecord) => {
+    if (!auth.currentUser || !data.objectId) return;
+
+    // Only allow detach if object is saved already to keep simple
+    if (!objectId) {
+      // Just remove from local state
+      setIdentifiers(prev => prev.filter(i => i.identifierKey !== idr.identifierKey));
+      return;
+    }
+
+    if (!confirm('Are you sure you want to detach this identifier?')) return;
+
+    setLoading(true);
+    try {
+      const idRef = doc(db, 'identifiers', idr.identifierKey);
+      const bindId = buildActiveBindingId(objectId, idr.identifierKey);
+      const bindRef = doc(db, 'objectIdentifierBindings', bindId);
+
+      // Update identifier status to unassigned, remove objectId
+      await updateDoc(idRef, {
+        status: 'unassigned',
+        objectId: null, // Depending on rules, might just need status change, but setting null is cleaner if allowed
+        updatedAt: serverTimestamp()
+      });
+
+      // Update binding status to detached
+      await updateDoc(bindRef, {
+        status: 'detached',
+        detachedAt: serverTimestamp(),
+        detachedBy: auth.currentUser.uid,
+        updatedAt: serverTimestamp()
+      });
+
+      await recordEvent('identifier_detached', { identifierKey: idr.identifierKey });
+
+      // Recompute summary and update object
+      const newIdentifiers = identifiers.filter(i => i.identifierKey !== idr.identifierKey);
+      setIdentifiers(newIdentifiers);
+
+      const summary = computeIdentifierSummary(newIdentifiers);
+      await updateDoc(doc(db, 'objects', objectId), {
+        identifierSummary: summary,
+        updatedAt: serverTimestamp()
+      });
+
+      toast.success('Identifier detached.');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to detach identifier');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!auth.currentUser) return;
     setLoading(true);
@@ -373,21 +530,28 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       const docRef = doc(db, 'objects', data.objectId!);
 
       // Compute summary
-      // Include the initialIdentifier in the summary if we are creating it now
-      const currentKinds = identifiers.map(i => i.kind);
+      const activeIdentifiers = identifiers.filter(i => i.status === 'active');
+
+      // If we're creating a new object and have an initial identifier, make sure it's included in the summary
+      // unless it's already in the identifiers list
       if (initialIdentifier && !objectId) {
-        currentKinds.push(initialIdentifier.kind);
+        const idKey = buildIdentifierKey(initialIdentifier.kind, initialIdentifier.scheme, initialIdentifier.canonicalValue);
+        const alreadyExists = activeIdentifiers.some(i => i.identifierKey === idKey);
+        if (!alreadyExists) {
+          activeIdentifiers.push({
+            identifierKey: idKey,
+            ownerId: auth.currentUser.uid,
+            kind: initialIdentifier.kind,
+            scheme: initialIdentifier.scheme,
+            canonicalValue: initialIdentifier.canonicalValue,
+            status: 'active',
+            createdAt: serverTimestamp() as any,
+            updatedAt: serverTimestamp() as any,
+          });
+        }
       }
 
-      const activeKinds = Array.from(new Set(currentKinds));
-      const activeIdentifierCount = identifiers.length + (initialIdentifier && !objectId ? 1 : 0);
-
-      const identifierSummary = {
-        activeKinds,
-        activeIdentifierCount,
-        hasQr: activeKinds.includes('qr'),
-        hasNfc: activeKinds.includes('nfc')
-      };
+      const identifierSummary = computeIdentifierSummary(activeIdentifiers);
 
       const payload = {
         ...data,
@@ -430,18 +594,12 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
              });
            }
 
-           const bindId = uuidv4();
-           await setDoc(doc(db, 'objectIdentifierBindings', bindId), {
-             bindingId: bindId,
-             ownerId: auth.currentUser.uid,
-             objectId: data.objectId,
-             identifierKey: idKey,
-             status: 'active',
-             attachedAt: serverTimestamp(),
-             attachedBy: auth.currentUser.uid,
-             createdAt: serverTimestamp(),
-             updatedAt: serverTimestamp()
-           });
+           const bindId = buildActiveBindingId(data.objectId, idKey);
+           await setDoc(
+             doc(db, 'objectIdentifierBindings', bindId),
+             buildActiveBindingRecord(bindId, auth.currentUser.uid, data.objectId, idKey, auth.currentUser.uid),
+             { merge: true }
+           );
            await recordEvent('identifier_attached', { identifierKey: idKey });
         }
       } else {
@@ -509,20 +667,102 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
           </div>
         </div>
 
-        {/* Identifiers Read-Only View */}
+        {/* Identifiers View */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-neutral-500 ml-1 uppercase tracking-widest">Identifiers</label>
+          <div className="flex items-center justify-between ml-1">
+            <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Identifiers</label>
+            <button
+              onClick={() => setShowAddIdentifier(!showAddIdentifier)}
+              className="text-xs font-bold text-[var(--primary)] flex items-center gap-1 hover:underline"
+            >
+              <Plus size={14} /> Add Identifier
+            </button>
+          </div>
+
+          {showAddIdentifier && (
+            <div className="bg-[var(--surface-container)] p-4 rounded-xl border border-[var(--outline)] space-y-4 mb-2">
+              <div className="flex gap-2 p-1 bg-[var(--surface-container-highest)] rounded-lg">
+                <button
+                  onClick={() => setNewIdentifierKind('manual')}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${newIdentifierKind === 'manual' ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm' : 'text-[var(--on-surface-variant)]'}`}
+                >
+                  Manual
+                </button>
+                <button
+                  onClick={() => setNewIdentifierKind('qr')}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${newIdentifierKind === 'qr' ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm' : 'text-[var(--on-surface-variant)]'}`}
+                >
+                  QR Code
+                </button>
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  value={newIdentifierValue}
+                  onChange={e => setNewIdentifierValue(e.target.value)}
+                  placeholder={newIdentifierKind === 'qr' ? 'Scan or enter QR token...' : 'Enter manual code...'}
+                  className="w-full bg-[var(--surface)] border border-[var(--outline)] text-[var(--on-surface)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                 <button
+                   onClick={() => setShowAddIdentifier(false)}
+                   className="text-xs font-bold text-[var(--on-surface-variant)] px-3 py-2"
+                 >
+                   Cancel
+                 </button>
+                 <button
+                   onClick={handleAddIdentifier}
+                   disabled={!newIdentifierValue.trim() || loading}
+                   className="bg-[var(--primary)] text-[var(--primary-foreground)] text-xs font-bold py-2 px-4 rounded-lg disabled:opacity-50"
+                 >
+                   {loading ? 'Adding...' : 'Attach'}
+                 </button>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-[var(--outline)] text-xs text-[var(--on-surface-variant)]">
+                <p className="flex flex-col gap-2">
+                  <span className="font-bold flex items-center gap-1"><Bluetooth size={14} /> NFC Identifiers</span>
+                  <span>NFC identifiers are added from the scanner. Use Scan → Scan NFC, then attach the detected tag to this object.</span>
+                </p>
+                <button
+                  onClick={() => navigate('/scanner')}
+                  className="mt-2 text-[var(--primary)] font-bold flex items-center gap-1 hover:underline"
+                >
+                  <QrCode size={12} /> Open Scanner
+                </button>
+              </div>
+            </div>
+          )}
+
           {identifiers.length > 0 ? (
              <div className="grid grid-cols-1 gap-2">
-               {identifiers.map(idr => (
+               {identifiers.filter(i => i.status === 'active').map(idr => (
                  <div key={idr.identifierKey} className="flex items-center gap-3 bg-[var(--surface-container)] p-3 rounded-xl border border-[var(--outline)]">
-                   <div className="w-8 h-8 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center">
+                   <div className="w-8 h-8 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center flex-shrink-0">
                      <Tag size={16} />
                    </div>
                    <div className="flex-1 min-w-0">
-                     <div className="text-sm font-bold uppercase">{idr.kind} <span className="text-[10px] text-neutral-500 lowercase ml-1">({idr.scheme})</span></div>
-                     <div className="text-xs font-mono text-neutral-500 truncate">{idr.canonicalValue}</div>
+                     <div className="text-sm font-bold uppercase flex items-center gap-2">
+                       {idr.kind}
+                       <span className="text-[10px] text-neutral-500 lowercase bg-[var(--surface-container-highest)] px-1.5 py-0.5 rounded-full">
+                         {idr.scheme}
+                       </span>
+                     </div>
+                     <div className="text-xs font-mono text-neutral-500 truncate mt-0.5" title={idr.canonicalValue}>
+                       {idr.canonicalValue}
+                     </div>
                    </div>
+                   <button
+                     onClick={() => handleDetachIdentifier(idr)}
+                     disabled={loading}
+                     className="p-2 text-[var(--on-surface-variant)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
+                     title="Detach Identifier"
+                   >
+                     <Trash2 size={16} />
+                   </button>
                  </div>
                ))}
              </div>

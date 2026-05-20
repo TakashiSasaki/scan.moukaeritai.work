@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import { db, auth } from '../lib/firebase';
 import { ObjectRecord, IdentifierRecord } from '../types';
 import { buildIdentifierKey } from '../lib/identifiers';
+import { buildActiveBindingId, buildActiveBindingRecord } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 
 export default function UnassignedIdentifierScreen() {
@@ -85,20 +86,14 @@ export default function UnassignedIdentifierScreen() {
         }
 
         // 2. Create Binding
-        // Create a unique bindingId to ensure we create a new append-only history record.
-        const bindingId = doc(collection(db, 'objectIdentifierBindings')).id;
+        // Use deterministic binding ID to avoid duplicating active records
+        const bindingId = buildActiveBindingId(objectId, idKey);
         const bindingRef = doc(db, 'objectIdentifierBindings', bindingId);
-        batch.set(bindingRef, {
-           bindingId: bindingId,
-           ownerId: auth.currentUser.uid,
-           objectId: objectId,
-           identifierKey: idKey,
-           status: 'active',
-           attachedAt: serverTimestamp(),
-           attachedBy: auth.currentUser.uid,
-           createdAt: serverTimestamp(),
-           updatedAt: serverTimestamp()
-        });
+        batch.set(
+            bindingRef,
+            buildActiveBindingRecord(bindingId, auth.currentUser.uid, objectId, idKey, auth.currentUser.uid),
+            { merge: true }
+        );
 
         // 3. Create Event (only if it wasn't already actively bound to this object)
         if (!existingId || existingId.objectId !== objectId || existingId.status !== 'active') {
