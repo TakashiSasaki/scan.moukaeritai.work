@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { db, auth } from '../lib/firebase';
 import { ObjectRecord, IdentifierRecord } from '../types';
 import { buildIdentifierKey } from '../lib/identifiers';
-import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner } from '../lib/identifierBindings';
+import { buildActiveBindingId, buildActiveBindingRecord, findCanonicalBindingsForOwner } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 
 export default function UnassignedIdentifierScreen() {
@@ -90,8 +90,8 @@ export default function UnassignedIdentifierScreen() {
         const bindingId = buildActiveBindingId(objectId, idKey);
         const bindingRef = doc(db, 'objectIdentifierBindings', bindingId);
 
-        const activeBindings = await findActiveBindingsForOwner(db, auth.currentUser.uid, objectId, idKey);
-        const hasCanonicalBinding = activeBindings.some(doc => doc.id === bindingId);
+        const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, objectId, idKey);
+        const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindingId);
 
         if (hasCanonicalBinding) {
             batch.update(bindingRef, {
