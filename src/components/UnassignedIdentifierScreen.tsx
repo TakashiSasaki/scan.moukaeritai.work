@@ -5,7 +5,6 @@ import { collection, query, where, getDocs, doc, writeBatch, serverTimestamp } f
 import { db, auth } from '../lib/firebase';
 import { ObjectRecord } from '../types';
 import { buildIdentifierKey } from '../lib/identifiers';
-import { computeIdentifierSummary } from '../lib/objectSummaries';
 
 export default function UnassignedIdentifierScreen() {
   const navigate = useNavigate();
