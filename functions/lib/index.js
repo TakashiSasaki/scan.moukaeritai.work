@@ -375,27 +375,34 @@ exports.migrateInventoryModel = (0, https_1.onCall)(async (request) => {
                         batchWrites++;
                     }
                     // 5. Context images
-                    if (Array.isArray(item.contextImageUrls) && !objectDoc.exists) {
-                        item.contextImageUrls.forEach((url, idx) => {
+                    if (Array.isArray(item.contextImageUrls)) {
+                        // We use a regular for loop here instead of Promise.all inside the batch loop,
+                        // to keep batch building synchronous and avoid await inside forEach.
+                        // Note: Since this is inside an async loop we can do awaited existence checks:
+                        for (let idx = 0; idx < item.contextImageUrls.length; idx++) {
+                            const url = item.contextImageUrls[idx];
                             const contextImageId = `${objectId}-context-${idx}`;
                             const contextImageRef = db.collection("objectImages").doc(contextImageId);
-                            batch.set(contextImageRef, {
-                                imageId: contextImageId,
-                                ownerId: item.ownerId,
-                                objectId: objectId,
-                                role: 'context',
-                                downloadUrl: url,
-                                sortOrder: idx,
-                                createdAt: item.createdAt || admin.firestore.FieldValue.serverTimestamp(),
-                                createdBy: item.ownerId,
-                                legacy: {
-                                    sourceField: 'contextImageUrls',
-                                    sourceUrl: url
-                                }
-                            }, { merge: true });
-                            stats.imagesCreated++;
-                            batchWrites++;
-                        });
+                            const contextImageDoc = await contextImageRef.get();
+                            if (!contextImageDoc.exists) {
+                                batch.set(contextImageRef, {
+                                    imageId: contextImageId,
+                                    ownerId: item.ownerId,
+                                    objectId: objectId,
+                                    role: 'context',
+                                    downloadUrl: url,
+                                    sortOrder: idx,
+                                    createdAt: item.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+                                    createdBy: item.ownerId,
+                                    legacy: {
+                                        sourceField: 'contextImageUrls',
+                                        sourceUrl: url
+                                    }
+                                }, { merge: true });
+                                stats.imagesCreated++;
+                                batchWrites++;
+                            }
+                        }
                     }
                     // 6. Create Migration Event if not exists
                     if (!eventDoc.exists) {
@@ -429,6 +436,15 @@ exports.migrateInventoryModel = (0, https_1.onCall)(async (request) => {
                         stats.imagesCreated++;
                     if (!eventDoc.exists)
                         stats.eventsCreated++;
+                    if (Array.isArray(item.contextImageUrls)) {
+                        for (let idx = 0; idx < item.contextImageUrls.length; idx++) {
+                            const contextImageId = `${objectId}-context-${idx}`;
+                            const contextImageDoc = await db.collection("objectImages").doc(contextImageId).get();
+                            if (!contextImageDoc.exists) {
+                                stats.imagesCreated++;
+                            }
+                        }
+                    }
                 }
             }
             catch (itemError) {
