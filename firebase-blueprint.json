@@ -10,6 +10,7 @@
           "description": "The unique ID matching the document ID."
         },
         "name": {
+          "description": "Short name of the object.",
           "type": "string"
         },
         "description": {
