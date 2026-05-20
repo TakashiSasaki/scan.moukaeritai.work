@@ -133,6 +133,7 @@ service cloud.firestore {
         && incoming().attachedBy == existing().attachedBy
         && incoming().status in ['active', 'detached', 'replaced']
         && (incoming().status == 'active' || ('detachedAt' in incoming() && incoming().detachedAt is timestamp && 'detachedBy' in incoming() && incoming().detachedBy is string))
+        && (!('note' in incoming()) || (incoming().note is string && incoming().note.size() <= 2000))
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time
         && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'detachedAt', 'detachedBy', 'note', 'updatedAt']);
@@ -171,6 +172,8 @@ service cloud.firestore {
         && (!('width' in incoming()) || incoming().width is number)
         && (!('height' in incoming()) || incoming().height is number)
         && (!('sortOrder' in incoming()) || incoming().sortOrder is number)
+        && (!('legacy' in incoming()) || incoming().legacy is map)
+        && incoming().keys().hasOnly(['imageId', 'ownerId', 'objectId', 'role', 'storagePath', 'downloadUrl', 'contentType', 'sizeBytes', 'width', 'height', 'sortOrder', 'createdAt', 'createdBy', 'legacy'])
         && incoming().createdAt == request.time
         && incoming().createdBy == request.auth.uid;
       allow update: if isSignedIn()
