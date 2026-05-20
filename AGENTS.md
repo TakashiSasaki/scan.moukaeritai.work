@@ -42,9 +42,14 @@ To prevent confusion across systems, note the following distinct identifiers use
 ## 4. Feature-Specific Implementations
 
 ### Image Provisioning (`CaptureForm.tsx`)
+- **Image Data Model**:
+  - `objectImages` collection is the source of truth for image asset metadata.
+  - `objects.primaryImageUrl` is a denormalized UI cache for Dashboard/Search list views.
+  - `objects.primaryImageId` points to the primary image record in `objectImages`.
+  - Legacy migrated images may only have `downloadUrl` and `legacy.sourceUrl` if the original `storagePath` cannot be recovered.
 - **Dual Input Strategy**: Uses separate `<input>` elements for file selection vs. camera capture (`capture="environment"`).
 - **Multi-Method Support**: Supports Click-to-dialog, Drag-and-drop, and Camera-direct.
-- **Compression & Settings**: WebP is the default format for optimal compression, falling back to JPEG if unsupported. Users can configure format, quality, and resolution in the User Settings panel (`UserSettingsPanel.tsx`) which is saved per-user in Firestore `/users/{uid}/settings`.
+- **Compression & Settings**: WebP is the default format for optimal compression, falling back to JPEG if unsupported. Users can configure format, quality, and resolution in the User Settings panel (`UserSettingsPanel.tsx`) which is saved per-user in Firestore `users/{uid}.settings` (a nested `settings` field inside the `users/{uid}` document).
 - **Interaction Model**:
   - PC: Hover triggers action menus.
   - Mobile: Tap toggles action menus (state-managed via `activeImageMenu`).
@@ -56,10 +61,11 @@ To prevent confusion across systems, note the following distinct identifiers use
 
 ### Bluetooth Tagging
 - **Device Filtering**: To prevent the native OS Bluetooth picker from being cluttered with unnamed/unknown devices, apply a wide alphanumeric `namePrefix` filter (`a-z`, `0-9`) when calling `navigator.bluetooth.requestDevice`.
-- **Historical Logging**: To retain a long-term history of Bluetooth tag associations without exceeding document limits, consider migrating from a bounded inline array (`bluetoothTags` on the item document) to a dedicated subcollection (e.g., `items/{itemId}/bluetooth_logs`) if events become frequent.
+- **Data Model**: Bluetooth identifiers should be modeled through `identifiers` with `kind: "bluetooth"` when a stable device identifier is available.
+- **Historical Logging**: Bluetooth-related scans/observations should be represented as `objectEvents` where appropriate to retain a long-term history without exceeding document limits. Legacy `bluetoothTags` may exist only in `LegacyItem` for migration compatibility.
 - **RSSI & Timestamps**: 
   - **Timestamps**: Always record the `timestamp` when a tag is detected or linked.
-  - **RSSI (Signal Strength)**: `requestDevice` does not return RSSI natively. To obtain signal strength, the browser must support and execute `device.watchAdvertisements()` to listen for `advertisementreceived` events. Model the `rssi` field as optional to gracefully handle browsers where this remains unsupported.
+  - **RSSI (Signal Strength)**: `requestDevice` does not return RSSI natively. To obtain signal strength, the browser must support and execute `device.watchAdvertisements()` to listen for `advertisementreceived` events. Note that browser Bluetooth RSSI remains optional because `requestDevice` does not provide RSSI directly and `watchAdvertisements()` is not universally supported.
 
 ### Image Interaction & Metadata
 - **Format Overlay**: All item images in the Dashboard, Search results, and Capture forms include a small, translucent overlay in the corner indicating the file format (e.g., JPEG, PNG). This is computed via `getImageFormatFromUrl` in `utils.ts`.
@@ -76,7 +82,12 @@ To prevent confusion across systems, note the following distinct identifiers use
 - **Firestore Schema Architecture**:
   - `users/{uid}`: Synchronized from Firebase Auth. Stores user profiles.
   - `admins/{uid}`: Handles Role-Based Access Control (RBAC). The presence of a document grants admin privileges.
-  - `items/{itemId}`: The core inventory document storing metadata, image URLs, QR/NFC references, and tags.
+  - `objects/{objectId}`: The core inventory object document.
+  - `identifiers/{identifierKey}`: Maps QR/NFC/manual/barcode/Bluetooth identifiers to objects.
+  - `objectIdentifierBindings/{bindingId}`: Records identifier attachment/detachment history.
+  - `objectImages/{imageId}`: Records image metadata and Storage references.
+  - `objectEvents/{eventId}`: Records append-only operational events.
+  - `items/{itemId}`: Legacy-only and used as migration input.
 - **Legacy Identifiers for Backend Resources**: The frontend deployment target uses the current domain name (`scan-moukaeritai-work`), but backend Firebase resources (Firestore Database, Storage Bucket) intentionally retain the legacy identifier `photo-moukaeritai-work`. This is reflected in `firebase-applet-config.json` and must not be altered to match the hosting name.
 - **Cloud Storage Strategy**:
   - Images captured via the application are stored in the designated Firebase Storage bucket (`photo-moukaeritai-work`).
@@ -168,6 +179,13 @@ To maintain clarity for administrators and developers, the application includes 
 - The human-readable admin route map lives at `/admin/sitemap`.
 - It is for administrators/developers, not SEO (it is not a sitemap.xml).
 - Whenever routes are added, renamed, or removed in the application, you MUST update `src/lib/routeCatalog.ts` (and by extension `SitemapPage.tsx`).
+- Key routes include:
+  - `/object/new`: Create object.
+  - `/object/:id`: View/edit object.
+  - `/item/:id`: Legacy redirect to `/object/:id`.
+  - `/unassigned`: Handle scanned tags not yet bound.
+  - `/admin/migration`: Database migration tool.
+  - `/admin/sitemap`: The human-readable route map itself.
 - Keep the route map strictly synchronized with `App.tsx`.
 - The `/admin/sitemap` route is admin-only and should never appear in the bottom navigation.
 
@@ -205,9 +223,15 @@ To support real-time object identification on mobile devices (e.g., Pixel 8a) wi
 
 To support the creation of small, efficient QR codes that link directly to items, the system utilizes QR Code Alphanumeric mode. Since alphanumeric mode only supports uppercase letters (and numbers/symbols), URLs encoded this way will be entirely uppercase (e.g., `HTTPS://APP.DOMAIN/ITEM/ITEM-123`).
 
-- **Case Insensitivity**: Firestore document IDs are inherently case-sensitive. Therefore, to ensure that scanned alphanumeric URLs correctly map to existing objects, **all object IDs and identifier lookup values in the system must be normalized and treated as uppercase**.
-- **URL Extraction**: When scanning a QR code, the result might be a full URL instead of a plain ID. The application must extract the ID from the URL (via query parameters or the final path segment) and convert it to uppercase (`.toUpperCase()`) before using it for routing or Firestore lookups.
-- **Generation**: Newly generated object IDs and normalized identifier tokens MUST always be exclusively uppercase (e.g., `OBJECT-XYZ123`).
+- **Terminology Distinctions**:
+  - `objectId`: ID of the real-world object document.
+  - `identifierKey`: Firestore-safe key for an identifier document.
+  - `canonicalValue`: Normalized scanned value/token.
+  - Legacy `itemId`: Old collection document ID used only for migration/backward compatibility.
+- **Case Insensitivity & Normalization**: Firestore document IDs are inherently case-sensitive. Therefore, to ensure that scanned alphanumeric URLs correctly map to existing identifiers, **QR tokens and identifier lookup values must be normalized and treated as uppercase**.
+- **Lookup Process**: QR/NFC scanning should resolve through `identifiers/{identifierKey}` rather than assuming the scanned payload is a direct `objectId`. The application extracts the payload from a URL (if necessary), normalizes it, and queries the `identifiers` collection.
+- **Routing**: Legacy `/item/:id` URLs redirect to `/object/:id` via `RouteCatalog`, but new design should prefer identifier lookup.
+- **Generation**: Newly generated `objectId`s and normalized identifier tokens MUST always be exclusively uppercase (e.g., `OBJECT-XYZ123`).
 
 ## 17. Data Model Redesign (Objects & Identifiers)
 
@@ -215,14 +239,18 @@ The application has transitioned from a simple `items` collection to a normalize
 
 - **Data Model Core Principles**:
   - **`objects`**: Represents a real-world physical entity. (Replaces legacy `items`).
-  - **`identifiers`**: Represents a physical tag (QR, NFC) or a logical code (barcode, manual). A single object can have multiple active identifiers. An identifier can point to at most one active object.
+    - `objects.identifierSummary` is denormalized and should be recomputed from active identifiers when needed.
+    - `objects.primaryImageUrl` is denormalized and should be kept in sync with the primary `objectImages` record.
+  - **`identifiers`**: Represents a physical tag (QR, NFC) or a logical code (barcode, manual). One object can have zero or more identifiers. One identifier can have at most one active object.
   - **`objectIdentifierBindings`**: Historical log of attachments, replacements, or detachments between objects and identifiers.
-  - **`objectImages`**: Centralized tracking for all object images (primary, context, etc.), replacing embedded arrays of URLs.
-  - **`objectEvents`**: An append-only event log tracking operations like creation, updates, and scanning.
+  - **`objectImages`**: The normalized image metadata collection, replacing embedded arrays of URLs.
+  - **`objectEvents`**: An append-only event log for normal clients tracking operations like creation, updates, and scanning.
 - **Migration**:
-  - A dedicated admin-only Cloud Function (`migrateInventoryModel`) safely translates legacy `items` into the normalized collections.
+  - A dedicated admin-only Cloud Function (`migrateInventoryModel`) safely translates legacy `items` into the normalized collections: `objects`, `identifiers`, `bindings`, `images`, and `events`.
   - The UI provides a `/admin/migration` page to run a Dry Run and an Execute phase.
-  - Legacy `items` are kept intact during the migration. If the app tries to load a legacy item that isn't migrated, the user is warned to run the migration first.
+  - **Non-destructive**: Migration does not delete legacy items or Storage files. Legacy `items` are kept intact. If the app tries to load a legacy item that isn't migrated, the user is warned to run the migration first.
+  - **Idempotency**: Migration should be idempotent per target record, allowing safe re-runs.
+  - **ID Conversion**: Legacy item IDs are normalized to uppercase object IDs. Legacy source IDs are retained in `objects.legacy.legacyItemId`.
 - **Source of Truth**:
   - `firebase-blueprint.json` defines the new schema boundaries.
   - Always prefer resolving an identifier via the `identifiers` collection rather than blindly treating a scanned payload as an `objectId`.
