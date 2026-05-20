@@ -1,4 +1,4 @@
-import { serverTimestamp, FieldValue } from 'firebase/firestore';
+import { serverTimestamp, collection, query, where, getDocs, Firestore } from 'firebase/firestore';
 import { ObjectIdentifierBindingRecord } from '../types';
 
 /**
@@ -30,6 +30,28 @@ export function buildActiveBindingRecord(
     createdAt: serverTimestamp() as any,
     updatedAt: serverTimestamp() as any,
   };
+}
+
+/**
+ * Finds active bindings for a specific owner, object, and identifier.
+ * Compatible with owner-scoped Firestore rules.
+ */
+export async function findActiveBindingsForOwner(
+  db: Firestore,
+  ownerId: string,
+  objectId: string,
+  identifierKey: string
+) {
+  const q = query(
+    collection(db, 'objectIdentifierBindings'),
+    where('ownerId', '==', ownerId),
+    where('objectId', '==', objectId),
+    where('identifierKey', '==', identifierKey),
+    where('status', '==', 'active')
+  );
+
+  const snap = await getDocs(q);
+  return snap.docs;
 }
 
 /**
