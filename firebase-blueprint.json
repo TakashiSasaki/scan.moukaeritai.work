@@ -5,108 +5,391 @@
       "description": "Represents a real-world physical object being cataloged.",
       "type": "object",
       "properties": {
-        "objectId": { "type": "string", "description": "The unique ID matching the document ID." },
-        "name": { "type": "string", "description": "Short name of the object." },
-        "description": { "type": "string", "description": "Detailed description of the object." },
-        "ownerId": { "type": "string", "description": "UID of the user who owns this object." },
-        "status": { "type": "string", "enum": ["active", "archived", "lost", "disposed"] },
-        "currentLocation": { "type": "object", "description": "Geographical location (latitude/longitude/address)." },
-        "primaryImageId": { "type": "string", "description": "ID of the primary image." },
-        "identifierSummary": { "type": "object", "description": "Denormalized UI summary." },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "objectId": {
+          "type": "string",
+          "description": "The unique ID matching the document ID."
+        },
+        "name": {
+          "type": "string",
+          "description": "Short name of the object."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the object."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the user who owns this object."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "archived",
+            "lost",
+            "disposed"
+          ]
+        },
+        "currentLocation": {
+          "type": "object",
+          "description": "Geographical location (latitude/longitude/address)."
+        },
+        "primaryImageId": {
+          "type": "string",
+          "description": "ID of the primary image."
+        },
+        "identifierSummary": {
+          "type": "object",
+          "description": "Denormalized UI summary."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "primaryImageUrl": {
+          "type": "string",
+          "description": "Denormalized URL for fast list view rendering."
+        }
       },
-      "required": ["objectId", "ownerId", "status", "createdAt", "updatedAt"]
+      "required": [
+        "objectId",
+        "ownerId",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
     },
     "IdentifierRecord": {
       "title": "Identifier Record",
       "description": "Lookup table from a scanned QR/NFC/manual value to an object.",
       "type": "object",
       "properties": {
-        "identifierKey": { "type": "string", "description": "Normalized Firestore-safe ID." },
-        "ownerId": { "type": "string", "description": "UID of the user who owns this identifier." },
-        "objectId": { "type": "string", "description": "Optional object this identifier resolves to." },
-        "kind": { "type": "string", "enum": ["qr", "nfc", "manual", "barcode", "bluetooth"] },
-        "scheme": { "type": "string", "description": "e.g., qr-url-token, nfc-uid" },
-        "canonicalValue": { "type": "string" },
-        "status": { "type": "string", "enum": ["active", "unassigned", "retired", "lost", "replaced"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "identifierKey": {
+          "type": "string",
+          "description": "Normalized Firestore-safe ID."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the user who owns this identifier."
+        },
+        "objectId": {
+          "type": "string",
+          "description": "Optional object this identifier resolves to."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "qr",
+            "nfc",
+            "manual",
+            "barcode",
+            "bluetooth"
+          ]
+        },
+        "scheme": {
+          "type": "string",
+          "description": "e.g., qr-url-token, nfc-uid"
+        },
+        "canonicalValue": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "unassigned",
+            "retired",
+            "lost",
+            "replaced"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "rawValue": {
+          "type": "string",
+          "description": "Original raw scanned value."
+        },
+        "label": {
+          "type": "string",
+          "description": "Optional human-readable label."
+        },
+        "lastSeenAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
-      "required": ["identifierKey", "ownerId", "kind", "scheme", "canonicalValue", "status", "createdAt", "updatedAt"]
+      "required": [
+        "identifierKey",
+        "ownerId",
+        "kind",
+        "scheme",
+        "canonicalValue",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
     },
     "ObjectIdentifierBindingRecord": {
       "title": "Object Identifier Binding Record",
       "description": "Historical record of identifier attachment/detachment.",
       "type": "object",
       "properties": {
-        "bindingId": { "type": "string" },
-        "ownerId": { "type": "string" },
-        "objectId": { "type": "string" },
-        "identifierKey": { "type": "string" },
-        "status": { "type": "string", "enum": ["active", "detached", "replaced"] },
-        "attachedAt": { "type": "string", "format": "date-time" },
-        "attachedBy": { "type": "string" }
+        "bindingId": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "identifierKey": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "detached",
+            "replaced"
+          ]
+        },
+        "attachedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "attachedBy": {
+          "type": "string"
+        },
+        "detachedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "detachedBy": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
-      "required": ["bindingId", "ownerId", "objectId", "identifierKey", "status", "attachedAt", "attachedBy"]
+      "required": [
+        "bindingId",
+        "ownerId",
+        "objectId",
+        "identifierKey",
+        "status",
+        "attachedAt",
+        "attachedBy"
+      ]
     },
     "ObjectEventRecord": {
       "title": "Object Event Record",
       "description": "Append-only event log for inventory operations.",
       "type": "object",
       "properties": {
-        "eventId": { "type": "string" },
-        "ownerId": { "type": "string" },
-        "objectId": { "type": "string" },
-        "type": { "type": "string", "enum": ["created", "updated", "scanned", "located", "image_added", "image_removed", "identifier_attached", "identifier_detached", "identifier_replaced", "migrated"] },
-        "occurredAt": { "type": "string", "format": "date-time" },
-        "actorUid": { "type": "string" }
+        "eventId": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "created",
+            "updated",
+            "scanned",
+            "located",
+            "image_added",
+            "image_removed",
+            "identifier_attached",
+            "identifier_detached",
+            "identifier_replaced",
+            "migrated"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actorUid": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "qr",
+            "nfc",
+            "manual",
+            "camera",
+            "system",
+            "migration"
+          ]
+        },
+        "location": {
+          "type": "object"
+        },
+        "metadata": {
+          "type": "object"
+        }
       },
-      "required": ["eventId", "ownerId", "type", "occurredAt", "actorUid"]
+      "required": [
+        "eventId",
+        "ownerId",
+        "type",
+        "occurredAt",
+        "actorUid"
+      ]
     },
     "ObjectImageRecord": {
       "title": "Object Image Record",
       "description": "Represents images stored in Firebase Storage.",
       "type": "object",
       "properties": {
-        "imageId": { "type": "string" },
-        "ownerId": { "type": "string" },
-        "objectId": { "type": "string" },
-        "role": { "type": "string", "enum": ["primary", "context", "label", "detail"] },
-        "storagePath": { "type": "string" },
-        "downloadUrl": { "type": "string" }
+        "imageId": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "context",
+            "label",
+            "detail"
+          ]
+        },
+        "storagePath": {
+          "type": "string"
+        },
+        "downloadUrl": {
+          "type": "string"
+        },
+        "contentType": {
+          "type": "string"
+        },
+        "sizeBytes": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "sortOrder": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string"
+        }
       },
-      "required": ["imageId", "ownerId", "objectId", "role"]
+      "required": [
+        "imageId",
+        "ownerId",
+        "objectId",
+        "role"
+      ]
     },
     "User": {
       "title": "User",
       "description": "User profile information.",
       "type": "object",
       "properties": {
-        "uid": { "type": "string" },
-        "displayName": { "type": "string" },
-        "email": { "type": "string" },
-        "photoURL": { "type": "string" },
-        "role": { "type": "string", "enum": ["user", "admin"], "description": "User role, usually not set by user directly." },
+        "uid": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "photoURL": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "user",
+            "admin"
+          ],
+          "description": "User role, usually not set by user directly."
+        },
         "settings": {
           "type": "object",
           "description": "User specific settings including image capture preferences.",
           "properties": {
-            "imageFormat": { "type": "string", "enum": ["webp", "jpeg"] },
-            "compressionQuality": { "type": "number", "minimum": 0.1, "maximum": 1.0 },
-            "maxResolution": { "type": "number", "enum": [512, 1024, 2048] }
+            "imageFormat": {
+              "type": "string",
+              "enum": [
+                "webp",
+                "jpeg"
+              ]
+            },
+            "compressionQuality": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 1
+            },
+            "maxResolution": {
+              "type": "number",
+              "enum": [
+                512,
+                1024,
+                2048
+              ]
+            }
           }
         }
       },
-      "required": ["uid"]
+      "required": [
+        "uid"
+      ]
     },
     "Admin": {
       "title": "Admin",
       "description": "Record to identify admin users securely.",
       "type": "object",
       "properties": {
-        "grantedAt": { "type": "string", "format": "date-time" },
-        "grantedBy": { "type": "string", "description": "UID of the user who granted this admin right" }
+        "grantedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "grantedBy": {
+          "type": "string",
+          "description": "UID of the user who granted this admin right"
+        }
       }
     }
   },

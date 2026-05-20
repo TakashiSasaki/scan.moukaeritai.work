@@ -13,6 +13,7 @@ export interface ObjectRecord {
     updatedAt?: Timestamp;
   };
   primaryImageId?: string;
+  primaryImageUrl?: string;
   identifierSummary?: {
     activeKinds: string[];
     activeIdentifierCount: number;
