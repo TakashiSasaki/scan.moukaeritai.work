@@ -191,7 +191,8 @@
       "type": "object",
       "properties": {
         "bindingId": {
-          "type": "string"
+          "type": "string",
+          "description": "Deterministic active ID formatted as ${objectId}__${identifierKey}__active to prevent duplicate active bindings"
         },
         "ownerId": {
           "type": "string"
