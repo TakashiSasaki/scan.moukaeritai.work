@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, storage, auth } from '../lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, addDoc, deleteField } from 'firebase/firestore';
 import { ref, getDownloadURL, uploadBytesResumable, UploadTaskSnapshot } from 'firebase/storage';
 import { ObjectRecord, IdentifierRecord, ObjectEventRecord, ObjectImageRecord, OperationType, BluetoothTag } from '../types';
 import { handleFirestoreError } from '../lib/error-handler';
@@ -440,11 +440,21 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
            });
         }
 
-        await setDoc(
-          doc(db, 'objectIdentifierBindings', bindId),
-          buildActiveBindingRecord(bindId, auth.currentUser.uid, objectId, idKey, auth.currentUser.uid),
-          { merge: true }
-        );
+        const bindRef = doc(db, 'objectIdentifierBindings', bindId);
+        const bindSnap = await getDoc(bindRef);
+        if (bindSnap.exists()) {
+           await updateDoc(bindRef, {
+             status: 'active',
+             updatedAt: serverTimestamp(),
+             detachedAt: deleteField(),
+             detachedBy: deleteField()
+           });
+        } else {
+           await setDoc(
+             bindRef,
+             buildActiveBindingRecord(bindId, auth.currentUser.uid, objectId, idKey, auth.currentUser.uid)
+           );
+        }
 
         await recordEvent('identifier_attached', { identifierKey: idKey });
 
@@ -497,7 +507,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       // Update identifier status to unassigned, remove objectId
       await updateDoc(idRef, {
         status: 'unassigned',
-        objectId: null, // Depending on rules, might just need status change, but setting null is cleaner if allowed
+        objectId: deleteField(),
         updatedAt: serverTimestamp()
       });
 
@@ -610,11 +620,21 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
            }
 
            const bindId = buildActiveBindingId(data.objectId!, idr.identifierKey);
-           await setDoc(
-             doc(db, 'objectIdentifierBindings', bindId),
-             buildActiveBindingRecord(bindId, auth.currentUser.uid, data.objectId!, idr.identifierKey, auth.currentUser.uid),
-             { merge: true }
-           );
+           const bindRef = doc(db, 'objectIdentifierBindings', bindId);
+           const bindSnap = await getDoc(bindRef);
+           if (bindSnap.exists()) {
+             await updateDoc(bindRef, {
+               status: 'active',
+               updatedAt: serverTimestamp(),
+               detachedAt: deleteField(),
+               detachedBy: deleteField()
+             });
+           } else {
+             await setDoc(
+               bindRef,
+               buildActiveBindingRecord(bindId, auth.currentUser.uid, data.objectId!, idr.identifierKey, auth.currentUser.uid)
+             );
+           }
            await recordEvent('identifier_attached', { identifierKey: idr.identifierKey });
         }
       } else {

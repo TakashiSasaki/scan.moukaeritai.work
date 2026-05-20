@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Package, PlusCircle, Scan, ArrowRight, Link as LinkIcon, Search } from 'lucide-react';
-import { collection, query, where, getDocs, doc, writeBatch, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, writeBatch, serverTimestamp, getDoc, deleteField } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { db, auth } from '../lib/firebase';
 import { ObjectRecord, IdentifierRecord } from '../types';
@@ -89,11 +89,21 @@ export default function UnassignedIdentifierScreen() {
         // Use deterministic binding ID to avoid duplicating active records
         const bindingId = buildActiveBindingId(objectId, idKey);
         const bindingRef = doc(db, 'objectIdentifierBindings', bindingId);
-        batch.set(
-            bindingRef,
-            buildActiveBindingRecord(bindingId, auth.currentUser.uid, objectId, idKey, auth.currentUser.uid),
-            { merge: true }
-        );
+        const bindSnap = await getDoc(bindingRef);
+
+        if (bindSnap.exists()) {
+            batch.update(bindingRef, {
+                status: 'active',
+                updatedAt: serverTimestamp(),
+                detachedAt: deleteField(),
+                detachedBy: deleteField()
+            });
+        } else {
+            batch.set(
+                bindingRef,
+                buildActiveBindingRecord(bindingId, auth.currentUser.uid, objectId, idKey, auth.currentUser.uid)
+            );
+        }
 
         // 3. Create Event (only if it wasn't already actively bound to this object)
         if (!existingId || existingId.objectId !== objectId || existingId.status !== 'active') {
