@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Package, PlusCircle, Scan, ArrowRight, Link as LinkIcon, Search } from 'lucide-react';
-import { collection, query, where, getDocs, doc, writeBatch, serverTimestamp, getDoc, deleteField } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, writeBatch, serverTimestamp, deleteField } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { db, auth } from '../lib/firebase';
 import { ObjectRecord, IdentifierRecord } from '../types';
 import { buildIdentifierKey } from '../lib/identifiers';
-import { buildActiveBindingId, buildActiveBindingRecord, findCanonicalBindingsForOwner } from '../lib/identifierBindings';
+import { buildActiveBindingId, buildActiveBindingRecord, validateIdentifierCanAttach } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 
 export default function UnassignedIdentifierScreen() {
@@ -51,21 +51,23 @@ export default function UnassignedIdentifierScreen() {
         const idKey = buildIdentifierKey(state.kind, state.scheme, state.canonicalValue);
         const idRef = doc(db, 'identifiers', idKey);
 
-        const idSnap = await getDoc(idRef);
-        let existingId: IdentifierRecord | null = null;
-        if (idSnap.exists()) {
-           existingId = idSnap.data() as IdentifierRecord;
-           if (existingId.ownerId === auth.currentUser.uid && existingId.objectId && existingId.objectId !== objectId && existingId.status === 'active') {
-               toast.error('This identifier is already attached to another object.');
-               setIsAttaching(false);
-               return;
-           }
+        const validation = await validateIdentifierCanAttach(idKey, objectId, auth.currentUser.uid);
+        if (!validation.canAttach) {
+            toast.error(validation.error || 'Cannot attach identifier.');
+            setIsAttaching(false);
+            return;
+        }
+
+        if (validation.isIdempotent) {
+            // Already attached
+            navigate(`/object/${objectId}`);
+            return;
         }
 
         const batch = writeBatch(db);
 
         // 1. Update/Create Identifier
-        if (existingId) {
+        if (validation.existingId) {
             batch.update(idRef, {
                 objectId: objectId,
                 status: 'active',
@@ -89,17 +91,13 @@ export default function UnassignedIdentifierScreen() {
         // Use deterministic binding ID to avoid duplicating active records
         const bindingId = buildActiveBindingId(objectId, idKey);
         const bindingRef = doc(db, 'objectIdentifierBindings', bindingId);
-
-        const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, objectId, idKey);
-        const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindingId);
-
-        if (hasCanonicalBinding) {
-            batch.update(bindingRef, {
+        if (validation.existingId) {
+            batch.set(bindingRef, {
                 status: 'active',
                 updatedAt: serverTimestamp(),
                 detachedAt: deleteField(),
                 detachedBy: deleteField()
-            });
+            }, { merge: true });
         } else {
             batch.set(
                 bindingRef,
@@ -108,7 +106,7 @@ export default function UnassignedIdentifierScreen() {
         }
 
         // 3. Create Event (only if it wasn't already actively bound to this object)
-        if (!existingId || existingId.objectId !== objectId || existingId.status !== 'active') {
+        if (!validation.isIdempotent) {
             const eventRef = doc(collection(db, 'objectEvents'));
             batch.set(eventRef, {
                eventId: eventRef.id,

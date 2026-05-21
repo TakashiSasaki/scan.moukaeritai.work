@@ -15,7 +15,7 @@ import { getImageFormatFromUrl } from '../lib/utils';
 import { ImageWithLongPress } from './ImageWithLongPress';
 import { useUserSettings } from '../hooks/useUserSettings';
 import { buildIdentifierKey, normalizeIdentifierInput } from '../lib/identifiers';
-import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner, findCanonicalBindingsForOwner, buildDetachedBindingPatch } from '../lib/identifierBindings';
+import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner, findCanonicalBindingsForOwner, buildDetachedBindingPatch, validateIdentifierCanAttach } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -382,27 +382,18 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       const { kind, scheme, canonicalValue } = normalizeIdentifierInput(newIdentifierValue, newIdentifierKind, newIdentifierKind === 'qr' ? 'qr-plain-token' : 'manual-code');
       const idKey = buildIdentifierKey(kind, scheme, canonicalValue);
 
-      // Check if identifier already exists and is active
-      const idRef = doc(db, 'identifiers', idKey);
-      const idSnap = await getDoc(idRef);
+      if (data.objectId) {
+        const validation = await validateIdentifierCanAttach(idKey, data.objectId, auth.currentUser.uid);
+        if (!validation.canAttach) {
+          toast.error(validation.error || 'Cannot attach identifier.');
+          return;
+        }
 
-      let isNewIdentifier = true;
-      let existingId: IdentifierRecord | null = null;
-
-      if (idSnap.exists()) {
-        isNewIdentifier = false;
-        existingId = idSnap.data() as IdentifierRecord;
-
-        if (existingId.status === 'active') {
-          if (existingId.objectId === data.objectId) {
-            toast.success('Identifier is already attached to this object.');
-            setShowAddIdentifier(false);
-            setNewIdentifierValue('');
-            return;
-          } else {
-            toast.error('Identifier is already active on another object.');
-            return;
-          }
+        if (validation.isIdempotent) {
+          toast.success('Identifier is already attached to this object.');
+          setShowAddIdentifier(false);
+          setNewIdentifierValue('');
+          return;
         }
       }
 
@@ -429,15 +420,19 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       if (objectId) {
         // Save directly if we are editing an existing object
         const bindId = buildActiveBindingId(objectId, idKey);
+        const idRef = doc(db, 'identifiers', idKey);
 
-        if (isNewIdentifier) {
-           await setDoc(idRef, newIdRecord);
-        } else {
+        // We already ran validateIdentifierCanAttach, so we can use its result
+        const validation = await validateIdentifierCanAttach(idKey, objectId, auth.currentUser.uid);
+
+        if (validation.existingId) {
            await updateDoc(idRef, {
              objectId: objectId,
              status: 'active',
              updatedAt: serverTimestamp()
            });
+        } else {
+           await setDoc(idRef, newIdRecord);
         }
 
         const bindRef = doc(db, 'objectIdentifierBindings', bindId);
@@ -452,6 +447,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
              detachedBy: deleteField()
            });
         } else {
+           const bindRef = doc(db, 'objectIdentifierBindings', bindId);
            await setDoc(
              bindRef,
              buildActiveBindingRecord(bindId, auth.currentUser.uid, objectId, idKey, auth.currentUser.uid)
@@ -496,42 +492,45 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
     setLoading(true);
     try {
       const idRef = doc(db, 'identifiers', idr.identifierKey);
-
       // We search for the current active binding because previous bindings might have used uuidv4
       const activeBindings = await findActiveBindingsForOwner(db, auth.currentUser.uid, objectId, idr.identifierKey);
-
-      // Update identifier status to unassigned, remove objectId
-      await updateDoc(idRef, {
+      const batch = writeBatch(db);
+      batch.update(idRef, {
         status: 'unassigned',
         objectId: deleteField(),
         updatedAt: serverTimestamp()
       });
 
-      // Update binding status to detached
       if (activeBindings.length > 0) {
-        // Detach all active bindings found (including legacy duplicates)
-        const batch = writeBatch(db);
         for (const bindDoc of activeBindings) {
           batch.update(bindDoc.ref, buildDetachedBindingPatch(auth.currentUser.uid));
         }
-        await batch.commit();
       } else {
         // If we didn't find an active one, it means there wasn't one recorded or it was lost in migration.
         // We can just log an event to keep history consistent.
         console.warn(`No active binding found to detach for ${idr.identifierKey}`);
       }
 
-      await recordEvent('identifier_detached', { identifierKey: idr.identifierKey });
-
-      // Recompute summary and update object
       const newIdentifiers = identifiers.filter(i => i.identifierKey !== idr.identifierKey);
-      setIdentifiers(newIdentifiers);
-
       const summary = computeIdentifierSummary(newIdentifiers);
-      await updateDoc(doc(db, 'objects', objectId), {
+      batch.update(doc(db, 'objects', objectId), {
         identifierSummary: summary,
         updatedAt: serverTimestamp()
       });
+      const eventRef = doc(collection(db, 'objectEvents'));
+      batch.set(eventRef, {
+        eventId: eventRef.id,
+        ownerId: auth.currentUser.uid,
+        objectId: data.objectId,
+        identifierKey: idr.identifierKey,
+        type: 'identifier_detached',
+        occurredAt: serverTimestamp(),
+        actorUid: auth.currentUser.uid,
+        source: 'system'
+      });
+
+      await batch.commit();
+      setIdentifiers(newIdentifiers);
 
       toast.success('Identifier detached.');
     } catch (err: any) {
@@ -570,6 +569,16 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         }
       }
 
+      // Pre-flight validation for new object creation to ensure all identifiers can be attached
+      if (!objectId) {
+        for (const idr of activeIdentifiers) {
+           const validation = await validateIdentifierCanAttach(idr.identifierKey, data.objectId!, auth.currentUser.uid);
+           if (!validation.canAttach) {
+             throw new Error(`Cannot attach identifier ${idr.canonicalValue}: ${validation.error}`);
+           }
+        }
+      }
+
       const identifierSummary = computeIdentifierSummary(activeIdentifiers);
 
       const payload = {
@@ -592,8 +601,9 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         for (const idr of activeIdentifiers) {
            const idRef = doc(db, 'identifiers', idr.identifierKey);
 
-           const idSnap = await getDoc(idRef);
-           if (idSnap.exists()) {
+           const validation = await validateIdentifierCanAttach(idr.identifierKey, data.objectId!, auth.currentUser.uid);
+
+           if (validation.existingId) {
              await updateDoc(idRef, {
                objectId: data.objectId,
                status: 'active',
@@ -626,6 +636,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
                detachedBy: deleteField()
              });
            } else {
+             const bindRef = doc(db, 'objectIdentifierBindings', bindId);
              await setDoc(
                bindRef,
                buildActiveBindingRecord(bindId, auth.currentUser.uid, data.objectId!, idr.identifierKey, auth.currentUser.uid)

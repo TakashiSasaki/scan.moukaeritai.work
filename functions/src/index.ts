@@ -279,6 +279,7 @@ export const migrateInventoryModel = onCall(async (request: any) => {
   let stats = {
     processed: 0,
     objectsCreated: 0,
+    objectsUpdated: 0,
     identifiersCreated: 0,
     bindingsCreated: 0,
     imagesCreated: 0,
@@ -323,46 +324,88 @@ export const migrateInventoryModel = onCall(async (request: any) => {
         const eventRef = db.collection("objectEvents").doc(eventId);
         const eventDoc = await eventRef.get();
 
-        if (objectDoc.exists && idDoc.exists && bindingDoc.exists && eventDoc.exists && (!item.mainImageUrl || primaryImageDoc.exists)) {
-          stats.skipped++;
-          continue;
+        let skipObject = objectDoc.exists;
+        let skipIdentifier = idDoc.exists;
+        let skipBinding = bindingDoc.exists;
+        let skipPrimaryImage = !item.mainImageUrl || primaryImageDoc.exists;
+        let skipEvent = eventDoc.exists;
+
+        let backfillPrimaryImageOnObject = false;
+
+        if (objectDoc.exists && item.mainImageUrl && !objectDoc.data()?.primaryImageUrl) {
+          // Object exists but is missing primaryImageUrl, we should backfill it
+          skipObject = false;
+          backfillPrimaryImageOnObject = true;
+        }
+
+        if (skipObject && skipIdentifier && skipBinding && skipEvent && skipPrimaryImage) {
+          // We still need to check context images before we can completely skip
+          let skipAllContextImages = true;
+          if (Array.isArray(item.contextImageUrls)) {
+             for (let idx = 0; idx < item.contextImageUrls.length; idx++) {
+               const contextImageId = `${objectId}-context-${idx}`;
+               const contextImageDoc = await db.collection("objectImages").doc(contextImageId).get();
+               if (!contextImageDoc.exists) {
+                 skipAllContextImages = false;
+                 break;
+               }
+             }
+          }
+          if (skipAllContextImages) {
+            stats.skipped++;
+            continue;
+          }
         }
 
         if (!dryRun) {
-          // 1. Create Object if not exists
-          if (!objectDoc.exists) {
-            const identifierSummary = {
-              activeKinds: ['qr'],
-              activeIdentifierCount: 1,
-              hasQr: true,
-              hasNfc: false
-            };
-            const objectData: any = {
-              objectId: objectId,
-              ownerId: item.ownerId,
-              name: item.name || '',
-              description: item.description || '',
-              status: 'active',
-              currentLocation: item.location || null,
-              identifierSummary,
-              createdAt: item.createdAt || admin.firestore.FieldValue.serverTimestamp(),
-              updatedAt: item.updatedAt || admin.firestore.FieldValue.serverTimestamp(),
-              legacy: {
-                sourceCollection: 'items',
-                legacyItemId: legacyItemId
+          // 1. Create or Update Object
+          if (!skipObject) {
+              if (backfillPrimaryImageOnObject) {
+                batch.update(objectRef, {
+                  primaryImageId: primaryImageId,
+                  primaryImageUrl: item.mainImageUrl,
+                  updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+                batchWrites++;
+                stats.objectsUpdated++;
+              } else if (!objectDoc.exists) {
+              const identifierSummary = {
+                activeKinds: ['qr'],
+                activeIdentifierCount: 1,
+                hasQr: true,
+                hasNfc: false
+              };
+              const objectData: any = {
+                objectId: objectId,
+                ownerId: item.ownerId,
+                name: item.name || '',
+                description: item.description || '',
+                status: 'active',
+                identifierSummary,
+                createdAt: item.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: item.updatedAt || admin.firestore.FieldValue.serverTimestamp(),
+                legacy: {
+                  sourceCollection: 'items',
+                  legacyItemId: legacyItemId
+                }
+              };
+
+              if (item.location && typeof item.location.latitude === 'number' && typeof item.location.longitude === 'number') {
+                objectData.currentLocation = item.location;
               }
-            };
-            if (item.mainImageUrl) {
-               objectData.primaryImageId = primaryImageId;
-               objectData.primaryImageUrl = item.mainImageUrl;
+
+              if (item.mainImageUrl) {
+                 objectData.primaryImageId = primaryImageId;
+                 objectData.primaryImageUrl = item.mainImageUrl;
+              }
+              batch.set(objectRef, objectData, { merge: true });
+              stats.objectsCreated++;
+              batchWrites++;
             }
-            batch.set(objectRef, objectData, { merge: true });
-            stats.objectsCreated++;
-            batchWrites++;
           }
 
           // 2. Create Identifier if not exists
-          if (!idDoc.exists) {
+          if (!skipIdentifier) {
             batch.set(idRef, {
               identifierKey: idKey,
               ownerId: item.ownerId,
@@ -379,7 +422,7 @@ export const migrateInventoryModel = onCall(async (request: any) => {
           }
 
           // 3. Create Binding if not exists
-          if (!bindingDoc.exists) {
+          if (!skipBinding) {
             batch.set(bindingRef, {
               bindingId: bindingId,
               ownerId: item.ownerId,
@@ -396,7 +439,7 @@ export const migrateInventoryModel = onCall(async (request: any) => {
           }
 
           // 4. Migrate Primary Image if not exists
-          if (item.mainImageUrl && !primaryImageDoc.exists) {
+          if (!skipPrimaryImage) {
             batch.set(primaryImageRef, {
               imageId: primaryImageId,
               ownerId: item.ownerId,
@@ -447,7 +490,7 @@ export const migrateInventoryModel = onCall(async (request: any) => {
           }
 
           // 6. Create Migration Event if not exists
-          if (!eventDoc.exists) {
+          if (!skipEvent) {
             batch.set(eventRef, {
               eventId: eventId,
               ownerId: item.ownerId,
@@ -469,6 +512,7 @@ export const migrateInventoryModel = onCall(async (request: any) => {
         } else {
           // DRY RUN
           if (!objectDoc.exists) stats.objectsCreated++;
+          if (backfillPrimaryImageOnObject) stats.objectsUpdated++;
           if (!idDoc.exists) stats.identifiersCreated++;
           if (!bindingDoc.exists) stats.bindingsCreated++;
           if (item.mainImageUrl && !primaryImageDoc.exists) stats.imagesCreated++;

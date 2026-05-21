@@ -242,20 +242,22 @@ The application has transitioned from a simple `items` collection to a normalize
     - `objects.identifierSummary` is denormalized and should be recomputed from active identifiers when needed.
     - `objects.primaryImageUrl` is denormalized and should be kept in sync with the primary `objectImages` record.
   - **`identifiers`**: Represents a physical tag (QR, NFC) or a logical code (barcode, manual). One object can have zero or more identifiers. One identifier can have at most one active object.
-  - **`objectIdentifierBindings`**: Historical log of attachments, replacements, or detachments between objects and identifiers. Active binding records use deterministic IDs formatted as `${objectId}__${identifierKey}__active` to prevent accumulating duplicate active rows.
+  - **`objectIdentifierBindings`**: Stores canonical relationship state between objects and identifiers. Active binding records use deterministic IDs formatted as `${objectId}__${identifierKey}__active`. There must be at most one active binding for a given `(objectId, identifierKey)` pair. Repeated attach of the same identifier to the same object should be idempotent. Reassignment to another object must be explicit and must record events. *Note: Client code should not rely on direct missing-document reads (`getDoc()`) for `objectIdentifierBindings` without checking rules, instead use owner-scoped queries.*
   - **`objectImages`**: The normalized image metadata collection, replacing embedded arrays of URLs.
-  - **`objectEvents`**: An append-only event log for normal clients tracking operations like creation, updates, and scanning.
+  - **`objectEvents`**: An append-only event log for normal clients tracking operations like creation, updates, scanning, migration, image attachment, and historical log of attachments, replacements, or detachments between objects and identifiers.
 
 - **Identifier Management**:
   - `CaptureForm` is now responsible for active identifier management (Adding and Detaching).
   - Adding an identifier creates/updates canonical bindings and appends to the `objectEvents` history.
-  - Detaching an identifier sets its status to `unassigned`, updates the binding to `detached`, and creates an `identifier_detached` event.
+  - Detaching an identifier sets its status to `unassigned`, updates matching active bindings to `detached`, updates `objects.identifierSummary`, and writes the `identifier_detached` event in a single Firestore `writeBatch` for atomicity.
   - Direct NFC attachment is scanner-driven, handled outside of `CaptureForm`. Users should be directed to the scanner flow for NFC identifiers.
 - **Migration**:
   - A dedicated admin-only Cloud Function (`migrateInventoryModel`) safely translates legacy `items` into the normalized collections: `objects`, `identifiers`, `objectIdentifierBindings`, `objectImages`, and `objectEvents`.
+  - Missing `currentLocation` is represented by field absence, not by `null`.
   - The UI provides a `/admin/migration` page to run a Dry Run and an Execute phase.
   - **Non-destructive**: Migration does not delete legacy items or Storage files. Legacy `items` are kept intact. If the app tries to load a legacy item that isn't migrated, the user is warned to run the migration first.
   - **Idempotency**: Migration should be idempotent per target record, allowing safe re-runs.
+  - Dry-run stats include object update backfills (`objectsUpdated`) when an existing object is patched with missing `primaryImageId`/`primaryImageUrl`.
   - **ID Conversion**: Legacy item IDs are normalized to uppercase object IDs. Legacy source IDs are retained in `objects.legacy.legacyItemId`.
 - **Source of Truth**:
   - `firebase-blueprint.json` defines the new schema boundaries.
