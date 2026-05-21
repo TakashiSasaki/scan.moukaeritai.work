@@ -1,6 +1,5 @@
 import { serverTimestamp, getDoc, doc, collection, query, where, getDocs } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
-import { db } from './firebase';
 import { IdentifierRecord, ObjectIdentifierBindingRecord } from '../types';
 
 /**
@@ -46,6 +45,7 @@ export function buildActiveBindingRecord(
  * Checks for ownership, active status, and reassignment rules.
  */
 export async function validateIdentifierCanAttach(
+  db: Firestore,
   identifierKey: string,
   targetObjectId: string,
   uid: string

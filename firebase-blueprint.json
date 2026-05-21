@@ -187,7 +187,7 @@
     },
     "ObjectIdentifierBindingRecord": {
       "title": "Object Identifier Binding Record",
-      "description": "Canonical active relationship state linking an object to an identifier.",
+      "description": "Canonical active relationship state linking an object to an identifier. This is NOT an append-only historical log; use objectEvents for history.",
       "type": "object",
       "properties": {
         "bindingId": {

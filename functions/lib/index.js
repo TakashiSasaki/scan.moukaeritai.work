@@ -255,6 +255,7 @@ exports.migrateInventoryModel = (0, https_1.onCall)(async (request) => {
     let stats = {
         processed: 0,
         objectsCreated: 0,
+        objectsUpdated: 0,
         identifiersCreated: 0,
         bindingsCreated: 0,
         imagesCreated: 0,
@@ -328,7 +329,7 @@ exports.migrateInventoryModel = (0, https_1.onCall)(async (request) => {
                                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
                             });
                             batchWrites++;
-                            // Not incrementing objectsCreated because it's just an update
+                            stats.objectsUpdated++;
                         }
                         else if (!objectDoc.exists) {
                             const identifierSummary = {
@@ -467,6 +468,8 @@ exports.migrateInventoryModel = (0, https_1.onCall)(async (request) => {
                     // DRY RUN
                     if (!objectDoc.exists)
                         stats.objectsCreated++;
+                    if (backfillPrimaryImageOnObject)
+                        stats.objectsUpdated++;
                     if (!idDoc.exists)
                         stats.identifiersCreated++;
                     if (!bindingDoc.exists)

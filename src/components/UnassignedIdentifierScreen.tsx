@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { db, auth } from '../lib/firebase';
 import { ObjectRecord, IdentifierRecord } from '../types';
 import { buildIdentifierKey } from '../lib/identifiers';
-import { buildActiveBindingId, buildActiveBindingRecord, validateIdentifierCanAttach } from '../lib/identifierBindings';
+import { buildActiveBindingId, buildActiveBindingRecord, validateIdentifierCanAttach, findCanonicalBindingsForOwner } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 
 export default function UnassignedIdentifierScreen() {
@@ -51,7 +51,7 @@ export default function UnassignedIdentifierScreen() {
         const idKey = buildIdentifierKey(state.kind, state.scheme, state.canonicalValue);
         const idRef = doc(db, 'identifiers', idKey);
 
-        const validation = await validateIdentifierCanAttach(idKey, objectId, auth.currentUser.uid);
+        const validation = await validateIdentifierCanAttach(db, idKey, objectId, auth.currentUser.uid);
         if (!validation.canAttach) {
             toast.error(validation.error || 'Cannot attach identifier.');
             setIsAttaching(false);
@@ -87,23 +87,39 @@ export default function UnassignedIdentifierScreen() {
             });
         }
 
-        // 2. Create Binding
+        // 2. Create/Update Binding
         // Use deterministic binding ID to avoid duplicating active records
         const bindingId = buildActiveBindingId(objectId, idKey);
         const bindingRef = doc(db, 'objectIdentifierBindings', bindingId);
-        if (validation.existingId) {
-            batch.set(bindingRef, {
+
+        const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, objectId, idKey);
+        const hasCanonicalBinding = canonicalBindings.some(d => d.id === bindingId);
+
+        if (hasCanonicalBinding) {
+            batch.update(bindingRef, {
                 status: 'active',
                 updatedAt: serverTimestamp(),
                 detachedAt: deleteField(),
                 detachedBy: deleteField()
-            }, { merge: true });
+            });
         } else {
             batch.set(
                 bindingRef,
                 buildActiveBindingRecord(bindingId, auth.currentUser.uid, objectId, idKey, auth.currentUser.uid)
             );
         }
+
+        // Handle legacy duplicate bindings (detaching them to keep history clean)
+        canonicalBindings.forEach(bindDoc => {
+            if (bindDoc.id !== bindingId && bindDoc.data().status === 'active') {
+                batch.update(bindDoc.ref, {
+                    status: 'detached',
+                    detachedAt: serverTimestamp(),
+                    detachedBy: auth.currentUser.uid,
+                    updatedAt: serverTimestamp()
+                });
+            }
+        });
 
         // 3. Create Event (only if it wasn't already actively bound to this object)
         if (!validation.isIdempotent) {
