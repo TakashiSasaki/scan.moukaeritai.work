@@ -255,8 +255,7 @@
       "type": "object",
       "properties": {
         "eventId": {
-          "type": "string",
-          "description": "The unique ID matching the document ID. Normal client-created events may use uuidv4()."
+          "type": "string"
         },
         "ownerId": {
           "type": "string"
@@ -321,8 +320,7 @@
       "type": "object",
       "properties": {
         "imageId": {
-          "type": "string",
-          "description": "The unique ID matching the document ID. Normal uploaded images may use uuidv4()."
+          "type": "string"
         },
         "ownerId": {
           "type": "string"

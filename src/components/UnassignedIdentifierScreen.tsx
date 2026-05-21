@@ -139,16 +139,24 @@ export default function UnassignedIdentifierScreen() {
             objectId
         );
 
-        const newIdentifier = {
-           identifierKey: idKey,
-           ownerId: auth.currentUser.uid,
-           objectId: objectId,
-           kind: state.kind,
-           scheme: state.scheme,
-           canonicalValue: state.canonicalValue,
-           status: 'active' as const,
-           updatedAt: serverTimestamp() as any,
-        } as IdentifierRecord;
+        const newIdentifier: IdentifierRecord = validation.existingId
+           ? {
+               ...validation.existingId,
+               objectId: objectId,
+               status: 'active',
+               updatedAt: serverTimestamp() as any
+             }
+           : {
+               identifierKey: idKey,
+               ownerId: auth.currentUser.uid,
+               objectId: objectId,
+               kind: state.kind,
+               scheme: state.scheme,
+               canonicalValue: state.canonicalValue,
+               status: 'active',
+               createdAt: serverTimestamp() as any,
+               updatedAt: serverTimestamp() as any,
+             };
 
         const mergedIdentifiers = mergeIdentifierForSummary(allIdentifiers, newIdentifier);
         const summary = computeIdentifierSummary(mergedIdentifiers);
