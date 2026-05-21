@@ -84,9 +84,9 @@ To prevent confusion across systems, note the following distinct identifiers use
   - `admins/{uid}`: Handles Role-Based Access Control (RBAC). The presence of a document grants admin privileges.
   - `objects/{objectId}`: The core inventory object document.
   - `identifiers/{identifierKey}`: Maps QR/NFC/manual/barcode/Bluetooth identifiers to objects.
-  - `objectIdentifierBindings/{bindingId}`: Records identifier attachment/detachment history.
+  - `objectIdentifierBindings/{bindingId}`: Canonical active relationship state between objects and identifiers (not a historical log).
   - `objectImages/{imageId}`: Records image metadata and Storage references.
-  - `objectEvents/{eventId}`: Records append-only operational events.
+  - `objectEvents/{eventId}`: Records append-only operational events (including attachment/detachment history).
   - `items/{itemId}`: Legacy-only and used as migration input.
 - **Legacy Identifiers for Backend Resources**: The frontend deployment target uses the current domain name (`scan-moukaeritai-work`), but backend Firebase resources (Firestore Database, Storage Bucket) intentionally retain the legacy identifier `photo-moukaeritai-work`. This is reflected in `firebase-applet-config.json` and must not be altered to match the hosting name.
 - **Cloud Storage Strategy**:
@@ -249,6 +249,8 @@ The application has transitioned from a simple `items` collection to a normalize
 - **Identifier Management**:
   - `CaptureForm` is now responsible for active identifier management (Adding and Detaching).
   - Adding an identifier creates/updates canonical bindings and appends to the `objectEvents` history.
+  - `CaptureForm` operations must use single `writeBatch` writes to avoid partial states, grouping identifier updates, binding creation, event creation, and object summary updates.
+  - Binding existence must be checked via owner-scoped queries (e.g. `findCanonicalBindingsForOwner` and `findActiveBindingsForOwner`) rather than direct document fetching to bypass Firestore rules limitations.
   - Detaching an identifier sets its status to `unassigned`, updates matching active bindings to `detached`, updates `objects.identifierSummary`, and writes the `identifier_detached` event in a single Firestore `writeBatch` for atomicity.
   - Direct NFC attachment is scanner-driven, handled outside of `CaptureForm`. Users should be directed to the scanner flow for NFC identifiers.
 - **Migration**:

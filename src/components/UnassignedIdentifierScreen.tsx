@@ -5,6 +5,7 @@ import { collection, query, where, getDocs, doc, writeBatch, serverTimestamp, de
 import { toast } from 'react-hot-toast';
 import { db, auth } from '../lib/firebase';
 import { ObjectRecord, IdentifierRecord } from '../types';
+import { v4 as uuidv4 } from 'uuid';
 import { buildIdentifierKey } from '../lib/identifiers';
 import { buildActiveBindingId, buildActiveBindingRecord, validateIdentifierCanAttach, findCanonicalBindingsForOwner } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
@@ -117,9 +118,10 @@ export default function UnassignedIdentifierScreen() {
 
         // 3. Create Event (only if it wasn't already actively bound to this object)
         if (!validation.isIdempotent) {
-            const eventRef = doc(collection(db, 'objectEvents'));
+            const eventId = uuidv4();
+            const eventRef = doc(db, 'objectEvents', eventId);
             batch.set(eventRef, {
-               eventId: eventRef.id,
+               eventId,
                ownerId: auth.currentUser.uid,
                objectId: objectId,
                identifierKey: idKey,
