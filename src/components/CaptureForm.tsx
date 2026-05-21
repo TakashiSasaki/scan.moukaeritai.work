@@ -391,13 +391,9 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
           return;
         }
 
-        if (validationResult.isIdempotent) {
-          toast.success('Identifier is already attached to this object.');
-          setShowAddIdentifier(false);
-          setNewIdentifierValue('');
-          return;
-        }
       }
+
+      const isIdempotentAttach = validationResult?.isIdempotent || false;
 
       const newIdRecord: IdentifierRecord = {
         identifierKey: idKey,
@@ -411,22 +407,33 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         updatedAt: serverTimestamp() as any
       };
 
+      const resolvedIdRecord: IdentifierRecord = validationResult?.existingId
+        ? {
+            ...validationResult.existingId,
+            objectId: data.objectId || '',
+            status: 'active',
+            updatedAt: serverTimestamp() as any
+          }
+        : newIdRecord;
+
       // We don't save to firestore right away, we let handleSave do it,
       // EXCEPT if the object already exists, then we save it directly to keep it simple and consistent with detach
       if (objectId && validationResult) {
         // Save directly if we are editing an existing object
         const bindId = buildActiveBindingId(objectId, idKey);
-        const idRef = doc(db, 'identifiers', idKey);
         const batch = writeBatch(db);
 
-        if (validationResult.existingId) {
-           batch.update(idRef, {
-             objectId: objectId,
-             status: 'active',
-             updatedAt: serverTimestamp()
-           });
-        } else {
-           batch.set(idRef, newIdRecord);
+        if (!isIdempotentAttach) {
+          const idRef = doc(db, 'identifiers', idKey);
+          if (validationResult.existingId) {
+             batch.update(idRef, {
+               objectId: objectId,
+               status: 'active',
+               updatedAt: serverTimestamp()
+             });
+          } else {
+             batch.set(idRef, newIdRecord);
+          }
         }
 
         const bindRef = doc(db, 'objectIdentifierBindings', bindId);
@@ -450,16 +457,11 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         // Detach legacy duplicates
         canonicalBindings.forEach(bindDoc => {
              if (bindDoc.id !== bindId && bindDoc.data().status === 'active') {
-                batch.update(bindDoc.ref, {
-                    status: 'detached',
-                    detachedAt: serverTimestamp(),
-                    detachedBy: auth.currentUser.uid,
-                    updatedAt: serverTimestamp()
-                });
+                batch.update(bindDoc.ref, buildDetachedBindingPatch(auth.currentUser!.uid));
              }
         });
 
-        if (!validationResult.isIdempotent) {
+        if (!isIdempotentAttach) {
             const eventId = uuidv4();
             const eventRef = doc(db, 'objectEvents', eventId);
             batch.set(eventRef, {
@@ -475,7 +477,10 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         }
 
         // Recompute summary and update object
-        const newIdentifiers = [...identifiers.filter(i => i.identifierKey !== idKey), newIdRecord];
+        const newIdentifiers = isIdempotentAttach && identifiers.some(i => i.identifierKey === idKey)
+          ? identifiers // Keep existing in-memory record if it's already there for idempotent attach
+          : [...identifiers.filter(i => i.identifierKey !== idKey), resolvedIdRecord];
+
         const summary = computeIdentifierSummary(newIdentifiers);
 
         batch.update(doc(db, 'objects', objectId), {
@@ -487,16 +492,19 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
 
         setIdentifiers(newIdentifiers);
 
-        if (validationResult.isIdempotent) {
-          toast.success('Identifier is already attached to this object.');
+        if (isIdempotentAttach) {
+          toast.success('Identifier is already attached. Canonical state checked.');
         } else {
           toast.success('Identifier added.');
         }
       } else {
         // New object case, just update local state
         setIdentifiers(prev => {
+          if (isIdempotentAttach && prev.some(i => i.identifierKey === idKey)) {
+            return prev;
+          }
           const filtered = prev.filter(i => i.identifierKey !== idKey);
-          return [...filtered, newIdRecord];
+          return [...filtered, resolvedIdRecord];
         });
       }
 
