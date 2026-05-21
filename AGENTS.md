@@ -240,10 +240,17 @@ The application has transitioned from a simple `items` collection to a normalize
 - **Data Model Core Principles**:
   - **`objects`**: Represents a real-world physical entity. (Replaces legacy `items`).
     - `objects.identifierSummary` is denormalized and should be recomputed from active identifiers when needed.
-    - When adding or repairing identifiers in `CaptureForm`, the summary should be recomputed from the current Firestore identifier state where practical, not only from potentially stale local component state.
+    - When adding, repairing, or detaching identifiers (e.g., in `CaptureForm`), the summary should be recomputed from the current Firestore identifier state where practical, not only from potentially stale local component state. Use `loadObjectIdentifiersForSummary()` to fetch the source data, and keep local component state updated after a successful write.
     - `objects.primaryImageUrl` is denormalized and should be kept in sync with the primary `objectImages` record.
   - **`identifiers`**: Represents a physical tag (QR, NFC) or a logical code (barcode, manual). One object can have zero or more identifiers. One identifier can have at most one active object.
   - **`objectIdentifierBindings`**: Stores canonical relationship state between objects and identifiers. Active binding records use deterministic IDs formatted as `${objectId}__${identifierKey}__active`. There must be at most one active binding for a given `(objectId, identifierKey)` pair. Repeated attach of the same identifier to the same object should be idempotent. Reassignment to another object must be explicit and must record events. *Note: Client code should not rely on direct missing-document reads (`getDoc()`) for `objectIdentifierBindings` without checking rules, instead use owner-scoped queries.* **Important:** `objectIdentifierBindings` is NOT a historical log table. The existence of an identifier document does not imply the existence of a binding document.
+  - **Document ID Conventions**:
+    - `objects/{objectId}`: Field `objectId` must equal the document ID.
+    - `identifiers/{identifierKey}`: Field `identifierKey` must equal the document ID.
+    - `objectIdentifierBindings/{bindingId}`: Field `bindingId` must equal the document ID. Canonical active binding IDs are deterministic: `${objectId}__${identifierKey}__active`.
+    - `objectEvents/{eventId}`: Field `eventId` must equal the document ID. Normal client-created events may use `uuidv4()`. Migration events may use deterministic IDs such as `${objectId}-migrated`.
+    - `objectImages/{imageId}`: Field `imageId` must equal the document ID. Normal uploaded images may use `uuidv4()`. Migration images may use deterministic IDs such as `${objectId}-primary` and `${objectId}-context-${idx}`.
+    - `admins/{uid}`: Uses Firebase Auth UID as the document ID.
     - `validationResult.isIdempotent` only means the `identifiers` lookup already points to the target object. Even in an idempotent attach, the code must proceed to repair canonical binding state and recompute `objects.identifierSummary` (avoiding stale local state). Idempotent attach must not create duplicate `identifier_attached` events. Canonical binding repair should use owner-scoped queries and deterministic active binding IDs.
   - **`objectImages`**: The normalized image metadata collection, replacing embedded arrays of URLs.
   - **`objectEvents`**: An append-only event log for normal clients tracking operations like creation, updates, scanning, migration, image attachment, and historical log of attachments, replacements, or detachments between objects and identifiers.

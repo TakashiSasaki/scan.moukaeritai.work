@@ -46,9 +46,11 @@ export function buildActiveBindingRecord(
 /**
  * Pure helper to merge an updated or new identifier into a list, matching by identifierKey.
  */
+export type IdentifierSummarySource = Pick<IdentifierRecord, "identifierKey" | "kind" | "status"> & Partial<IdentifierRecord>;
+
 export function mergeIdentifierForSummary(
   identifiers: IdentifierRecord[],
-  identifier: Partial<IdentifierRecord> & { identifierKey: string; kind: string; status: string }
+  identifier: IdentifierSummarySource
 ): IdentifierRecord[] {
   const byKey = new Map<string, IdentifierRecord>();
   for (const existing of identifiers) {

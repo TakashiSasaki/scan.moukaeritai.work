@@ -560,15 +560,20 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         console.warn(`No active binding found to detach for ${idr.identifierKey}`);
       }
 
-      const newIdentifiers = identifiers.filter(i => i.identifierKey !== idr.identifierKey);
+      // Recompute summary from Firestore truth
+      const currentIdentifiers = await loadObjectIdentifiersForSummary(db, auth.currentUser.uid, objectId);
+      const newIdentifiers = currentIdentifiers.filter(i => i.identifierKey !== idr.identifierKey);
       const summary = computeIdentifierSummary(newIdentifiers);
+
       batch.update(doc(db, 'objects', objectId), {
         identifierSummary: summary,
         updatedAt: serverTimestamp()
       });
-      const eventRef = doc(collection(db, 'objectEvents'));
+
+      const eventId = uuidv4();
+      const eventRef = doc(db, 'objectEvents', eventId);
       batch.set(eventRef, {
-        eventId: eventRef.id,
+        eventId,
         ownerId: auth.currentUser.uid,
         objectId: data.objectId,
         identifierKey: idr.identifierKey,
