@@ -279,6 +279,7 @@ export const migrateInventoryModel = onCall(async (request: any) => {
   let stats = {
     processed: 0,
     objectsCreated: 0,
+    objectsUpdated: 0,
     identifiersCreated: 0,
     bindingsCreated: 0,
     imagesCreated: 0,
@@ -359,15 +360,15 @@ export const migrateInventoryModel = onCall(async (request: any) => {
         if (!dryRun) {
           // 1. Create or Update Object
           if (!skipObject) {
-            if (backfillPrimaryImageOnObject) {
-               batch.update(objectRef, {
-                 primaryImageId: primaryImageId,
-                 primaryImageUrl: item.mainImageUrl,
-                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
-               });
-               batchWrites++;
-               // Not incrementing objectsCreated because it's just an update
-            } else if (!objectDoc.exists) {
+              if (backfillPrimaryImageOnObject) {
+                batch.update(objectRef, {
+                  primaryImageId: primaryImageId,
+                  primaryImageUrl: item.mainImageUrl,
+                  updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+                batchWrites++;
+                stats.objectsUpdated++;
+              } else if (!objectDoc.exists) {
               const identifierSummary = {
                 activeKinds: ['qr'],
                 activeIdentifierCount: 1,
@@ -511,6 +512,7 @@ export const migrateInventoryModel = onCall(async (request: any) => {
         } else {
           // DRY RUN
           if (!objectDoc.exists) stats.objectsCreated++;
+          if (backfillPrimaryImageOnObject) stats.objectsUpdated++;
           if (!idDoc.exists) stats.identifiersCreated++;
           if (!bindingDoc.exists) stats.bindingsCreated++;
           if (item.mainImageUrl && !primaryImageDoc.exists) stats.imagesCreated++;

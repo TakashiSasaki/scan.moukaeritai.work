@@ -1,4 +1,5 @@
-import { serverTimestamp, getDoc, doc } from 'firebase/firestore';
+import { serverTimestamp, getDoc, doc, collection, query, where, getDocs } from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
 import { db } from './firebase';
 import { IdentifierRecord, ObjectIdentifierBindingRecord } from '../types';
 
@@ -86,6 +87,49 @@ export async function validateIdentifierCanAttach(
 
   // status is retired, lost, or replaced
   return { canAttach: false, isIdempotent: false, error: `Cannot attach identifier with status: ${existingId.status}.`, existingId };
+}
+
+/**
+ * Finds active bindings for a specific owner, object, and identifier.
+ * Compatible with owner-scoped Firestore rules.
+ */
+export async function findActiveBindingsForOwner(
+  db: Firestore,
+  ownerId: string,
+  objectId: string,
+  identifierKey: string
+) {
+  const q = query(
+    collection(db, 'objectIdentifierBindings'),
+    where('ownerId', '==', ownerId),
+    where('objectId', '==', objectId),
+    where('identifierKey', '==', identifierKey),
+    where('status', '==', 'active')
+  );
+
+  const snap = await getDocs(q);
+  return snap.docs;
+}
+
+/**
+ * Finds canonical bindings (active or detached) for a specific owner, object, and identifier.
+ * Compatible with owner-scoped Firestore rules.
+ */
+export async function findCanonicalBindingsForOwner(
+  db: Firestore,
+  ownerId: string,
+  objectId: string,
+  identifierKey: string
+) {
+  const q = query(
+    collection(db, 'objectIdentifierBindings'),
+    where('ownerId', '==', ownerId),
+    where('objectId', '==', objectId),
+    where('identifierKey', '==', identifierKey)
+  );
+
+  const snap = await getDocs(q);
+  return snap.docs;
 }
 
 /**

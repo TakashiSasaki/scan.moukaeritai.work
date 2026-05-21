@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Package, PlusCircle, Scan, ArrowRight, Link as LinkIcon, Search } from 'lucide-react';
-import { collection, query, where, getDocs, doc, writeBatch, serverTimestamp, getDoc, deleteField } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, writeBatch, serverTimestamp, deleteField } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { db, auth } from '../lib/firebase';
 import { ObjectRecord, IdentifierRecord } from '../types';
@@ -90,27 +90,15 @@ export default function UnassignedIdentifierScreen() {
         // 2. Create Binding
         // Use deterministic binding ID to avoid duplicating active records
         const bindingId = buildActiveBindingId(objectId, idKey);
-
-        // Search for active bindings using owner-scoped query
-        const qActiveBindings = query(
-          collection(db, 'objectIdentifierBindings'),
-          where('ownerId', '==', auth.currentUser.uid),
-          where('objectId', '==', objectId),
-          where('identifierKey', '==', idKey),
-          where('status', '==', 'active')
-        );
-        const activeBindingsSnap = await getDocs(qActiveBindings);
-
-        if (!activeBindingsSnap.empty) {
-            const bindDoc = activeBindingsSnap.docs[0];
-            batch.update(bindDoc.ref, {
+        const bindingRef = doc(db, 'objectIdentifierBindings', bindingId);
+        if (validation.existingId) {
+            batch.set(bindingRef, {
                 status: 'active',
                 updatedAt: serverTimestamp(),
                 detachedAt: deleteField(),
                 detachedBy: deleteField()
-            });
+            }, { merge: true });
         } else {
-            const bindingRef = doc(db, 'objectIdentifierBindings', bindingId);
             batch.set(
                 bindingRef,
                 buildActiveBindingRecord(bindingId, auth.currentUser.uid, objectId, idKey, auth.currentUser.uid)

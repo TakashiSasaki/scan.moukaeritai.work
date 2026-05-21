@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, storage, auth } from '../lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, addDoc, deleteField } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, addDoc, deleteField, writeBatch } from 'firebase/firestore';
 import { ref, getDownloadURL, uploadBytesResumable, UploadTaskSnapshot } from 'firebase/storage';
 import { ObjectRecord, IdentifierRecord, ObjectEventRecord, ObjectImageRecord, OperationType, BluetoothTag } from '../types';
 import { handleFirestoreError } from '../lib/error-handler';
@@ -15,7 +15,7 @@ import { getImageFormatFromUrl } from '../lib/utils';
 import { ImageWithLongPress } from './ImageWithLongPress';
 import { useUserSettings } from '../hooks/useUserSettings';
 import { buildIdentifierKey, normalizeIdentifierInput } from '../lib/identifiers';
-import { buildActiveBindingId, buildActiveBindingRecord, validateIdentifierCanAttach, buildDetachedBindingPatch } from '../lib/identifierBindings';
+import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner, findCanonicalBindingsForOwner, buildDetachedBindingPatch, validateIdentifierCanAttach } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -435,20 +435,12 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
            await setDoc(idRef, newIdRecord);
         }
 
-        // Query for active bindings using owner-scoped query to avoid permission-denied if missing document lacks ownerId
-        const q = query(
-          collection(db, 'objectIdentifierBindings'),
-          where('ownerId', '==', auth.currentUser.uid),
-          where('objectId', '==', objectId),
-          where('identifierKey', '==', idKey),
-          where('status', '==', 'active')
-        );
-        const activeBindingsSnap = await getDocs(q);
+        const bindRef = doc(db, 'objectIdentifierBindings', bindId);
+        const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, objectId, idKey);
+        const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindId);
 
-        if (!activeBindingsSnap.empty) {
-           // We just update the deterministic one or the existing one
-           const bindDoc = activeBindingsSnap.docs[0];
-           await updateDoc(bindDoc.ref, {
+        if (hasCanonicalBinding) {
+           await updateDoc(bindRef, {
              status: 'active',
              updatedAt: serverTimestamp(),
              detachedAt: deleteField(),
@@ -500,28 +492,18 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
     setLoading(true);
     try {
       const idRef = doc(db, 'identifiers', idr.identifierKey);
-
-      // Search for active bindings using owner-scoped query
-      const q = query(
-        collection(db, 'objectIdentifierBindings'),
-        where('ownerId', '==', auth.currentUser.uid),
-        where('objectId', '==', objectId),
-        where('identifierKey', '==', idr.identifierKey),
-        where('status', '==', 'active')
-      );
-      const bindDocs = await getDocs(q);
-
-      // Update identifier status to unassigned, remove objectId
-      await updateDoc(idRef, {
+      // We search for the current active binding because previous bindings might have used uuidv4
+      const activeBindings = await findActiveBindingsForOwner(db, auth.currentUser.uid, objectId, idr.identifierKey);
+      const batch = writeBatch(db);
+      batch.update(idRef, {
         status: 'unassigned',
         objectId: deleteField(),
         updatedAt: serverTimestamp()
       });
 
-      // Update all matching active bindings to detached
-      if (!bindDocs.empty) {
-        for (const bindDoc of bindDocs.docs) {
-          await updateDoc(bindDoc.ref, buildDetachedBindingPatch(auth.currentUser.uid));
+      if (activeBindings.length > 0) {
+        for (const bindDoc of activeBindings) {
+          batch.update(bindDoc.ref, buildDetachedBindingPatch(auth.currentUser.uid));
         }
       } else {
         // If we didn't find an active one, it means there wasn't one recorded or it was lost in migration.
@@ -529,17 +511,26 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         console.warn(`No active binding found to detach for ${idr.identifierKey}`);
       }
 
-      await recordEvent('identifier_detached', { identifierKey: idr.identifierKey });
-
-      // Recompute summary and update object
       const newIdentifiers = identifiers.filter(i => i.identifierKey !== idr.identifierKey);
-      setIdentifiers(newIdentifiers);
-
       const summary = computeIdentifierSummary(newIdentifiers);
-      await updateDoc(doc(db, 'objects', objectId), {
+      batch.update(doc(db, 'objects', objectId), {
         identifierSummary: summary,
         updatedAt: serverTimestamp()
       });
+      const eventRef = doc(collection(db, 'objectEvents'));
+      batch.set(eventRef, {
+        eventId: eventRef.id,
+        ownerId: auth.currentUser.uid,
+        objectId: data.objectId,
+        identifierKey: idr.identifierKey,
+        type: 'identifier_detached',
+        occurredAt: serverTimestamp(),
+        actorUid: auth.currentUser.uid,
+        source: 'system'
+      });
+
+      await batch.commit();
+      setIdentifiers(newIdentifiers);
 
       toast.success('Identifier detached.');
     } catch (err: any) {
@@ -633,19 +624,12 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
            }
 
            const bindId = buildActiveBindingId(data.objectId!, idr.identifierKey);
+           const bindRef = doc(db, 'objectIdentifierBindings', bindId);
+           const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, data.objectId!, idr.identifierKey);
+           const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindId);
 
-           const q = query(
-             collection(db, 'objectIdentifierBindings'),
-             where('ownerId', '==', auth.currentUser.uid),
-             where('objectId', '==', data.objectId!),
-             where('identifierKey', '==', idr.identifierKey),
-             where('status', '==', 'active')
-           );
-           const activeBindingsSnap = await getDocs(q);
-
-           if (!activeBindingsSnap.empty) {
-             const bindDoc = activeBindingsSnap.docs[0];
-             await updateDoc(bindDoc.ref, {
+           if (hasCanonicalBinding) {
+             await updateDoc(bindRef, {
                status: 'active',
                updatedAt: serverTimestamp(),
                detachedAt: deleteField(),
