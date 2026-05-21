@@ -399,7 +399,6 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         }
       }
 
-      // Add to local state
       const newIdRecord: IdentifierRecord = {
         identifierKey: idKey,
         ownerId: auth.currentUser.uid,
@@ -412,33 +411,27 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         updatedAt: serverTimestamp() as any
       };
 
-      setIdentifiers(prev => {
-        const filtered = prev.filter(i => i.identifierKey !== idKey);
-        return [...filtered, newIdRecord];
-      });
-
       // We don't save to firestore right away, we let handleSave do it,
       // EXCEPT if the object already exists, then we save it directly to keep it simple and consistent with detach
       if (objectId && validationResult) {
         // Save directly if we are editing an existing object
         const bindId = buildActiveBindingId(objectId, idKey);
         const idRef = doc(db, 'identifiers', idKey);
+        const batch = writeBatch(db);
 
         if (validationResult.existingId) {
-           await updateDoc(idRef, {
+           batch.update(idRef, {
              objectId: objectId,
              status: 'active',
              updatedAt: serverTimestamp()
            });
         } else {
-           await setDoc(idRef, newIdRecord);
+           batch.set(idRef, newIdRecord);
         }
 
         const bindRef = doc(db, 'objectIdentifierBindings', bindId);
         const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, objectId, idKey);
         const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindId);
-
-        const batch = writeBatch(db);
 
         if (hasCanonicalBinding) {
            batch.update(bindRef, {
@@ -466,26 +459,45 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
              }
         });
 
-        await batch.commit();
-
         if (!validationResult.isIdempotent) {
-            await recordEvent('identifier_attached', { identifierKey: idKey });
+            const eventId = uuidv4();
+            const eventRef = doc(db, 'objectEvents', eventId);
+            batch.set(eventRef, {
+              eventId,
+              ownerId: auth.currentUser.uid,
+              objectId: objectId,
+              identifierKey: idKey,
+              type: 'identifier_attached',
+              occurredAt: serverTimestamp(),
+              actorUid: auth.currentUser.uid,
+              source: 'system'
+            });
         }
 
         // Recompute summary and update object
         const newIdentifiers = [...identifiers.filter(i => i.identifierKey !== idKey), newIdRecord];
         const summary = computeIdentifierSummary(newIdentifiers);
 
-        await updateDoc(doc(db, 'objects', objectId), {
+        batch.update(doc(db, 'objects', objectId), {
           identifierSummary: summary,
           updatedAt: serverTimestamp()
         });
+
+        await batch.commit();
+
+        setIdentifiers(newIdentifiers);
 
         if (validationResult.isIdempotent) {
           toast.success('Identifier is already attached to this object.');
         } else {
           toast.success('Identifier added.');
         }
+      } else {
+        // New object case, just update local state
+        setIdentifiers(prev => {
+          const filtered = prev.filter(i => i.identifierKey !== idKey);
+          return [...filtered, newIdRecord];
+        });
       }
 
       setShowAddIdentifier(false);
@@ -589,6 +601,9 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         }
       }
 
+      // Store validation results to avoid re-fetching and ensure consistency
+      const validationResults = new Map<string, any>();
+
       // Pre-flight validation for new object creation to ensure all identifiers can be attached
       if (!objectId) {
         for (const idr of activeIdentifiers) {
@@ -596,6 +611,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
            if (!validation.canAttach) {
              throw new Error(`Cannot attach identifier ${idr.canonicalValue}: ${validation.error}`);
            }
+           validationResults.set(idr.identifierKey, validation);
         }
       }
 
@@ -610,27 +626,42 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
 
       if (!objectId) {
         // New object
-        await setDoc(docRef, {
+        const batch = writeBatch(db);
+
+        batch.set(docRef, {
           ...payload,
           createdAt: serverTimestamp(),
         });
-        await recordEvent('created');
+
+        const createdEventId = uuidv4();
+        batch.set(doc(db, 'objectEvents', createdEventId), {
+          eventId: createdEventId,
+          ownerId: auth.currentUser.uid,
+          objectId: data.objectId,
+          type: 'created',
+          occurredAt: serverTimestamp(),
+          actorUid: auth.currentUser.uid,
+          source: 'system'
+        });
 
         // Bind any identifiers that were added while in "New Object" mode
         // including the initialIdentifier (which is already added to activeIdentifiers list above)
         for (const idr of activeIdentifiers) {
            const idRef = doc(db, 'identifiers', idr.identifierKey);
 
-           const validation = await validateIdentifierCanAttach(db, idr.identifierKey, data.objectId!, auth.currentUser.uid);
+           const validation = validationResults.get(idr.identifierKey);
+           if (!validation || !validation.canAttach) {
+               throw new Error(`Validation failed for identifier ${idr.canonicalValue}`);
+           }
 
            if (validation.existingId) {
-             await updateDoc(idRef, {
+             batch.update(idRef, {
                objectId: data.objectId,
                status: 'active',
                updatedAt: serverTimestamp()
              });
            } else {
-             await setDoc(idRef, {
+             batch.set(idRef, {
                identifierKey: idr.identifierKey,
                ownerId: auth.currentUser.uid,
                objectId: data.objectId,
@@ -648,17 +679,15 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
            const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, data.objectId!, idr.identifierKey);
            const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindId);
 
-           const loopBatch = writeBatch(db);
-
            if (hasCanonicalBinding) {
-             loopBatch.update(bindRef, {
+             batch.update(bindRef, {
                status: 'active',
                updatedAt: serverTimestamp(),
                detachedAt: deleteField(),
                detachedBy: deleteField()
              });
            } else {
-             loopBatch.set(
+             batch.set(
                bindRef,
                buildActiveBindingRecord(bindId, auth.currentUser.uid, data.objectId!, idr.identifierKey, auth.currentUser.uid)
              );
@@ -667,7 +696,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
            // Detach legacy duplicates
            canonicalBindings.forEach(bindDoc => {
              if (bindDoc.id !== bindId && bindDoc.data().status === 'active') {
-                loopBatch.update(bindDoc.ref, {
+                batch.update(bindDoc.ref, {
                     status: 'detached',
                     detachedAt: serverTimestamp(),
                     detachedBy: auth.currentUser.uid,
@@ -676,12 +705,22 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
              }
            });
 
-           await loopBatch.commit();
-
            if (!validation.isIdempotent) {
-             await recordEvent('identifier_attached', { identifierKey: idr.identifierKey });
+             const attachEventId = uuidv4();
+             batch.set(doc(db, 'objectEvents', attachEventId), {
+               eventId: attachEventId,
+               ownerId: auth.currentUser.uid,
+               objectId: data.objectId,
+               identifierKey: idr.identifierKey,
+               type: 'identifier_attached',
+               occurredAt: serverTimestamp(),
+               actorUid: auth.currentUser.uid,
+               source: 'system'
+             });
            }
         }
+
+        await batch.commit();
       } else {
         // Update
         await updateDoc(docRef, payload);
