@@ -58,6 +58,12 @@ export default function UnassignedIdentifierScreen() {
             return;
         }
 
+        if (validation.isIdempotent) {
+            // Already attached
+            navigate(`/object/${objectId}`);
+            return;
+        }
+
         const batch = writeBatch(db);
 
         // 1. Update/Create Identifier
@@ -163,11 +169,6 @@ export default function UnassignedIdentifierScreen() {
         batch.update(objectRef, { identifierSummary: summary, updatedAt: serverTimestamp() });
 
         await batch.commit();
-        if (validation.isIdempotent) {
-            toast.success('Identifier is already attached to this object.');
-        } else {
-            toast.success('Identifier attached.');
-        }
         navigate(`/object/${objectId}`);
      } catch (error: any) {
         console.error("Error attaching identifier:", error);

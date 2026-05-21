@@ -382,14 +382,16 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       const { kind, scheme, canonicalValue } = normalizeIdentifierInput(newIdentifierValue, newIdentifierKind, newIdentifierKind === 'qr' ? 'qr-plain-token' : 'manual-code');
       const idKey = buildIdentifierKey(kind, scheme, canonicalValue);
 
+      let validationResult: { canAttach: boolean; isIdempotent: boolean; error?: string; existingId: IdentifierRecord | null } | null = null;
+
       if (data.objectId) {
-        const validation = await validateIdentifierCanAttach(idKey, data.objectId, auth.currentUser.uid);
-        if (!validation.canAttach) {
-          toast.error(validation.error || 'Cannot attach identifier.');
+        validationResult = await validateIdentifierCanAttach(db, idKey, data.objectId, auth.currentUser.uid);
+        if (!validationResult.canAttach) {
+          toast.error(validationResult.error || 'Cannot attach identifier.');
           return;
         }
 
-        if (validation.isIdempotent) {
+        if (validationResult.isIdempotent) {
           toast.success('Identifier is already attached to this object.');
           setShowAddIdentifier(false);
           setNewIdentifierValue('');
@@ -417,15 +419,12 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
 
       // We don't save to firestore right away, we let handleSave do it,
       // EXCEPT if the object already exists, then we save it directly to keep it simple and consistent with detach
-      if (objectId) {
+      if (objectId && validationResult) {
         // Save directly if we are editing an existing object
         const bindId = buildActiveBindingId(objectId, idKey);
         const idRef = doc(db, 'identifiers', idKey);
 
-        // We already ran validateIdentifierCanAttach, so we can use its result
-        const validation = await validateIdentifierCanAttach(idKey, objectId, auth.currentUser.uid);
-
-        if (validation.existingId) {
+        if (validationResult.existingId) {
            await updateDoc(idRef, {
              objectId: objectId,
              status: 'active',
@@ -439,22 +438,39 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, objectId, idKey);
         const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindId);
 
+        const batch = writeBatch(db);
+
         if (hasCanonicalBinding) {
-           await updateDoc(bindRef, {
+           batch.update(bindRef, {
              status: 'active',
              updatedAt: serverTimestamp(),
              detachedAt: deleteField(),
              detachedBy: deleteField()
            });
         } else {
-           const bindRef = doc(db, 'objectIdentifierBindings', bindId);
-           await setDoc(
+           batch.set(
              bindRef,
              buildActiveBindingRecord(bindId, auth.currentUser.uid, objectId, idKey, auth.currentUser.uid)
            );
         }
 
-        await recordEvent('identifier_attached', { identifierKey: idKey });
+        // Detach legacy duplicates
+        canonicalBindings.forEach(bindDoc => {
+             if (bindDoc.id !== bindId && bindDoc.data().status === 'active') {
+                batch.update(bindDoc.ref, {
+                    status: 'detached',
+                    detachedAt: serverTimestamp(),
+                    detachedBy: auth.currentUser.uid,
+                    updatedAt: serverTimestamp()
+                });
+             }
+        });
+
+        await batch.commit();
+
+        if (!validationResult.isIdempotent) {
+            await recordEvent('identifier_attached', { identifierKey: idKey });
+        }
 
         // Recompute summary and update object
         const newIdentifiers = [...identifiers.filter(i => i.identifierKey !== idKey), newIdRecord];
@@ -465,7 +481,11 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
           updatedAt: serverTimestamp()
         });
 
-        toast.success('Identifier added.');
+        if (validationResult.isIdempotent) {
+          toast.success('Identifier is already attached to this object.');
+        } else {
+          toast.success('Identifier added.');
+        }
       }
 
       setShowAddIdentifier(false);
@@ -572,7 +592,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       // Pre-flight validation for new object creation to ensure all identifiers can be attached
       if (!objectId) {
         for (const idr of activeIdentifiers) {
-           const validation = await validateIdentifierCanAttach(idr.identifierKey, data.objectId!, auth.currentUser.uid);
+           const validation = await validateIdentifierCanAttach(db, idr.identifierKey, data.objectId!, auth.currentUser.uid);
            if (!validation.canAttach) {
              throw new Error(`Cannot attach identifier ${idr.canonicalValue}: ${validation.error}`);
            }
@@ -601,7 +621,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         for (const idr of activeIdentifiers) {
            const idRef = doc(db, 'identifiers', idr.identifierKey);
 
-           const validation = await validateIdentifierCanAttach(idr.identifierKey, data.objectId!, auth.currentUser.uid);
+           const validation = await validateIdentifierCanAttach(db, idr.identifierKey, data.objectId!, auth.currentUser.uid);
 
            if (validation.existingId) {
              await updateDoc(idRef, {
@@ -628,21 +648,39 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
            const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, data.objectId!, idr.identifierKey);
            const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindId);
 
+           const loopBatch = writeBatch(db);
+
            if (hasCanonicalBinding) {
-             await updateDoc(bindRef, {
+             loopBatch.update(bindRef, {
                status: 'active',
                updatedAt: serverTimestamp(),
                detachedAt: deleteField(),
                detachedBy: deleteField()
              });
            } else {
-             const bindRef = doc(db, 'objectIdentifierBindings', bindId);
-             await setDoc(
+             loopBatch.set(
                bindRef,
                buildActiveBindingRecord(bindId, auth.currentUser.uid, data.objectId!, idr.identifierKey, auth.currentUser.uid)
              );
            }
-           await recordEvent('identifier_attached', { identifierKey: idr.identifierKey });
+
+           // Detach legacy duplicates
+           canonicalBindings.forEach(bindDoc => {
+             if (bindDoc.id !== bindId && bindDoc.data().status === 'active') {
+                loopBatch.update(bindDoc.ref, {
+                    status: 'detached',
+                    detachedAt: serverTimestamp(),
+                    detachedBy: auth.currentUser.uid,
+                    updatedAt: serverTimestamp()
+                });
+             }
+           });
+
+           await loopBatch.commit();
+
+           if (!validation.isIdempotent) {
+             await recordEvent('identifier_attached', { identifierKey: idr.identifierKey });
+           }
         }
       } else {
         // Update
