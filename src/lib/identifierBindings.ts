@@ -41,9 +41,6 @@ export function buildActiveBindingRecord(
 }
 
 /**
- * Loads current identifiers for an object to be used in summary recomputations.
- */
-/**
  * Pure helper to merge an updated or new identifier into a list, matching by identifierKey.
  */
 export type IdentifierSummarySource = Pick<IdentifierRecord, "identifierKey" | "kind" | "status"> & Partial<IdentifierRecord>;
@@ -66,6 +63,9 @@ export function mergeIdentifierForSummary(
   return Array.from(byKey.values());
 }
 
+/**
+ * Loads current identifiers for an object to be used in summary recomputations.
+ */
 export async function loadObjectIdentifiersForSummary(
   db: Firestore,
   ownerId: string,
