@@ -391,13 +391,9 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
           return;
         }
 
-        if (validationResult.isIdempotent) {
-          toast.success('Identifier is already attached to this object.');
-          setShowAddIdentifier(false);
-          setNewIdentifierValue('');
-          return;
-        }
       }
+
+      const isIdempotentAttach = validationResult?.isIdempotent || false;
 
       const newIdRecord: IdentifierRecord = {
         identifierKey: idKey,
@@ -416,17 +412,19 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       if (objectId && validationResult) {
         // Save directly if we are editing an existing object
         const bindId = buildActiveBindingId(objectId, idKey);
-        const idRef = doc(db, 'identifiers', idKey);
         const batch = writeBatch(db);
 
-        if (validationResult.existingId) {
-           batch.update(idRef, {
-             objectId: objectId,
-             status: 'active',
-             updatedAt: serverTimestamp()
-           });
-        } else {
-           batch.set(idRef, newIdRecord);
+        if (!isIdempotentAttach) {
+          const idRef = doc(db, 'identifiers', idKey);
+          if (validationResult.existingId) {
+             batch.update(idRef, {
+               objectId: objectId,
+               status: 'active',
+               updatedAt: serverTimestamp()
+             });
+          } else {
+             batch.set(idRef, newIdRecord);
+          }
         }
 
         const bindRef = doc(db, 'objectIdentifierBindings', bindId);
@@ -450,16 +448,11 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         // Detach legacy duplicates
         canonicalBindings.forEach(bindDoc => {
              if (bindDoc.id !== bindId && bindDoc.data().status === 'active') {
-                batch.update(bindDoc.ref, {
-                    status: 'detached',
-                    detachedAt: serverTimestamp(),
-                    detachedBy: auth.currentUser.uid,
-                    updatedAt: serverTimestamp()
-                });
+                batch.update(bindDoc.ref, buildDetachedBindingPatch(auth.currentUser!.uid));
              }
         });
 
-        if (!validationResult.isIdempotent) {
+        if (!isIdempotentAttach) {
             const eventId = uuidv4();
             const eventRef = doc(db, 'objectEvents', eventId);
             batch.set(eventRef, {
@@ -487,8 +480,8 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
 
         setIdentifiers(newIdentifiers);
 
-        if (validationResult.isIdempotent) {
-          toast.success('Identifier is already attached to this object.');
+        if (isIdempotentAttach) {
+          toast.success('Identifier is already attached. Canonical state checked.');
         } else {
           toast.success('Identifier added.');
         }
