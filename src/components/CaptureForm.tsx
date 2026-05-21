@@ -15,7 +15,7 @@ import { getImageFormatFromUrl } from '../lib/utils';
 import { ImageWithLongPress } from './ImageWithLongPress';
 import { useUserSettings } from '../hooks/useUserSettings';
 import { buildIdentifierKey, normalizeIdentifierInput } from '../lib/identifiers';
-import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner, findCanonicalBindingsForOwner, buildDetachedBindingPatch, validateIdentifierCanAttach, loadObjectIdentifiersForSummary } from '../lib/identifierBindings';
+import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner, findCanonicalBindingsForOwner, buildDetachedBindingPatch, validateIdentifierCanAttach, loadObjectIdentifiersForSummary, mergeIdentifierForSummary } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -478,20 +478,12 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
 
         // Recompute summary and update object from Firestore truth
         const currentIdentifiers = await loadObjectIdentifiersForSummary(db, auth.currentUser.uid, objectId);
-        const byKey = new Map<string, IdentifierRecord>();
-
-        for (const existing of currentIdentifiers) {
-          byKey.set(existing.identifierKey, existing);
-        }
-
-        byKey.set(idKey, {
+        const newIdentifiers = mergeIdentifierForSummary(currentIdentifiers, {
           ...resolvedIdRecord,
           objectId,
           status: 'active',
           updatedAt: serverTimestamp() as any
         });
-
-        const newIdentifiers = Array.from(byKey.values());
         const summary = computeIdentifierSummary(newIdentifiers);
 
         batch.update(doc(db, 'objects', objectId), {
@@ -560,8 +552,10 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         console.warn(`No active binding found to detach for ${idr.identifierKey}`);
       }
 
-      const newIdentifiers = identifiers.filter(i => i.identifierKey !== idr.identifierKey);
+      const currentIdentifiers = await loadObjectIdentifiersForSummary(db, auth.currentUser.uid, objectId);
+      const newIdentifiers = currentIdentifiers.filter(i => i.identifierKey !== idr.identifierKey);
       const summary = computeIdentifierSummary(newIdentifiers);
+
       batch.update(doc(db, 'objects', objectId), {
         identifierSummary: summary,
         updatedAt: serverTimestamp()

@@ -41,6 +41,21 @@ export function buildActiveBindingRecord(
 }
 
 /**
+ * Pure helper to merge an updated or new identifier into a list, matching by identifierKey.
+ */
+export function mergeIdentifierForSummary(
+  identifiers: IdentifierRecord[],
+  identifier: IdentifierRecord
+): IdentifierRecord[] {
+  const byKey = new Map<string, IdentifierRecord>();
+  for (const existing of identifiers) {
+    byKey.set(existing.identifierKey, existing);
+  }
+  byKey.set(identifier.identifierKey, identifier);
+  return Array.from(byKey.values());
+}
+
+/**
  * Loads current identifiers for an object to be used in summary recomputations.
  */
 export async function loadObjectIdentifiersForSummary(

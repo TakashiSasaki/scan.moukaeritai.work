@@ -7,7 +7,7 @@ import { db, auth } from '../lib/firebase';
 import { ObjectRecord, IdentifierRecord } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { buildIdentifierKey } from '../lib/identifiers';
-import { buildActiveBindingId, buildActiveBindingRecord, validateIdentifierCanAttach, findCanonicalBindingsForOwner } from '../lib/identifierBindings';
+import { buildActiveBindingId, buildActiveBindingRecord, validateIdentifierCanAttach, findCanonicalBindingsForOwner, loadObjectIdentifiersForSummary, mergeIdentifierForSummary } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 
 export default function UnassignedIdentifierScreen() {
@@ -133,16 +133,12 @@ export default function UnassignedIdentifierScreen() {
         }
 
         // 4. Update Object Summary
-        const q = query(
-            collection(db, 'identifiers'),
-            where('ownerId', '==', auth.currentUser.uid),
-            where('objectId', '==', objectId)
+        const allIdentifiers = await loadObjectIdentifiersForSummary(
+            db,
+            auth.currentUser.uid,
+            objectId
         );
-        const existingIdsSnap = await getDocs(q);
-        const allIdentifiers = existingIdsSnap.docs.map(d => d.data() as IdentifierRecord);
 
-        // Add the new/updated one to the array if it's not already in it, or update it
-        const currentIdx = allIdentifiers.findIndex(i => i.identifierKey === idKey);
         const newIdentifier = {
            identifierKey: idKey,
            ownerId: auth.currentUser.uid,
@@ -151,15 +147,11 @@ export default function UnassignedIdentifierScreen() {
            scheme: state.scheme,
            canonicalValue: state.canonicalValue,
            status: 'active' as const,
+           updatedAt: serverTimestamp() as any,
         } as IdentifierRecord;
 
-        if (currentIdx > -1) {
-            allIdentifiers[currentIdx] = newIdentifier;
-        } else {
-            allIdentifiers.push(newIdentifier);
-        }
-
-        const summary = computeIdentifierSummary(allIdentifiers);
+        const mergedIdentifiers = mergeIdentifierForSummary(allIdentifiers, newIdentifier);
+        const summary = computeIdentifierSummary(mergedIdentifiers);
 
         const objectRef = doc(db, 'objects', objectId);
         batch.update(objectRef, { identifierSummary: summary, updatedAt: serverTimestamp() });
