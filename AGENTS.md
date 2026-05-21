@@ -249,7 +249,7 @@ The application has transitioned from a simple `items` collection to a normalize
 - **Identifier Management**:
   - `CaptureForm` is now responsible for active identifier management (Adding and Detaching).
   - Adding an identifier creates/updates canonical bindings and appends to the `objectEvents` history.
-  - Detaching an identifier sets its status to `unassigned`, updates the binding to `detached`, and creates an `identifier_detached` event.
+  - Detaching an identifier sets its status to `unassigned`, updates matching active bindings to `detached`, updates `objects.identifierSummary`, and writes the `identifier_detached` event in a single Firestore `writeBatch` for atomicity.
   - Direct NFC attachment is scanner-driven, handled outside of `CaptureForm`. Users should be directed to the scanner flow for NFC identifiers.
 - **Migration**:
   - A dedicated admin-only Cloud Function (`migrateInventoryModel`) safely translates legacy `items` into the normalized collections: `objects`, `identifiers`, `objectIdentifierBindings`, `objectImages`, and `objectEvents`.
@@ -257,6 +257,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - The UI provides a `/admin/migration` page to run a Dry Run and an Execute phase.
   - **Non-destructive**: Migration does not delete legacy items or Storage files. Legacy `items` are kept intact. If the app tries to load a legacy item that isn't migrated, the user is warned to run the migration first.
   - **Idempotency**: Migration should be idempotent per target record, allowing safe re-runs.
+  - Dry-run stats include object update backfills (`objectsUpdated`) when an existing object is patched with missing `primaryImageId`/`primaryImageUrl`.
   - **ID Conversion**: Legacy item IDs are normalized to uppercase object IDs. Legacy source IDs are retained in `objects.legacy.legacyItemId`.
 - **Source of Truth**:
   - `firebase-blueprint.json` defines the new schema boundaries.
