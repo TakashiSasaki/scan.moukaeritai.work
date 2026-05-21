@@ -15,7 +15,7 @@ import { getImageFormatFromUrl } from '../lib/utils';
 import { ImageWithLongPress } from './ImageWithLongPress';
 import { useUserSettings } from '../hooks/useUserSettings';
 import { buildIdentifierKey, normalizeIdentifierInput } from '../lib/identifiers';
-import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner, findCanonicalBindingsForOwner, buildDetachedBindingPatch, validateIdentifierCanAttach } from '../lib/identifierBindings';
+import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner, findCanonicalBindingsForOwner, buildDetachedBindingPatch, validateIdentifierCanAttach, loadObjectIdentifiersForSummary } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -476,11 +476,22 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
             });
         }
 
-        // Recompute summary and update object
-        const newIdentifiers = isIdempotentAttach && identifiers.some(i => i.identifierKey === idKey)
-          ? identifiers // Keep existing in-memory record if it's already there for idempotent attach
-          : [...identifiers.filter(i => i.identifierKey !== idKey), resolvedIdRecord];
+        // Recompute summary and update object from Firestore truth
+        const currentIdentifiers = await loadObjectIdentifiersForSummary(db, auth.currentUser.uid, objectId);
+        const byKey = new Map<string, IdentifierRecord>();
 
+        for (const existing of currentIdentifiers) {
+          byKey.set(existing.identifierKey, existing);
+        }
+
+        byKey.set(idKey, {
+          ...resolvedIdRecord,
+          objectId,
+          status: 'active',
+          updatedAt: serverTimestamp() as any
+        });
+
+        const newIdentifiers = Array.from(byKey.values());
         const summary = computeIdentifierSummary(newIdentifiers);
 
         batch.update(doc(db, 'objects', objectId), {
@@ -499,10 +510,8 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         }
       } else {
         // New object case, just update local state
+        // Prefer replacing the local record with resolvedIdRecord to avoid stale state
         setIdentifiers(prev => {
-          if (isIdempotentAttach && prev.some(i => i.identifierKey === idKey)) {
-            return prev;
-          }
           const filtered = prev.filter(i => i.identifierKey !== idKey);
           return [...filtered, resolvedIdRecord];
         });
