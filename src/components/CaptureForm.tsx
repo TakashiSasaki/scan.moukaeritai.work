@@ -602,7 +602,8 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       }
 
       // Store validation results to avoid re-fetching and ensure consistency
-      const validationResults = new Map<string, any>();
+      type ValidationResultType = Awaited<ReturnType<typeof validateIdentifierCanAttach>>;
+      const validationResults = new Map<string, ValidationResultType>();
 
       // Pre-flight validation for new object creation to ensure all identifiers can be attached
       if (!objectId) {
@@ -626,14 +627,35 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
 
       if (!objectId) {
         // New object
-        const batch = writeBatch(db);
 
+        // Split writes into chunks of 450 to stay safely under Firestore's 500 limit
+        const MAX_BATCH_SIZE = 450;
+        let batch = writeBatch(db);
+        let writeCount = 0;
+
+        const commitBatch = async () => {
+          if (writeCount > 0) {
+            await batch.commit();
+            batch = writeBatch(db);
+            writeCount = 0;
+          }
+        };
+
+        const checkAndCommit = async (incrementBy = 1) => {
+          if (writeCount + incrementBy >= MAX_BATCH_SIZE) {
+            await commitBatch();
+          }
+          writeCount += incrementBy;
+        };
+
+        await checkAndCommit();
         batch.set(docRef, {
           ...payload,
           createdAt: serverTimestamp(),
         });
 
         const createdEventId = uuidv4();
+        await checkAndCommit();
         batch.set(doc(db, 'objectEvents', createdEventId), {
           eventId: createdEventId,
           ownerId: auth.currentUser.uid,
@@ -651,9 +673,10 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
 
            const validation = validationResults.get(idr.identifierKey);
            if (!validation || !validation.canAttach) {
-               throw new Error(`Validation failed for identifier ${idr.canonicalValue}`);
+               throw new Error(`Cannot attach identifier ${idr.canonicalValue}: ${validation?.error || 'Validation missing.'}`);
            }
 
+           await checkAndCommit();
            if (validation.existingId) {
              batch.update(idRef, {
                objectId: data.objectId,
@@ -679,6 +702,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
            const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, data.objectId!, idr.identifierKey);
            const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindId);
 
+           await checkAndCommit();
            if (hasCanonicalBinding) {
              batch.update(bindRef, {
                status: 'active',
@@ -694,8 +718,9 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
            }
 
            // Detach legacy duplicates
-           canonicalBindings.forEach(bindDoc => {
+           for (const bindDoc of canonicalBindings) {
              if (bindDoc.id !== bindId && bindDoc.data().status === 'active') {
+                await checkAndCommit();
                 batch.update(bindDoc.ref, {
                     status: 'detached',
                     detachedAt: serverTimestamp(),
@@ -703,10 +728,11 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
                     updatedAt: serverTimestamp()
                 });
              }
-           });
+           }
 
            if (!validation.isIdempotent) {
              const attachEventId = uuidv4();
+             await checkAndCommit();
              batch.set(doc(db, 'objectEvents', attachEventId), {
                eventId: attachEventId,
                ownerId: auth.currentUser.uid,
@@ -720,7 +746,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
            }
         }
 
-        await batch.commit();
+        await commitBatch();
       } else {
         // Update
         await updateDoc(docRef, payload);
