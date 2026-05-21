@@ -67,8 +67,7 @@ export default function UnassignedIdentifierScreen() {
         const batch = writeBatch(db);
 
         // 1. Update/Create Identifier
-        const idSnap = await getDoc(idRef);
-        if (idSnap.exists()) {
+        if (validation.existingId) {
             batch.update(idRef, {
                 objectId: objectId,
                 status: 'active',

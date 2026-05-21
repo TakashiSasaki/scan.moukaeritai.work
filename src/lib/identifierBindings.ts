@@ -48,35 +48,44 @@ export async function validateIdentifierCanAttach(
   identifierKey: string,
   targetObjectId: string,
   uid: string
-): Promise<{ canAttach: boolean; isIdempotent: boolean; error?: string }> {
+): Promise<{ canAttach: boolean; isIdempotent: boolean; error?: string; existingId: IdentifierRecord | null }> {
   const idRef = doc(db, 'identifiers', identifierKey);
-  const idSnap = await getDoc(idRef);
+  let idSnap;
+
+  try {
+    idSnap = await getDoc(idRef);
+  } catch (err: any) {
+    // If Firestore rules deny access (e.g., document exists but belongs to someone else),
+    // getDoc will throw a permission-denied error. We catch it and fail gracefully.
+    console.warn('validateIdentifierCanAttach permission error:', err);
+    return { canAttach: false, isIdempotent: false, error: 'Identifier belongs to another user or is inaccessible.', existingId: null };
+  }
 
   if (!idSnap.exists()) {
-    return { canAttach: true, isIdempotent: false };
+    return { canAttach: true, isIdempotent: false, existingId: null };
   }
 
   const existingId = idSnap.data() as IdentifierRecord;
 
   if (existingId.ownerId !== uid) {
-    return { canAttach: false, isIdempotent: false, error: 'Identifier belongs to another user.' };
+    return { canAttach: false, isIdempotent: false, error: 'Identifier belongs to another user.', existingId };
   }
 
   if (existingId.status === 'active') {
     if (existingId.objectId !== targetObjectId) {
-      return { canAttach: false, isIdempotent: false, error: 'Identifier is already active on another object.' };
+      return { canAttach: false, isIdempotent: false, error: 'Identifier is already active on another object.', existingId };
     } else {
       // It's already active on the SAME object.
-      return { canAttach: true, isIdempotent: true };
+      return { canAttach: true, isIdempotent: true, existingId };
     }
   }
 
   if (existingId.status === 'unassigned') {
-    return { canAttach: true, isIdempotent: false };
+    return { canAttach: true, isIdempotent: false, existingId };
   }
 
   // status is retired, lost, or replaced
-  return { canAttach: false, isIdempotent: false, error: `Cannot attach identifier with status: ${existingId.status}.` };
+  return { canAttach: false, isIdempotent: false, error: `Cannot attach identifier with status: ${existingId.status}.`, existingId };
 }
 
 /**

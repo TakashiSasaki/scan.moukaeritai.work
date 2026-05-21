@@ -422,9 +422,10 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         const bindId = buildActiveBindingId(objectId, idKey);
         const idRef = doc(db, 'identifiers', idKey);
 
-        // We already checked validation above, so it exists and can be attached, or it's new.
-        const idSnap = await getDoc(idRef);
-        if (idSnap.exists()) {
+        // We already ran validateIdentifierCanAttach, so we can use its result
+        const validation = await validateIdentifierCanAttach(idKey, objectId, auth.currentUser.uid);
+
+        if (validation.existingId) {
            await updateDoc(idRef, {
              objectId: objectId,
              status: 'active',
@@ -609,8 +610,9 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         for (const idr of activeIdentifiers) {
            const idRef = doc(db, 'identifiers', idr.identifierKey);
 
-           const idSnap = await getDoc(idRef);
-           if (idSnap.exists()) {
+           const validation = await validateIdentifierCanAttach(idr.identifierKey, data.objectId!, auth.currentUser.uid);
+
+           if (validation.existingId) {
              await updateDoc(idRef, {
                objectId: data.objectId,
                status: 'active',
