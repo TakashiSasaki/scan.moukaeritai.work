@@ -41,6 +41,23 @@ export function buildActiveBindingRecord(
 }
 
 /**
+ * Loads current identifiers for an object to be used in summary recomputations.
+ */
+export async function loadObjectIdentifiersForSummary(
+  db: Firestore,
+  ownerId: string,
+  objectId: string
+): Promise<IdentifierRecord[]> {
+  const q = query(
+    collection(db, 'identifiers'),
+    where('ownerId', '==', ownerId),
+    where('objectId', '==', objectId)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => d.data() as IdentifierRecord);
+}
+
+/**
  * Validates if an identifier can be attached to the target object.
  * Checks for ownership, active status, and reassignment rules.
  */
