@@ -1,0 +1,28 @@
+--- src/components/UnassignedIdentifierScreen.tsx
++++ src/components/UnassignedIdentifierScreen.tsx
+@@ -58,12 +58,6 @@
+             return;
+         }
+
+-        if (validation.isIdempotent) {
+-            // Already attached
+-            navigate(`/object/${objectId}`);
+-            return;
+-        }
+-
+         const batch = writeBatch(db);
+
+         // 1. Update/Create Identifier
+@@ -149,7 +143,11 @@
+         });
+
+         await batch.commit();
+-        toast.success('Identifier attached.');
++        if (validation.isIdempotent) {
++            toast.success('Identifier is already attached to this object.');
++        } else {
++            toast.success('Identifier attached.');
++        }
+         navigate(`/object/${objectId}`);
+     } catch (err: any) {
+         toast.error(err.message || 'Failed to attach identifier');
