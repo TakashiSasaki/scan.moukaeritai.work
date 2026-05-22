@@ -7,6 +7,7 @@ import {
   doc,
   getDoc,
   Firestore,
+  DocumentReference,
 } from 'firebase/firestore';
 import {
   IdentifierObservationRecord,
@@ -93,7 +94,7 @@ export async function runObservationDiagnostics(
     | { status: 'inaccessible'; code?: string; message?: string };
 
   // Safe get helper for optional relationships
-  const safeGetDoc = async <T>(docRef: any): Promise<SafeGetDocResult<T>> => {
+  const safeGetDoc = async <T>(docRef: DocumentReference): Promise<SafeGetDocResult<T>> => {
     try {
       const snap = await getDoc(docRef);
       if (snap.exists()) {
