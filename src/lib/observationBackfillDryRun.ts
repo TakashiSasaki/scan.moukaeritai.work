@@ -115,6 +115,7 @@ export async function runObservationBackfillDryRun(
       const obsQuery = query(
         collection(db, 'identifierObservations'),
         where('identifierKey', '==', identifier.identifierKey),
+        where('observerUid', '==', ownerId), // Enforce owner scope for observations
         orderBy('observedAt', 'asc'),
         limit(limits.maxObservations)
       );
@@ -276,6 +277,7 @@ export async function runObservationBackfillDryRun(
               const obsQuery = query(
                   collection(db, 'identifierObservations'),
                   where('identifierKey', '==', binding.identifierKey),
+                  where('observerUid', '==', ownerId), // Enforce owner scope for observations
                   orderBy('observedAt', 'asc'),
                   limit(limits.maxObservations)
               );
