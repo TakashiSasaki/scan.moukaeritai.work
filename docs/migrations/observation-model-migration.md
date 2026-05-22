@@ -18,7 +18,7 @@ This migration is intended to add observation-aware behavior without destructive
 The future core addition is expected to be:
 - `identifierObservations`
 
-Phase 0 does not add it yet.
+Phase 1 does not add it yet.
 
 ## Baseline normalized model
 
