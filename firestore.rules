@@ -151,7 +151,6 @@ service cloud.firestore {
         && incoming().createdAt is timestamp
         && incoming().source in ['nfc', 'qr', 'manual', 'barcode', 'camera']
         && incoming().observationType in ['sighting', 'scan']
-        && !('observerDeviceId' in incoming())
         && (!('objectId' in incoming()) || (incoming().objectId is string && incoming().objectId.size() <= 128))
         && (!('observerIsAnonymous' in incoming()) || incoming().observerIsAnonymous is bool)
         && (!('placeLabel' in incoming()) || (incoming().placeLabel is string && incoming().placeLabel.size() <= 1000))
