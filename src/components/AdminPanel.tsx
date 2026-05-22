@@ -4,6 +4,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db, auth } from '../lib/firebase';
 import { Users, Database, Server, Activity, ShieldAlert, CloudCog, HardDrive, Cpu, Loader2, LayoutDashboard, Search, AlertCircle } from 'lucide-react';
 import { runObservationDiagnostics, ObservationDiagnosticsResult } from '../lib/observationDiagnostics';
+import { runObservationBackfillDryRun, DryRunResult } from '../lib/observationBackfillDryRun';
 
 interface ServerMetrics {
   storageTotalMB: string;
@@ -25,6 +26,10 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
   const [diagnosticsResult, setDiagnosticsResult] = useState<ObservationDiagnosticsResult | null>(null);
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
 
+  const [dryRunRunning, setDryRunRunning] = useState(false);
+  const [dryRunResult, setDryRunResult] = useState<DryRunResult | null>(null);
+  const [dryRunError, setDryRunError] = useState<string | null>(null);
+
   const handleRunDiagnostics = async () => {
     if (!auth.currentUser) return;
     setDiagnosticsRunning(true);
@@ -44,6 +49,22 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
       setDiagnosticsError(err.message || 'Failed to run diagnostics');
     } finally {
       setDiagnosticsRunning(false);
+    }
+  };
+
+  const handleRunDryRun = async () => {
+    if (!auth.currentUser) return;
+    setDryRunRunning(true);
+    setDryRunError(null);
+    setDryRunResult(null);
+
+    try {
+      const result = await runObservationBackfillDryRun(db, auth.currentUser.uid);
+      setDryRunResult(result);
+    } catch (err: any) {
+      setDryRunError(err.message || 'Unknown error during dry run');
+    } finally {
+      setDryRunRunning(false);
     }
   };
 
@@ -203,6 +224,132 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
                       <span className="text-purple-600/80">※他アプリと共有時は合算されます</span>
                     </p>
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* Observation Backfill Dry Run Section */}
+            <div className="bg-[var(--surface-container-high)] rounded-3xl p-6 lg:p-8 border border-[var(--outline)]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-[var(--on-surface)] flex items-center gap-2">
+                  <Database size={20} className="text-teal-500" />
+                  観測モデル バックフィル Dry Run
+                </h3>
+                <button
+                  onClick={handleRunDryRun}
+                  disabled={dryRunRunning}
+                  className="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white rounded-xl text-sm font-bold transition-colors flex items-center gap-2 shadow-sm"
+                >
+                  {dryRunRunning ? <Loader2 size={16} className="animate-spin" /> : <Activity size={16} />}
+                  Dry Run を実行 (Run)
+                </button>
+              </div>
+              <p className="text-sm text-[var(--on-surface-variant)] mb-6">
+                Read-only, bounded dry-run backfill planner for the current authenticated user’s owner-scoped records. This computes proposed updates for optional observation-related fields without writing anything to Firestore.
+                <br />
+                <span className="block mt-2 text-[13px] text-[var(--on-surface-variant)]">
+                  「現在のログインユーザーに紐づく範囲を対象とした、読み取り専用のバックフィル（データ補完）Dry Runです。任意フィールドへの追加提案を計算するだけで、実際のデータ書き込み（変更）は一切行いません。」
+                </span>
+                <br />
+                <span className="font-bold text-teal-600">Note:</span> This phase calculates proposals for later review. It does NOT implement imported observations, execution controls, or data repair operations.
+              </p>
+
+              {dryRunError && (
+                <div className="p-4 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded-xl border border-red-200 dark:border-red-800 text-sm font-medium mb-4">
+                  {dryRunError}
+                </div>
+              )}
+
+              {dryRunResult && (
+                <div className="space-y-6">
+                  {/* Counts */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="p-3 bg-[var(--surface)] border border-[var(--outline)] rounded-xl text-center">
+                      <div className="text-xs text-[var(--on-surface-variant)] font-bold mb-1">Identifiers Checked</div>
+                      <div className="text-xl font-black text-[var(--on-surface)]">{dryRunResult.counts.identifiersChecked}</div>
+                    </div>
+                    <div className="p-3 bg-[var(--surface)] border border-[var(--outline)] rounded-xl text-center">
+                      <div className="text-xs text-[var(--on-surface-variant)] font-bold mb-1">Objects Checked</div>
+                      <div className="text-xl font-black text-[var(--on-surface)]">{dryRunResult.counts.objectsChecked}</div>
+                    </div>
+                    <div className="p-3 bg-[var(--surface)] border border-[var(--outline)] rounded-xl text-center">
+                      <div className="text-xs text-[var(--on-surface-variant)] font-bold mb-1">Identifier Candidates</div>
+                      <div className="text-xl font-black text-[var(--on-surface)]">{dryRunResult.counts.candidateCounts.identifiers}</div>
+                    </div>
+                    <div className="p-3 bg-[var(--surface)] border border-[var(--outline)] rounded-xl text-center">
+                      <div className="text-xs text-[var(--on-surface-variant)] font-bold mb-1">Object Candidates</div>
+                      <div className="text-xl font-black text-[var(--on-surface)]">{dryRunResult.counts.candidateCounts.objects}</div>
+                    </div>
+                  </div>
+
+                  {/* Candidates */}
+                  <div>
+                    <h4 className="text-md font-bold text-[var(--on-surface)] mb-3 flex items-center gap-2">
+                      <Activity size={18} className={dryRunResult.candidates.length > 0 ? "text-teal-500" : "text-emerald-500"} />
+                      Candidates (Proposals): {dryRunResult.candidates.length}
+                    </h4>
+                    {dryRunResult.candidates.length === 0 ? (
+                      <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-800 text-sm font-medium">
+                        No backfill candidates found.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {dryRunResult.candidates.map((candidate, idx) => (
+                          <div key={idx} className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-xl">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="font-bold text-sm text-[var(--on-surface)]">
+                                  {candidate.targetCollection} / {candidate.targetDocId}
+                                </div>
+                                <div className="text-xs text-[var(--on-surface-variant)] mt-1">Reason: {candidate.reason}</div>
+                                <div className="mt-3 space-y-2">
+                                  <div className="text-xs font-bold text-[var(--on-surface-variant)]">Proposed Patch:</div>
+                                  <pre className="text-[10px] bg-[var(--surface-container-highest)] p-2 rounded-lg overflow-x-auto text-[var(--on-surface)]">
+                                    {JSON.stringify(candidate.proposedPatch, null, 2)}
+                                  </pre>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Skipped */}
+                  {dryRunResult.skipped.length > 0 && (
+                    <div>
+                      <h4 className="text-md font-bold text-[var(--on-surface)] mb-3 flex items-center gap-2">
+                        <CloudCog size={18} className="text-amber-500" />
+                        Skipped Records (Sampled): {dryRunResult.skipped.length}
+                      </h4>
+                      <div className="space-y-4">
+                        {dryRunResult.skipped.map((skipped, idx) => (
+                          <div key={idx} className="p-3 bg-[var(--surface)] border border-[var(--outline)] rounded-xl text-xs text-[var(--on-surface-variant)]">
+                            <span className="font-bold">{skipped.targetCollection} / {skipped.targetDocId}</span> — Reason: {skipped.reason}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Warnings */}
+                  {dryRunResult.warnings.length > 0 && (
+                    <div>
+                      <h4 className="text-md font-bold text-[var(--on-surface)] mb-3 flex items-center gap-2">
+                        <AlertCircle size={18} className="text-red-500" />
+                        Warnings: {dryRunResult.warnings.length}
+                      </h4>
+                      <div className="space-y-4">
+                        {dryRunResult.warnings.map((warning, idx) => (
+                          <div key={idx} className="p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-xl text-xs">
+                            <span className="font-bold">{warning.type}</span> — {warning.message}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               )}
             </div>
