@@ -229,7 +229,22 @@ export async function runObservationDiagnostics(
 
       // Check I: Object identifier summary staleness
       if (obj.objectId && ownerId === obj.ownerId) {
-        const currentIdentifiers = await loadObjectIdentifiersForSummary(db, ownerId, obj.objectId);
+        // Enforce a strict bound on identifiers loaded per object to prevent latency spikes
+        const maxIdentifiersPerObject = 100;
+        const idQ = query(
+          collection(db, 'identifiers'),
+          where('ownerId', '==', ownerId),
+          where('objectId', '==', obj.objectId),
+          limit(maxIdentifiersPerObject)
+        );
+        const currentIdentifiersSnap = await getDocs(idQ);
+
+        if (currentIdentifiersSnap.docs.length >= maxIdentifiersPerObject) {
+          reportIssue('object-identifier-summary-partial-check', 'Object has too many identifiers for bounded staleness check', 'warning', { objectId: obj.objectId, maxLimit: maxIdentifiersPerObject });
+          continue;
+        }
+
+        const currentIdentifiers = currentIdentifiersSnap.docs.map(doc => doc.data() as IdentifierRecord);
         const computedSummary = computeIdentifierSummary(currentIdentifiers);
 
         const storedSummary = obj.identifierSummary || {
@@ -243,7 +258,7 @@ export async function runObservationDiagnostics(
           computedSummary.activeIdentifierCount !== storedSummary.activeIdentifierCount ||
           computedSummary.hasQr !== storedSummary.hasQr ||
           computedSummary.hasNfc !== storedSummary.hasNfc ||
-          computedSummary.activeKinds.sort().join(',') !== (storedSummary.activeKinds || []).sort().join(',');
+          [...computedSummary.activeKinds].sort().join(',') !== [...(storedSummary.activeKinds || [])].sort().join(',');
 
         if (isStale) {
           reportIssue('object-identifier-summary-stale', 'Object identifierSummary does not match active identifiers', 'warning', {
