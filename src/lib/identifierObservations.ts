@@ -269,7 +269,9 @@ export async function createUserIdentifierObservation(
 
         // Ownership check
         if (existingId.ownerId !== userContext.uid) {
-          throw new Error('identifier-owned-by-other-user');
+          // Throw an object with a code so it can be reliably identified in the catch block
+          // even if Firestore wraps the error.
+          throw { code: 'identifier-owned-by-other-user', message: 'Identifier belongs to another user.' };
         }
 
         // Update existing identifier's last observation fields
@@ -316,12 +318,12 @@ export async function createUserIdentifierObservation(
   } catch (err: any) {
     console.error('Failed to create observation:', err);
 
-    const isOwnerError = err.message === 'identifier-owned-by-other-user';
+    const isOwnerError = err?.code === 'identifier-owned-by-other-user';
 
     return {
       success: false,
       errorCode: isOwnerError ? 'identifier-owned-by-other-user' : 'transaction-failed',
-      errorMessage: err.message || 'Transaction failed',
+      errorMessage: err?.message || 'Transaction failed',
       isNewIdentifier: false,
     };
   }
