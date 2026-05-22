@@ -3,8 +3,8 @@
 ## Status
 
 State:
-- Current phase: Phase 4 — Read-only diagnostics. (Phases 0, 1, 2, 3A, 3B, 3C, and 3D are completed)
-- Version line: Phase 4 is on the `1.4.x` line.
+- Current phase: Phase 5 — Dry-run backfill migration. (Phases 0, 1, 2, 3A, 3B, 3C, 3D, and 4 are completed)
+- Version line: Phase 5 is on the `1.5.x` line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
 - The legacy `items` -> normalized model migration is completed.
@@ -97,15 +97,16 @@ Phase 3D: Observation-only flow verification and cleanup (Completed)
 - Clean up related observation helpers.
 - Document manual verification checklist.
 
-Phase 4: Read-only diagnostics (Current)
+Phase 4: Read-only diagnostics (Completed)
 - Add read-only, bounded, owner-scoped/current-user diagnostics for observation migration readiness.
 - Do not repair or mutate data yet.
 - See [Phase 4: Read-only Diagnostics](phase-4-read-only-diagnostics.md).
 
-Phase 5: Dry-run backfill migration
-- Add admin-only dry-run migration for optional field backfill.
-- Default to dry-run.
-- Return stats and samples.
+Phase 5: Dry-run backfill migration (Current)
+- Add an admin-only dry-run migration planner for optional field backfill.
+- Computes candidate optional-field backfills without mutating data.
+- Does not implement imported observations, actual backfill execution, anonymous sign-in, device ingestion, provisional objects, or custody/loan workflows.
+- See [Phase 5: Dry-run Backfill](phase-5-dry-run-backfill.md).
 
 Phase 6: Optional imported observations
 - Optionally create deterministic `observationType: "imported"` records from existing identifiers.

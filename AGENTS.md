@@ -275,15 +275,16 @@ The application has transitioned from a simple `items` collection to a normalize
   - `tag-1.0.0` is the immutable migration source baseline.
   - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
   - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
-  - Current phase is Phase 4. (Proceeding on the `1.4.x` version line)
+  - Current phase is Phase 5. (Proceeding on the `1.5.x` version line)
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
   - Agents must read that document before modifying migration-related code.
   - Agents must follow `docs/migrations/phase-1-observation-model-spec.md` for implementation constraints.
-  - Phase 4 implements read-only diagnostics for observation migration readiness.
-  - The Phase 4 diagnostics document is `docs/migrations/phase-4-read-only-diagnostics.md`.
-  - Diagnostics must remain strictly read-only and bounded for the current authenticated user’s owner scope, unless a later phase explicitly designs broader admin/global diagnostics.
+  - Phase 5 implements a dry-run backfill planner for optional fields.
+  - The Phase 5 dry-run document is `docs/migrations/phase-5-dry-run-backfill.md`.
+  - Phase 5 dry-run must remain strictly read-only. No execution, apply, or repair buttons should be added.
+  - Phase 5 must not include imported observations creation.
   - Observation-only runtime writes must continue to use `src/lib/identifierObservations.ts`.
-  - Agents must not implement Phase 5+ or backfill work unless explicitly instructed.
+  - Agents must not implement Phase 6+ unless explicitly instructed.
 
 - **Source of Truth**:
   - `firebase-blueprint.json` defines the new schema boundaries.
