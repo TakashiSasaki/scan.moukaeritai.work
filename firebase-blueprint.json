@@ -250,7 +250,7 @@
     },
     "IdentifierObservationRecord": {
       "title": "Identifier Observation Record",
-      "description": "An evidence/log record of an identifier observation. Does not represent canonical object state. Can exist before an object is registered. Order by observedAt or receivedAt.",
+      "description": "An evidence/log record of an identifier observation. Does not represent canonical object state. Can exist before an object is registered. Direct client-created observations are initially limited by Firestore rules to ordinary user sighting/scan records. Order by observedAt or receivedAt.",
       "type": "object",
       "properties": {
         "observationId": {
@@ -278,10 +278,29 @@
           "format": "date-time"
         },
         "source": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "nfc",
+            "qr",
+            "manual",
+            "barcode",
+            "ble",
+            "camera",
+            "gateway",
+            "import"
+          ],
+          "description": "'import' is reserved for future backend/migration flows. 'gateway' and 'ble' are reserved for later device/sensor ingestion unless explicitly enabled by a later phase."
         },
         "observationType": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "sighting",
+            "scan",
+            "proximity",
+            "gateway_seen",
+            "imported"
+          ],
+          "description": "'imported' is reserved for future backend/migration flows. 'proximity' and 'gateway_seen' are reserved for later device/sensor ingestion unless explicitly enabled by a later phase."
         },
         "createdAt": {
           "type": "string",

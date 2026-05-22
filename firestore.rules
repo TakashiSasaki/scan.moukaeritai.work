@@ -137,6 +137,9 @@ service cloud.firestore {
       allow read: if isSignedIn() && existing().observerUid == request.auth.uid;
       allow read: if isAdmin();
 
+      // Client-created observations are initially limited to ordinary user sighting/scan records.
+      // imported/system observations are reserved for future backend/migration flows.
+      // device/proximity/gateway observations are reserved for future device-auth ingestion.
       allow create: if isSignedIn()
         && isValidId(observationId)
         && incoming().observationId == observationId
@@ -146,18 +149,18 @@ service cloud.firestore {
         && incoming().observedAt is timestamp
         && incoming().receivedAt is timestamp
         && incoming().createdAt is timestamp
-        && incoming().source in ['nfc', 'qr', 'manual', 'barcode', 'ble', 'camera', 'gateway', 'import']
-        && incoming().observationType in ['sighting', 'scan', 'proximity', 'gateway_seen', 'imported']
+        && incoming().source in ['nfc', 'qr', 'manual', 'barcode', 'camera']
+        && incoming().observationType in ['sighting', 'scan']
+        && !('observerDeviceId' in incoming())
         && (!('objectId' in incoming()) || (incoming().objectId is string && incoming().objectId.size() <= 128))
         && (!('observerIsAnonymous' in incoming()) || incoming().observerIsAnonymous is bool)
-        && (!('observerDeviceId' in incoming()) || incoming().observerDeviceId is string)
         && (!('placeLabel' in incoming()) || (incoming().placeLabel is string && incoming().placeLabel.size() <= 1000))
         && (!('location' in incoming()) || (incoming().location is map && 'latitude' in incoming().location && incoming().location.latitude is number && incoming().location.latitude >= -90 && incoming().location.latitude <= 90 && 'longitude' in incoming().location && incoming().location.longitude is number && incoming().location.longitude >= -180 && incoming().location.longitude <= 180 && (!('address' in incoming().location) || (incoming().location.address is string && incoming().location.address.size() <= 1000))))
         && (!('note' in incoming()) || (incoming().note is string && incoming().note.size() <= 2000))
         && (!('metadata' in incoming()) || incoming().metadata is map)
         && (!('visibility' in incoming()) || incoming().visibility in ['private', 'linked_object', 'community', 'public'])
         && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
-        && incoming().keys().hasOnly(['observationId', 'identifierKey', 'observerKind', 'observedAt', 'receivedAt', 'source', 'observationType', 'createdAt', 'objectId', 'observerUid', 'observerIsAnonymous', 'observerDeviceId', 'placeLabel', 'location', 'note', 'metadata', 'visibility', 'schemaVersion'])
+        && incoming().keys().hasOnly(['observationId', 'identifierKey', 'observerKind', 'observedAt', 'receivedAt', 'source', 'observationType', 'createdAt', 'objectId', 'observerUid', 'observerIsAnonymous', 'placeLabel', 'location', 'note', 'metadata', 'visibility', 'schemaVersion'])
         && incoming().receivedAt == request.time
         && incoming().createdAt == request.time;
 
