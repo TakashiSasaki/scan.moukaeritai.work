@@ -269,8 +269,8 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {diagnosticsResult.issues.map((issue, idx) => (
-                          <div key={idx} className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-xl">
+                        {diagnosticsResult.issues.map((issue) => (
+                          <div key={issue.type} className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-xl">
                             <div className="flex items-start gap-3">
                               <div className={`mt-0.5 px-2 py-1 text-[10px] uppercase font-bold rounded-md ${issue.severity === 'error' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
                                 {issue.severity}
