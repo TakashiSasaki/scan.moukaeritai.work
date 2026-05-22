@@ -275,13 +275,13 @@ The application has transitioned from a simple `items` collection to a normalize
   - `tag-1.0.0` is the immutable migration source baseline.
   - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
   - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
-  - Current phase is Phase 3C. (Proceeding on the `1.3.x` version line)
+  - Current phase is Phase 3D. (Proceeding on the `1.3.x` version line)
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
   - Agents must read that document before modifying migration-related code.
   - Agents must follow `docs/migrations/phase-1-observation-model-spec.md` for implementation constraints.
-  - Phase 3C hardens the unknown identifier observation-only flow.
-  - Phase 3C keeps client-created observations limited to ordinary user sighting/scan records; imported/device observations are reserved for later backend flows.
-  - Observation-only runtime writes must use `src/lib/identifierObservations.ts`.
+  - Phase 3D verifies and cleans up the unknown identifier observation-only flow. The verification checklist is in `docs/migrations/phase-3d-observation-flow-verification.md`.
+  - Phase 3D keeps client-created observations limited to ordinary user sighting/scan records; imported/device observations are reserved for later backend flows.
+  - Observation-only runtime writes must continue to use `src/lib/identifierObservations.ts`.
   - Agents must not implement Phase 4+ or backfill work unless explicitly instructed.
 
 - **Source of Truth**:
