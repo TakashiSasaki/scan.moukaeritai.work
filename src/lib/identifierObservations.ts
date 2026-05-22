@@ -176,12 +176,24 @@ export function buildObservedUnassignedIdentifierRecord(
   return record;
 }
 
-export interface CreateUserObservationResult {
-  success: boolean;
-  observationId?: string;
-  error?: string;
-  isNewIdentifier: boolean;
-}
+export type CreateUserObservationErrorCode =
+  | 'not-signed-in'
+  | 'invalid-identifier'
+  | 'identifier-owned-by-other-user'
+  | 'transaction-failed';
+
+export type CreateUserObservationResult =
+  | {
+      success: true;
+      observationId: string;
+      isNewIdentifier: boolean;
+    }
+  | {
+      success: false;
+      errorCode: CreateUserObservationErrorCode;
+      errorMessage?: string;
+      isNewIdentifier: false;
+    };
 
 export interface CreateUserIdentifierObservationArgs {
   db: Firestore;
@@ -208,6 +220,24 @@ export async function createUserIdentifierObservation(
   args: CreateUserIdentifierObservationArgs
 ): Promise<CreateUserObservationResult> {
   const { db, identifierInput, observationInput, userContext } = args;
+
+  if (!userContext.uid) {
+    return {
+      success: false,
+      errorCode: 'not-signed-in',
+      errorMessage: 'User UID is missing',
+      isNewIdentifier: false,
+    };
+  }
+
+  if (!identifierInput.identifierKey || !identifierInput.canonicalValue || !identifierInput.kind || !identifierInput.scheme) {
+    return {
+      success: false,
+      errorCode: 'invalid-identifier',
+      errorMessage: 'Identifier state is incomplete',
+      isNewIdentifier: false,
+    };
+  }
 
   const identifierRef = doc(db, 'identifiers', identifierInput.identifierKey);
   const observationId = buildObservationId();
@@ -239,7 +269,9 @@ export async function createUserIdentifierObservation(
 
         // Ownership check
         if (existingId.ownerId !== userContext.uid) {
-          throw new Error('Identifier belongs to another user.');
+          // Throw an object with a code so it can be reliably identified in the catch block
+          // even if Firestore wraps the error.
+          throw { code: 'identifier-owned-by-other-user', message: 'Identifier belongs to another user.' };
         }
 
         // Update existing identifier's last observation fields
@@ -285,9 +317,13 @@ export async function createUserIdentifierObservation(
     };
   } catch (err: any) {
     console.error('Failed to create observation:', err);
+
+    const isOwnerError = err?.code === 'identifier-owned-by-other-user';
+
     return {
       success: false,
-      error: err.message || 'Transaction failed',
+      errorCode: isOwnerError ? 'identifier-owned-by-other-user' : 'transaction-failed',
+      errorMessage: err?.message || 'Transaction failed',
       isNewIdentifier: false,
     };
   }

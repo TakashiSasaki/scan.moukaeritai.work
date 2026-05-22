@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { buildIdentifierKey } from '../lib/identifiers';
 import { buildActiveBindingId, buildActiveBindingRecord, validateIdentifierCanAttach, findCanonicalBindingsForOwner, loadObjectIdentifiersForSummary, mergeIdentifierForSummary } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
-import { createUserIdentifierObservation, UserObservationSource } from '../lib/identifierObservations';
+import { createUserIdentifierObservation, UserObservationSource, CreateUserObservationResult } from '../lib/identifierObservations';
 import { Timestamp } from 'firebase/firestore';
 
 export default function UnassignedIdentifierScreen() {
@@ -28,10 +28,16 @@ export default function UnassignedIdentifierScreen() {
     if (src && validSources.includes(src as UserObservationSource)) {
       return src as UserObservationSource;
     }
+    // Fallback to manual for legacy/manual-entry navigation paths that do not yet pass an explicit source.
     return 'manual';
   };
 
-  const [mode, setMode] = useState<'options' | 'attach' | 'observe' | 'observe_success'>('options');
+  const [mode, setMode] = useState<'options' | 'attach' | 'observe' | 'observe_success' | 'invalid_state'>(() => {
+    if (!state || !state.kind || !state.scheme || !state.canonicalValue) {
+      return 'invalid_state';
+    }
+    return 'options';
+  });
   const [placeLabel, setPlaceLabel] = useState('');
   const [note, setNote] = useState('');
   const [isObserving, setIsObserving] = useState(false);
@@ -213,7 +219,7 @@ export default function UnassignedIdentifierScreen() {
     try {
       const idKey = buildIdentifierKey(state.kind, state.scheme, state.canonicalValue);
 
-      const result = await createUserIdentifierObservation({
+      const result: CreateUserObservationResult = await createUserIdentifierObservation({
         db,
         identifierInput: {
           identifierKey: idKey,
@@ -236,10 +242,25 @@ export default function UnassignedIdentifierScreen() {
       });
 
       if (!result.success) {
-        if (result.error?.includes('belongs to another user')) {
-          toast.error('この識別子は他のユーザーのデータとして登録されているため、観測を記録できません。');
-        } else {
-          toast.error('観測の記録に失敗しました。時間をおいてもう一度お試しください。');
+        const errorResult = result as Extract<CreateUserObservationResult, { success: false }>;
+        if (errorResult.errorMessage) {
+          console.error('Observation write failed:', errorResult.errorMessage);
+        }
+
+        switch (errorResult.errorCode) {
+          case 'identifier-owned-by-other-user':
+            toast.error('この識別子は他のユーザーのデータとして登録されているため、観測を記録できません。');
+            break;
+          case 'not-signed-in':
+            toast.error('観測を記録するにはログインが必要です。');
+            break;
+          case 'invalid-identifier':
+            toast.error('識別子情報が不足しているため、観測を記録できません。もう一度スキャンしてください。');
+            break;
+          case 'transaction-failed':
+          default:
+            toast.error('観測の記録に失敗しました。時間をおいてもう一度お試しください。');
+            break;
         }
         return;
       }
@@ -261,7 +282,35 @@ export default function UnassignedIdentifierScreen() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
       <div className="bg-[var(--surface-container)] rounded-3xl p-8 max-w-md w-full text-center border border-[var(--outline)] shadow-lg">
-        {mode === 'options' ? (
+        {mode === 'invalid_state' ? (
+          <>
+            <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Scan size={32} />
+            </div>
+
+            <h2 className="text-2xl font-bold text-[var(--on-surface)] mb-2">エラー</h2>
+            <p className="text-[var(--on-surface-variant)] mb-8">
+              識別子情報が不足しているため、観測を記録できません。もう一度スキャンしてください。
+            </p>
+
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={() => navigate('/scanner')}
+                className="w-full flex items-center justify-center gap-2 bg-[var(--primary)] text-[var(--primary-foreground)] py-4 px-6 rounded-2xl font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                <Scan size={20} />
+                スキャナーに戻る
+              </button>
+
+              <button
+                onClick={() => navigate('/')}
+                className="w-full flex items-center justify-center gap-2 bg-[var(--surface-container-highest)] text-[var(--on-surface)] py-4 px-6 rounded-2xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                ホームに戻る
+              </button>
+            </div>
+          </>
+        ) : mode === 'options' ? (
           <>
             <div className="w-16 h-16 bg-[var(--primary)]/10 text-[var(--primary)] rounded-full flex items-center justify-center mx-auto mb-6">
               <Scan size={32} />
