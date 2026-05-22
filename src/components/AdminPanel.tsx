@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getCountFromServer } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
 import { Users, Database, Server, Activity, ShieldAlert, CloudCog, HardDrive, Cpu, Loader2, LayoutDashboard, Search, AlertCircle } from 'lucide-react';
 import { runObservationDiagnostics, ObservationDiagnosticsResult } from '../lib/observationDiagnostics';
-import { auth } from '../lib/firebase';
 
 interface ServerMetrics {
   storageTotalMB: string;
