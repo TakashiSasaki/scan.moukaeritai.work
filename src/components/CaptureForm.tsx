@@ -15,7 +15,7 @@ import { getImageFormatFromUrl } from '../lib/utils';
 import { ImageWithLongPress } from './ImageWithLongPress';
 import { useUserSettings } from '../hooks/useUserSettings';
 import { buildIdentifierKey, normalizeIdentifierInput } from '../lib/identifiers';
-import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner, findCanonicalBindingsForOwner, buildDetachedBindingPatch, validateIdentifierCanAttach, loadObjectIdentifiersForSummary } from '../lib/identifierBindings';
+import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner, findCanonicalBindingsForOwner, buildDetachedBindingPatch, validateIdentifierCanAttach, loadObjectIdentifiersForSummary, mergeIdentifierForSummary } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -476,22 +476,17 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
             });
         }
 
-        // Recompute summary and update object from Firestore truth
+        // loadObjectIdentifiersForSummary() reads Firestore state for denormalized summary recomputation.
         const currentIdentifiers = await loadObjectIdentifiersForSummary(db, auth.currentUser.uid, objectId);
-        const byKey = new Map<string, IdentifierRecord>();
 
-        for (const existing of currentIdentifiers) {
-          byKey.set(existing.identifierKey, existing);
-        }
-
-        byKey.set(idKey, {
+        // mergeIdentifierForSummary() deduplicates by identifierKey
+        const newIdentifiers = mergeIdentifierForSummary(currentIdentifiers, {
           ...resolvedIdRecord,
           objectId,
           status: 'active',
           updatedAt: serverTimestamp() as any
         });
 
-        const newIdentifiers = Array.from(byKey.values());
         const summary = computeIdentifierSummary(newIdentifiers);
 
         batch.update(doc(db, 'objects', objectId), {
@@ -501,6 +496,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
 
         await batch.commit();
 
+        // Local React state should be updated from the same identifier set used to compute summary after commit succeeds
         setIdentifiers(newIdentifiers);
 
         if (isIdempotentAttach) {
@@ -560,7 +556,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         console.warn(`No active binding found to detach for ${idr.identifierKey}`);
       }
 
-      // Recompute summary from Firestore truth
+      // loadObjectIdentifiersForSummary() reads Firestore state for denormalized summary recomputation.
       const currentIdentifiers = await loadObjectIdentifiersForSummary(db, auth.currentUser.uid, objectId);
       const newIdentifiers = currentIdentifiers.filter(i => i.identifierKey !== idr.identifierKey);
       const summary = computeIdentifierSummary(newIdentifiers);
@@ -584,6 +580,8 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       });
 
       await batch.commit();
+
+      // Local React state should be updated from the same identifier set used to compute summary after commit succeeds
       setIdentifiers(newIdentifiers);
 
       toast.success('Identifier detached.');
