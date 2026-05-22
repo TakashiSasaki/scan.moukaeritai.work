@@ -47,7 +47,7 @@ service cloud.firestore {
         && (!('visibility' in data) || data.visibility in ['private', 'link_shared', 'community_visible', 'public_readable'])
         && (!('lastReportedAt' in data) || data.lastReportedAt is timestamp)
         && (!('lastReportedBy' in data) || data.lastReportedBy is string)
-        && (!('lastReportedLocation' in data) || (data.lastReportedLocation is map && 'latitude' in data.lastReportedLocation && data.lastReportedLocation.latitude is number && 'longitude' in data.lastReportedLocation && data.lastReportedLocation.longitude is number))
+        && (!('lastReportedLocation' in data) || (data.lastReportedLocation is map && 'latitude' in data.lastReportedLocation && data.lastReportedLocation.latitude is number && data.lastReportedLocation.latitude >= -90 && data.lastReportedLocation.latitude <= 90 && 'longitude' in data.lastReportedLocation && data.lastReportedLocation.longitude is number && data.lastReportedLocation.longitude >= -180 && data.lastReportedLocation.longitude <= 180 && (!('address' in data.lastReportedLocation) || (data.lastReportedLocation.address is string && data.lastReportedLocation.address.size() <= 1000))))
         && (!('lastReportedPlaceLabel' in data) || (data.lastReportedPlaceLabel is string && data.lastReportedPlaceLabel.size() <= 1000));
     }
 
@@ -151,7 +151,7 @@ service cloud.firestore {
         && (!('observerIsAnonymous' in incoming()) || incoming().observerIsAnonymous is bool)
         && (!('observerDeviceId' in incoming()) || incoming().observerDeviceId is string)
         && (!('placeLabel' in incoming()) || (incoming().placeLabel is string && incoming().placeLabel.size() <= 1000))
-        && (!('location' in incoming()) || (incoming().location is map && 'latitude' in incoming().location && incoming().location.latitude is number && 'longitude' in incoming().location && incoming().location.longitude is number))
+        && (!('location' in incoming()) || (incoming().location is map && 'latitude' in incoming().location && incoming().location.latitude is number && incoming().location.latitude >= -90 && incoming().location.latitude <= 90 && 'longitude' in incoming().location && incoming().location.longitude is number && incoming().location.longitude >= -180 && incoming().location.longitude <= 180 && (!('address' in incoming().location) || (incoming().location.address is string && incoming().location.address.size() <= 1000))))
         && (!('note' in incoming()) || (incoming().note is string && incoming().note.size() <= 2000))
         && (!('metadata' in incoming()) || incoming().metadata is map)
         && (!('visibility' in incoming()) || incoming().visibility in ['private', 'linked_object', 'community', 'public'])
