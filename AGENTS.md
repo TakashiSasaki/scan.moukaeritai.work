@@ -281,7 +281,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - Agents must follow `docs/migrations/phase-1-observation-model-spec.md` for implementation constraints.
   - Phase 4 implements read-only diagnostics for observation migration readiness.
   - The Phase 4 diagnostics document is `docs/migrations/phase-4-read-only-diagnostics.md`.
-  - Diagnostics must remain strictly read-only.
+  - Diagnostics must remain strictly read-only and bounded for the current authenticated user’s owner scope, unless a later phase explicitly designs broader admin/global diagnostics.
   - Observation-only runtime writes must continue to use `src/lib/identifierObservations.ts`.
   - Agents must not implement Phase 5+ or backfill work unless explicitly instructed.
 
