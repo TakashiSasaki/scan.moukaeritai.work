@@ -23,6 +23,14 @@ export default function UnassignedIdentifierScreen() {
     rawValue?: string
   };
 
+  const getValidSource = (src?: string): UserObservationSource => {
+    const validSources: UserObservationSource[] = ['nfc', 'qr', 'manual', 'barcode', 'camera'];
+    if (src && validSources.includes(src as UserObservationSource)) {
+      return src as UserObservationSource;
+    }
+    return 'manual';
+  };
+
   const [mode, setMode] = useState<'options' | 'attach' | 'observe' | 'observe_success'>('options');
   const [placeLabel, setPlaceLabel] = useState('');
   const [note, setNote] = useState('');
@@ -216,7 +224,7 @@ export default function UnassignedIdentifierScreen() {
         },
         observationInput: {
           observedAt: Timestamp.now(),
-          source: (state.source as UserObservationSource) || 'manual',
+          source: getValidSource(state.source),
           observationType: 'scan',
           placeLabel: placeLabel.trim() || undefined,
           note: note.trim() || undefined
