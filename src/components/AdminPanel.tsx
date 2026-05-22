@@ -59,7 +59,15 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
     setDryRunResult(null);
 
     try {
-      const result = await runObservationBackfillDryRun(db, auth.currentUser.uid);
+      const result = await runObservationBackfillDryRun(db, auth.currentUser.uid, {
+        maxIdentifiers: 50,
+        maxObjects: 50,
+        maxObservations: 50,
+        maxCandidates: 50,
+        maxSamplesPerCategory: 5,
+        maxBindingsPerObject: 50,
+        maxIdentifiersPerObject: 50
+      });
       setDryRunResult(result);
     } catch (err: any) {
       setDryRunError(err.message || 'Unknown error during dry run');

@@ -26,9 +26,7 @@ export interface DryRunLimits {
   maxIdentifiersPerObject: number;
 }
 
-export interface DryRunOptions extends Partial<DryRunLimits> {
-  includeSamples?: boolean;
-}
+export interface DryRunOptions extends Partial<DryRunLimits> {}
 
 export interface DryRunCounts {
   identifiersChecked: number;
