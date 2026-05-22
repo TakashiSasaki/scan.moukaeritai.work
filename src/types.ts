@@ -1,5 +1,64 @@
 import { Timestamp } from 'firebase/firestore';
 
+export type ObservationObserverKind = 'user' | 'device' | 'system';
+
+export type ObservationSource =
+  | 'nfc'
+  | 'qr'
+  | 'manual'
+  | 'barcode'
+  | 'ble'
+  | 'camera'
+  | 'gateway'
+  | 'import';
+
+export type ObservationType = 'sighting' | 'scan' | 'proximity' | 'gateway_seen' | 'imported';
+
+export type ObservationVisibility = 'private' | 'linked_object' | 'community' | 'public';
+
+export type ObjectVisibility = 'private' | 'link_shared' | 'community_visible' | 'public_readable';
+
+export interface ObservationLocation {
+  latitude: number;
+  longitude: number;
+  address?: string;
+}
+
+export type IdentifierDiscoveryState = 'observed' | 'registered' | 'detached' | 'unknown';
+
+export interface IdentifierObservationRecord {
+  /**
+   * observationId must equal document ID.
+   * Normal client-created observations should use UUIDv7.
+   * Imported/synthetic observations should use deterministic IDs.
+   */
+  observationId: string;
+  identifierKey: string;
+  observerKind: ObservationObserverKind;
+  /**
+   * Observations are evidence/log records, not canonical object state.
+   */
+  observedAt: Timestamp;
+  receivedAt: Timestamp;
+  source: ObservationSource;
+  observationType: ObservationType;
+  createdAt: Timestamp;
+
+  /**
+   * objectId is optional. Observations can exist before an object is registered.
+   */
+  objectId?: string;
+  observerUid?: string;
+  observerIsAnonymous?: boolean;
+  observerDeviceId?: string;
+  placeLabel?: string;
+  location?: ObservationLocation;
+  note?: string;
+  metadata?: Record<string, unknown>;
+  visibility?: ObservationVisibility;
+  schemaVersion?: number;
+}
+
 export interface ObjectRecord {
   objectId: string; // Must equal document ID
   ownerId: string;
@@ -24,6 +83,13 @@ export interface ObjectRecord {
     sourceCollection: 'items';
     legacyItemId: string;
   };
+  createdBy?: string;
+  ownerUid?: string;
+  visibility?: ObjectVisibility;
+  lastReportedAt?: Timestamp;
+  lastReportedBy?: string;
+  lastReportedLocation?: ObservationLocation;
+  lastReportedPlaceLabel?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -38,6 +104,15 @@ export interface IdentifierRecord {
   canonicalValue: string;
   status: 'active' | 'unassigned' | 'retired' | 'lost' | 'replaced';
   label?: string;
+  firstObservedAt?: Timestamp;
+  firstObservedBy?: string;
+  firstObservationId?: string;
+  lastObservedAt?: Timestamp;
+  lastObservedBy?: string;
+  lastObservationId?: string;
+  lastObservedSource?: ObservationSource;
+  discoveryState?: IdentifierDiscoveryState;
+  schemaVersion?: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   lastSeenAt?: Timestamp;

@@ -41,7 +41,14 @@ service cloud.firestore {
         && data.get('status', 'active') in ['active', 'archived', 'lost', 'disposed']
         && (!('currentLocation' in data) || (data.currentLocation is map && 'latitude' in data.currentLocation && data.currentLocation.latitude is number && data.currentLocation.latitude >= -90 && data.currentLocation.latitude <= 90 && 'longitude' in data.currentLocation && data.currentLocation.longitude is number && data.currentLocation.longitude >= -180 && data.currentLocation.longitude <= 180 && (!('address' in data.currentLocation) || (data.currentLocation.address is string && data.currentLocation.address.size() <= 1000)) && (!('updatedAt' in data.currentLocation) || data.currentLocation.updatedAt is timestamp)))
         && (!('identifierSummary' in data) || (data.identifierSummary is map && 'activeKinds' in data.identifierSummary && data.identifierSummary.activeKinds is list && 'activeIdentifierCount' in data.identifierSummary && data.identifierSummary.activeIdentifierCount is number && data.identifierSummary.activeIdentifierCount >= 0 && (!('hasQr' in data.identifierSummary) || data.identifierSummary.hasQr is bool) && (!('hasNfc' in data.identifierSummary) || data.identifierSummary.hasNfc is bool)))
-        && (!('primaryImageUrl' in data) || (data.primaryImageUrl is string && data.primaryImageUrl.size() <= 2000));
+        && (!('primaryImageUrl' in data) || (data.primaryImageUrl is string && data.primaryImageUrl.size() <= 2000))
+        && (!('createdBy' in data) || data.createdBy is string)
+        && (!('ownerUid' in data) || data.ownerUid is string)
+        && (!('visibility' in data) || data.visibility in ['private', 'link_shared', 'community_visible', 'public_readable'])
+        && (!('lastReportedAt' in data) || data.lastReportedAt is timestamp)
+        && (!('lastReportedBy' in data) || data.lastReportedBy is string)
+        && (!('lastReportedLocation' in data) || (data.lastReportedLocation is map && 'latitude' in data.lastReportedLocation && data.lastReportedLocation.latitude is number && 'longitude' in data.lastReportedLocation && data.lastReportedLocation.longitude is number))
+        && (!('lastReportedPlaceLabel' in data) || (data.lastReportedPlaceLabel is string && data.lastReportedPlaceLabel.size() <= 1000));
     }
 
     match /objects/{objectId} {
@@ -52,7 +59,7 @@ service cloud.firestore {
         && isValidId(objectId)
         && incoming().objectId == objectId
         && isValidObjectBase(incoming())
-        && incoming().keys().hasOnly(['objectId', 'ownerId', 'name', 'description', 'status', 'currentLocation', 'primaryImageId', 'primaryImageUrl', 'identifierSummary', 'legacy', 'createdAt', 'updatedAt'])
+        && incoming().keys().hasOnly(['objectId', 'ownerId', 'name', 'description', 'status', 'currentLocation', 'primaryImageId', 'primaryImageUrl', 'identifierSummary', 'legacy', 'createdBy', 'ownerUid', 'visibility', 'lastReportedAt', 'lastReportedBy', 'lastReportedLocation', 'lastReportedPlaceLabel', 'createdAt', 'updatedAt'])
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
 
@@ -62,7 +69,7 @@ service cloud.firestore {
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time
         && isValidObjectBase(incoming())
-        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'status', 'currentLocation', 'primaryImageId', 'primaryImageUrl', 'identifierSummary', 'updatedAt']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'status', 'currentLocation', 'primaryImageId', 'primaryImageUrl', 'identifierSummary', 'updatedAt', 'visibility', 'lastReportedAt', 'lastReportedBy', 'lastReportedLocation', 'lastReportedPlaceLabel']);
 
       allow delete: if isOwner(existing().ownerId);
     }
@@ -82,9 +89,18 @@ service cloud.firestore {
         && (!('rawValue' in incoming()) || (incoming().rawValue is string && incoming().rawValue.size() <= 1000))
         && (!('label' in incoming()) || (incoming().label is string && incoming().label.size() <= 1000))
         && (!('lastSeenAt' in incoming()) || incoming().lastSeenAt is timestamp)
+        && (!('firstObservedAt' in incoming()) || incoming().firstObservedAt is timestamp)
+        && (!('firstObservedBy' in incoming()) || incoming().firstObservedBy is string)
+        && (!('firstObservationId' in incoming()) || incoming().firstObservationId is string)
+        && (!('lastObservedAt' in incoming()) || incoming().lastObservedAt is timestamp)
+        && (!('lastObservedBy' in incoming()) || incoming().lastObservedBy is string)
+        && (!('lastObservationId' in incoming()) || incoming().lastObservationId is string)
+        && (!('lastObservedSource' in incoming()) || incoming().lastObservedSource is string)
+        && (!('discoveryState' in incoming()) || incoming().discoveryState in ['observed', 'registered', 'detached', 'unknown'])
+        && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
         && incoming().status in ['active', 'unassigned', 'retired', 'lost', 'replaced']
         && (incoming().status in ['unassigned', 'retired', 'lost', 'replaced'] || ('objectId' in incoming() && incoming().objectId is string && incoming().objectId.size() <= 128))
-        && incoming().keys().hasOnly(['identifierKey', 'ownerId', 'objectId', 'kind', 'scheme', 'canonicalValue', 'rawValue', 'label', 'status', 'createdAt', 'updatedAt', 'lastSeenAt'])
+        && incoming().keys().hasOnly(['identifierKey', 'ownerId', 'objectId', 'kind', 'scheme', 'canonicalValue', 'rawValue', 'label', 'status', 'firstObservedAt', 'firstObservedBy', 'firstObservationId', 'lastObservedAt', 'lastObservedBy', 'lastObservationId', 'lastObservedSource', 'discoveryState', 'schemaVersion', 'createdAt', 'updatedAt', 'lastSeenAt'])
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
 
@@ -98,13 +114,54 @@ service cloud.firestore {
         && (!('rawValue' in incoming()) || (incoming().rawValue is string && incoming().rawValue.size() <= 1000))
         && (!('label' in incoming()) || (incoming().label is string && incoming().label.size() <= 1000))
         && (!('lastSeenAt' in incoming()) || incoming().lastSeenAt is timestamp)
+        && (!('firstObservedAt' in incoming()) || incoming().firstObservedAt is timestamp)
+        && (!('firstObservedBy' in incoming()) || incoming().firstObservedBy is string)
+        && (!('firstObservationId' in incoming()) || incoming().firstObservationId is string)
+        && (!('lastObservedAt' in incoming()) || incoming().lastObservedAt is timestamp)
+        && (!('lastObservedBy' in incoming()) || incoming().lastObservedBy is string)
+        && (!('lastObservationId' in incoming()) || incoming().lastObservationId is string)
+        && (!('lastObservedSource' in incoming()) || incoming().lastObservedSource is string)
+        && (!('discoveryState' in incoming()) || incoming().discoveryState in ['observed', 'registered', 'detached', 'unknown'])
+        && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
         && incoming().status in ['active', 'unassigned', 'retired', 'lost', 'replaced']
         && (incoming().status in ['unassigned', 'retired', 'lost', 'replaced'] || ('objectId' in incoming() && incoming().objectId is string && incoming().objectId.size() <= 128))
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly(['objectId', 'status', 'label', 'rawValue', 'updatedAt', 'lastSeenAt']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['objectId', 'status', 'label', 'rawValue', 'updatedAt', 'lastSeenAt', 'firstObservedAt', 'firstObservedBy', 'firstObservationId', 'lastObservedAt', 'lastObservedBy', 'lastObservationId', 'lastObservedSource', 'discoveryState', 'schemaVersion']);
 
       allow delete: if isOwner(existing().ownerId);
+    }
+
+    // --- IDENTIFIER OBSERVATIONS ---
+    match /identifierObservations/{observationId} {
+      allow read: if isSignedIn() && existing().observerUid == request.auth.uid;
+      allow read: if isAdmin();
+
+      allow create: if isSignedIn()
+        && incoming().observationId == observationId
+        && isValidId(incoming().identifierKey)
+        && incoming().observerKind == 'user'
+        && incoming().observerUid == request.auth.uid
+        && incoming().observedAt is timestamp
+        && incoming().receivedAt is timestamp
+        && incoming().createdAt is timestamp
+        && incoming().source in ['nfc', 'qr', 'manual', 'barcode', 'ble', 'camera', 'gateway', 'import']
+        && incoming().observationType in ['sighting', 'scan', 'proximity', 'gateway_seen', 'imported']
+        && (!('objectId' in incoming()) || (incoming().objectId is string && incoming().objectId.size() <= 128))
+        && (!('observerIsAnonymous' in incoming()) || incoming().observerIsAnonymous is bool)
+        && (!('observerDeviceId' in incoming()) || incoming().observerDeviceId is string)
+        && (!('placeLabel' in incoming()) || (incoming().placeLabel is string && incoming().placeLabel.size() <= 1000))
+        && (!('location' in incoming()) || (incoming().location is map && 'latitude' in incoming().location && incoming().location.latitude is number && 'longitude' in incoming().location && incoming().location.longitude is number))
+        && (!('note' in incoming()) || (incoming().note is string && incoming().note.size() <= 2000))
+        && (!('metadata' in incoming()) || incoming().metadata is map)
+        && (!('visibility' in incoming()) || incoming().visibility in ['private', 'linked_object', 'community', 'public'])
+        && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
+        && incoming().keys().hasOnly(['observationId', 'identifierKey', 'observerKind', 'observedAt', 'receivedAt', 'source', 'observationType', 'createdAt', 'objectId', 'observerUid', 'observerIsAnonymous', 'observerDeviceId', 'placeLabel', 'location', 'note', 'metadata', 'visibility', 'schemaVersion'])
+        && incoming().receivedAt == request.time
+        && incoming().createdAt == request.time;
+
+      allow update: if false; // Append mostly, prevent update from client
+      allow delete: if isAdmin();
     }
 
     // --- OBJECT IDENTIFIER BINDINGS ---

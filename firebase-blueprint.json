@@ -99,6 +99,34 @@
               "type": "string"
             }
           }
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "ownerUid": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "private",
+            "link_shared",
+            "community_visible",
+            "public_readable"
+          ]
+        },
+        "lastReportedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastReportedBy": {
+          "type": "string"
+        },
+        "lastReportedLocation": {
+          "type": "object"
+        },
+        "lastReportedPlaceLabel": {
+          "type": "string"
         }
       },
       "required": [
@@ -169,6 +197,41 @@
           "type": "string",
           "description": "Optional human-readable label."
         },
+        "firstObservedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "firstObservedBy": {
+          "type": "string"
+        },
+        "firstObservationId": {
+          "type": "string"
+        },
+        "lastObservedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastObservedBy": {
+          "type": "string"
+        },
+        "lastObservationId": {
+          "type": "string"
+        },
+        "lastObservedSource": {
+          "type": "string"
+        },
+        "discoveryState": {
+          "type": "string",
+          "enum": [
+            "observed",
+            "registered",
+            "detached",
+            "unknown"
+          ]
+        },
+        "schemaVersion": {
+          "type": "number"
+        },
         "lastSeenAt": {
           "type": "string",
           "format": "date-time"
@@ -185,9 +248,97 @@
         "updatedAt"
       ]
     },
+    "IdentifierObservationRecord": {
+      "title": "Identifier Observation Record",
+      "description": "An evidence/log record of an identifier observation. Does not represent canonical object state. Can exist before an object is registered. Order by observedAt or receivedAt.",
+      "type": "object",
+      "properties": {
+        "observationId": {
+          "type": "string",
+          "description": "Must equal document ID. Use UUIDv7 for client-created, deterministic IDs for imported/synthetic."
+        },
+        "identifierKey": {
+          "type": "string"
+        },
+        "observerKind": {
+          "type": "string",
+          "enum": [
+            "user",
+            "device",
+            "system"
+          ],
+          "description": "Device is reserved for future backend/device-auth ingestion."
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source": {
+          "type": "string"
+        },
+        "observationType": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "objectId": {
+          "type": "string",
+          "description": "Optional object this observation relates to."
+        },
+        "observerUid": {
+          "type": "string"
+        },
+        "observerIsAnonymous": {
+          "type": "boolean"
+        },
+        "observerDeviceId": {
+          "type": "string"
+        },
+        "placeLabel": {
+          "type": "string"
+        },
+        "location": {
+          "type": "object"
+        },
+        "note": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "private",
+            "linked_object",
+            "community",
+            "public"
+          ]
+        },
+        "schemaVersion": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "observationId",
+        "identifierKey",
+        "observerKind",
+        "observedAt",
+        "receivedAt",
+        "source",
+        "observationType",
+        "createdAt"
+      ]
+    },
     "ObjectIdentifierBindingRecord": {
       "title": "Object Identifier Binding Record",
-      "description": "Canonical active relationship state linking an object to an identifier. This is NOT an append-only historical log; use objectEvents for history.",
+      "description": "Canonical active relationship state linking an object to an identifier. This is NOT an append-only historical log; use objectEvents for history. Observations do not replace canonical bindings.",
       "type": "object",
       "properties": {
         "bindingId": {
@@ -251,7 +402,7 @@
     },
     "ObjectEventRecord": {
       "title": "Object Event Record",
-      "description": "Append-only event log for inventory operations.",
+      "description": "Append-only event log for inventory operations. Remains object operational history, not the generic observation log.",
       "type": "object",
       "properties": {
         "eventId": {
@@ -469,7 +620,11 @@
     },
     "/identifiers/{identifierKey}": {
       "schema": "IdentifierRecord",
-      "description": "Lookup table from scanned values to objects."
+      "description": "Lookup table from scanned values to objects. Now supports optional first/last observation fields and discoveryState."
+    },
+    "/identifierObservations/{observationId}": {
+      "schema": "IdentifierObservationRecord",
+      "description": "Collection of observation events for identifiers. Independent of object creation."
     },
     "/objectIdentifierBindings/{bindingId}": {
       "schema": "ObjectIdentifierBindingRecord",

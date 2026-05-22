@@ -275,11 +275,11 @@ The application has transitioned from a simple `items` collection to a normalize
   - `tag-1.0.0` is the immutable migration source baseline.
   - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
   - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
-  - Current phase is Phase 1. (Proceeding on the `1.1.x` version line)
+  - Current phase is Phase 2. (Proceeding on the `1.2.x` version line)
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
   - Agents must read that document before modifying migration-related code.
-  - Agents must not implement later-phase work unless explicitly instructed.
-  - Pre-Phase-2 decisions are recorded in `docs/migrations/phase-1-observation-model-spec.md` and must be followed before implementing Phase 2.
+  - Agents must follow `docs/migrations/phase-1-observation-model-spec.md` for implementation constraints.
+  - Agents must not implement Phase 3+ work unless explicitly instructed.
 
 - **Source of Truth**:
   - `firebase-blueprint.json` defines the new schema boundaries.
