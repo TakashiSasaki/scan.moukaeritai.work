@@ -12,7 +12,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { auth, db, signInWithPopup, googleProvider, onAuthStateChanged, User, signOut } from './lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ThemeProvider, useTheme, ThemeColor, ThemeMode } from './context/ThemeContext';
-import { Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert, Beaker, PlaySquare, Route as RouteIcon, Database } from 'lucide-react';
+import { Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert, Beaker, PlaySquare, Route as RouteIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'react-hot-toast';
 import Dashboard from './components/Dashboard';
@@ -25,7 +25,6 @@ import Overview from './components/Overview';
 import AdminPanel from './components/AdminPanel';
 import { Navigate } from 'react-router-dom';
 import SitemapPage from './components/SitemapPage';
-import MigrationScreen from './components/MigrationScreen';
 import UserSettingsPanel from './components/UserSettingsPanel';
 import TestScreen from './components/TestScreen';
 import DemoScreen from './components/DemoScreen';
@@ -259,15 +258,6 @@ function AppContent() {
                         >
                            <ShieldAlert size={16} className="text-amber-500" /> Admin Panel
                         </button>
-                        <button
-                        onClick={() => {
-                          setShowProfile(false);
-                          navigate('/admin/migration');
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors mb-1"
-                     >
-                        <Database size={16} /> Data Migration
-                     </button>
                      <button
                           onClick={() => {
                              setShowProfile(false);
@@ -339,21 +329,6 @@ function AppContent() {
             {isAdmin ? (
                <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                  <AdminPanel onClose={() => navigate('/')} />
-               </motion.div>
-            ) : (
-               <div className="p-12 mt-4 text-center bg-[var(--surface)] border border-red-500/20 rounded-2xl mx-4">
-                 <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                 <h2 className="text-xl font-bold text-red-500 mb-2">Access Denied</h2>
-                 <p className="text-[var(--on-surface-variant)]">You do not have permission to view this page.</p>
-               </div>
-            )}
-          </main>
-        } />
-        <Route path="/admin/migration" element={
-          <main className="flex-1 max-w-4xl mx-auto w-full">
-            {isAdmin ? (
-               <motion.div key="admin-migration" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                 <MigrationScreen onClose={() => navigate('/')} />
                </motion.div>
             ) : (
                <div className="p-12 mt-4 text-center bg-[var(--surface)] border border-red-500/20 rounded-2xl mx-4">

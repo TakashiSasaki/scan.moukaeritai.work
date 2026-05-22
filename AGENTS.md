@@ -270,6 +270,16 @@ The application has transitioned from a simple `items` collection to a normalize
   - **Idempotency**: Migration should be idempotent per target record, allowing safe re-runs.
   - Dry-run stats include object update backfills (`objectsUpdated`) when an existing object is patched with missing `primaryImageId`/`primaryImageUrl`.
   - **ID Conversion**: Legacy item IDs are normalized to uppercase object IDs. Legacy source IDs are retained in `objects.legacy.legacyItemId`.
+- **Observation Model Migration**:
+  - The repository is currently in a staged migration project from the completed `tag-1.0.0` normalized inventory source baseline to an observation-aware model.
+  - `tag-1.0.0` is the immutable migration source baseline.
+  - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
+  - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
+  - Current phase is Phase 0.
+  - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
+  - Agents must read that document before modifying migration-related code.
+  - Agents must not implement later-phase work unless explicitly instructed.
+
 - **Source of Truth**:
   - `firebase-blueprint.json` defines the new schema boundaries.
   - Always prefer resolving an identifier via the `identifiers` collection rather than blindly treating a scanned payload as an `objectId`.
