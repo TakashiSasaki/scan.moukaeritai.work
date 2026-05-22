@@ -235,16 +235,40 @@ Specify:
 - Imported observations must not be represented as human sightings.
 - Creating imported observations should be opt-in, not automatic.
 
-## Open questions
+## Decisions before Phase 2
 
-- Should `visibility` be included in Phase 2 types, or deferred?
-- Should `objects.status` include `"provisional"` in Phase 2, or wait until UI supports provisional objects?
-- Should `identifierObservations` require an existing `identifiers/{identifierKey}` document before create, or should the scan flow create both?
-- Should `observationId` be `uuidv4()` for normal observations?
-- Should imported observation IDs be deterministic?
-- Should `placeLabel` be top-level, or only inside metadata?
-- Should `lastObservationSummary` be added in Phase 2 or delayed until Phase 3/5?
-- How much anonymous-user display data should be snapshotted?
+Record these decisions:
+
+1. **Identifier existence at observation creation**
+   - **Decision:** `identifierObservations` conceptually does not require an existing object. `objectId` remains optional. For implementation, the scan flow should ensure `identifiers/{identifierKey}` exists when creating an observation. If the identifier is unknown, Phase 3 should create `identifiers/{identifierKey}` and `identifierObservations/{observationId}` together, preferably in one batch/transaction. The new identifier should initially use `status: "unassigned"` and `discoveryState: "observed"` once those fields are implemented. Observation creation must not require creating an object.
+
+2. **observationId generation**
+   - **Decision:** Normal client-created `identifierObservations` should use UUIDv7 for `observationId`. Imported/synthetic observations should use deterministic IDs for idempotency. Normal observations should not use Firestore auto IDs. Normal observations should not use UUIDv4 unless UUIDv7 is unavailable and explicitly justified later.
+   - **Rationale:** Observations are log-like records. UUIDv7 carries a timestamp prefix and is useful for debugging, export, and approximate chronological locality. Formal sorting and queries must not rely on `observationId` order. Use `observedAt` or `receivedAt` for ordering. UUIDv7 exposes approximate generation time; this is acceptable because observation records already carry timestamps, but observation IDs must not be treated as private secrets. If high-volume device ingestion becomes necessary, revisit Firestore write distribution and hotspot risk.
+   - **Implementation note for later phases:** Check whether the existing `uuid` package supports v7. If supported, future implementation may use: `import { v7 as uuidv7 } from 'uuid';`. Do not implement this import in this task.
+
+3. **visibility**
+   - **Decision:** Include `visibility` as an optional draft field in the Phase 2 types/spec. Initial implementation should remain conservative. Default should be "private" unless a later phase explicitly implements sharing semantics. Do not open community/public reads merely because the field exists. Firestore rules in Phase 2 should not grant broad public/community access unless explicitly designed.
+   - **Suggested future union:** For `identifierObservations`: `"private" | "linked_object" | "community" | "public"`. For objects: `"private" | "link_shared" | "community_visible" | "public_readable"`. If this naming mismatch is considered undesirable, record it as a naming issue to resolve before Phase 2 implementation.
+
+4. **provisional objects**
+   - **Decision:** Do not add `"provisional"` to `objects.status` in Phase 2. Provisional object support should wait until the UI/workflow for creating provisional objects from unknown tags is designed. For now, observations can exist without objects. This avoids forcing the app to define provisional-object behavior prematurely.
+
+5. **lastObservationSummary**
+   - **Decision:** Do not implement `objects.lastObservationSummary` as an active denormalized cache in Phase 2. It may remain a future optional field candidate in the spec. Phase 2 may define supporting types only if doing so does not require update logic. Prefer delaying active summary writes until Phase 3 or Phase 5, when observation creation/backfill logic exists. Existing `objects.identifierSummary` remains only about active identifiers, not observations.
+
+6. **placeLabel**
+   - **Decision:** `placeLabel` should be a top-level field on `identifierObservations`. It should not be metadata-only.
+   - **Rationale:** human-readable place labels are central to the shared-house/community use case and are useful even without GPS.
+
+7. **anonymous reporter snapshot**
+   - **Decision:** Include `observerIsAnonymous?: boolean`. Do not include email snapshot by default. Do not include display-name snapshot by default unless later UI requirements justify it. `observerUid` is the primary reporter identity, including anonymous Firebase Auth UID. UI should present anonymous reporters carefully, e.g. “anonymous reporter”, not as verified owners.
+
+8. **device/sensor observations**
+   - **Decision:** Keep `observerKind: "device"` in the model. Do not allow arbitrary client-side device observation writes in the initial implementation. Device observations should later be ingested through Cloud Functions or another authenticated backend/device-auth mechanism. `metadata` may carry RSSI, readerId, antennaId, scanWindowMs, confidence, and similar source-specific values. High-volume device ingestion must trigger a later review of document ID distribution, batching, and write-hotspot risks.
+
+9. **no formal lending/custody model**
+   - **Decision:** Do not introduce loans, borrowings, custodyTransfers, currentCustodianUid, or formal delivery-tracking state. The app only needs loose observation evidence such as “this user last reported it”. `lastObservedBy` / `lastReportedBy` means reporter/observer, not holder/borrower.
 
 ## Phase 1 exit criteria
 
