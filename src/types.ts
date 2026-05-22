@@ -26,7 +26,7 @@ export interface ObservationLocation {
 
 export type IdentifierDiscoveryState = 'observed' | 'registered' | 'detached' | 'unknown';
 
-export interface IdentifierObservationRecord {
+export type IdentifierObservationRecord = {
   /**
    * observationId must equal document ID.
    * Normal client-created observations should use UUIDv7.
@@ -34,7 +34,6 @@ export interface IdentifierObservationRecord {
    */
   observationId: string;
   identifierKey: string;
-  observerKind: ObservationObserverKind;
   /**
    * Observations are evidence/log records, not canonical object state.
    */
@@ -48,16 +47,26 @@ export interface IdentifierObservationRecord {
    * objectId is optional. Observations can exist before an object is registered.
    */
   objectId?: string;
-  observerUid?: string;
-  observerIsAnonymous?: boolean;
-  observerDeviceId?: string;
   placeLabel?: string;
   location?: ObservationLocation;
   note?: string;
   metadata?: Record<string, unknown>;
   visibility?: ObservationVisibility;
   schemaVersion?: number;
-}
+} & (
+  | {
+      observerKind: 'user';
+      observerUid: string;
+      observerIsAnonymous?: boolean;
+      observerDeviceId?: string;
+    }
+  | {
+      observerKind: 'device' | 'system';
+      observerUid?: string;
+      observerIsAnonymous?: boolean;
+      observerDeviceId?: string;
+    }
+);
 
 export interface ObjectRecord {
   objectId: string; // Must equal document ID

@@ -138,6 +138,7 @@ service cloud.firestore {
       allow read: if isAdmin();
 
       allow create: if isSignedIn()
+        && isValidId(observationId)
         && incoming().observationId == observationId
         && isValidId(incoming().identifierKey)
         && incoming().observerKind == 'user'
