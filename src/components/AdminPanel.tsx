@@ -226,7 +226,7 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
               <p className="text-sm text-[var(--on-surface-variant)] mb-6">
                 Read-only diagnostics to verify Phase 4 observation model data consistency.
                 <br />
-                <span className="font-bold text-amber-600">Note:</span> This is a bounded/sampled scan (max 50 records per collection by default) to conserve read quota.
+                <span className="font-bold text-amber-600">Note:</span> This is a bounded/sampled scan (initially fetching max 50 top-level records per collection by default). Additional reads are performed for referenced documents, which will increase total read quota usage.
               </p>
 
               {diagnosticsError && (
