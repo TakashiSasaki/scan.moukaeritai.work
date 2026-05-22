@@ -275,7 +275,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - `tag-1.0.0` is the immutable migration source baseline.
   - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
   - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
-  - Current phase is Phase 0.
+  - Current phase is Phase 1. (Proceeding on the `1.1.x` version line)
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
   - Agents must read that document before modifying migration-related code.
   - Agents must not implement later-phase work unless explicitly instructed.
