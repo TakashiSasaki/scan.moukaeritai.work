@@ -3,11 +3,13 @@
 ## Status
 
 State:
-- Current phase: Phase 0 — Migration governance and baseline freeze.
+- Current phase: Phase 1 — Observation model specification. (Phase 0 is completed)
+- Version line: Phase 0 completed on the `1.0.x` line. Phase 1 starts the `1.1.x` line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
 - The legacy `items` -> normalized model migration is completed.
 - Future migration work targets the `tag-1.0.0` data model or later non-destructive preparation commits.
+- Specification: See [Phase 1: Observation Model Specification](phase-1-observation-model-spec.md).
 
 ## Purpose
 
@@ -16,7 +18,7 @@ This migration is intended to add observation-aware behavior without destructive
 The future core addition is expected to be:
 - `identifierObservations`
 
-Phase 0 does not add it yet.
+Phase 1 does not add it yet.
 
 ## Baseline normalized model
 
