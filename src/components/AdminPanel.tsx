@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { collection, getCountFromServer } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../lib/firebase';
-import { Users, Database, Server, Activity, ShieldAlert, CloudCog, HardDrive, Cpu, Loader2, LayoutDashboard } from 'lucide-react';
+import { Users, Database, Server, Activity, ShieldAlert, CloudCog, HardDrive, Cpu, Loader2, LayoutDashboard, Search, AlertCircle } from 'lucide-react';
+import { runObservationDiagnostics, ObservationDiagnosticsResult } from '../lib/observationDiagnostics';
+import { auth } from '../lib/firebase';
 
 interface ServerMetrics {
   storageTotalMB: string;
@@ -19,6 +21,32 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
   const [metricsLoading, setMetricsLoading] = useState(true);
   const [serverMetrics, setServerMetrics] = useState<ServerMetrics | null>(null);
   const [metricsError, setMetricsError] = useState<string | null>(null);
+
+  const [diagnosticsRunning, setDiagnosticsRunning] = useState(false);
+  const [diagnosticsResult, setDiagnosticsResult] = useState<ObservationDiagnosticsResult | null>(null);
+  const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
+
+  const handleRunDiagnostics = async () => {
+    if (!auth.currentUser) return;
+    setDiagnosticsRunning(true);
+    setDiagnosticsError(null);
+    setDiagnosticsResult(null);
+    try {
+      // Conservative default limits to avoid performance/read spikes
+      const result = await runObservationDiagnostics(db, auth.currentUser.uid, {
+        maxObservations: 50,
+        maxIdentifiers: 50,
+        maxObjects: 50,
+        maxBindings: 50,
+        maxSamplesPerIssue: 5
+      });
+      setDiagnosticsResult(result);
+    } catch (err: any) {
+      setDiagnosticsError(err.message || 'Failed to run diagnostics');
+    } finally {
+      setDiagnosticsRunning(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchStats() {
@@ -179,6 +207,101 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
                 </div>
               )}
             </div>
+
+            {/* Observation Diagnostics Section */}
+            <div className="bg-[var(--surface-container-high)] rounded-3xl p-6 lg:p-8 border border-[var(--outline)]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-[var(--on-surface)] flex items-center gap-2">
+                  <Search size={20} className="text-indigo-500" />
+                  観測モデル診断 (Observation Diagnostics)
+                </h3>
+                <button
+                  onClick={handleRunDiagnostics}
+                  disabled={diagnosticsRunning}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-sm font-bold transition-colors flex items-center gap-2 shadow-sm"
+                >
+                  {diagnosticsRunning ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                  診断を実行 (Run)
+                </button>
+              </div>
+              <p className="text-sm text-[var(--on-surface-variant)] mb-6">
+                Read-only diagnostics to verify Phase 4 observation model data consistency.
+                <br />
+                <span className="font-bold text-amber-600">Note:</span> This is a bounded/sampled scan (max 50 records per collection by default) to conserve read quota.
+              </p>
+
+              {diagnosticsError && (
+                <div className="p-4 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded-xl border border-red-200 dark:border-red-800 text-sm font-medium mb-4">
+                  {diagnosticsError}
+                </div>
+              )}
+
+              {diagnosticsResult && (
+                <div className="space-y-6">
+                  {/* Counts */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="p-3 bg-[var(--surface)] border border-[var(--outline)] rounded-xl text-center">
+                      <div className="text-xs text-[var(--on-surface-variant)] font-bold mb-1">Observations Checked</div>
+                      <div className="text-xl font-black text-[var(--on-surface)]">{diagnosticsResult.counts.observationsChecked}</div>
+                    </div>
+                    <div className="p-3 bg-[var(--surface)] border border-[var(--outline)] rounded-xl text-center">
+                      <div className="text-xs text-[var(--on-surface-variant)] font-bold mb-1">Identifiers Checked</div>
+                      <div className="text-xl font-black text-[var(--on-surface)]">{diagnosticsResult.counts.identifiersChecked}</div>
+                    </div>
+                    <div className="p-3 bg-[var(--surface)] border border-[var(--outline)] rounded-xl text-center">
+                      <div className="text-xs text-[var(--on-surface-variant)] font-bold mb-1">Bindings Checked</div>
+                      <div className="text-xl font-black text-[var(--on-surface)]">{diagnosticsResult.counts.bindingsChecked}</div>
+                    </div>
+                    <div className="p-3 bg-[var(--surface)] border border-[var(--outline)] rounded-xl text-center">
+                      <div className="text-xs text-[var(--on-surface-variant)] font-bold mb-1">Objects Checked</div>
+                      <div className="text-xl font-black text-[var(--on-surface)]">{diagnosticsResult.counts.objectsChecked}</div>
+                    </div>
+                  </div>
+
+                  {/* Issues */}
+                  <div>
+                    <h4 className="text-md font-bold text-[var(--on-surface)] mb-3 flex items-center gap-2">
+                      <AlertCircle size={18} className={diagnosticsResult.issues.length > 0 ? "text-amber-500" : "text-emerald-500"} />
+                      Issues Found: {diagnosticsResult.issues.length}
+                    </h4>
+                    {diagnosticsResult.issues.length === 0 ? (
+                      <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-800 text-sm font-medium">
+                        No issues detected in the sampled records.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {diagnosticsResult.issues.map((issue, idx) => (
+                          <div key={idx} className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-xl">
+                            <div className="flex items-start gap-3">
+                              <div className={`mt-0.5 px-2 py-1 text-[10px] uppercase font-bold rounded-md ${issue.severity === 'error' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                                {issue.severity}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-bold text-sm text-[var(--on-surface)]">{issue.type}</div>
+                                <div className="text-xs text-[var(--on-surface-variant)] mt-1">{issue.description}</div>
+                                <div className="mt-3 space-y-2">
+                                  {issue.samples.map((sample, sIdx) => (
+                                    <pre key={sIdx} className="text-[10px] bg-[var(--surface-container-highest)] p-2 rounded-lg overflow-x-auto text-[var(--on-surface)]">
+                                      {JSON.stringify(sample, null, 2)}
+                                    </pre>
+                                  ))}
+                                  {issue.samples.length >= diagnosticsResult.limits.maxSamplesPerIssue && (
+                                    <div className="text-[10px] text-[var(--on-surface-variant)] italic">
+                                      ...and possibly more (limited to {diagnosticsResult.limits.maxSamplesPerIssue} samples).
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
         </div>
       </div>
     </div>
