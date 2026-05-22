@@ -9,8 +9,6 @@ import {
 } from 'firebase/firestore';
 import type {
   IdentifierObservationRecord,
-  ObservationSource,
-  ObservationType,
   ObservationVisibility,
   ObservationLocation,
   IdentifierRecord,
