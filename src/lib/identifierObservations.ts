@@ -5,7 +5,6 @@ import {
   Timestamp,
   runTransaction,
   doc,
-  collection,
   Firestore,
 } from 'firebase/firestore';
 import type {
