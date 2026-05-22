@@ -214,13 +214,12 @@ export async function createUserIdentifierObservation(
   const observationRef = doc(db, 'identifierObservations', observationId);
 
   try {
-    let isNewIdentifier = false;
-
-    await runTransaction(db, async (transaction) => {
+    const isNewIdentifier = await runTransaction(db, async (transaction) => {
       const idSnap = await transaction.get(identifierRef);
+      let isNew = false;
 
       if (!idSnap.exists()) {
-        isNewIdentifier = true;
+        isNew = true;
         // Create new unassigned/observed identifier
         const newIdentifier = buildObservedUnassignedIdentifierRecord({
           identifierKey: identifierInput.identifierKey,
@@ -276,6 +275,7 @@ export async function createUserIdentifierObservation(
       });
 
       transaction.set(observationRef, observationWrite);
+      return isNew;
     });
 
     return {
