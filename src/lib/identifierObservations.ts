@@ -221,10 +221,6 @@ export async function createUserIdentifierObservation(
 ): Promise<CreateUserObservationResult> {
   const { db, identifierInput, observationInput, userContext } = args;
 
-  const identifierRef = doc(db, 'identifiers', identifierInput.identifierKey);
-  const observationId = buildObservationId();
-  const observationRef = doc(db, 'identifierObservations', observationId);
-
   if (!userContext.uid) {
     return {
       success: false,
@@ -242,6 +238,10 @@ export async function createUserIdentifierObservation(
       isNewIdentifier: false,
     };
   }
+
+  const identifierRef = doc(db, 'identifiers', identifierInput.identifierKey);
+  const observationId = buildObservationId();
+  const observationRef = doc(db, 'identifierObservations', observationId);
 
   try {
     const isNewIdentifier = await runTransaction(db, async (transaction) => {
