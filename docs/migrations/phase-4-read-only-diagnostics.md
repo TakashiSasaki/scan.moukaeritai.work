@@ -32,8 +32,9 @@ The diagnostic module (`src/lib/observationDiagnostics.ts`) implements the follo
 
 ## Known limitations
 
-- **Bounded scans**: To avoid excessive read costs and performance impacts, the diagnostics scan is heavily bounded (e.g., max 50 records per collection). It represents only a sampled subset of the entire database.
-- **Firestore rules**: Depending on current Firestore security rules, some referenced documents might be legitimately unreadable if they belong to another user, which the diagnostics will handle gracefully without throwing uncaught errors.
+- **Bounded/Sampled scans**: To avoid excessive read costs and performance impacts, the diagnostics scan is heavily bounded (e.g., max 50 records per collection).
+- **Owner-scoped / Current-user scoped**: The current UI runs diagnostics for the current authenticated user / owner scope. It is not a full global database audit. Full global/admin diagnostics, if needed, are a later design item.
+- **Missing vs. Inaccessible**: Depending on current Firestore security rules, some referenced documents might be unreadable. Diagnostics distinguish these and report them as inaccessible/unknown warnings rather than definite missing references.
 - **No repair**: No issues surfaced by this tool will be repaired automatically. Full backfill and dry-run fixes remain as goals for Phase 5.
 
 ## How to use

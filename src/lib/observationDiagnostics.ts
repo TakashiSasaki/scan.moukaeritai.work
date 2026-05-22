@@ -87,13 +87,23 @@ export async function runObservationDiagnostics(
     }
   };
 
+  type SafeGetDocResult<T> =
+    | { status: 'exists'; data: T; id: string }
+    | { status: 'missing' }
+    | { status: 'inaccessible'; code?: string; message?: string };
+
   // Safe get helper for optional relationships
-  const safeGetDoc = async (docRef: any) => {
+  const safeGetDoc = async <T>(docRef: any): Promise<SafeGetDocResult<T>> => {
     try {
-      return await getDoc(docRef);
-    } catch (e) {
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        return { status: 'exists', data: snap.data() as T, id: snap.id };
+      } else {
+        return { status: 'missing' };
+      }
+    } catch (e: any) {
       // Permission denied or other error
-      return null;
+      return { status: 'inaccessible', code: e?.code, message: e?.message };
     }
   };
 
@@ -113,9 +123,11 @@ export async function runObservationDiagnostics(
 
       // Check A: Observation -> identifier reference
       if (obs.identifierKey) {
-        const idSnap = await safeGetDoc(doc(db, 'identifiers', obs.identifierKey));
-        if (!idSnap || !idSnap.exists()) {
+        const idResult = await safeGetDoc<IdentifierRecord>(doc(db, 'identifiers', obs.identifierKey));
+        if (idResult.status === 'missing') {
           reportIssue('observation-missing-identifier', 'Observation references missing identifier', 'error', { observationId: obs.observationId, identifierKey: obs.identifierKey });
+        } else if (idResult.status === 'inaccessible') {
+          reportIssue('observation-identifier-inaccessible', 'Observation references an identifier that could not be read; this may be due to Firestore rules.', 'warning', { observationId: obs.observationId, identifierKey: obs.identifierKey, code: idResult.code, message: idResult.message });
         }
       } else {
         reportIssue('observation-missing-identifier-key', 'Observation lacks identifierKey', 'error', { observationId: obs.observationId });
@@ -123,9 +135,11 @@ export async function runObservationDiagnostics(
 
       // Check C: Observation object reference
       if (obs.objectId) {
-        const objSnap = await safeGetDoc(doc(db, 'objects', obs.objectId));
-        if (!objSnap || !objSnap.exists()) {
+        const objResult = await safeGetDoc<ObjectRecord>(doc(db, 'objects', obs.objectId));
+        if (objResult.status === 'missing') {
           reportIssue('observation-missing-object', 'Observation references missing object', 'error', { observationId: obs.observationId, objectId: obs.objectId });
+        } else if (objResult.status === 'inaccessible') {
+          reportIssue('observation-object-inaccessible', 'Observation references an object that could not be read; this may be due to Firestore rules.', 'warning', { observationId: obs.observationId, objectId: obs.objectId, code: objResult.code, message: objResult.message });
         }
       }
 
@@ -156,15 +170,19 @@ export async function runObservationDiagnostics(
 
       // Check E: Identifier observation summary references
       if (iden.lastObservationId) {
-        const obsSnap = await safeGetDoc(doc(db, 'identifierObservations', iden.lastObservationId));
-        if (!obsSnap || !obsSnap.exists()) {
+        const obsResult = await safeGetDoc<IdentifierObservationRecord>(doc(db, 'identifierObservations', iden.lastObservationId));
+        if (obsResult.status === 'missing') {
           reportIssue('identifier-missing-last-observation', 'Identifier references missing lastObservationId', 'warning', { identifierKey: iden.identifierKey, lastObservationId: iden.lastObservationId });
+        } else if (obsResult.status === 'inaccessible') {
+          reportIssue('identifier-last-observation-inaccessible', 'Identifier references a lastObservationId that could not be read; this may be due to Firestore rules.', 'warning', { identifierKey: iden.identifierKey, lastObservationId: iden.lastObservationId, code: obsResult.code, message: obsResult.message });
         }
       }
       if (iden.firstObservationId) {
-        const obsSnap = await safeGetDoc(doc(db, 'identifierObservations', iden.firstObservationId));
-        if (!obsSnap || !obsSnap.exists()) {
+        const obsResult = await safeGetDoc<IdentifierObservationRecord>(doc(db, 'identifierObservations', iden.firstObservationId));
+        if (obsResult.status === 'missing') {
           reportIssue('identifier-missing-first-observation', 'Identifier references missing firstObservationId', 'warning', { identifierKey: iden.identifierKey, firstObservationId: iden.firstObservationId });
+        } else if (obsResult.status === 'inaccessible') {
+          reportIssue('identifier-first-observation-inaccessible', 'Identifier references a firstObservationId that could not be read; this may be due to Firestore rules.', 'warning', { identifierKey: iden.identifierKey, firstObservationId: iden.firstObservationId, code: obsResult.code, message: obsResult.message });
         }
       }
 
@@ -203,14 +221,18 @@ export async function runObservationDiagnostics(
 
       if (binding.status === 'active') {
         // Check H: Binding -> identifier/object consistency
-        const idSnap = await safeGetDoc(doc(db, 'identifiers', binding.identifierKey));
-        if (!idSnap || !idSnap.exists()) {
+        const idResult = await safeGetDoc<IdentifierRecord>(doc(db, 'identifiers', binding.identifierKey));
+        if (idResult.status === 'missing') {
           reportIssue('binding-missing-identifier', 'Binding references missing identifier', 'error', { bindingId: binding.bindingId, identifierKey: binding.identifierKey });
+        } else if (idResult.status === 'inaccessible') {
+          reportIssue('binding-identifier-inaccessible', 'Binding references an identifier that could not be read; this may be due to Firestore rules.', 'warning', { bindingId: binding.bindingId, identifierKey: binding.identifierKey, code: idResult.code, message: idResult.message });
         }
 
-        const objSnap = await safeGetDoc(doc(db, 'objects', binding.objectId));
-        if (!objSnap || !objSnap.exists()) {
+        const objResult = await safeGetDoc<ObjectRecord>(doc(db, 'objects', binding.objectId));
+        if (objResult.status === 'missing') {
           reportIssue('binding-missing-object', 'Binding references missing object', 'error', { bindingId: binding.bindingId, objectId: binding.objectId });
+        } else if (objResult.status === 'inaccessible') {
+          reportIssue('binding-object-inaccessible', 'Binding references an object that could not be read; this may be due to Firestore rules.', 'warning', { bindingId: binding.bindingId, objectId: binding.objectId, code: objResult.code, message: objResult.message });
         }
       }
     }

@@ -98,7 +98,7 @@ Phase 3D: Observation-only flow verification and cleanup (Completed)
 - Document manual verification checklist.
 
 Phase 4: Read-only diagnostics (Current)
-- Add diagnostics for observation migration readiness.
+- Add read-only, bounded, owner-scoped/current-user diagnostics for observation migration readiness.
 - Do not repair or mutate data yet.
 - See [Phase 4: Read-only Diagnostics](phase-4-read-only-diagnostics.md).
 

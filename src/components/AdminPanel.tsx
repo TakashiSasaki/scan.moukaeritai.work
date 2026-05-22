@@ -224,7 +224,11 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
                 </button>
               </div>
               <p className="text-sm text-[var(--on-surface-variant)] mb-6">
-                Read-only diagnostics to verify Phase 4 observation model data consistency.
+                Read-only, bounded diagnostics for the current authenticated user’s owner-scoped records. This is not a full global database audit. Some referenced documents may be reported as inaccessible rather than missing if Firestore rules prevent reads.
+                <br />
+                <span className="block mt-2 text-[13px] text-[var(--on-surface-variant)]">
+                  「現在のログインユーザーに紐づく範囲を対象とした、読み取り専用・件数制限付きの診断です。データベース全体の完全監査ではありません。Firestore ルールにより参照先を読めない場合は、欠落ではなくアクセス不能として報告されることがあります。」
+                </span>
                 <br />
                 <span className="font-bold text-amber-600">Note:</span> This is a bounded/sampled scan (initially fetching max 50 top-level records per collection by default). Additional reads are performed for referenced documents, which will increase total read quota usage.
               </p>
