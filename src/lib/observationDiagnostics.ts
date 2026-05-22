@@ -189,7 +189,7 @@ export async function runObservationDiagnostics(
       }
     }
   } catch (err: any) {
-    reportIssue('diagnostics-read-error', `Failed reading identifiers: ${err.message}`, 'error', {});
+    reportIssue('diagnostics-read-identifiers-error', `Failed reading identifiers: ${err.message}`, 'error', {});
   }
 
   // --- 3. Check Bindings ---
@@ -215,7 +215,7 @@ export async function runObservationDiagnostics(
       }
     }
   } catch (err: any) {
-    reportIssue('diagnostics-read-error', `Failed reading bindings: ${err.message}`, 'error', {});
+    reportIssue('diagnostics-read-bindings-error', `Failed reading bindings: ${err.message}`, 'error', {});
   }
 
   // --- 4. Check Objects ---
@@ -270,7 +270,7 @@ export async function runObservationDiagnostics(
       }
     }
   } catch (err: any) {
-    reportIssue('diagnostics-read-error', `Failed reading objects: ${err.message}`, 'error', {});
+    reportIssue('diagnostics-read-objects-error', `Failed reading objects: ${err.message}`, 'error', {});
   }
 
   return {
