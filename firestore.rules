@@ -95,7 +95,7 @@ service cloud.firestore {
         && (!('lastObservedAt' in incoming()) || incoming().lastObservedAt is timestamp)
         && (!('lastObservedBy' in incoming()) || incoming().lastObservedBy is string)
         && (!('lastObservationId' in incoming()) || incoming().lastObservationId is string)
-        && (!('lastObservedSource' in incoming()) || incoming().lastObservedSource is string)
+        && (!('lastObservedSource' in incoming()) || incoming().lastObservedSource in ['nfc', 'qr', 'manual', 'barcode', 'ble', 'camera', 'gateway', 'import'])
         && (!('discoveryState' in incoming()) || incoming().discoveryState in ['observed', 'registered', 'detached', 'unknown'])
         && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
         && incoming().status in ['active', 'unassigned', 'retired', 'lost', 'replaced']
@@ -120,7 +120,7 @@ service cloud.firestore {
         && (!('lastObservedAt' in incoming()) || incoming().lastObservedAt is timestamp)
         && (!('lastObservedBy' in incoming()) || incoming().lastObservedBy is string)
         && (!('lastObservationId' in incoming()) || incoming().lastObservationId is string)
-        && (!('lastObservedSource' in incoming()) || incoming().lastObservedSource is string)
+        && (!('lastObservedSource' in incoming()) || incoming().lastObservedSource in ['nfc', 'qr', 'manual', 'barcode', 'ble', 'camera', 'gateway', 'import'])
         && (!('discoveryState' in incoming()) || incoming().discoveryState in ['observed', 'registered', 'detached', 'unknown'])
         && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
         && incoming().status in ['active', 'unassigned', 'retired', 'lost', 'replaced']
