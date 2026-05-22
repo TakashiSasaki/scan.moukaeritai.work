@@ -3,8 +3,8 @@
 ## Status
 
 State:
-- Current phase: Phase 3A — Observation write foundation. (Phases 0, 1, and 2 are completed)
-- Version line: Phase 3A is on the `1.3.x` line.
+- Current phase: Phase 3B — Unknown identifier flow integration. (Phases 0, 1, 2, and 3A are completed)
+- Version line: Phase 3B is on the `1.3.x` line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
 - The legacy `items` -> normalized model migration is completed.
@@ -18,7 +18,7 @@ This migration is intended to add observation-aware behavior without destructive
 The future core addition is expected to be:
 - `identifierObservations`
 
-Phase 3A adds the runtime helper foundation for `identifierObservations` writes, but does not yet integrate it with the scanner UI. Phase 3B will implement the full runtime scan/observation UI flow.
+Phase 3A added the runtime helper foundation for `identifierObservations` writes. Phase 3B integrates the observation write helper into the unknown identifier flow. Phase 3B still does not implement anonymous sign-in, device ingestion, imported observations, backfill, or provisional objects.
 
 ## Baseline normalized model
 
@@ -75,13 +75,14 @@ Phase 2: Additive schema/types/rules (Completed)
 - Keep old documents compatible.
 - **Note:** Phase 2 implements additive TypeScript types, blueprint schema, and conservative Firestore rules. Phase 2 still does not implement UI, runtime observation writes, anonymous sign-in, device ingestion, or backfill.
 
-Phase 3A: Observation write foundation (Current)
+Phase 3A: Observation write foundation (Completed)
 - Add helper foundation for user-created identifier observations.
 - Support unassigned observed identifiers without creating objects.
 - Keep client-created observations limited to user sighting/scan records.
 - Do not implement UI integration yet.
 
-Phase 3B: New scan flow writes observations
+Phase 3B: Unknown identifier flow integration (Current)
+- Integrate observation write helper into the unknown identifier flow.
 - Add observation-only recording for unknown NFC/QR/manual scans.
 - Allow object creation or attach as separate choices.
 - Do not require object creation to save an observation.

@@ -187,7 +187,7 @@ export default function Scanner({ onCancel }: ScannerProps) {
 
       // 4. Identifier is unassigned or not found
       toast.dismiss('resolveTag');
-      navigate('/unassigned', { state: identifierData });
+      navigate('/unassigned', { state: { ...identifierData, source: kind } });
 
     } catch (error) {
       console.error('Resolution error:', error);
