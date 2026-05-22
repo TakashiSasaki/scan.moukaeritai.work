@@ -3,8 +3,8 @@
 ## Status
 
 State:
-- Current phase: Phase 2 — Additive schema/types/rules. (Phase 0 and 1 are completed)
-- Version line: Phase 2 is on the `1.2.x` line.
+- Current phase: Phase 3A — Observation write foundation. (Phases 0, 1, and 2 are completed)
+- Version line: Phase 3A is on the `1.3.x` line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
 - The legacy `items` -> normalized model migration is completed.
@@ -18,7 +18,7 @@ This migration is intended to add observation-aware behavior without destructive
 The future core addition is expected to be:
 - `identifierObservations`
 
-Phase 2 adds schema/types/rules for `identifierObservations`, but still does not implement runtime observation writes. Phase 3 has not started yet. Phase 3 will implement runtime scan/observation flow later.
+Phase 3A adds the runtime helper foundation for `identifierObservations` writes, but does not yet integrate it with the scanner UI. Phase 3B will implement the full runtime scan/observation UI flow.
 
 ## Baseline normalized model
 
@@ -68,14 +68,20 @@ Phase 1: Observation model specification
 - No database writes.
 - **Note:** Pre-Phase-2 design decisions are recorded in `docs/migrations/phase-1-observation-model-spec.md`. Phase 2 should use those decisions as implementation constraints.
 
-Phase 2: Additive schema/types/rules (Current)
+Phase 2: Additive schema/types/rules (Completed)
 - Add TypeScript types.
 - Update `firebase-blueprint.json`.
 - Add Firestore rules for future observation records.
 - Keep old documents compatible.
 - **Note:** Phase 2 implements additive TypeScript types, blueprint schema, and conservative Firestore rules. Phase 2 still does not implement UI, runtime observation writes, anonymous sign-in, device ingestion, or backfill.
 
-Phase 3: New scan flow writes observations
+Phase 3A: Observation write foundation (Current)
+- Add helper foundation for user-created identifier observations.
+- Support unassigned observed identifiers without creating objects.
+- Keep client-created observations limited to user sighting/scan records.
+- Do not implement UI integration yet.
+
+Phase 3B: New scan flow writes observations
 - Add observation-only recording for unknown NFC/QR/manual scans.
 - Allow object creation or attach as separate choices.
 - Do not require object creation to save an observation.
