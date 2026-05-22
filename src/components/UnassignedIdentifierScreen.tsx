@@ -325,6 +325,7 @@ export default function UnassignedIdentifierScreen() {
                   type="text"
                   value={placeLabel}
                   onChange={(e) => setPlaceLabel(e.target.value)}
+                  maxLength={100}
                   placeholder="例: リビングの棚"
                   className="w-full bg-[var(--surface)] border border-[var(--outline)] text-[var(--on-surface)] rounded-xl p-3 focus:ring-2 focus:ring-[var(--primary)] outline-none"
                 />
@@ -335,6 +336,7 @@ export default function UnassignedIdentifierScreen() {
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
+                  maxLength={1000}
                   placeholder="何か気づいたことなど"
                   rows={3}
                   className="w-full bg-[var(--surface)] border border-[var(--outline)] text-[var(--on-surface)] rounded-xl p-3 focus:ring-2 focus:ring-[var(--primary)] outline-none resize-none"
