@@ -44,8 +44,13 @@ Constraints:
 
 - **`observationId: string`**
   - Required. Must equal document ID.
-  - Normal operation may use `uuidv4()`.
-  - Imported observations, if later enabled, should use deterministic IDs.
+  - Normal client-created observations should use UUIDv7.
+  - Imported/synthetic observations should use deterministic IDs for idempotency.
+  - Normal observations should not use Firestore auto IDs.
+  - Normal observations should not use UUIDv4 unless UUIDv7 is unavailable and explicitly justified later.
+  - Sorting and queries must use `observedAt` or `receivedAt`, not `observationId` ordering.
+  - UUIDv7 exposes approximate generation time; this is acceptable because observation records already carry timestamps, but observation IDs must not be treated as private secrets.
+  - If high-volume device ingestion becomes necessary, revisit Firestore write distribution and hotspot risk.
 
 - **`identifierKey: string`**
   - Required. Refers to `identifiers/{identifierKey}`.
