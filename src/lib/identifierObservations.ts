@@ -5,10 +5,13 @@ import {
   Timestamp,
   runTransaction,
   doc,
+  collection,
   Firestore,
 } from 'firebase/firestore';
 import type {
   IdentifierObservationRecord,
+  ObservationSource,
+  ObservationType,
   ObservationVisibility,
   ObservationLocation,
   IdentifierRecord,
@@ -144,16 +147,14 @@ export interface BuildObservedUnassignedIdentifierInput {
 export function buildObservedUnassignedIdentifierRecord(
   input: BuildObservedUnassignedIdentifierInput
 ): IdentifierRecordWrite {
-  return {
+  const record: IdentifierRecordWrite = {
     identifierKey: input.identifierKey,
     ownerId: input.ownerId,
     kind: input.kind,
     scheme: input.scheme,
     canonicalValue: input.canonicalValue,
-    rawValue: input.rawValue,
     status: 'unassigned',
     discoveryState: 'observed',
-    label: input.label,
     firstObservedAt: input.observedAt,
     firstObservedBy: input.ownerId,
     firstObservationId: input.observationId,
@@ -164,6 +165,15 @@ export function buildObservedUnassignedIdentifierRecord(
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
+
+  if (input.rawValue !== undefined) {
+    record.rawValue = input.rawValue;
+  }
+  if (input.label !== undefined) {
+    record.label = input.label;
+  }
+
+  return record;
 }
 
 export interface CreateUserObservationResult {
