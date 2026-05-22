@@ -5,13 +5,10 @@ import {
   Timestamp,
   runTransaction,
   doc,
-  collection,
   Firestore,
 } from 'firebase/firestore';
 import type {
   IdentifierObservationRecord,
-  ObservationSource,
-  ObservationType,
   ObservationVisibility,
   ObservationLocation,
   IdentifierRecord,

@@ -3,8 +3,8 @@
 ## Status
 
 State:
-- Current phase: Phase 3C — Observation-only flow hardening. (Phases 0, 1, 2, 3A, and 3B are completed)
-- Version line: Phase 3C is on the `1.3.x` line.
+- Current phase: Phase 3D — Observation-only flow verification and cleanup. (Phases 0, 1, 2, 3A, 3B, and 3C are completed)
+- Version line: Phase 3D is on the `1.3.x` line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
 - The legacy `items` -> normalized model migration is completed.
@@ -18,7 +18,7 @@ This migration is intended to add observation-aware behavior without destructive
 The future core addition is expected to be:
 - `identifierObservations`
 
-Phase 3A added the runtime helper foundation for `identifierObservations` writes. Phase 3B integrated the observation write helper into the unknown identifier flow. Phase 3C hardens route-state validation, source handling, typed errors, and observation-only UX. Phase 3C still does not implement anonymous sign-in, device ingestion, imported observations, backfill, provisional objects, or formal custody/loan workflows.
+Phase 3A added the runtime helper foundation for `identifierObservations` writes. Phase 3B integrated the observation write helper into the unknown identifier flow. Phase 3C hardened route-state validation, source handling, typed errors, and observation-only UX. Phase 3D verifies and cleans up the observation-only unknown identifier flow. See [Phase 3D Verification](phase-3d-observation-flow-verification.md). Phase 3D still does not implement anonymous sign-in, device ingestion, imported observations, diagnostics/backfill, provisional objects, or formal custody/loan workflows.
 
 ## Baseline normalized model
 
@@ -87,9 +87,14 @@ Phase 3B: Unknown identifier flow integration (Completed)
 - Allow object creation or attach as separate choices.
 - Do not require object creation to save an observation.
 
-Phase 3C: Observation-only flow hardening (Current)
+Phase 3C: Observation-only flow hardening (Completed)
 - Harden route-state validation, source handling, typed errors, and observation-only UX.
 - Note: Manual/barcode/camera source flows are currently routed to UnassignedIdentifierScreen with a default source of `manual` if not explicitly provided, and will be fully connected in later UI integration items.
+
+Phase 3D: Observation-only flow verification and cleanup (Current)
+- Verify the observation-only flow has no object/binding/event side effects.
+- Clean up related observation helpers.
+- Document manual verification checklist.
 
 Phase 4: Read-only diagnostics
 - Add diagnostics for observation migration readiness.
