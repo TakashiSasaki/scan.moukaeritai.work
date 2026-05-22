@@ -179,7 +179,18 @@ export async function runObservationBackfillDryRun(
               reason: skipReason
           });
       } else if (Object.keys(patch).length > 0) {
-          if (result.counts.candidateCounts.identifiers < limits.maxCandidates) {
+          if (result.counts.candidateCounts.identifiers >= limits.maxCandidates) {
+              result.skipped.push({
+                  targetCollection: 'identifiers',
+                  targetDocId: identifier.identifierKey,
+                  reason: 'candidate-limit-reached'
+              });
+              result.warnings.push({
+                  type: 'candidate-limit-reached',
+                  message: 'Maximum candidate limit reached for identifiers. Subsequent valid candidates were skipped.'
+              });
+              break; // Stop scanning further identifiers since limit is reached
+          } else {
               result.candidates.push({
                   targetCollection: 'identifiers',
                   targetDocId: identifier.identifierKey,
@@ -194,8 +205,8 @@ export async function runObservationBackfillDryRun(
                   },
                   confidence: 'high'
               });
+              result.counts.candidateCounts.identifiers++;
           }
-          result.counts.candidateCounts.identifiers++;
       }
     }
 
@@ -300,7 +311,18 @@ export async function runObservationBackfillDryRun(
               reason: skipReason
           });
       } else if (Object.keys(patch).length > 0) {
-          if (result.counts.candidateCounts.objects < limits.maxCandidates) {
+          if (result.counts.candidateCounts.objects >= limits.maxCandidates) {
+              result.skipped.push({
+                  targetCollection: 'objects',
+                  targetDocId: obj.objectId,
+                  reason: 'candidate-limit-reached'
+              });
+              result.warnings.push({
+                  type: 'candidate-limit-reached',
+                  message: 'Maximum candidate limit reached for objects. Subsequent valid candidates were skipped.'
+              });
+              break; // Stop scanning further objects since limit is reached
+          } else {
               result.candidates.push({
                   targetCollection: 'objects',
                   targetDocId: obj.objectId,
@@ -315,8 +337,8 @@ export async function runObservationBackfillDryRun(
                   },
                   confidence: 'high'
               });
+              result.counts.candidateCounts.objects++;
           }
-          result.counts.candidateCounts.objects++;
       }
 
     }
