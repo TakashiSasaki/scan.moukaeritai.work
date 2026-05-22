@@ -3,6 +3,7 @@ import {
   getDocs,
   query,
   limit,
+  where,
   doc,
   getDoc,
   Firestore,
@@ -98,7 +99,7 @@ export async function runObservationDiagnostics(
 
   // --- 1. Check Observations ---
   try {
-    const obsQ = query(collection(db, 'identifierObservations'), limit(mergedLimits.maxObservations));
+    const obsQ = query(collection(db, 'identifierObservations'), where('observerUid', '==', ownerId), limit(mergedLimits.maxObservations));
     const obsSnap = await getDocs(obsQ);
     counts.observationsChecked = obsSnap.docs.length;
 
@@ -146,7 +147,7 @@ export async function runObservationDiagnostics(
 
   // --- 2. Check Identifiers ---
   try {
-    const idQ = query(collection(db, 'identifiers'), limit(mergedLimits.maxIdentifiers));
+    const idQ = query(collection(db, 'identifiers'), where('ownerId', '==', ownerId), limit(mergedLimits.maxIdentifiers));
     const idSnap = await getDocs(idQ);
     counts.identifiersChecked = idSnap.docs.length;
 
@@ -193,7 +194,7 @@ export async function runObservationDiagnostics(
 
   // --- 3. Check Bindings ---
   try {
-    const bindQ = query(collection(db, 'objectIdentifierBindings'), limit(mergedLimits.maxBindings));
+    const bindQ = query(collection(db, 'objectIdentifierBindings'), where('ownerId', '==', ownerId), limit(mergedLimits.maxBindings));
     const bindSnap = await getDocs(bindQ);
     counts.bindingsChecked = bindSnap.docs.length;
 
@@ -219,7 +220,7 @@ export async function runObservationDiagnostics(
 
   // --- 4. Check Objects ---
   try {
-    const objQ = query(collection(db, 'objects'), limit(mergedLimits.maxObjects));
+    const objQ = query(collection(db, 'objects'), where('ownerId', '==', ownerId), limit(mergedLimits.maxObjects));
     const objSnap = await getDocs(objQ);
     counts.objectsChecked = objSnap.docs.length;
 
