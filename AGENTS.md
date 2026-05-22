@@ -279,6 +279,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
   - Agents must read that document before modifying migration-related code.
   - Agents must not implement later-phase work unless explicitly instructed.
+  - Pre-Phase-2 decisions are recorded in `docs/migrations/phase-1-observation-model-spec.md` and must be followed before implementing Phase 2.
 
 - **Source of Truth**:
   - `firebase-blueprint.json` defines the new schema boundaries.

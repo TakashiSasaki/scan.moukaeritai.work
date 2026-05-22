@@ -66,6 +66,7 @@ Phase 1: Observation model specification
 - Specify optional fields for `objects` and `identifiers`.
 - Decide exact field names and semantics.
 - No database writes.
+- **Note:** Pre-Phase-2 design decisions are recorded in `docs/migrations/phase-1-observation-model-spec.md`. Phase 2 should use those decisions as implementation constraints.
 
 Phase 2: Additive schema/types/rules
 - Add TypeScript types.
