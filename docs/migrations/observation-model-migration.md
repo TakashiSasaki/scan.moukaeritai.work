@@ -18,7 +18,7 @@ This migration is intended to add observation-aware behavior without destructive
 The future core addition is expected to be:
 - `identifierObservations`
 
-Phase 1 does not add it yet.
+Phase 2 adds schema/types/rules for `identifierObservations`, but still does not implement runtime observation writes. Phase 3 has not started yet. Phase 3 will implement runtime scan/observation flow later.
 
 ## Baseline normalized model
 

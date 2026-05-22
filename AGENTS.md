@@ -279,6 +279,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
   - Agents must read that document before modifying migration-related code.
   - Agents must follow `docs/migrations/phase-1-observation-model-spec.md` for implementation constraints.
+  - Before Phase 3, client-created observation rules must remain limited to ordinary user sighting/scan records; imported/device observations are reserved for later backend flows.
   - Agents must not implement Phase 3+ work unless explicitly instructed.
 
 - **Source of Truth**:
