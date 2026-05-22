@@ -22,6 +22,8 @@ export interface DryRunLimits {
   maxObservations: number;
   maxCandidates: number;
   maxSamplesPerCategory: number;
+  maxBindingsPerObject: number;
+  maxIdentifiersPerObject: number;
 }
 
 export interface DryRunOptions extends Partial<DryRunLimits> {
@@ -70,6 +72,8 @@ const DEFAULT_LIMITS: DryRunLimits = {
   maxObservations: 100,
   maxCandidates: 50,
   maxSamplesPerCategory: 5,
+  maxBindingsPerObject: 50,
+  maxIdentifiersPerObject: 50,
 };
 
 export async function runObservationBackfillDryRun(
@@ -230,7 +234,8 @@ export async function runObservationBackfillDryRun(
           collection(db, 'objectIdentifierBindings'),
           where('ownerId', '==', ownerId),
           where('objectId', '==', obj.objectId),
-          where('status', '==', 'active')
+          where('status', '==', 'active'),
+          limit(limits.maxBindingsPerObject)
       );
       const bindingsSnap = await getDocs(bindingsQuery);
 
@@ -241,7 +246,14 @@ export async function runObservationBackfillDryRun(
           let allObservations: IdentifierObservationRecord[] = [];
 
           // Compute summary staleness
-          const activeIdentifiers = await loadObjectIdentifiersForSummary(db, ownerId, obj.objectId);
+          let activeIdentifiers = await loadObjectIdentifiersForSummary(db, ownerId, obj.objectId);
+          if (activeIdentifiers.length > limits.maxIdentifiersPerObject) {
+            result.warnings.push({
+              type: 'dry-run-limit-hit',
+              message: `Object ${obj.objectId} exceeded maxIdentifiersPerObject limit (${limits.maxIdentifiersPerObject}). Computed summary may be inaccurate.`,
+            });
+            activeIdentifiers = activeIdentifiers.slice(0, limits.maxIdentifiersPerObject);
+          }
           const computedSummary = computeIdentifierSummary(activeIdentifiers);
 
           if (JSON.stringify(obj.identifierSummary) !== JSON.stringify(computedSummary)) {
