@@ -25,7 +25,6 @@ import Overview from './components/Overview';
 import AdminPanel from './components/AdminPanel';
 import { Navigate } from 'react-router-dom';
 import SitemapPage from './components/SitemapPage';
-import MigrationScreen from './components/MigrationScreen';
 import UserSettingsPanel from './components/UserSettingsPanel';
 import TestScreen from './components/TestScreen';
 import DemoScreen from './components/DemoScreen';
@@ -259,15 +258,6 @@ function AppContent() {
                         >
                            <ShieldAlert size={16} className="text-amber-500" /> Admin Panel
                         </button>
-                        <button
-                        onClick={() => {
-                          setShowProfile(false);
-                          navigate('/admin/migration');
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors mb-1"
-                     >
-                        <Database size={16} /> Data Migration
-                     </button>
                      <button
                           onClick={() => {
                              setShowProfile(false);
@@ -353,7 +343,22 @@ function AppContent() {
           <main className="flex-1 max-w-4xl mx-auto w-full">
             {isAdmin ? (
                <motion.div key="admin-migration" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                 <MigrationScreen onClose={() => navigate('/')} />
+                 <div className="p-8">
+                   <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-8 text-center max-w-md mx-auto mt-12">
+                     <Database className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+                     <h2 className="text-xl font-bold text-[var(--on-surface)] mb-2">Migration Tool Retired</h2>
+                     <p className="text-[var(--on-surface-variant)] mb-6">
+                       The legacy items-to-objects migration tool has been retired and is no longer available.
+                       The repository is currently entering a new non-destructive observation-model migration phase.
+                     </p>
+                     <button
+                       onClick={() => navigate('/')}
+                       className="px-6 py-2 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors"
+                     >
+                       Return to Home
+                     </button>
+                   </div>
+                 </div>
                </motion.div>
             ) : (
                <div className="p-12 mt-4 text-center bg-[var(--surface)] border border-red-500/20 rounded-2xl mx-4">

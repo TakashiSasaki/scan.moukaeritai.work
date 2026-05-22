@@ -260,6 +260,11 @@ export const getClientIp = onCall(async (request: any) => {
 
 /**
  * Callable function to migrate legacy `items` to the new normalized `objects` model.
+ *
+ * LEGACY/ARCHIVE NOTICE:
+ * This function belongs to the completed legacy `items` -> normalized model migration.
+ * It must not be reused or extended for the observation-model migration.
+ * Future observation migration work must use a separate function.
  */
 export const migrateInventoryModel = onCall(async (request: any) => {
   if (!request.auth) {

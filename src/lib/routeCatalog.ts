@@ -94,13 +94,6 @@ export const routeGroups: RouteGroup[] = [
         purpose: 'human-readable route map'
       },
       {
-        path: '/admin/migration',
-        component: 'MigrationScreen',
-        access: 'admin only',
-        navigation: 'profile menu',
-        purpose: 'admin database migration tool'
-      },
-      {
         path: '/settings',
         component: 'UserSettingsPanel',
         access: 'signed-in user',

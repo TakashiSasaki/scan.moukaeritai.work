@@ -184,7 +184,7 @@ To maintain clarity for administrators and developers, the application includes 
   - `/object/:id`: View/edit object.
   - `/item/:id`: Legacy redirect to `/object/:id`.
   - `/unassigned`: Handle scanned tags not yet bound.
-  - `/admin/migration`: Database migration tool.
+  - `/admin/migration`: Retired legacy database migration tool (displays deprecation warning).
   - `/admin/sitemap`: The human-readable route map itself.
 - Keep the route map strictly synchronized with `App.tsx`.
 - The `/admin/sitemap` route is admin-only and should never appear in the bottom navigation.
@@ -262,14 +262,24 @@ The application has transitioned from a simple `items` collection to a normalize
   - Binding existence must be checked via owner-scoped queries (e.g. `findCanonicalBindingsForOwner` and `findActiveBindingsForOwner`) rather than direct document fetching to bypass Firestore rules limitations.
   - Detaching an identifier sets its status to `unassigned`, updates matching active bindings to `detached`, updates `objects.identifierSummary`, and writes the `identifier_detached` event in a single Firestore `writeBatch` for atomicity.
   - Direct NFC attachment is scanner-driven, handled outside of `CaptureForm`. Users should be directed to the scanner flow for NFC identifiers.
-- **Migration**:
-  - A dedicated admin-only Cloud Function (`migrateInventoryModel`) safely translates legacy `items` into the normalized collections: `objects`, `identifiers`, `objectIdentifierBindings`, `objectImages`, and `objectEvents`.
+- **Legacy Migration**:
+  - A dedicated admin-only Cloud Function (`migrateInventoryModel`) safely translates legacy `items` into the normalized collections: `objects`, `identifiers`, `objectIdentifierBindings`, `objectImages`, and `objectEvents`. **Note: This function is now retired and must not be extended.**
   - Missing `currentLocation` is represented by field absence, not by `null`.
-  - The UI provides a `/admin/migration` page to run a Dry Run and an Execute phase.
+  - The UI formerly provided a `/admin/migration` page to run a Dry Run and an Execute phase. **Note: This UI is retired in Phase 0 and now displays a deprecation message.**
   - **Non-destructive**: Migration does not delete legacy items or Storage files. Legacy `items` are kept intact. If the app tries to load a legacy item that isn't migrated, the user is warned to run the migration first.
   - **Idempotency**: Migration should be idempotent per target record, allowing safe re-runs.
   - Dry-run stats include object update backfills (`objectsUpdated`) when an existing object is patched with missing `primaryImageId`/`primaryImageUrl`.
   - **ID Conversion**: Legacy item IDs are normalized to uppercase object IDs. Legacy source IDs are retained in `objects.legacy.legacyItemId`.
+- **Observation Model Migration**:
+  - The repository is currently in a staged migration project from the completed `tag-1.0.0` normalized inventory source baseline to an observation-aware model.
+  - `tag-1.0.0` is the immutable migration source baseline.
+  - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
+  - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
+  - Current phase is Phase 0.
+  - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
+  - Agents must read that document before modifying migration-related code.
+  - Agents must not implement later-phase work unless explicitly instructed.
+
 - **Source of Truth**:
   - `firebase-blueprint.json` defines the new schema boundaries.
   - Always prefer resolving an identifier via the `identifiers` collection rather than blindly treating a scanned payload as an `objectId`.
