@@ -3,8 +3,8 @@
 ## Status
 
 State:
-- Current phase: Phase 7A — Backend imported observation revalidation dry-run.
-- Version line: Phase 7A proceeds on the `1.7.x` version line.
+- Current phase: Phase 7B — Limited imported observation execute without UI.
+- Version line: Phase 7B proceeds on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
 - The legacy `items` -> normalized model migration is completed.
@@ -124,19 +124,21 @@ Phase 6B: Imported observation execute design and safety plan (Completed)
 - Does not create imported observations or provide an executable path.
 - See [Phase 6B: Imported Observation Execute Plan](phase-6b-imported-observation-execute-plan.md).
 
-Phase 7A: Backend imported observation revalidation dry-run (Current)
+Phase 7A: Backend imported observation revalidation dry-run (Completed)
 - Backend dry-run only.
 - Does not create imported observations.
 - See [Phase 7A: Backend Imported Observation Revalidation Dry Run](phase-7a-backend-imported-observation-revalidation-dry-run.md).
 
-Phase 7B: Limited execute (Future)
-- May later implement limited execute if explicitly approved.
+Phase 7B: Limited imported observation execute without UI (Current)
+- Allows limited backend/Admin SDK writes for imported observations.
+- No AdminPanel execute UI.
+- Requires server-side revalidation of candidates.
+- Uses small batch limits (max 5).
+- Does not update identifiers/objects/bindings/events.
+- See [Phase 7B: Limited Imported Observation Execute](phase-7b-limited-imported-observation-execute.md).
 
-Phase 7: Limited execute and verification
-- Handle limited execute of backfill or imported observations if explicitly approved based on the Phase 6B design.
-- Utilize the backend/Admin SDK path for future imported observations.
-- Require server-side revalidation of candidates.
-- Start with small batches.
+Phase 7C: Limited execute and verification (Future)
+- Handle limited execute of backfill if explicitly approved based on the Phase 6B design.
 - Execute backfill in limited batches.
 - Re-run diagnostics.
 - Verify no existing invariants are broken.

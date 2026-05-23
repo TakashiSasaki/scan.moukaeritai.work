@@ -1,7 +1,8 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
-import { uuidV5FromCanonicalPayload, APPLICATION_UUID_V5_NAMESPACE } from "./deterministicUuid";
+import { uuidV5FromCanonicalPayload, APPLICATION_UUID_V5_NAMESPACE, canonicalizeJson } from "./deterministicUuid";
+import * as crypto from "crypto";
 
 const appletConfig = {
   firestoreDatabaseId: "photo-moukaeritai-work"
@@ -19,11 +20,11 @@ export const scanExecuteImportedObservationBatch = onCall(async (request: any) =
   }
 
   const data = request.data || {};
-  const { mode, ownerId, identifierKeys } = data;
+  const { mode, ownerId, identifierKeys, confirmationText } = data;
   const rawMaxBatchSize = data.maxBatchSize;
 
-  if (mode !== "dryRun") {
-    throw new HttpsError("invalid-argument", "Only dryRun mode is supported.");
+  if (mode !== "dryRun" && mode !== "execute") {
+    throw new HttpsError("invalid-argument", "mode must be either 'dryRun' or 'execute'.");
   }
 
   if (!ownerId || typeof ownerId !== "string") {
@@ -40,23 +41,33 @@ export const scanExecuteImportedObservationBatch = onCall(async (request: any) =
     }
   }
 
-  let maxBatchSize = 20;
-  if (rawMaxBatchSize !== undefined) {
-    if (typeof rawMaxBatchSize !== "number" || !Number.isInteger(rawMaxBatchSize) || rawMaxBatchSize < 1) {
-      throw new HttpsError("invalid-argument", "maxBatchSize must be a positive integer.");
-    }
-    maxBatchSize = rawMaxBatchSize;
-  }
-
   const uniqueIdentifierKeys = Array.from(new Set(identifierKeys));
-  const effectiveMaxBatchSize = Math.min(maxBatchSize, 20);
 
-  if (uniqueIdentifierKeys.length > effectiveMaxBatchSize) {
-    throw new HttpsError("invalid-argument", `Batch size exceeds the maximum limit of ${effectiveMaxBatchSize}.`);
+  let effectiveMaxBatchSize = 20;
+  if (mode === "execute") {
+    effectiveMaxBatchSize = 5;
+    if (confirmationText !== "CREATE_IMPORTED_OBSERVATIONS") {
+      throw new HttpsError("invalid-argument", "Execute mode requires explicit confirmationText: 'CREATE_IMPORTED_OBSERVATIONS'.");
+    }
+    if (uniqueIdentifierKeys.length > effectiveMaxBatchSize) {
+      throw new HttpsError("invalid-argument", `Execute mode hard limit is ${effectiveMaxBatchSize}.`);
+    }
+  } else {
+    let maxBatchSize = 20;
+    if (rawMaxBatchSize !== undefined) {
+      if (typeof rawMaxBatchSize !== "number" || !Number.isInteger(rawMaxBatchSize) || rawMaxBatchSize < 1) {
+        throw new HttpsError("invalid-argument", "maxBatchSize must be a positive integer.");
+      }
+      maxBatchSize = rawMaxBatchSize;
+    }
+    effectiveMaxBatchSize = Math.min(maxBatchSize, 20);
+    if (uniqueIdentifierKeys.length > effectiveMaxBatchSize) {
+      throw new HttpsError("invalid-argument", `Batch size exceeds the maximum limit of ${effectiveMaxBatchSize}.`);
+    }
   }
 
   const result = {
-    mode: "dryRun",
+    mode: mode,
     checkedAt: new Date().toISOString(),
     executedBy: request.auth.uid,
     ownerId,
@@ -251,15 +262,83 @@ export const scanExecuteImportedObservationBatch = onCall(async (request: any) =
         proposedObservation.objectId = identifierData.objectId;
       }
 
-      result.candidates.push({
-        identifierKey,
-        observationId,
-        deterministicPayload,
-        proposedObservation,
-        confidence: "high",
-        reason: "Missing imported baseline observation"
-      });
-      result.counts.candidates++;
+      if (mode === "dryRun") {
+        result.candidates.push({
+          identifierKey,
+          observationId,
+          deterministicPayload,
+          proposedObservation,
+          confidence: "high",
+          reason: "Missing imported baseline observation"
+        });
+        result.counts.candidates++;
+      } else {
+        // Execute mode
+        try {
+          const canonicalString = canonicalizeJson(deterministicPayload);
+          const deterministicIdPayloadHash = crypto.createHash("sha256").update(canonicalString).digest("hex");
+
+          const metadataForExecute: any = {
+            migration: {
+              name: "observation-model-migration",
+              phase: "phase-7b",
+              version: "v1",
+              baseline: "tag-1.0.0",
+              importedFrom: "identifiers",
+              sourceIdentifierKey: identifierKey,
+              timestampSource: "identifier.createdAt",
+              observedAtIsInferred: true,
+              deterministicIdNamespace: APPLICATION_UUID_V5_NAMESPACE,
+              deterministicIdPayloadSchemaVersion: 1,
+              deterministicIdPayloadHash: deterministicIdPayloadHash,
+              executedBy: request.auth.uid
+            }
+          };
+
+          if (identifierData.status === "active" && identifierData.objectId) {
+            metadataForExecute.migration.sourceObjectId = identifierData.objectId;
+          }
+
+          const actualObservation: any = {
+            observationId,
+            identifierKey,
+            ownerId,
+            observerKind: "system",
+            observedAt: new Date(createdAtMillis).toISOString(),
+            receivedAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            source: "import",
+            observationType: "imported",
+            visibility: "private",
+            schemaVersion: 1,
+            metadata: metadataForExecute
+          };
+
+          if (identifierData.status === "active" && identifierData.objectId) {
+            actualObservation.objectId = identifierData.objectId;
+          }
+
+          const docRef = db.collection("identifierObservations").doc(observationId);
+          await docRef.create(actualObservation);
+
+          // Use the `candidates` array in the return payload to maintain schema compatibility
+          // with dryRun mode, but effectively these are "created" items.
+          result.candidates.push({
+             identifierKey,
+             observationId,
+             status: "created"
+          });
+          result.counts.candidates++;
+        } catch (err: any) {
+           if (err.code === 6 || err.message?.includes("ALREADY_EXISTS")) {
+              result.counts.conflicts++;
+              result.skipped.push({ identifierKey, reason: "deterministic-observation-already-exists" });
+              result.counts.skipped++;
+           } else {
+              throw err;
+           }
+        }
+      }
 
     } catch (err: any) {
       result.errors.push({ identifierKey, code: err.code || "unknown", message: err.message });
