@@ -71,15 +71,21 @@ exports.scanExecuteImportedObservationBatch = (0, https_1.onCall)(async (request
         counts: {
             requested: uniqueIdentifierKeys.length,
             checked: 0,
-            candidates: 0,
             skipped: 0,
             conflicts: 0,
             errors: 0
         },
-        candidates: [],
         skipped: [],
         errors: []
     };
+    if (mode === "dryRun") {
+        result.counts.candidates = 0;
+        result.candidates = [];
+    }
+    else {
+        result.counts.created = 0;
+        result.created = [];
+    }
     for (const identifierKey of uniqueIdentifierKeys) {
         result.counts.checked++;
         try {
@@ -115,15 +121,13 @@ exports.scanExecuteImportedObservationBatch = (0, https_1.onCall)(async (request
                 result.counts.skipped++;
                 continue;
             }
-            let createdAtMillis;
-            if (identifierData.createdAt.toMillis) {
-                createdAtMillis = identifierData.createdAt.toMillis();
-            }
-            else {
-                result.skipped.push({ identifierKey, reason: "invalid-created-at" });
+            // Ensure we have a Firestore Timestamp-like object
+            if (!identifierData.createdAt || typeof identifierData.createdAt.toMillis !== "function") {
+                result.skipped.push({ identifierKey, reason: "missing-reliable-timestamp" });
                 result.counts.skipped++;
                 continue;
             }
+            const createdAtMillis = identifierData.createdAt.toMillis();
             const maxObservationsPerIdentifier = 20;
             const obsQueryNew = db.collection("identifierObservations")
                 .where("identifierKey", "==", identifierKey)
@@ -277,7 +281,7 @@ exports.scanExecuteImportedObservationBatch = (0, https_1.onCall)(async (request
                         identifierKey,
                         ownerId,
                         observerKind: "system",
-                        observedAt: new Date(createdAtMillis).toISOString(),
+                        observedAt: identifierData.createdAt,
                         receivedAt: admin.firestore.FieldValue.serverTimestamp(),
                         createdAt: admin.firestore.FieldValue.serverTimestamp(),
                         source: "import",
@@ -291,14 +295,12 @@ exports.scanExecuteImportedObservationBatch = (0, https_1.onCall)(async (request
                     }
                     const docRef = db.collection("identifierObservations").doc(observationId);
                     await docRef.create(actualObservation);
-                    // Use the `candidates` array in the return payload to maintain schema compatibility
-                    // with dryRun mode, but effectively these are "created" items.
-                    result.candidates.push({
+                    result.created.push({
                         identifierKey,
                         observationId,
                         status: "created"
                     });
-                    result.counts.candidates++;
+                    result.counts.created++;
                 }
                 catch (err) {
                     if (err.code === 6 || ((_a = err.message) === null || _a === void 0 ? void 0 : _a.includes("ALREADY_EXISTS"))) {
