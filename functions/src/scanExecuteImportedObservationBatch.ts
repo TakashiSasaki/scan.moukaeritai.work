@@ -18,7 +18,9 @@ export const scanExecuteImportedObservationBatch = onCall(async (request: any) =
     throw new HttpsError("permission-denied", "You do not have administrative privileges.");
   }
 
-  const { mode, ownerId, identifierKeys, maxBatchSize = 20 } = request.data;
+  const data = request.data || {};
+  const { mode, ownerId, identifierKeys } = data;
+  const rawMaxBatchSize = data.maxBatchSize;
 
   if (mode !== "dryRun") {
     throw new HttpsError("invalid-argument", "Only dryRun mode is supported.");
@@ -30,6 +32,20 @@ export const scanExecuteImportedObservationBatch = onCall(async (request: any) =
 
   if (!Array.isArray(identifierKeys) || identifierKeys.length === 0) {
     throw new HttpsError("invalid-argument", "identifierKeys must be a non-empty array of strings.");
+  }
+
+  for (const key of identifierKeys) {
+    if (!key || typeof key !== "string") {
+      throw new HttpsError("invalid-argument", "All elements in identifierKeys must be non-empty strings.");
+    }
+  }
+
+  let maxBatchSize = 20;
+  if (rawMaxBatchSize !== undefined) {
+    if (typeof rawMaxBatchSize !== "number" || !Number.isInteger(rawMaxBatchSize) || rawMaxBatchSize < 1) {
+      throw new HttpsError("invalid-argument", "maxBatchSize must be a positive integer.");
+    }
+    maxBatchSize = rawMaxBatchSize;
   }
 
   const uniqueIdentifierKeys = Array.from(new Set(identifierKeys));
@@ -110,12 +126,15 @@ export const scanExecuteImportedObservationBatch = onCall(async (request: any) =
         continue;
       }
 
+      const maxObservationsPerIdentifier = 20;
       const obsQueryNew = db.collection("identifierObservations")
         .where("identifierKey", "==", identifierKey)
-        .where("ownerId", "==", ownerId);
+        .where("ownerId", "==", ownerId)
+        .limit(maxObservationsPerIdentifier);
       const obsQueryLegacy = db.collection("identifierObservations")
         .where("identifierKey", "==", identifierKey)
-        .where("observerUid", "==", ownerId);
+        .where("observerUid", "==", ownerId)
+        .limit(maxObservationsPerIdentifier);
 
       let hasRealObservations = false;
       let existingObservations = new Map<string, any>();
@@ -123,8 +142,14 @@ export const scanExecuteImportedObservationBatch = onCall(async (request: any) =
       try {
         const [obsSnapNew, obsSnapLegacy] = await Promise.all([obsQueryNew.get(), obsQueryLegacy.get()]);
 
-        obsSnapNew.docs.forEach(d => existingObservations.set(d.id, d.data()));
-        obsSnapLegacy.docs.forEach(d => existingObservations.set(d.id, d.data()));
+        if (obsSnapNew.docs.length === maxObservationsPerIdentifier || obsSnapLegacy.docs.length === maxObservationsPerIdentifier) {
+           result.skipped.push({ identifierKey, reason: "observation-check-limit-hit" });
+           result.counts.skipped++;
+           continue;
+        }
+
+        obsSnapNew.docs.forEach((d: any) => existingObservations.set(d.id, d.data()));
+        obsSnapLegacy.docs.forEach((d: any) => existingObservations.set(d.id, d.data()));
 
         for (const obs of existingObservations.values()) {
           const isImported = obs.source === "import" || obs.observationType === "imported";
@@ -169,6 +194,21 @@ export const scanExecuteImportedObservationBatch = onCall(async (request: any) =
       if (existingObservations.has(observationId)) {
         result.counts.conflicts++;
         result.skipped.push({ identifierKey, reason: "deterministic-observation-already-exists" });
+        result.counts.skipped++;
+        continue;
+      }
+
+      try {
+        const detObsDoc = await db.collection("identifierObservations").doc(observationId).get();
+        if (detObsDoc.exists) {
+          result.counts.conflicts++;
+          result.skipped.push({ identifierKey, reason: "deterministic-observation-already-exists" });
+          result.counts.skipped++;
+          continue;
+        }
+      } catch (err: any) {
+        result.skipped.push({ identifierKey, reason: "deterministic-observation-check-failed", notes: err.message });
+        result.counts.skipped++;
         continue;
       }
 

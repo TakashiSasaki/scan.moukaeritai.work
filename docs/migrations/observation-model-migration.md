@@ -4,7 +4,7 @@
 
 State:
 - Current phase: Phase 7A — Backend imported observation revalidation dry-run.
-- Version line: Phase 6B remains on the `1.6.x` version line.
+- Version line: Phase 7A proceeds on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
 - The legacy `items` -> normalized model migration is completed.

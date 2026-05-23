@@ -48,6 +48,8 @@ For each identifier key provided, the server:
 - Checks identifier status (only `active` and `unassigned` are allowed).
 - Verifies required fields are present and valid.
 - Verifies the identifier still has no real observations. Real observations are deduced by checking existing `identifierObservations` using both new-style (`ownerId`) and legacy (`observerUid`) queries and ensuring they are not marked with source `import` or observationType `imported`.
+- The observation queries are bounded to 20 documents maximum.
+- A direct document conflict check is performed against `identifierObservations/{observationId}` before accepting a candidate.
 - Conservatively skips if conditions aren't met.
 
 ## Deterministic ID policy
