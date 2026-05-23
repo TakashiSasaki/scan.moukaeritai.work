@@ -275,16 +275,17 @@ The application has transitioned from a simple `items` collection to a normalize
   - `tag-1.0.0` is the immutable migration source baseline.
   - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
   - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
-  - Current phase is Phase 6A. (Proceeding on the `1.6.x` version line)
+  - Current phase is Phase 6B. (Proceeding on the `1.6.x` version line)
   - Phase 6A imported observation dry-run document is `docs/migrations/phase-6a-imported-observation-dry-run.md`.
+  - Phase 6B imported observation execute plan document is `docs/migrations/phase-6b-imported-observation-execute-plan.md`.
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
   - `docs/architecture/deterministic-uuid.md` is the authoritative deterministic UUID namespace document.
   - `src/lib/deterministicUuid.ts` may contain the constant but must point to the permanent document.
-  - Phase 6A must remain read-only.
-  - Phase 6A must not create imported/synthetic observations.
-  - Phase 6A must not add execute/apply/repair controls.
-  - Phase 6A must use deterministic UUIDv5 IDs from canonical JSON payloads.
-  - Client Firestore rules must not be broadened to permit imported observation writes.
+  - Phase 6B is design-only. Agents must not implement Phase 7 unless explicitly instructed.
+  - Agents must not create imported/synthetic observations.
+  - Agents must not add execute/apply/repair controls.
+  - Agents must not broaden Firestore rules for client-created imported observations.
+  - Future execution must use backend/Admin SDK authorization, not ordinary client Firestore writes.
   - Observation-only runtime writes must continue to use `src/lib/identifierObservations.ts`.
 
 - **Source of Truth**:
