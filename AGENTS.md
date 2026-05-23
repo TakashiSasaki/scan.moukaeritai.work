@@ -281,6 +281,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - Agents must follow `docs/migrations/phase-1-observation-model-spec.md` for implementation constraints.
   - Phase 5 implements a dry-run backfill planner for optional fields.
   - The Phase 5 dry-run document is `docs/migrations/phase-5-dry-run-backfill.md`.
+  - Phase 5 dry-run must remain bounded (e.g. bounded object identifier summary queries) and must conservatively infer `detached` states.
   - Phase 5 dry-run must remain strictly read-only. No execution, apply, or repair buttons should be added.
   - Phase 5 must not include imported observations creation.
   - Observation-only runtime writes must continue to use `src/lib/identifierObservations.ts`.

@@ -14,7 +14,46 @@ import {
   ObjectIdentifierBindingRecord,
 } from '../types';
 import { computeIdentifierSummary } from './objectSummaries';
-import { loadObjectIdentifiersForSummary } from './identifierBindings';
+
+// Helper for normalized summary comparison
+function areIdentifierSummariesEqual(
+  a: ObjectRecord['identifierSummary'] | undefined,
+  b: ObjectRecord['identifierSummary'] | undefined
+): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+
+  if (a.activeIdentifierCount !== b.activeIdentifierCount) return false;
+  if (a.hasQr !== b.hasQr) return false;
+  if (a.hasNfc !== b.hasNfc) return false;
+
+  const aKinds = Array.isArray(a.activeKinds) ? [...a.activeKinds].sort() : [];
+  const bKinds = Array.isArray(b.activeKinds) ? [...b.activeKinds].sort() : [];
+
+  if (aKinds.length !== bKinds.length) return false;
+  for (let i = 0; i < aKinds.length; i++) {
+    if (aKinds[i] !== bKinds[i]) return false;
+  }
+
+  return true;
+}
+
+// Bounded helper for summary computation
+async function loadObjectIdentifiersForSummaryBounded(
+  db: Firestore,
+  ownerId: string,
+  objectId: string,
+  limitCount: number
+): Promise<IdentifierRecord[]> {
+  const q = query(
+    collection(db, 'identifiers'),
+    where('ownerId', '==', ownerId),
+    where('objectId', '==', objectId),
+    limit(limitCount)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => d.data() as IdentifierRecord);
+}
 
 export interface DryRunLimits {
   maxIdentifiers: number;
@@ -109,6 +148,8 @@ export async function runObservationBackfillDryRun(
       try {
         let patch: Record<string, any> = {};
         let skipReason = '';
+        let itemConfidence: 'high' | 'medium' | 'low' = 'high';
+        let itemNotes: string[] = [];
 
         // Fetch real observations for this identifier
         const obsQuery = query(
@@ -126,19 +167,22 @@ export async function runObservationBackfillDryRun(
           if (identifier.status === 'unassigned' && !identifier.objectId) {
             if (observations.length > 0 || identifier.firstObservedAt) {
               patch.discoveryState = 'observed';
+            } else {
+              skipReason = 'ambiguous-discovery-state';
+              itemNotes.push('Unassigned identifier without real observations.');
             }
           } else if (identifier.status === 'active' && identifier.objectId) {
             patch.discoveryState = 'registered';
+          } else if (identifier.status === 'replaced') {
+            patch.discoveryState = 'detached';
+            itemConfidence = 'medium';
+            itemNotes.push('discoveryState detached is inferred from replaced status.');
           } else if (identifier.status === 'retired' || identifier.status === 'lost') {
-              patch.discoveryState = 'detached'; // Wait, let's stick to simple inference. Status 'detached' isn't standard status, it's discovery state detached.
-          } else {
-              // Check if status implies detached but unambiguous
-              // The instructions say: "If the identifier appears detached/inactive according to existing status conventions, propose "discoveryState: 'detached'" only if that status is already explicit and unambiguous."
-              // Statuses: 'active' | 'unassigned' | 'retired' | 'lost' | 'replaced'
-              if (identifier.status === 'unassigned' && identifier.objectId) {
-                  // Actually unassigned shouldn't have objectId.
-                  skipReason = 'ambiguous-discovery-state';
-              }
+            skipReason = 'ambiguous-discovery-state';
+            itemNotes.push(`Status ${identifier.status} is ambiguous for discoveryState.`);
+          } else if (identifier.status === 'unassigned' && identifier.objectId) {
+            skipReason = 'ambiguous-discovery-state';
+            itemNotes.push('Inconsistent state: unassigned but has objectId.');
           }
         }
 
@@ -172,11 +216,12 @@ export async function runObservationBackfillDryRun(
             }
         }
 
-        if (skipReason) {
+        if (skipReason && Object.keys(patch).length === 0) {
             result.skipped.push({
                 targetCollection: 'identifiers',
                 targetDocId: identifier.identifierKey,
-                reason: skipReason
+                reason: skipReason,
+                notes: itemNotes.length > 0 ? itemNotes.join(' ') : undefined
             });
         } else if (Object.keys(patch).length > 0) {
             if (result.counts.candidateCounts.identifiers >= limits.maxCandidates) {
@@ -203,7 +248,8 @@ export async function runObservationBackfillDryRun(
                         status: identifier.status,
                         objectId: identifier.objectId
                     },
-                    confidence: 'high'
+                    confidence: itemConfidence,
+                    notes: itemNotes.length > 0 ? itemNotes.join(' ') : undefined
                 });
                 result.counts.candidateCounts.identifiers++;
             }
@@ -235,6 +281,8 @@ export async function runObservationBackfillDryRun(
       try {
         let patch: Record<string, any> = {};
         let skipReason = '';
+        let itemConfidence: 'high' | 'medium' | 'low' = 'high';
+        let itemNotes: string[] = [];
 
         if (!obj.visibility) {
           patch.visibility = 'private';
@@ -247,8 +295,15 @@ export async function runObservationBackfillDryRun(
         if (!obj.createdBy) {
             if (obj.ownerId) {
                 patch.createdBy = obj.ownerId;
+                itemConfidence = 'medium';
+                itemNotes.push('createdBy is inferred from ownerId.');
             } else {
-                skipReason = 'ambiguous-created-by';
+                result.skipped.push({
+                  targetCollection: 'objects',
+                  targetDocId: obj.objectId,
+                  reason: 'ambiguous-created-by',
+                  notes: 'No ownerId to infer createdBy.'
+                });
             }
         }
 
@@ -269,18 +324,18 @@ export async function runObservationBackfillDryRun(
             let allObservations: IdentifierObservationRecord[] = [];
 
             // Compute summary staleness
-            let activeIdentifiers = await loadObjectIdentifiersForSummary(db, ownerId, obj.objectId);
-            if (activeIdentifiers.length > limits.maxIdentifiersPerObject) {
+            let activeIdentifiers = await loadObjectIdentifiersForSummaryBounded(db, ownerId, obj.objectId, limits.maxIdentifiersPerObject);
+            if (activeIdentifiers.length >= limits.maxIdentifiersPerObject) {
               result.warnings.push({
                 type: 'dry-run-limit-hit',
-                message: `Object ${obj.objectId} exceeded maxIdentifiersPerObject limit (${limits.maxIdentifiersPerObject}). Computed summary may be inaccurate.`,
+                message: `Object ${obj.objectId} reached maxIdentifiersPerObject limit (${limits.maxIdentifiersPerObject}). Skipping identifierSummary check.`,
               });
-              activeIdentifiers = activeIdentifiers.slice(0, limits.maxIdentifiersPerObject);
-            }
-            const computedSummary = computeIdentifierSummary(activeIdentifiers);
+            } else {
+              const computedSummary = computeIdentifierSummary(activeIdentifiers);
 
-            if (JSON.stringify(obj.identifierSummary) !== JSON.stringify(computedSummary)) {
-                patch.identifierSummary = computedSummary;
+              if (!areIdentifierSummariesEqual(obj.identifierSummary, computedSummary)) {
+                  patch.identifierSummary = computedSummary;
+              }
             }
 
             for (const bindingSnap of bindingsSnap.docs) {
@@ -317,7 +372,7 @@ export async function runObservationBackfillDryRun(
             }
         }
 
-        if (skipReason) {
+        if (skipReason && Object.keys(patch).length === 0) {
             result.skipped.push({
                 targetCollection: 'objects',
                 targetDocId: obj.objectId,
@@ -348,7 +403,8 @@ export async function runObservationBackfillDryRun(
                         lastReportedAt: obj.lastReportedAt,
                         identifierSummary: obj.identifierSummary
                     },
-                    confidence: 'high'
+                    confidence: itemConfidence,
+                    notes: itemNotes.length > 0 ? itemNotes.join(' ') : undefined
                 });
                 result.counts.candidateCounts.objects++;
             }

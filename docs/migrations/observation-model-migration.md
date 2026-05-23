@@ -106,6 +106,7 @@ Phase 5: Dry-run backfill migration (Current)
 - Add an admin-only dry-run migration planner for optional field backfill.
 - Computes candidate optional-field backfills without mutating data.
 - Does not implement imported observations, actual backfill execution, anonymous sign-in, device ingestion, provisional objects, or custody/loan workflows.
+- Phase 5 cleanup (dry-run backfill hardening) completed.
 - See [Phase 5: Dry-run Backfill](phase-5-dry-run-backfill.md).
 
 Phase 6: Optional imported observations
