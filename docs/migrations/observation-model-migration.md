@@ -3,8 +3,8 @@
 ## Status
 
 State:
-- Current phase: Phase 6-prep — Owner-scoped observations and deterministic UUID foundation. (Phases 0-5 are completed)
-- Version line: Phase 6-prep is on the `1.5.x` line.
+- Current phase: Phase 6A — Imported observation dry-run / preview. (Phase 6-prep cleanup completed)
+- Version line: Phase 6A starts the `1.6.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
 - The legacy `items` -> normalized model migration is completed.
@@ -109,19 +109,19 @@ Phase 5: Dry-run backfill migration (Completed)
 - Phase 5 cleanup (dry-run backfill hardening) completed.
 - See [Phase 5: Dry-run Backfill](phase-5-dry-run-backfill.md).
 
-Phase 6-prep: Owner-scoped observations and deterministic UUID foundation (Current)
+Phase 6-prep: Owner-scoped observations and deterministic UUID foundation (Completed)
 - Adds `ownerId` to identifier observations to prepare for imported and system observations.
 - Establishes the application-wide deterministic UUIDv5 namespace and canonical JSON helper.
-- Imported observation candidate generation and creation are not implemented yet.
-- Phase 6A will later handle imported observation dry-run/preview.
 - See [Deterministic UUID Policy](../architecture/deterministic-uuid.md).
 
-Phase 6A: Optional imported observations dry-run
-- Optionally plan deterministic `observationType: "imported"` records from existing identifiers.
-- Does not create records yet.
+Phase 6A: Optional imported observations dry-run (Current)
+- Computes candidate deterministic `observationType: "imported"` records from existing identifiers for preview.
+- Does not create imported observation records.
+- See [Phase 6A: Imported Observation Dry Run](phase-6a-imported-observation-dry-run.md).
 
 Phase 7: Limited execute and verification
-- Execute backfill in limited batches if explicitly approved.
+- Handle limited execute of backfill or imported observations if explicitly approved.
+- Execute backfill in limited batches.
 - Re-run diagnostics.
 - Verify no existing invariants are broken.
 
