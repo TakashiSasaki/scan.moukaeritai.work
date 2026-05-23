@@ -1,4 +1,4 @@
-import { scanExecuteImportedObservationBatch } from "./scanExecuteImportedObservationBatch";
+export { scanExecuteImportedObservationBatch } from "./scanExecuteImportedObservationBatch";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
@@ -556,4 +556,3 @@ export const migrateInventoryModel = onCall(async (request: any) => {
   }
 });
 
-export { scanExecuteImportedObservationBatch };
