@@ -33,8 +33,9 @@ For sampled `identifiers/{identifierKey}` owned by the current user, the dry run
 1. **`discoveryState`:**
    - Proposes `"observed"` if the identifier is unassigned, has no `objectId`, but has real `identifierObservations`.
    - Proposes `"registered"` if `status` is `"active"` and `objectId` exists.
-   - Proposes `"detached"` if the status clearly implies detachment.
-   - Ambiguous states are skipped.
+   - Proposes `"detached"` with medium confidence if the status is `"replaced"`, as this clearly implies detachment in the current model.
+   - For inactive statuses like `"retired"` or `"lost"`, the discovery state inference is conservative, and these ambiguous states are skipped to avoid incorrect assumptions.
+   - Mixed-confidence candidate patches set their overall `confidence` to the lowest confidence of their proposed fields (e.g., a mix of `high` and `medium` yields `medium`).
 
 2. **First/Last Observation metadata (`firstObservedAt`, `lastObservedAt`, `lastObservedSource`, etc.):**
    - Deduced **only** from real, existing `identifierObservations`.
@@ -50,6 +51,8 @@ For sampled `objects/{objectId}` owned by the current user, the dry run proposes
 4. **`lastReportedAt` / `lastReportedBy` / `lastReportedPlaceLabel`:**
    - Deduced **only** from real existing observations related to the active identifiers bound to the object.
 5. **`identifierSummary`:** Compares the stored summary with a newly computed summary based on current `objectIdentifierBindings`, proposing a patch if they are out of sync.
+   - The summary comparison is normalized to avoid false positives caused by array or property ordering (e.g., `activeKinds` array order).
+   - The query to compute the summary is strictly bounded to `maxIdentifiersPerObject`. If an object exceeds this bound, the summary computation is skipped and a warning is emitted instead, to avoid proposing an incomplete summary.
 
 ## Skipped Records
 
@@ -73,4 +76,4 @@ The results shown in the dry run UI are **proposals only**.
 - Candidate and skipped samples are correctly grouped and displayed in the UI.
 - No imported/synthetic observation generation occurs.
 - `npm run lint` and `npm run build` continue to pass.
-- Package version is bumped to 1.5.0.
+- Package version is bumped to 1.5.1.
