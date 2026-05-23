@@ -16,7 +16,10 @@ import {
 import { computeIdentifierSummary } from './objectSummaries';
 
 // Helper for normalized summary comparison
-function areIdentifierSummariesEqual(a: any, b: any): boolean {
+function areIdentifierSummariesEqual(
+  a: ObjectRecord['identifierSummary'] | undefined,
+  b: ObjectRecord['identifierSummary'] | undefined
+): boolean {
   if (!a && !b) return true;
   if (!a || !b) return false;
 
@@ -165,12 +168,8 @@ export async function runObservationBackfillDryRun(
             if (observations.length > 0 || identifier.firstObservedAt) {
               patch.discoveryState = 'observed';
             } else {
-              result.skipped.push({
-                targetCollection: 'identifiers',
-                targetDocId: identifier.identifierKey,
-                reason: 'ambiguous-discovery-state',
-                notes: 'Unassigned identifier without real observations.'
-              });
+              skipReason = 'ambiguous-discovery-state';
+              itemNotes.push('Unassigned identifier without real observations.');
             }
           } else if (identifier.status === 'active' && identifier.objectId) {
             patch.discoveryState = 'registered';
@@ -179,20 +178,11 @@ export async function runObservationBackfillDryRun(
             itemConfidence = 'medium';
             itemNotes.push('discoveryState detached is inferred from replaced status.');
           } else if (identifier.status === 'retired' || identifier.status === 'lost') {
-            // Do not propose discoveryState, add skipped reason, but let observation fields continue
-            result.skipped.push({
-              targetCollection: 'identifiers',
-              targetDocId: identifier.identifierKey,
-              reason: 'ambiguous-discovery-state',
-              notes: `Status ${identifier.status} is ambiguous for discoveryState.`
-            });
+            skipReason = 'ambiguous-discovery-state';
+            itemNotes.push(`Status ${identifier.status} is ambiguous for discoveryState.`);
           } else if (identifier.status === 'unassigned' && identifier.objectId) {
-            result.skipped.push({
-              targetCollection: 'identifiers',
-              targetDocId: identifier.identifierKey,
-              reason: 'ambiguous-discovery-state',
-              notes: 'Inconsistent state: unassigned but has objectId.'
-            });
+            skipReason = 'ambiguous-discovery-state';
+            itemNotes.push('Inconsistent state: unassigned but has objectId.');
           }
         }
 
@@ -221,7 +211,7 @@ export async function runObservationBackfillDryRun(
           if (!identifier.lastObservedBy && lastObs.observerUid) patch.lastObservedBy = lastObs.observerUid;
           if (!identifier.lastObservedSource) patch.lastObservedSource = lastObs.source;
         } else {
-            if (Object.keys(patch).length === 0) {
+            if (Object.keys(patch).length === 0 && !skipReason) {
                 skipReason = 'no-real-observations';
             }
         }
@@ -230,7 +220,8 @@ export async function runObservationBackfillDryRun(
             result.skipped.push({
                 targetCollection: 'identifiers',
                 targetDocId: identifier.identifierKey,
-                reason: skipReason
+                reason: skipReason,
+                notes: itemNotes.length > 0 ? itemNotes.join(' ') : undefined
             });
         } else if (Object.keys(patch).length > 0) {
             if (result.counts.candidateCounts.identifiers >= limits.maxCandidates) {

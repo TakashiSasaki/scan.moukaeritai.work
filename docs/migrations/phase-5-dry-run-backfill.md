@@ -50,7 +50,7 @@ For sampled `objects/{objectId}` owned by the current user, the dry run proposes
 3. **`createdBy`:** Inferred safely (often from `ownerId`). Otherwise, skipped.
 4. **`lastReportedAt` / `lastReportedBy` / `lastReportedPlaceLabel`:**
    - Deduced **only** from real existing observations related to the active identifiers bound to the object.
-5. **`identifierSummary`:** Compares the stored summary with a newly computed summary based on current `objectIdentifierBindings`, proposing a patch if they are out of sync.
+5. **`identifierSummary`:** Compares the stored summary with a newly computed summary based on the current identifiers (queried by owner and object ID), proposing a patch if they are out of sync.
    - The summary comparison is normalized to avoid false positives caused by array or property ordering (e.g., `activeKinds` array order).
    - The query to compute the summary is strictly bounded to `maxIdentifiersPerObject`. If an object exceeds this bound, the summary computation is skipped and a warning is emitted instead, to avoid proposing an incomplete summary.
 
