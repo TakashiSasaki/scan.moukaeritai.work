@@ -180,7 +180,10 @@ export async function runObservationBackfillDryRun(
         }
         for (const d of obsSnapLegacy.docs) {
             if (!obsMap.has(d.id)) {
-                obsMap.set(d.id, d.data() as IdentifierObservationRecord);
+                const legacyObs = d.data() as IdentifierObservationRecord;
+                if (!legacyObs.ownerId || legacyObs.ownerId === ownerId) {
+                    obsMap.set(d.id, legacyObs);
+                }
             }
         }
 
@@ -397,7 +400,10 @@ export async function runObservationBackfillDryRun(
                 }
                 for (const d of obsSnapLegacy.docs) {
                     if (!obsMap.has(d.id)) {
-                        obsMap.set(d.id, d.data() as IdentifierObservationRecord);
+                        const legacyObs = d.data() as IdentifierObservationRecord;
+                        if (!legacyObs.ownerId || legacyObs.ownerId === ownerId) {
+                            obsMap.set(d.id, legacyObs);
+                        }
                     }
                 }
 

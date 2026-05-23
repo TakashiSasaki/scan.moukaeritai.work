@@ -51,7 +51,13 @@ export function canonicalizeJson(value: any): string {
 
   if (type === 'object') {
     if (Array.isArray(value)) {
-      const items = value.map(v => canonicalizeJson(v));
+      const items: string[] = [];
+      for (let i = 0; i < value.length; i++) {
+        if (!(i in value) || value[i] === undefined) {
+          throw new Error('canonicalizeJson: undefined array elements or sparse arrays are not supported.');
+        }
+        items.push(canonicalizeJson(value[i]));
+      }
       return `[${items.join(',')}]`;
     }
 
