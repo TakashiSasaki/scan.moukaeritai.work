@@ -146,6 +146,7 @@ service cloud.firestore {
         && isValidId(incoming().identifierKey)
         && incoming().observerKind == 'user'
         && incoming().observerUid == request.auth.uid
+        && incoming().ownerId == request.auth.uid
         && incoming().observedAt is timestamp
         && incoming().receivedAt is timestamp
         && incoming().createdAt is timestamp
@@ -159,7 +160,7 @@ service cloud.firestore {
         && (!('metadata' in incoming()) || incoming().metadata is map)
         && (!('visibility' in incoming()) || incoming().visibility in ['private', 'linked_object', 'community', 'public'])
         && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
-        && incoming().keys().hasOnly(['observationId', 'identifierKey', 'observerKind', 'observedAt', 'receivedAt', 'source', 'observationType', 'createdAt', 'objectId', 'observerUid', 'observerIsAnonymous', 'placeLabel', 'location', 'note', 'metadata', 'visibility', 'schemaVersion'])
+        && incoming().keys().hasOnly(['observationId', 'identifierKey', 'ownerId', 'observerKind', 'observedAt', 'receivedAt', 'source', 'observationType', 'createdAt', 'objectId', 'observerUid', 'observerIsAnonymous', 'placeLabel', 'location', 'note', 'metadata', 'visibility', 'schemaVersion'])
         && incoming().receivedAt == request.time
         && incoming().createdAt == request.time;
 
