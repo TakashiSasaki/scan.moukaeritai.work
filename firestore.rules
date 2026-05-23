@@ -134,7 +134,10 @@ service cloud.firestore {
 
     // --- IDENTIFIER OBSERVATIONS ---
     match /identifierObservations/{observationId} {
-      allow read: if isSignedIn() && existing().observerUid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        existing().get('ownerId', null) == request.auth.uid ||
+        existing().get('observerUid', null) == request.auth.uid
+      );
       allow read: if isAdmin();
 
       // Client-created observations are initially limited to ordinary user sighting/scan records.
