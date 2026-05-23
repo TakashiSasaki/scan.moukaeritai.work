@@ -4,7 +4,6 @@
 Phase 7A implements backend-side revalidation dry-run for imported observation candidates. It introduces a new admin-only callable Cloud Function that revalidates existing identifiers server-side and returns a preview of proposed imported observations, similar to Phase 6A but without trusting client inputs.
 
 ## Non-goals
-- Phase 7A still performs no writes (reads only).
 - no writes
 - no imported observation creation
 - no execute mode

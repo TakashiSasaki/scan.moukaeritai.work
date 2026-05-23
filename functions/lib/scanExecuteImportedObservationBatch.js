@@ -36,8 +36,8 @@ exports.scanExecuteImportedObservationBatch = (0, https_1.onCall)(async (request
     }
     let maxBatchSize = 20;
     if (rawMaxBatchSize !== undefined) {
-        if (typeof rawMaxBatchSize !== "number" || !Number.isFinite(rawMaxBatchSize) || rawMaxBatchSize < 1) {
-            throw new https_1.HttpsError("invalid-argument", "maxBatchSize must be a finite positive number.");
+        if (typeof rawMaxBatchSize !== "number" || !Number.isInteger(rawMaxBatchSize) || rawMaxBatchSize < 1) {
+            throw new https_1.HttpsError("invalid-argument", "maxBatchSize must be a positive integer.");
         }
         maxBatchSize = rawMaxBatchSize;
     }
@@ -171,6 +171,7 @@ exports.scanExecuteImportedObservationBatch = (0, https_1.onCall)(async (request
             if (existingObservations.has(observationId)) {
                 result.counts.conflicts++;
                 result.skipped.push({ identifierKey, reason: "deterministic-observation-already-exists" });
+                result.counts.skipped++;
                 continue;
             }
             try {
@@ -178,6 +179,7 @@ exports.scanExecuteImportedObservationBatch = (0, https_1.onCall)(async (request
                 if (detObsDoc.exists) {
                     result.counts.conflicts++;
                     result.skipped.push({ identifierKey, reason: "deterministic-observation-already-exists" });
+                    result.counts.skipped++;
                     continue;
                 }
             }
