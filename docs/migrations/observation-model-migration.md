@@ -3,8 +3,8 @@
 ## Status
 
 State:
-- Current phase: Phase 6A — Imported observation dry-run / preview. (Phase 6-prep cleanup completed)
-- Version line: Phase 6A starts the `1.6.x` version line.
+- Current phase: Phase 6B — Imported observation execute design and safety plan.
+- Version line: Phase 6B remains on the `1.6.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
 - The legacy `items` -> normalized model migration is completed.
@@ -114,13 +114,21 @@ Phase 6-prep: Owner-scoped observations and deterministic UUID foundation (Compl
 - Establishes the application-wide deterministic UUIDv5 namespace and canonical JSON helper.
 - See [Deterministic UUID Policy](../architecture/deterministic-uuid.md).
 
-Phase 6A: Optional imported observations dry-run (Current)
+Phase 6A: Optional imported observations dry-run (Completed)
 - Computes candidate deterministic `observationType: "imported"` records from existing identifiers for preview.
 - Does not create imported observation records.
 - See [Phase 6A: Imported Observation Dry Run](phase-6a-imported-observation-dry-run.md).
 
+Phase 6B: Imported observation execute design and safety plan (Current)
+- Designs a future limited execution path for imported baseline observations.
+- Does not create imported observations or provide an executable path.
+- See [Phase 6B: Imported Observation Execute Plan](phase-6b-imported-observation-execute-plan.md).
+
 Phase 7: Limited execute and verification
-- Handle limited execute of backfill or imported observations if explicitly approved.
+- Handle limited execute of backfill or imported observations if explicitly approved based on the Phase 6B design.
+- Utilize the backend/Admin SDK path for future imported observations.
+- Require server-side revalidation of candidates.
+- Start with small batches.
 - Execute backfill in limited batches.
 - Re-run diagnostics.
 - Verify no existing invariants are broken.
