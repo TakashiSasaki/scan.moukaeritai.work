@@ -446,8 +446,8 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {importedDryRunResult.candidates.map((candidate, idx) => (
-                          <div key={idx} className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-xl">
+                        {importedDryRunResult.candidates.map((candidate) => (
+                          <div key={candidate.identifierKey} className="p-4 bg-[var(--surface)] border border-[var(--outline)] rounded-xl">
                             <div className="flex items-start gap-3">
                               <div className="flex-1 min-w-0">
                                 <div className="font-bold text-sm text-[var(--on-surface)]">
@@ -477,8 +477,8 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
                         Skipped Records (Sampled): {importedDryRunResult.skipped.length}
                       </h4>
                       <div className="space-y-4">
-                        {importedDryRunResult.skipped.map((skipped, idx) => (
-                          <div key={idx} className="p-3 bg-[var(--surface)] border border-[var(--outline)] rounded-xl text-xs text-[var(--on-surface-variant)]">
+                        {importedDryRunResult.skipped.map((skipped) => (
+                          <div key={`${skipped.identifierKey}-${skipped.reason}`} className="p-3 bg-[var(--surface)] border border-[var(--outline)] rounded-xl text-xs text-[var(--on-surface-variant)]">
                             <span className="font-bold">{skipped.identifierKey}</span> — Reason: {skipped.reason} {skipped.notes && `(${skipped.notes})`}
                           </div>
                         ))}
@@ -495,7 +495,7 @@ export default function AdminPanel({ onClose }: { onClose?: () => void }) {
                       </h4>
                       <div className="space-y-4">
                         {importedDryRunResult.warnings.map((warning, idx) => (
-                          <div key={idx} className="p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-xl text-xs">
+                          <div key={`${warning.type}-${idx}`} className="p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-xl text-xs">
                             <span className="font-bold">{warning.type}</span> — {warning.message}
                           </div>
                         ))}

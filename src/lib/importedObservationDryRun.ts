@@ -104,15 +104,21 @@ export async function runImportedObservationDryRun(
     warnings: [],
   };
 
+  const warningCounts = new Map<string, number>();
   const addWarning = (type: string, message: string) => {
-    if (result.warnings.length < limits.maxSamplesPerCategory) {
+    const count = warningCounts.get(type) || 0;
+    if (count < limits.maxSamplesPerCategory) {
       result.warnings.push({ type, message });
+      warningCounts.set(type, count + 1);
     }
   };
 
+  const skippedCounts = new Map<string, number>();
   const addSkipped = (skipped: Skipped) => {
-    if (result.skipped.length < limits.maxSamplesPerCategory) {
+    const count = skippedCounts.get(skipped.reason) || 0;
+    if (count < limits.maxSamplesPerCategory) {
       result.skipped.push(skipped);
+      skippedCounts.set(skipped.reason, count + 1);
     }
   };
 
@@ -164,28 +170,34 @@ export async function runImportedObservationDryRun(
           where('ownerId', '==', ownerId),
           limit(limits.maxObservationsPerIdentifier)
         );
-        const obsSnapNew = await getDocs(obsQueryNew);
-        result.counts.observationsChecked += obsSnapNew.size;
-
         const obsQueryLegacy = query(
           collection(db, 'identifierObservations'),
           where('identifierKey', '==', identifierKey),
           where('observerUid', '==', ownerId),
           limit(limits.maxObservationsPerIdentifier)
         );
-        const obsSnapLegacy = await getDocs(obsQueryLegacy);
-        result.counts.observationsChecked += obsSnapLegacy.size;
 
-        const allObs = new Map<string, IdentifierObservationRecord>();
-        obsSnapNew.docs.forEach(d => allObs.set(d.id, d.data() as IdentifierObservationRecord));
-        obsSnapLegacy.docs.forEach(d => allObs.set(d.id, d.data() as IdentifierObservationRecord));
+        const [obsSnapNew, obsSnapLegacy] = await Promise.all([
+          getDocs(obsQueryNew),
+          getDocs(obsQueryLegacy)
+        ]);
 
-        for (const obs of allObs.values()) {
-          // A real observation is one that is not imported.
-          const isImported = obs.source === ('import' as any) || obs.observationType === ('imported' as any);
-          if (!isImported) {
-             hasRealObservations = true;
-             break;
+        result.counts.observationsChecked += obsSnapNew.size + obsSnapLegacy.size;
+
+        if (obsSnapNew.size === limits.maxObservationsPerIdentifier || obsSnapLegacy.size === limits.maxObservationsPerIdentifier) {
+          hasRealObservations = true;
+        } else {
+          const allObs = new Map<string, IdentifierObservationRecord>();
+          obsSnapNew.docs.forEach(d => allObs.set(d.id, d.data() as IdentifierObservationRecord));
+          obsSnapLegacy.docs.forEach(d => allObs.set(d.id, d.data() as IdentifierObservationRecord));
+
+          for (const obs of allObs.values()) {
+            // A real observation is one that is not imported.
+            const isImported = obs.source === 'import' || obs.observationType === 'imported';
+            if (!isImported) {
+               hasRealObservations = true;
+               break;
+            }
           }
         }
       } catch (err: any) {
