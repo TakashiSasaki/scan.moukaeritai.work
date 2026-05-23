@@ -45,7 +45,7 @@ For successful candidates, a document is created at `identifierObservations/{obs
 - `identifierKey`
 - `ownerId`
 - `observerKind: "system"`
-- `observedAt: new Date(createdAtMillis).toISOString()`
+- `observedAt: identifier.createdAt` (Firestore Timestamp copied from the source identifier)
 - `receivedAt: admin.firestore.FieldValue.serverTimestamp()`
 - `createdAt: admin.firestore.FieldValue.serverTimestamp()`
 - `source: "import"`
@@ -53,6 +53,8 @@ For successful candidates, a document is created at `identifierObservations/{obs
 - `visibility: "private"`
 - `schemaVersion: 1`
 - `metadata`
+
+Note: Dry-run previews may still render `observedAt` as an ISO string for display purposes, but actual execute writes store a Firestore Timestamp.
 
 Documents are created using `docRef.create()` to prevent overwrites.
 
@@ -69,7 +71,10 @@ This action is append-only for the `identifierObservations` collection and does 
 Audit metadata is embedded inside the created observation record, not in a global logging collection.
 
 ## Deployment Safety
-The GitHub Actions workflow deploy command remains explicit: `firebase deploy --only "functions:scanExecuteImportedObservationBatch"`. Broad deployments (`--only functions`) are not used.
+The GitHub Actions workflow deploy command remains explicit function-name allow-list. The new function is added explicitly to the deployment, alongside existing functions:
+`npx --yes firebase-tools deploy --only "functions:getAppMetrics,functions:identifyMatches,functions:describeImage,functions:getClientIp,functions:migrateInventoryModel,functions:scanExecuteImportedObservationBatch" --project moukaeritaid --non-interactive`
+
+Broad deployments (`--only functions`) are strictly not used.
 
 ## Pre-execute Checklist
 - Confirm caller is admin.
@@ -78,7 +83,10 @@ The GitHub Actions workflow deploy command remains explicit: `firebase deploy --
 - Confirm `confirmationText`.
 
 ## Post-execute Checklist
-- Output structured response containing `counts`, `candidates` (created records), `skipped`, and `errors`.
+- Output structured response containing `counts`.
+  - For execute mode: `created` and `counts.created`.
+  - For dryRun mode: `candidates` and `counts.candidates`.
+- `skipped`, and `errors`.
 - Verify idempotent behavior handles repeated runs correctly (via conflict checks).
 
 ## Failure/Rollback Model
@@ -90,4 +98,4 @@ The GitHub Actions workflow deploy command remains explicit: `firebase deploy --
 - Server-side hashing (SHA-256) of deterministic payload is implemented.
 - `metadata.migration.phase` is recorded as `phase-7b` during execute.
 - No UI components for execution have been built.
-- `package.json` version is updated to `1.7.2`.
+- `package.json` version is updated to `1.7.3`.
