@@ -50,6 +50,7 @@ export interface BuildUserObservationInput {
   observedAt: Timestamp;
   source: UserObservationSource;
   observationType: UserObservationType;
+  ownerId: string;
   observerUid: string;
   observerIsAnonymous?: boolean;
   objectId?: string;
@@ -71,6 +72,7 @@ export function buildUserIdentifierObservationWrite(
   const payload: UserIdentifierObservationWrite = {
     observationId: input.observationId,
     identifierKey: input.identifierKey,
+    ownerId: input.ownerId,
     observerKind: 'user',
     observerUid: input.observerUid,
     observedAt: input.observedAt,
@@ -202,7 +204,7 @@ export interface CreateUserIdentifierObservationArgs {
     rawValue?: string;
     label?: string;
   };
-  observationInput: Omit<BuildUserObservationInput, 'observationId' | 'identifierKey' | 'observerUid'>;
+  observationInput: Omit<BuildUserObservationInput, 'observationId' | 'identifierKey' | 'ownerId' | 'observerUid'>;
   userContext: {
     uid: string;
     isAnonymous?: boolean;
@@ -299,6 +301,7 @@ export async function createUserIdentifierObservation(
         ...observationInput,
         observationId,
         identifierKey: identifierInput.identifierKey,
+        ownerId: userContext.uid,
         observerUid: userContext.uid,
         observerIsAnonymous: userContext.isAnonymous,
       });

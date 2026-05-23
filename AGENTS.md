@@ -275,17 +275,19 @@ The application has transitioned from a simple `items` collection to a normalize
   - `tag-1.0.0` is the immutable migration source baseline.
   - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
   - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
-  - Current phase is Phase 5. (Proceeding on the `1.5.x` version line)
+  - Current phase is Phase 6-prep. (Proceeding on the `1.5.x` version line)
+  - Phase 6-prep adds owner-scoped observations and deterministic UUID foundation.
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
+  - `docs/architecture/deterministic-uuid.md` is the authoritative deterministic UUID namespace document.
+  - `src/lib/deterministicUuid.ts` may contain the constant but must point to the permanent document.
+  - Deterministic UUIDv5 name payloads must use canonical JSON.
   - Agents must read that document before modifying migration-related code.
   - Agents must follow `docs/migrations/phase-1-observation-model-spec.md` for implementation constraints.
-  - Phase 5 implements a dry-run backfill planner for optional fields.
-  - The Phase 5 dry-run document is `docs/migrations/phase-5-dry-run-backfill.md`.
-  - Phase 5 dry-run must remain bounded (e.g. bounded object identifier summary queries) and must conservatively infer `detached` states.
-  - Phase 5 dry-run must remain strictly read-only. No execution, apply, or repair buttons should be added.
-  - Phase 5 must not include imported observations creation.
+  - Agents must not implement Phase 6A imported observation candidates unless explicitly instructed.
+  - Agents must not create imported/synthetic observations.
+  - Agents must not add execute/apply/repair controls.
+  - Agents must not broaden client rules to allow imported observations.
   - Observation-only runtime writes must continue to use `src/lib/identifierObservations.ts`.
-  - Agents must not implement Phase 6+ unless explicitly instructed.
 
 - **Source of Truth**:
   - `firebase-blueprint.json` defines the new schema boundaries.

@@ -260,6 +260,10 @@
         "identifierKey": {
           "type": "string"
         },
+        "ownerId": {
+          "type": "string",
+          "description": "The owner/scope boundary for the observation record. Existing pre-ownerId records may lack this field."
+        },
         "observerKind": {
           "type": "string",
           "enum": [

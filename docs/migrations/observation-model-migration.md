@@ -3,8 +3,8 @@
 ## Status
 
 State:
-- Current phase: Phase 5 — Dry-run backfill migration. (Phases 0, 1, 2, 3A, 3B, 3C, 3D, and 4 are completed)
-- Version line: Phase 5 is on the `1.5.x` line.
+- Current phase: Phase 6-prep — Owner-scoped observations and deterministic UUID foundation. (Phases 0-5 are completed)
+- Version line: Phase 6-prep is on the `1.5.x` line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
 - The legacy `items` -> normalized model migration is completed.
@@ -102,19 +102,26 @@ Phase 4: Read-only diagnostics (Completed)
 - Do not repair or mutate data yet.
 - See [Phase 4: Read-only Diagnostics](phase-4-read-only-diagnostics.md).
 
-Phase 5: Dry-run backfill migration (Current)
+Phase 5: Dry-run backfill migration (Completed)
 - Add an admin-only dry-run migration planner for optional field backfill.
 - Computes candidate optional-field backfills without mutating data.
 - Does not implement imported observations, actual backfill execution, anonymous sign-in, device ingestion, provisional objects, or custody/loan workflows.
 - Phase 5 cleanup (dry-run backfill hardening) completed.
 - See [Phase 5: Dry-run Backfill](phase-5-dry-run-backfill.md).
 
-Phase 6: Optional imported observations
-- Optionally create deterministic `observationType: "imported"` records from existing identifiers.
-- This must be opt-in, not automatic.
+Phase 6-prep: Owner-scoped observations and deterministic UUID foundation (Current)
+- Adds `ownerId` to identifier observations to prepare for imported and system observations.
+- Establishes the application-wide deterministic UUIDv5 namespace and canonical JSON helper.
+- Imported observation candidate generation and creation are not implemented yet.
+- Phase 6A will later handle imported observation dry-run/preview.
+- See [Deterministic UUID Policy](../architecture/deterministic-uuid.md).
+
+Phase 6A: Optional imported observations dry-run
+- Optionally plan deterministic `observationType: "imported"` records from existing identifiers.
+- Does not create records yet.
 
 Phase 7: Limited execute and verification
-- Execute backfill in limited batches.
+- Execute backfill in limited batches if explicitly approved.
 - Re-run diagnostics.
 - Verify no existing invariants are broken.
 

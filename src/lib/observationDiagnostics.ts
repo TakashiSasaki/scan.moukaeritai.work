@@ -110,16 +110,37 @@ export async function runObservationDiagnostics(
 
   // --- 1. Check Observations ---
   try {
-    const obsQ = query(collection(db, 'identifierObservations'), where('observerUid', '==', ownerId), limit(mergedLimits.maxObservations));
-    const obsSnap = await getDocs(obsQ);
-    counts.observationsChecked = obsSnap.docs.length;
+    // New records use ownerId. Legacy records used observerUid.
+    // Query both and deduplicate for conservative bounded checks.
+    const obsQNew = query(collection(db, 'identifierObservations'), where('ownerId', '==', ownerId), limit(mergedLimits.maxObservations));
+    const obsQLegacy = query(collection(db, 'identifierObservations'), where('observerUid', '==', ownerId), limit(mergedLimits.maxObservations));
 
-    for (const d of obsSnap.docs) {
-      const obs = d.data() as IdentifierObservationRecord;
+    const [obsSnapNew, obsSnapLegacy] = await Promise.all([
+      getDocs(obsQNew),
+      getDocs(obsQLegacy)
+    ]);
+
+    const obsMap = new Map<string, IdentifierObservationRecord>();
+    for (const d of obsSnapNew.docs) {
+      obsMap.set(d.id, d.data() as IdentifierObservationRecord);
+    }
+    for (const d of obsSnapLegacy.docs) {
+      if (!obsMap.has(d.id)) {
+        obsMap.set(d.id, d.data() as IdentifierObservationRecord);
+      }
+    }
+
+    const allObs = Array.from(obsMap.entries()).slice(0, mergedLimits.maxObservations);
+    counts.observationsChecked = allObs.length;
+
+    for (const [docId, obs] of allObs) {
+      if (!obs.ownerId) {
+        reportIssue('observation-missing-owner-id', 'Observation is missing the ownerId field', 'warning', { docId, observationId: obs.observationId });
+      }
 
       // Check B: Observation document ID consistency
-      if (obs.observationId !== d.id) {
-        reportIssue('observation-id-mismatch', 'observationId field does not match document ID', 'error', { docId: d.id, observationId: obs.observationId });
+      if (obs.observationId !== docId) {
+        reportIssue('observation-id-mismatch', 'observationId field does not match document ID', 'error', { docId, observationId: obs.observationId });
       }
 
       // Check A: Observation -> identifier reference

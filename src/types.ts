@@ -35,6 +35,14 @@ export type IdentifierObservationRecord = {
   observationId: string;
   identifierKey: string;
   /**
+   * The owner/scope boundary for the observation record.
+   * Distinct from observerUid (the actual reporting/scanning user),
+   * though currently they are often the same for ordinary user observations.
+   * Existing pre-ownerId observations may lack this field.
+   * New observation writes should include it.
+   */
+  ownerId?: string;
+  /**
    * Observations are evidence/log records, not canonical object state.
    */
   observedAt: Timestamp;

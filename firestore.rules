@@ -146,6 +146,7 @@ service cloud.firestore {
         && isValidId(incoming().identifierKey)
         && incoming().observerKind == 'user'
         && incoming().observerUid == request.auth.uid
+        && incoming().ownerId == request.auth.uid
         && incoming().observedAt is timestamp
         && incoming().receivedAt is timestamp
         && incoming().createdAt is timestamp

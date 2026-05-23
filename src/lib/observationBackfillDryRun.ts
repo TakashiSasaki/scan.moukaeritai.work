@@ -152,15 +152,45 @@ export async function runObservationBackfillDryRun(
         let itemNotes: string[] = [];
 
         // Fetch real observations for this identifier
-        const obsQuery = query(
+        // New records use ownerId. Legacy records used observerUid.
+        // Query both and deduplicate.
+        const obsQNew = query(
           collection(db, 'identifierObservations'),
           where('identifierKey', '==', identifier.identifierKey),
-          where('observerUid', '==', ownerId), // Enforce owner scope for observations
+          where('ownerId', '==', ownerId), // Enforce owner scope for observations
           orderBy('observedAt', 'asc'),
           limit(limits.maxObservations)
         );
-        const obsSnap = await getDocs(obsQuery);
-        const observations = obsSnap.docs.map(d => d.data() as IdentifierObservationRecord);
+        const obsQLegacy = query(
+          collection(db, 'identifierObservations'),
+          where('identifierKey', '==', identifier.identifierKey),
+          where('observerUid', '==', ownerId), // Enforce owner scope for legacy observations
+          orderBy('observedAt', 'asc'),
+          limit(limits.maxObservations)
+        );
+
+        const [obsSnapNew, obsSnapLegacy] = await Promise.all([
+            getDocs(obsQNew),
+            getDocs(obsQLegacy)
+        ]);
+
+        const obsMap = new Map<string, IdentifierObservationRecord>();
+        for (const d of obsSnapNew.docs) {
+            obsMap.set(d.id, d.data() as IdentifierObservationRecord);
+        }
+        for (const d of obsSnapLegacy.docs) {
+            if (!obsMap.has(d.id)) {
+                obsMap.set(d.id, d.data() as IdentifierObservationRecord);
+            }
+        }
+
+        const observations = Array.from(obsMap.values());
+
+        // Add note if ownerId is missing on any queried observations for this identifier
+        const missingOwnerIdCount = observations.filter(o => !o.ownerId).length;
+        if (missingOwnerIdCount > 0) {
+            itemNotes.push(`Found ${missingOwnerIdCount} observation(s) missing ownerId.`);
+        }
 
         // A. Discovery State
         if (!identifier.discoveryState) {
@@ -340,15 +370,38 @@ export async function runObservationBackfillDryRun(
 
             for (const bindingSnap of bindingsSnap.docs) {
                 const binding = bindingSnap.data() as ObjectIdentifierBindingRecord;
-                const obsQuery = query(
+
+                const obsQNew = query(
                     collection(db, 'identifierObservations'),
                     where('identifierKey', '==', binding.identifierKey),
-                    where('observerUid', '==', ownerId), // Enforce owner scope for observations
+                    where('ownerId', '==', ownerId),
                     orderBy('observedAt', 'asc'),
                     limit(limits.maxObservations)
                 );
-                const obsSnap = await getDocs(obsQuery);
-                allObservations.push(...obsSnap.docs.map(d => d.data() as IdentifierObservationRecord));
+                const obsQLegacy = query(
+                    collection(db, 'identifierObservations'),
+                    where('identifierKey', '==', binding.identifierKey),
+                    where('observerUid', '==', ownerId),
+                    orderBy('observedAt', 'asc'),
+                    limit(limits.maxObservations)
+                );
+
+                const [obsSnapNew, obsSnapLegacy] = await Promise.all([
+                    getDocs(obsQNew),
+                    getDocs(obsQLegacy)
+                ]);
+
+                const obsMap = new Map<string, IdentifierObservationRecord>();
+                for (const d of obsSnapNew.docs) {
+                    obsMap.set(d.id, d.data() as IdentifierObservationRecord);
+                }
+                for (const d of obsSnapLegacy.docs) {
+                    if (!obsMap.has(d.id)) {
+                        obsMap.set(d.id, d.data() as IdentifierObservationRecord);
+                    }
+                }
+
+                allObservations.push(...Array.from(obsMap.values()));
             }
 
             if (allObservations.length > 0) {
