@@ -1,28 +1,33 @@
---- src/components/UnassignedIdentifierScreen.tsx
-+++ src/components/UnassignedIdentifierScreen.tsx
-@@ -58,12 +58,6 @@
-             return;
-         }
+--- functions/src/scanExecuteImportedObservationBatch.ts
++++ functions/src/scanExecuteImportedObservationBatch.ts
+@@ -16,7 +16,9 @@
+     throw new HttpsError("permission-denied", "You do not have administrative privileges.");
+   }
 
--        if (validation.isIdempotent) {
--            // Already attached
--            navigate(`/object/${objectId}`);
--            return;
--        }
--
-         const batch = writeBatch(db);
+-  const { mode, ownerId, identifierKeys, maxBatchSize = 20 } = request.data;
++  const data = request.data || {};
++  const { mode, ownerId, identifierKeys } = data;
++  const rawMaxBatchSize = data.maxBatchSize;
 
-         // 1. Update/Create Identifier
-@@ -149,7 +143,11 @@
-         });
+   if (mode !== "dryRun") {
+     throw new HttpsError("invalid-argument", "Only dryRun mode is supported.");
+@@ -30,8 +32,19 @@
+     throw new HttpsError("invalid-argument", "identifierKeys must be a non-empty array of strings.");
+   }
 
-         await batch.commit();
--        toast.success('Identifier attached.');
-+        if (validation.isIdempotent) {
-+            toast.success('Identifier is already attached to this object.');
-+        } else {
-+            toast.success('Identifier attached.');
-+        }
-         navigate(`/object/${objectId}`);
-     } catch (err: any) {
-         toast.error(err.message || 'Failed to attach identifier');
++  for (const key of identifierKeys) {
++    if (!key || typeof key !== "string") {
++      throw new HttpsError("invalid-argument", "All elements in identifierKeys must be non-empty strings.");
++    }
++  }
++
++  let maxBatchSize = 20;
++  if (rawMaxBatchSize !== undefined) {
++    if (typeof rawMaxBatchSize !== "number" || !Number.isFinite(rawMaxBatchSize) || rawMaxBatchSize < 1) {
++      throw new HttpsError("invalid-argument", "maxBatchSize must be a finite positive number.");
++    }
++    maxBatchSize = rawMaxBatchSize;
++  }
++
+   const uniqueIdentifierKeys = Array.from(new Set(identifierKeys));
+   const effectiveMaxBatchSize = Math.min(maxBatchSize, 20);

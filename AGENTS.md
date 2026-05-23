@@ -275,13 +275,15 @@ The application has transitioned from a simple `items` collection to a normalize
   - `tag-1.0.0` is the immutable migration source baseline.
   - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
   - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
-  - Current phase is Phase 6B. (Proceeding on the `1.6.x` version line)
+  - Current phase is Phase 7A. (Proceeding on the `1.7.x` version line)
   - Phase 6A imported observation dry-run document is `docs/migrations/phase-6a-imported-observation-dry-run.md`.
   - Phase 6B imported observation execute plan document is `docs/migrations/phase-6b-imported-observation-execute-plan.md`.
+  - Phase 7A backend imported observation revalidation dry-run document is `docs/migrations/phase-7a-backend-imported-observation-revalidation-dry-run.md`.
+  - Phase 7A is backend dry-run only. Agents must not implement Phase 7B unless explicitly instructed.
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
   - `docs/architecture/deterministic-uuid.md` is the authoritative deterministic UUID namespace document.
   - `src/lib/deterministicUuid.ts` may contain the constant but must point to the permanent document.
-  - Phase 6B is design-only. Agents must not implement Phase 7 unless explicitly instructed.
+  - Cloud Functions must use app-prefixed names. GitHub Actions must not use broad functions deploy. New functions must be deployed by explicit function name if deployment workflow is updated.
   - Agents must not create imported/synthetic observations.
   - Agents must not add execute/apply/repair controls.
   - Agents must not broaden Firestore rules for client-created imported observations.
