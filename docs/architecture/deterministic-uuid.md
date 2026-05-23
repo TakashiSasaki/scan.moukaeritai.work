@@ -4,7 +4,8 @@ The application uses an application-wide UUIDv5 namespace for generating determi
 
 **Application UUIDv5 Namespace:** `e23891cf-81cd-4231-b750-836376f90efe`
 
-*   **Generated On:** May 23, 2024 (Generated once as UUIDv4)
+*   **Recorded On:** May 23, 2026
+*   **Generation:** Generated once as UUIDv4 during Phase 6-prep.
 *   **Purpose:** Application-wide namespace for deterministic UUIDv5 generation from canonical JSON payloads.
 *   **Scope:** This is a permanent application-wide policy, not restricted to Phase 6.
 
