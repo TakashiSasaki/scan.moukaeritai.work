@@ -3,7 +3,7 @@
 ## Status
 
 State:
-- Current phase: Phase 6B — Imported observation execute design and safety plan.
+- Current phase: Phase 7A — Backend imported observation revalidation dry-run.
 - Version line: Phase 6B remains on the `1.6.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
@@ -119,10 +119,18 @@ Phase 6A: Optional imported observations dry-run (Completed)
 - Does not create imported observation records.
 - See [Phase 6A: Imported Observation Dry Run](phase-6a-imported-observation-dry-run.md).
 
-Phase 6B: Imported observation execute design and safety plan (Current)
+Phase 6B: Imported observation execute design and safety plan (Completed)
 - Designs a future limited execution path for imported baseline observations.
 - Does not create imported observations or provide an executable path.
 - See [Phase 6B: Imported Observation Execute Plan](phase-6b-imported-observation-execute-plan.md).
+
+Phase 7A: Backend imported observation revalidation dry-run (Current)
+- Backend dry-run only.
+- Does not create imported observations.
+- See [Phase 7A: Backend Imported Observation Revalidation Dry Run](phase-7a-backend-imported-observation-revalidation-dry-run.md).
+
+Phase 7B: Limited execute (Future)
+- May later implement limited execute if explicitly approved.
 
 Phase 7: Limited execute and verification
 - Handle limited execute of backfill or imported observations if explicitly approved based on the Phase 6B design.

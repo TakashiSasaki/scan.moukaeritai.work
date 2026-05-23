@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.migrateInventoryModel = exports.getClientIp = exports.describeImage = exports.identifyMatches = exports.getAppMetrics = void 0;
+exports.scanExecuteImportedObservationBatch = exports.migrateInventoryModel = exports.getClientIp = exports.describeImage = exports.identifyMatches = exports.getAppMetrics = void 0;
+const scanExecuteImportedObservationBatch_1 = require("./scanExecuteImportedObservationBatch");
+Object.defineProperty(exports, "scanExecuteImportedObservationBatch", { enumerable: true, get: function () { return scanExecuteImportedObservationBatch_1.scanExecuteImportedObservationBatch; } });
 const https_1 = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const firestore_1 = require("firebase-admin/firestore");
