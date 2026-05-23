@@ -120,19 +120,19 @@ The intended future write payload shape, consistent with Phase 6A preview:
 
 The `metadata.migration` object should include the following fields:
 
-* `migration.name`
-* `migration.phase`
-* `migration.version`
-* `migration.baseline`
-* `migration.importedFrom`
-* `migration.sourceIdentifierKey`
-* `migration.sourceObjectId` (When applicable)
-* `migration.timestampSource`
-* `migration.observedAtIsInferred`
-* `migration.deterministicIdNamespace`
-* `migration.deterministicIdPayloadSchemaVersion`
-* `migration.deterministicIdPayloadHash` (Optional hash of the canonical UUIDv5 payload, useful for audit/debugging)
-* `migration.executedBy` (UID or backend actor identifier for the admin/backend execution actor in Phase 7)
+* `name`
+* `phase`
+* `version`
+* `baseline`
+* `importedFrom`
+* `sourceIdentifierKey`
+* `sourceObjectId` (When applicable)
+* `timestampSource`
+* `observedAtIsInferred`
+* `deterministicIdNamespace`
+* `deterministicIdPayloadSchemaVersion`
+* `deterministicIdPayloadHash` (Optional hash of the canonical UUIDv5 payload, useful for audit/debugging)
+* `executedBy` (UID or backend actor identifier for the admin/backend execution actor in Phase 7)
 
 ## Batch sizing and limits
 
