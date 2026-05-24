@@ -77,6 +77,10 @@ To prevent confusion across systems, note the following distinct identifiers use
 - **Port**: Always runs on port **3000**.
 - **HMR**: Disabled by platform. Rebuilds occur on file save/turn completion.
 - **Environment Variables**: Use `.env.example` as a template.
+- **Local Validation Dependency Order**:
+  - Always install root dependencies (`npm ci` preferred, `npm install` only when lockfile updates are intended) before running root `npm run lint` / `npm run build`.
+  - Always install dependencies inside `functions/` (`cd functions && npm ci` preferred) before running `cd functions && npm run build`.
+  - Do not classify missing dependency/module errors (for example `vite not found`, `react`, `firebase/*`) as source-code defects until dependency installation is completed in the corresponding directory.
 
 ## 6. Firebase Configuration (Database & Storage)
 - **Firestore Schema Architecture**:
@@ -275,12 +279,13 @@ The application has transitioned from a simple `items` collection to a normalize
   - `tag-1.0.0` is the immutable migration source baseline.
   - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
   - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
-  - Current phase is Phase 7C. (Proceeding on the `1.7.x` version line)
+  - Current phase is Phase 7D. (Proceeding on the `1.7.x` version line)
   - Phase 6A imported observation dry-run document is `docs/migrations/phase-6a-imported-observation-dry-run.md`.
   - Phase 6B imported observation execute plan document is `docs/migrations/phase-6b-imported-observation-execute-plan.md`.
   - Phase 7A backend imported observation revalidation dry-run document is `docs/migrations/phase-7a-backend-imported-observation-revalidation-dry-run.md`.
   - Phase 7B limited imported observation execute document is `docs/migrations/phase-7b-limited-imported-observation-execute.md`.
   - Phase 7C controlled execution readiness runbook document is `docs/migrations/phase-7c-controlled-execution-runbook.md`.
+  - Phase 7D GitHub Actions controlled dry-run preparation document is `docs/migrations/phase-7d-github-actions-controlled-dry-run.md`.
   - Phase 7B permits backend limited execute mode with small batch sizes only. There is no web migration screen execute UI or AdminPanel UI for execution. Do not broaden Firestore rules for clients. Do not create migrationRuns collections or update identifiers/objects/bindings/events.
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
   - `docs/architecture/deterministic-uuid.md` is the authoritative deterministic UUID namespace document.
@@ -291,10 +296,13 @@ The application has transitioned from a simple `items` collection to a normalize
   - Agents must not broaden Firestore rules for client-created imported observations.
   - Future execution must use backend/Admin SDK authorization, not ordinary client Firestore writes.
   - Observation-only runtime writes must continue to use `src/lib/identifierObservations.ts`.
-  - Phase 7C is runbook/readiness only and does not execute migration writes.
+  - Phase 7D is GitHub Actions dry-run preparation only and does not execute migration writes.
   - Agents must not execute the `scanExecuteImportedObservationBatch` callable function.
+  - Agents must not invoke execute mode for imported observation migration in Phase 7D.
+  - Agents must not deploy for Phase 7D dry-run preparation tasks.
   - Agents must not add AdminPanel or web migration execute/apply/repair controls.
   - Agents must not broaden Firestore rules for imported observations.
+  - Final controlled imported observation execution is reserved for Phase 7E with separate explicit approval.
   - Agents must not modify execution behavior unless explicitly instructed for a later phase.
 
 - **Source of Truth**:
