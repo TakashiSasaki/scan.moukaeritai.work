@@ -51,6 +51,7 @@ Exact deployment command used by GitHub Actions:
 
 ## Pre-merge checklist
 
+- after dependency install (`npm ci` at repository root and `cd functions && npm ci` in `functions/`)
 - root `npm run lint`
 - root `npm run build`
 - `cd functions && npm run build`
@@ -77,7 +78,7 @@ Exact deployment command used by GitHub Actions:
 - use `cd functions && npm ci` when lockfile is in sync
 - if lockfile refresh is intentionally needed in functions, use `cd functions && npm install`
 - run `cd functions && npm run build` only after functions dependency install
-- functions build failures must not be dismissed as environment-only unless they are reproduced after `cd functions && npm ci`
+- functions build failures must not be dismissed as environment-only until after running `cd functions && npm ci`
 
 ## Pre-execution checklist
 
