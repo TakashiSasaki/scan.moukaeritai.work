@@ -77,6 +77,10 @@ To prevent confusion across systems, note the following distinct identifiers use
 - **Port**: Always runs on port **3000**.
 - **HMR**: Disabled by platform. Rebuilds occur on file save/turn completion.
 - **Environment Variables**: Use `.env.example` as a template.
+- **Local Validation Dependency Order**:
+  - Always install root dependencies (`npm ci` preferred, `npm install` only when lockfile updates are intended) before running root `npm run lint` / `npm run build`.
+  - Always install dependencies inside `functions/` (`cd functions && npm ci` preferred) before running `cd functions && npm run build`.
+  - Do not classify missing dependency/module errors (for example `vite not found`, `react`, `firebase/*`) as source-code defects until dependency installation is completed in the corresponding directory.
 
 ## 6. Firebase Configuration (Database & Storage)
 - **Firestore Schema Architecture**:

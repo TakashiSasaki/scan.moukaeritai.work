@@ -51,6 +51,7 @@ Exact deployment command used by GitHub Actions:
 
 ## Pre-merge checklist
 
+- after dependency install (`npm ci` at repository root and `cd functions && npm ci` in `functions/`)
 - root `npm run lint`
 - root `npm run build`
 - `cd functions && npm run build`
@@ -59,6 +60,25 @@ Exact deployment command used by GitHub Actions:
 - verify no web execute UI was added
 - verify no migrationRuns collection was introduced
 - verify no identifier/object/binding/event update path was added
+
+## Local validation environment
+
+- root validation requires installing root dependencies first
+- use `npm ci` at repository root when lockfile is in sync
+- if lockfile refresh is intentionally needed, use `npm install` at repository root
+- run root checks only after install:
+  - `npm run lint`
+  - `npm run build`
+- `vite not found` usually indicates root dependencies are not installed
+- missing `react` or `firebase/*` module/type errors at root usually indicate root dependencies are not installed
+- if React type declarations are still unresolved after install, add root devDependencies:
+  - `@types/react`
+  - `@types/react-dom`
+- functions validation requires a separate install under `functions/`
+- use `cd functions && npm ci` when lockfile is in sync
+- if lockfile refresh is intentionally needed in functions, use `cd functions && npm install`
+- run `cd functions && npm run build` only after functions dependency install
+- functions build failures must not be dismissed as environment-only until after running `cd functions && npm ci`
 
 ## Pre-execution checklist
 
