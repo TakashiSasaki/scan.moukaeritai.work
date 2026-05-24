@@ -291,11 +291,11 @@ The application has transitioned from a simple `items` collection to a normalize
   - Agents must not broaden Firestore rules for client-created imported observations.
   - Future execution must use backend/Admin SDK authorization, not ordinary client Firestore writes.
   - Observation-only runtime writes must continue to use `src/lib/identifierObservations.ts`.
-- Phase 7C is runbook/readiness only and does not execute migration writes.
-- Agents must not execute the `scanExecuteImportedObservationBatch` callable function.
-- Agents must not add AdminPanel or web migration execute/apply/repair controls.
-- Agents must not broaden Firestore rules for imported observations.
-- Agents must not modify execution behavior unless explicitly instructed for a later phase.
+  - Phase 7C is runbook/readiness only and does not execute migration writes.
+  - Agents must not execute the `scanExecuteImportedObservationBatch` callable function.
+  - Agents must not add AdminPanel or web migration execute/apply/repair controls.
+  - Agents must not broaden Firestore rules for imported observations.
+  - Agents must not modify execution behavior unless explicitly instructed for a later phase.
 
 - **Source of Truth**:
   - `firebase-blueprint.json` defines the new schema boundaries.
