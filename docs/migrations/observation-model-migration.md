@@ -3,8 +3,8 @@
 ## Status
 
 State:
-- Current phase: Phase 7B — Limited imported observation execute without UI.
-- Version line: Phase 7B proceeds on the `1.7.x` version line.
+- Current phase: Phase 7C — Controlled execution readiness and verification runbook.
+- Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
 - The legacy `items` -> normalized model migration is completed.
@@ -129,7 +129,7 @@ Phase 7A: Backend imported observation revalidation dry-run (Completed)
 - Does not create imported observations.
 - See [Phase 7A: Backend Imported Observation Revalidation Dry Run](phase-7a-backend-imported-observation-revalidation-dry-run.md).
 
-Phase 7B: Limited imported observation execute without UI (Current)
+Phase 7B: Limited imported observation execute without UI (Completed)
 - Allows limited backend/Admin SDK writes for imported observations.
 - No AdminPanel execute UI.
 - Requires server-side revalidation of candidates.
@@ -137,11 +137,13 @@ Phase 7B: Limited imported observation execute without UI (Current)
 - Does not update identifiers/objects/bindings/events.
 - See [Phase 7B: Limited Imported Observation Execute](phase-7b-limited-imported-observation-execute.md).
 
-Phase 7C: Limited execute and verification (Future)
-- Handle limited execute of backfill if explicitly approved based on the Phase 6B design.
-- Execute backfill in limited batches.
-- Re-run diagnostics.
-- Verify no existing invariants are broken.
+Phase 7C: Controlled execution readiness and verification runbook (Current)
+- Documentation/readiness only for the first controlled execution.
+- Does not execute anything.
+- Does not deploy anything.
+- Does not mutate production data.
+- Prepares the first controlled execution procedure; execution still requires separate manual approval.
+- See [Phase 7C: Controlled Execution Readiness and Verification Runbook](phase-7c-controlled-execution-runbook.md).
 
 Phase 8: Archive/remove legacy migration tools
 - Archive or remove old legacy migration UI/function after the new migration path is stable.
