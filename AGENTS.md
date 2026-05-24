@@ -275,11 +275,12 @@ The application has transitioned from a simple `items` collection to a normalize
   - `tag-1.0.0` is the immutable migration source baseline.
   - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
   - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
-  - Current phase is Phase 7B. (Proceeding on the `1.7.x` version line)
+  - Current phase is Phase 7C. (Proceeding on the `1.7.x` version line)
   - Phase 6A imported observation dry-run document is `docs/migrations/phase-6a-imported-observation-dry-run.md`.
   - Phase 6B imported observation execute plan document is `docs/migrations/phase-6b-imported-observation-execute-plan.md`.
   - Phase 7A backend imported observation revalidation dry-run document is `docs/migrations/phase-7a-backend-imported-observation-revalidation-dry-run.md`.
   - Phase 7B limited imported observation execute document is `docs/migrations/phase-7b-limited-imported-observation-execute.md`.
+- Phase 7C controlled execution readiness runbook document is `docs/migrations/phase-7c-controlled-execution-runbook.md`.
   - Phase 7B permits backend limited execute mode with small batch sizes only. There is no web migration screen execute UI or AdminPanel UI for execution. Do not broaden Firestore rules for clients. Do not create migrationRuns collections or update identifiers/objects/bindings/events.
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
   - `docs/architecture/deterministic-uuid.md` is the authoritative deterministic UUID namespace document.
@@ -290,6 +291,11 @@ The application has transitioned from a simple `items` collection to a normalize
   - Agents must not broaden Firestore rules for client-created imported observations.
   - Future execution must use backend/Admin SDK authorization, not ordinary client Firestore writes.
   - Observation-only runtime writes must continue to use `src/lib/identifierObservations.ts`.
+- Phase 7C is runbook/readiness only and does not execute migration writes.
+- Agents must not execute the `scanExecuteImportedObservationBatch` callable function.
+- Agents must not add AdminPanel or web migration execute/apply/repair controls.
+- Agents must not broaden Firestore rules for imported observations.
+- Agents must not modify execution behavior unless explicitly instructed for a later phase.
 
 - **Source of Truth**:
   - `firebase-blueprint.json` defines the new schema boundaries.
