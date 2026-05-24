@@ -47,7 +47,7 @@ Phase 7D prepares a GitHub Actions based, controlled dry-run path for first cont
 - no Firestore writes
 - input `owner_id` must be explicit
 - input `identifier_keys_json` must be explicit
-- `identifier_keys_json` must be limited to at most 5 keys for controlled execution parity
+- `identifier_keys_json` must be limited to at most 5 unique keys for controlled execution parity
 - workflow prints a bounded dry-run summary
 - workflow must not print secrets
 - workflow must not store production data outside workflow logs except optional manually copied summaries
