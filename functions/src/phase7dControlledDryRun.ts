@@ -85,8 +85,8 @@ async function runDryRun(): Promise<void> {
   if (uniqueIdentifierKeys.length === 0) {
     throw new Error("identifier_keys_json must include at least one identifier key.");
   }
-  if (uniqueIdentifierKeys.length > maxBatchSize || uniqueIdentifierKeys.length > MAX_KEYS_HARD_LIMIT) {
-    throw new Error(`identifier_keys_json contains too many keys. Max allowed is ${maxBatchSize} (hard limit ${MAX_KEYS_HARD_LIMIT}).`);
+  if (uniqueIdentifierKeys.length > maxBatchSize) {
+    throw new Error(`identifier_keys_json contains too many keys. Max allowed is ${maxBatchSize}.`);
   }
 
   const app = initAdminApp();
