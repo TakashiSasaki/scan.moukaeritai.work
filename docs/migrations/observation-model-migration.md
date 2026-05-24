@@ -4,7 +4,7 @@
 
 State:
 - Current phase: Phase 7C — Controlled execution readiness and verification runbook.
-- Version line: Phase 7B proceeds on the `1.7.x` version line.
+- Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
 - The legacy `items` -> normalized model migration is completed.
