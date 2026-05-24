@@ -1,0 +1,47 @@
+name: Phase 7D Imported Observation Dry Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      owner_id:
+        description: "Target ownerId (explicit, required)"
+        required: true
+        type: string
+      identifier_keys_json:
+        description: "JSON array of identifier keys (explicit, required, max 5)"
+        required: true
+        type: string
+      max_batch_size:
+        description: "Optional max batch size (default 5, hard limit 5)"
+        required: false
+        default: "5"
+        type: string
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+      OWNER_ID: ${{ inputs.owner_id }}
+      IDENTIFIER_KEYS_JSON: ${{ inputs.identifier_keys_json }}
+      MAX_BATCH_SIZE: ${{ inputs.max_batch_size }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Function Dependencies
+        run: npm ci
+        working-directory: ./functions
+
+      - name: Build Functions
+        run: npm run build
+        working-directory: ./functions
+
+      - name: Run Phase 7D Read-only Dry Run
+        run: node lib/phase7dControlledDryRun.js
+        working-directory: ./functions

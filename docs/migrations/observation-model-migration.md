@@ -3,7 +3,7 @@
 ## Status
 
 State:
-- Current phase: Phase 7C — Controlled execution readiness and verification runbook.
+- Current phase: Phase 7D — GitHub Actions controlled dry-run preparation.
 - Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
@@ -137,13 +137,21 @@ Phase 7B: Limited imported observation execute without UI (Completed)
 - Does not update identifiers/objects/bindings/events.
 - See [Phase 7B: Limited Imported Observation Execute](phase-7b-limited-imported-observation-execute.md).
 
-Phase 7C: Controlled execution readiness and verification runbook (Current)
+Phase 7C: Controlled execution readiness and verification runbook (Completed)
 - Documentation/readiness only for the first controlled execution.
 - Does not execute anything.
 - Does not deploy anything.
 - Does not mutate production data.
 - Prepares the first controlled execution procedure; execution still requires separate manual approval.
 - See [Phase 7C: Controlled Execution Readiness and Verification Runbook](phase-7c-controlled-execution-runbook.md).
+
+Phase 7D: GitHub Actions controlled dry-run preparation (Current)
+- Dry-run only through GitHub Actions controlled path preparation.
+- Prepares workflow_dispatch inputs and bounded dry-run output checks.
+- Does not execute final migration writes.
+- Does not create imported observations.
+- Final controlled execution is reserved for Phase 7E with separate explicit approval.
+- See [Phase 7D: GitHub Actions Controlled Dry-run Preparation](phase-7d-github-actions-controlled-dry-run.md).
 
 Phase 8: Archive/remove legacy migration tools
 - Archive or remove old legacy migration UI/function after the new migration path is stable.
