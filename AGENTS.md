@@ -280,7 +280,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - Phase 6B imported observation execute plan document is `docs/migrations/phase-6b-imported-observation-execute-plan.md`.
   - Phase 7A backend imported observation revalidation dry-run document is `docs/migrations/phase-7a-backend-imported-observation-revalidation-dry-run.md`.
   - Phase 7B limited imported observation execute document is `docs/migrations/phase-7b-limited-imported-observation-execute.md`.
-- Phase 7C controlled execution readiness runbook document is `docs/migrations/phase-7c-controlled-execution-runbook.md`.
+  - Phase 7C controlled execution readiness runbook document is `docs/migrations/phase-7c-controlled-execution-runbook.md`.
   - Phase 7B permits backend limited execute mode with small batch sizes only. There is no web migration screen execute UI or AdminPanel UI for execution. Do not broaden Firestore rules for clients. Do not create migrationRuns collections or update identifiers/objects/bindings/events.
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
   - `docs/architecture/deterministic-uuid.md` is the authoritative deterministic UUID namespace document.
