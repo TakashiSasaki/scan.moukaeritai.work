@@ -30,21 +30,23 @@ interface DryRunSummary {
   errors: Array<{ identifierKey: string; message: string }>;
 }
 
+const IDENTIFIER_KEYS_INPUT_LABEL = "IDENTIFIER_KEYS_JSON (workflow input: identifier_keys_json)";
+
 function parseIdentifierKeys(raw: string): string[] {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch (error) {
-    throw new Error(`identifier_keys_json must be valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`${IDENTIFIER_KEYS_INPUT_LABEL} must be valid JSON: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   if (!Array.isArray(parsed)) {
-    throw new Error("identifier_keys_json must be a JSON array of strings.");
+    throw new Error(`${IDENTIFIER_KEYS_INPUT_LABEL} must be a JSON array of strings.`);
   }
 
   const keys = parsed.filter((v): v is string => typeof v === "string").map((k) => k.trim()).filter(Boolean);
   if (keys.length !== parsed.length) {
-    throw new Error("identifier_keys_json must contain only non-empty strings.");
+    throw new Error(`${IDENTIFIER_KEYS_INPUT_LABEL} must contain only non-empty strings.`);
   }
 
   return Array.from(new Set(keys));
