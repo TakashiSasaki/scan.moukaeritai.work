@@ -166,7 +166,15 @@ async function runDryRun(): Promise<void> {
         .where("observerUid", "==", ownerId)
         .limit(OBSERVATION_QUERY_LIMIT);
 
-      const [obsSnapNew, obsSnapLegacy] = await Promise.all([obsQueryNew.get(), obsQueryLegacy.get()]);
+      let obsSnapNew;
+      let obsSnapLegacy;
+      try {
+        [obsSnapNew, obsSnapLegacy] = await Promise.all([obsQueryNew.get(), obsQueryLegacy.get()]);
+      } catch (err: any) {
+        summary.skipped.push({ identifierKey, reason: "observation-check-failed", notes: err?.message });
+        summary.counts.skipped++;
+        continue;
+      }
       if (obsSnapNew.docs.length === OBSERVATION_QUERY_LIMIT || obsSnapLegacy.docs.length === OBSERVATION_QUERY_LIMIT) {
         summary.skipped.push({ identifierKey, reason: "observation-check-limit-hit" });
         summary.counts.skipped++;
@@ -202,7 +210,14 @@ async function runDryRun(): Promise<void> {
         ownerId,
         identifierKey,
       };
-      const observationId = uuidV5FromCanonicalPayload(deterministicPayload);
+      let observationId;
+      try {
+        observationId = uuidV5FromCanonicalPayload(deterministicPayload);
+      } catch (err: any) {
+        summary.skipped.push({ identifierKey, reason: "uuid-generation-failed", notes: err?.message });
+        summary.counts.skipped++;
+        continue;
+      }
 
       if (existingObservations.has(observationId)) {
         summary.counts.conflicts++;
@@ -210,10 +225,16 @@ async function runDryRun(): Promise<void> {
         summary.counts.skipped++;
         continue;
       }
-      const detObsDoc = await db.collection("identifierObservations").doc(observationId).get();
-      if (detObsDoc.exists) {
-        summary.counts.conflicts++;
-        summary.skipped.push({ identifierKey, reason: "deterministic-observation-already-exists" });
+      try {
+        const detObsDoc = await db.collection("identifierObservations").doc(observationId).get();
+        if (detObsDoc.exists) {
+          summary.counts.conflicts++;
+          summary.skipped.push({ identifierKey, reason: "deterministic-observation-already-exists" });
+          summary.counts.skipped++;
+          continue;
+        }
+      } catch (err: any) {
+        summary.skipped.push({ identifierKey, reason: "deterministic-observation-check-failed", notes: err?.message });
         summary.counts.skipped++;
         continue;
       }
