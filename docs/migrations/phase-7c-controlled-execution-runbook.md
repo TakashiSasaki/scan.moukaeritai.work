@@ -51,6 +51,7 @@ Exact deployment command used by GitHub Actions:
 
 ## Pre-merge checklist
 
+- after dependency install (`npm ci` at repository root and `cd functions && npm ci` in `functions/`)
 - root `npm run lint`
 - root `npm run build`
 - `cd functions && npm run build`
