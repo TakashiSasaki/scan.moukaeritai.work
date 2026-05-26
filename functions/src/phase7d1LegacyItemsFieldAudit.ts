@@ -9,12 +9,32 @@ if (!admin.apps.length) {
 const { getFirestore } = require("firebase-admin/firestore");
 const db = getFirestore(admin.app(), "photo-moukaeritai-work");
 
+// Explicit runtime write-safety mechanism to prevent accidental regression
+const preventWrite = () => {
+  throw new Error("WRITE PREVENTED: This is a read-only audit script.");
+};
+const DocumentReference = require("firebase-admin/firestore").DocumentReference;
+if (DocumentReference && DocumentReference.prototype) {
+  DocumentReference.prototype.set = preventWrite;
+  DocumentReference.prototype.update = preventWrite;
+  DocumentReference.prototype.delete = preventWrite;
+  DocumentReference.prototype.create = preventWrite;
+}
+const WriteBatch = require("firebase-admin/firestore").WriteBatch;
+if (WriteBatch && WriteBatch.prototype) {
+  WriteBatch.prototype.commit = preventWrite;
+}
+
 async function runFieldAudit() {
   console.log("Starting Phase 7D.1 Legacy Items Field Audit...");
 
   const ownerId = process.env.OWNER_ID;
   const limitStr = process.env.LIMIT || "50";
-  const limit = parseInt(limitStr, 10);
+  let limit = parseInt(limitStr, 10);
+  if (!Number.isInteger(limit) || limit <= 0) {
+    console.warn(`Invalid LIMIT provided: "${limitStr}". Defaulting to 50.`);
+    limit = 50;
+  }
   const includeSamples = process.env.INCLUDE_SAMPLES === 'true';
 
   console.log(`Config: ownerId=${ownerId || 'ALL'}, limit=${limit}, includeSamples=${includeSamples}`);
