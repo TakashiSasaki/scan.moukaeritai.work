@@ -29,6 +29,9 @@ async function runFieldAudit() {
   console.log("Starting Phase 7D.1 Legacy Items Field Audit...");
 
   const ownerId = process.env.OWNER_ID;
+  if (!ownerId) {
+    throw new Error("OWNER_ID is strictly required for this audit harness.");
+  }
   const limitStr = process.env.LIMIT || "50";
   let limit = parseInt(limitStr, 10);
   if (!Number.isInteger(limit) || limit <= 0) {
@@ -37,12 +40,10 @@ async function runFieldAudit() {
   }
   const includeSamples = process.env.INCLUDE_SAMPLES === 'true';
 
-  console.log(`Config: ownerId=${ownerId || 'ALL'}, limit=${limit}, includeSamples=${includeSamples}`);
+  console.log(`Config: ownerId=${ownerId}, limit=${limit}, includeSamples=${includeSamples}`);
 
   let query: admin.firestore.Query = db.collection('items');
-  if (ownerId) {
-    query = query.where('ownerId', '==', ownerId);
-  }
+  query = query.where('ownerId', '==', ownerId);
   query = query.limit(limit);
 
   const snapshot = await query.get();
