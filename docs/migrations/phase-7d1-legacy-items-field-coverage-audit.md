@@ -51,7 +51,7 @@ During the review of the current migration strategy, it was identified that `ite
 | `location` | `objects.currentLocation` | `migrated` | `functions/src/index.ts:400` | Mapped if lat/lng are numbers. |
 | `location.latitude` | `objects.currentLocation.latitude` | `migrated` | `functions/src/index.ts:399` | Required property of location. |
 | `location.longitude` | `objects.currentLocation.longitude` | `migrated` | `functions/src/index.ts:399` | Required property of location. |
-| `location.address` | N/A | `needs-decision` | Code mapping check `functions/src/index.ts:400` only checks lat/lng | Is `address` safely copied or explicitly skipped? Needs code review or decision. |
+| `location.address` | `objects.currentLocation.address` | `partially-migrated` | `functions/src/index.ts` assigns `objectData.currentLocation = item.location` when lat/lng are numeric | `address` is preserved when parent location passes numeric lat/lng validation. Live-data audit should verify if address-only or invalid-location cases exist. |
 | `mainImageUrl` | `objects.primaryImageUrl`, `objectImages` (role='primary') | `migrated` | `functions/src/index.ts:404,454` | Mapped and normalized into `objectImages`. |
 | `contextImageUrls` | `objectImages` (role='context') | `migrated` | `functions/src/index.ts:482` | Array iterates to individual images. |
 | `bluetoothTags` | N/A | `unmigrated-gap` | Not mapped in `functions/src/index.ts` | Complete drop of physical hardware identifiers. |
@@ -63,6 +63,10 @@ During the review of the current migration strategy, it was identified that `ite
 | `createdAt` | `objects.createdAt`, `identifiers.createdAt`, `objectIdentifierBindings.attachedAt`, `objectImages.createdAt` | `migrated` | Scattered across resources | Used extensively as creation timestamp fallback. |
 | `updatedAt` | `objects.updatedAt`, `identifiers.updatedAt`, `objectIdentifierBindings.updatedAt` | `migrated` | Scattered across resources | |
 
+## Conditional mapping to verify in live data
+
+* `location.address` (Verify if address-only or invalid lat/lng locations exist)
+
 ## Suspected gaps
 
 * `bluetoothTags`
@@ -71,7 +75,6 @@ During the review of the current migration strategy, it was identified that `ite
 * `bluetoothTags[].rssi`
 * `bluetoothTags[].linkedAt`
 * `tagType`
-* `location.address` (Possibly lost if only lat/lng are moved?)
 
 ## Possible decisions for bluetoothTags
 

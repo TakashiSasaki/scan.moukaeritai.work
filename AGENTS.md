@@ -243,7 +243,28 @@ For any data migration, schema change, normalization, import, backfill, or stora
 
 Execution must not proceed if any source field remains unclassified, `needs-decision`, or `unmigrated-gap`. For policy details, refer to `docs/migrations/migration-design-checklist.md`.
 
-## 17. Data Model Redesign (Objects & Identifiers)
+## 17. Migration completeness rule
+
+For any data migration, schema change, normalization, import, backfill, or storage reorganization, agents must require a source coverage audit and source-to-target mapping audit before implementation or execution.
+
+The audit must inspect:
+- source schema definitions
+- code that wrote the source data
+- field paths actually present in real source data
+
+Every source field must be classified as one of:
+- `migrated`
+- `partially-migrated`
+- `derived-only`
+- `preserved-as-legacy-reference`
+- `preserved-as-raw-snapshot`
+- `intentionally-discarded`
+- `unmigrated-gap`
+- `needs-decision`
+
+Agents must not proceed to execution if any source field is unclassified, `needs-decision`, or `unmigrated-gap`. Fields not migrated must be documented with explicit rationale. Silent data loss is not acceptable. Reference `docs/migrations/migration-design-checklist.md`.
+
+## 18. Data Model Redesign (Objects & Identifiers)
 
 The application has transitioned from a simple `items` collection to a normalized data model separating physical objects from their identifiers.
 
