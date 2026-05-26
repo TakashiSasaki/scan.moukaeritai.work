@@ -3,7 +3,7 @@
 ## Status
 
 State:
-- Current phase: Phase 7D — GitHub Actions controlled dry-run preparation.
+Current phase: Phase 7D.1 — Legacy items field coverage audit.
 - Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
@@ -145,13 +145,23 @@ Phase 7C: Controlled execution readiness and verification runbook (Completed)
 - Prepares the first controlled execution procedure; execution still requires separate manual approval.
 - See [Phase 7C: Controlled Execution Readiness and Verification Runbook](phase-7c-controlled-execution-runbook.md).
 
-Phase 7D: GitHub Actions controlled dry-run preparation (Current)
+Phase 7D: GitHub Actions controlled dry-run preparation (Completed)
 - Dry-run only through GitHub Actions controlled path preparation.
 - Prepares workflow_dispatch inputs and bounded dry-run output checks.
 - Does not execute final migration writes.
 - Does not create imported observations.
 - Final controlled execution is reserved for Phase 7E with separate explicit approval.
 - See [Phase 7D: GitHub Actions Controlled Dry-run Preparation](phase-7d-github-actions-controlled-dry-run.md).
+
+Phase 7D.1: Legacy items field coverage audit (Current)
+- Read-only audit only.
+- Phase 7E final execution remains blocked until the audit is reviewed.
+- `items.bluetoothTags` is a known suspected gap.
+- `items.tagType` is a known suspected gap or decision-needed field.
+- Additional fields may also require decisions.
+- Source-field coverage audit is required before future migration execution phases.
+- See [Phase 7D.1: Legacy Items Field Coverage Audit](phase-7d1-legacy-items-field-coverage-audit.md).
+- See [Migration Design Checklist](migration-design-checklist.md) for general migration rules.
 
 Phase 8: Archive/remove legacy migration tools
 - Archive or remove old legacy migration UI/function after the new migration path is stable.
