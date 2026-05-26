@@ -237,6 +237,12 @@ To support the creation of small, efficient QR codes, the system utilizes QR Cod
 - **Routing**: Legacy `/item/:id` URLs redirect to `/object/:id` via `RouteCatalog`, but new design should prefer identifier lookup.
 - **Generation**: Newly generated `objectId`s and normalized identifier tokens MUST always be exclusively uppercase (e.g., `OBJECT-XYZ123`).
 
+## General migration completeness rule
+
+For any data migration, schema change, normalization, import, backfill, or storage reorganization, agents must require a source coverage audit and source-to-target mapping audit before implementation or execution.
+
+Execution must not proceed if any source field remains unclassified, `needs-decision`, or `unmigrated-gap`. For policy details, refer to `docs/migrations/migration-design-checklist.md`.
+
 ## 17. Data Model Redesign (Objects & Identifiers)
 
 The application has transitioned from a simple `items` collection to a normalized data model separating physical objects from their identifiers.
@@ -279,13 +285,15 @@ The application has transitioned from a simple `items` collection to a normalize
   - `tag-1.0.0` is the immutable migration source baseline.
   - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
   - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
-  - Current phase is Phase 7D. (Proceeding on the `1.7.x` version line)
+  - Current phase is Phase 7D.1. (Proceeding on the `1.7.x` version line)
   - Phase 6A imported observation dry-run document is `docs/migrations/phase-6a-imported-observation-dry-run.md`.
   - Phase 6B imported observation execute plan document is `docs/migrations/phase-6b-imported-observation-execute-plan.md`.
   - Phase 7A backend imported observation revalidation dry-run document is `docs/migrations/phase-7a-backend-imported-observation-revalidation-dry-run.md`.
   - Phase 7B limited imported observation execute document is `docs/migrations/phase-7b-limited-imported-observation-execute.md`.
   - Phase 7C controlled execution readiness runbook document is `docs/migrations/phase-7c-controlled-execution-runbook.md`.
   - Phase 7D GitHub Actions controlled dry-run preparation document is `docs/migrations/phase-7d-github-actions-controlled-dry-run.md`.
+  - Phase 7D.1 legacy items field coverage audit document is `docs/migrations/phase-7d1-legacy-items-field-coverage-audit.md`.
+  - Phase 7D.1 is a read-only source-field coverage audit. Agents must not execute migration, call execute mode, deploy, add UI execute controls, or broaden Firestore rules. Phase 7E remains blocked until audit decisions are made.
   - Phase 7B permits backend limited execute mode with small batch sizes only. There is no web migration screen execute UI or AdminPanel UI for execution. Do not broaden Firestore rules for clients. Do not create migrationRuns collections or update identifiers/objects/bindings/events.
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
   - `docs/architecture/deterministic-uuid.md` is the authoritative deterministic UUID namespace document.

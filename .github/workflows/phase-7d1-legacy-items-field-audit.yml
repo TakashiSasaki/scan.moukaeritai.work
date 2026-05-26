@@ -1,0 +1,62 @@
+name: "Phase 7D.1: Legacy Items Field Audit"
+
+on:
+  workflow_dispatch:
+    inputs:
+      owner_id:
+        description: "Owner ID to audit items for"
+        required: true
+        type: string
+      limit:
+        description: "Maximum number of documents to scan (default 50)"
+        required: false
+        default: "50"
+        type: string
+      include_samples:
+        description: "Include sample document IDs in the output"
+        required: false
+        default: "false"
+        type: boolean
+
+jobs:
+  audit_legacy_items:
+    name: "Run Legacy Items Field Audit"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: 'functions/package-lock.json'
+
+      - name: "Install Functions dependencies"
+        working-directory: ./functions
+        run: npm ci
+
+      - name: "Build Functions"
+        working-directory: ./functions
+        run: npm run build
+
+      - name: "Create Google Cloud credentials file"
+        run: |
+          echo "$GCP_SA_KEY" > /tmp/gcp_key.json
+        env:
+          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+
+      - name: "Run live-data audit script"
+        working-directory: ./functions
+        run: node lib/phase7d1LegacyItemsFieldAudit.js
+        env:
+          GCLOUD_PROJECT: "moukaeritaid"
+          GOOGLE_APPLICATION_CREDENTIALS: "/tmp/gcp_key.json"
+          OWNER_ID: ${{ inputs.owner_id }}
+          LIMIT: ${{ inputs.limit }}
+          INCLUDE_SAMPLES: ${{ inputs.include_samples }}
+
+      - name: "Cleanup credentials"
+        if: always()
+        run: rm -f /tmp/gcp_key.json
