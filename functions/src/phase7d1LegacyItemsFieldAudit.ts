@@ -49,7 +49,7 @@ async function runFieldAudit() {
   const snapshot = await query.get();
   console.log(`Fetched ${snapshot.size} documents.`);
 
-  const pathStats: Record<string, { count: number, types: Set<string>, sampleDocs: Set<string> }> = {};
+  const pathStats: Record<string, { count: number, types: Set<string>, sampleDocs: Set<string> }> = Object.create(null);
 
   const processObject = (obj: any, prefix = '', docId: string) => {
     if (obj === null) {
@@ -107,8 +107,8 @@ async function runFieldAudit() {
     if (path === '') continue; // Skip the root object itself
     report[path] = {
       count: stats.count,
-      types: Array.from(stats.types),
-      samples: includeSamples ? Array.from(stats.sampleDocs) : undefined
+      types: Array.from(stats.types).sort(),
+      samples: includeSamples ? Array.from(stats.sampleDocs).sort() : undefined
     };
   }
 
