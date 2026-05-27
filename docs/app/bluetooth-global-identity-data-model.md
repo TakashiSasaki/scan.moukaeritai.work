@@ -188,21 +188,22 @@ flowchart TD
 
 ## Deterministic ID payload
 
+The Bluetooth semantic identity payload is JCS-canonicalized. The UUIDv5 key is computed over the JCS UTF-8 payload.
+
 ```json
 {
   "app": "scan.moukaeritai.work",
   "idKind": "identifier",
-  "idPurpose": "legacy-bluetooth-tag",
+  "idPurpose": "canonical-identifier",
+  "identitySchemaVersion": 1,
+  "canonicalizationVersion": 1,
   "kind": "bluetooth",
   "scheme": "bluetooth-legacy-tag-id",
-  "schemaVersion": 1,
-  "migration": "observation-model-migration",
-  "migrationPhase": "phase-7d3",
-  "baseline": "tag-1.0.0",
-  "sourceCollection": "items",
-  "bluetoothTagCanonicalValue": "<canonicalizedBluetoothTagId>"
+  "canonicalValue": "<canonicalizedBluetoothTagId>"
 }
 ```
+
+*Note: Older migration sketches used a Bluetooth-specific field name (`bluetoothTagCanonicalValue`), but the canonical identity payload should now use the generic `canonicalValue` field.*
 
 * `legacyItemId` belongs in binding/provenance output, not identifier identity.
 * `ownerId` belongs in owner-scoped observations/bindings/claims/access-control records, not identifier identity.

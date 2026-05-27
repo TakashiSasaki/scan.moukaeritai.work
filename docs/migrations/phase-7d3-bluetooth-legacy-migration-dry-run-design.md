@@ -87,7 +87,7 @@ For each `items/{legacyItemId}.bluetoothTags[]` entry:
 
 ## Deterministic identifierKey design
 
-The deterministic UUIDv5-based `identifierKey` design uses the existing application deterministic UUID namespace.
+The deterministic UUIDv5-based `identifierKey` design uses the existing application deterministic UUID namespace and the JCS JSON Canonicalization Scheme.
 
 We evaluated options for generating the UUIDv5 payload.
 
@@ -120,18 +120,19 @@ We evaluated options for generating the UUIDv5 payload.
   * Schema/implementation needs handling since current `IdentifierRecord` has `ownerId`.
 
 **Recommendation:**
-Use Option C. The deterministic identifier identity payload should include:
+Use Option C. The deterministic identifier identity payload is JCS-canonicalized and includes:
 * `idKind: "identifier"`
-* `idPurpose: "legacy-bluetooth-tag"`
+* `idPurpose: "canonical-identifier"`
 * `kind: "bluetooth"`
 * `scheme: "bluetooth-legacy-tag-id"`
-* canonicalized Bluetooth tag ID
-* migration/baseline/schema metadata
+* `canonicalValue`
+* app and namespace version metadata
 
 * Bluetooth tag identity is global.
-* `ownerId` must not be part of the identifier identity payload.
-* `legacyItemId` must not be part of the identifier identity payload.
-* `ownerId` remains on observations, bindings, provenance, visibility, and access-control records.
+* `identifierKey` must be reproducible from `kind`, `scheme`, `canonicalValue`, and versioned namespace metadata.
+* `ownerId` and `objectId` must not be part of the UUIDv5 identity payload.
+* `legacyItemId` must not be part of the UUIDv5 identity payload.
+* `ownerId` remains on observations, bindings, provenance, visibility, and access-control records. `ownerId` may appear in dry-run result context, binding candidates, observation candidates, and provenance, but not in identifier identity.
 * `legacyItemId` remains in binding/provenance/dry-run output.
 
 Example canonical JSON payload shape:
@@ -139,15 +140,12 @@ Example canonical JSON payload shape:
 {
   "app": "scan.moukaeritai.work",
   "idKind": "identifier",
-  "idPurpose": "legacy-bluetooth-tag",
+  "idPurpose": "canonical-identifier",
+  "identitySchemaVersion": 1,
+  "canonicalizationVersion": 1,
   "kind": "bluetooth",
   "scheme": "bluetooth-legacy-tag-id",
-  "schemaVersion": 1,
-  "migration": "observation-model-migration",
-  "migrationPhase": "phase-7d3",
-  "baseline": "tag-1.0.0",
-  "sourceCollection": "items",
-  "bluetoothTagCanonicalValue": "<canonicalizedBluetoothTagId>"
+  "canonicalValue": "<canonicalizedBluetoothTagId>"
 }
 ```
 

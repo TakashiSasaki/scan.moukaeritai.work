@@ -13,16 +13,72 @@ The application uses an application-wide UUIDv5 namespace for generating determi
 This namespace UUID **must not be changed**. Changing this constant will change all derived UUIDv5 IDs across the entire application, breaking database references and deterministic lookups.
 
 ## Canonical JSON Requirement
+
 Deterministic UUIDv5 name payloads **must use canonical JSON**.
+
+JCS refers to JSON Canonicalization Scheme as specified by RFC 8785. For this project, deterministic UUIDv5 payloads must be serialized as JCS-canonical UTF-8 JSON before being used as the UUIDv5 name input.
 
 Ad hoc string concatenation must not be used for UUIDv5 name payloads.
 
 ### Canonicalization Rules:
 *   Only valid JSON data types (string, number, boolean, null, object, array) are permitted.
 *   Unsupported runtime values such as `Date`, `Timestamp`, `undefined`, `Map`, `Set`, functions, and cyclic objects must not be directly included in canonical payloads.
-*   Timestamps, if needed, must be explicitly converted to stable strings or numbers before canonicalization.
-*   Object keys are sorted deterministically.
-*   Array order is preserved and treated as semantically meaningful. If a set-like structure is required, the caller must sort the array before canonicalization.
+*   Timestamps and runtime-specific values, if needed, must be explicitly converted to stable JSON primitives first before canonicalization.
+*   Object keys are sorted deterministically according to JCS.
+*   Array order is preserved and treated as semantically meaningful. If a set-like structure is required, the caller must explicitly sort the array before JCS canonicalization.
+*   The output representation must be UTF-8.
+
+## Identifier Semantic Identity Payload
+
+For identifiers, semantic identity is represented by a structured JCS payload.
+
+**Required conceptual shape:**
+```json
+{
+  "app": "scan.moukaeritai.work",
+  "idKind": "identifier",
+  "idPurpose": "canonical-identifier",
+  "identitySchemaVersion": 1,
+  "canonicalizationVersion": 1,
+  "kind": "<qr|nfc|manual|barcode|bluetooth>",
+  "scheme": "<scheme-name>",
+  "canonicalValue": "<canonicalized-identifier-value>"
+}
+```
+
+The payload **must include**:
+*   `app`
+*   `idKind`
+*   `idPurpose`
+*   `identitySchemaVersion`
+*   `canonicalizationVersion`
+*   `kind`
+*   `scheme`
+*   `canonicalValue`
+
+The payload **must not include**:
+*   `ownerId`
+*   `objectId`
+*   `legacyItemId`
+*   `observerUid`
+*   binding target
+*   `label`
+*   `rawValue`
+*   `status`
+*   timestamps
+*   location
+*   RSSI
+*   visibility
+*   migration provenance
+
+### Derivation
+
+The `identifierKey` is a deterministic storage-safe projection of this semantic identity.
+`identifierKey = UUIDv5(applicationNamespaceUuid, JCS(identifierSemanticIdentityPayload))`
+
+`identifiers/{identifierKey}` uses this UUID as the Firestore document ID. The `IdentifierRecord.identifierKey` must equal the document ID.
+
+Note: The semantic identity is not the raw identifier value itself. The raw identifier value may be stored as `rawValue`, but only `canonicalValue` participates in identity.
 
 ## Purpose Separation
 To avoid ID collisions between different entities that might otherwise serialize identically, purpose separation must be done explicitly inside the canonical JSON payload using fields such as:
