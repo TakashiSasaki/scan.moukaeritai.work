@@ -8,10 +8,10 @@ This document provides a comprehensive overview of the normalized data model use
 erDiagram
     objects ||--o{ objectIdentifierBindings : "has bindings"
     objects ||--o{ objectImages : "has images"
-    objects ||--o{ objectEvents : "has events"
-    objects ||--o{ identifierObservations : "has observations"
+    objects |o--o{ objectEvents : "has events"
+    objects |o--o{ identifierObservations : "has observations"
     identifiers ||--o{ objectIdentifierBindings : "bound via"
-    identifiers ||--o{ objectEvents : "involved in"
+    identifiers |o--o{ objectEvents : "involved in"
     identifiers ||--o{ identifierObservations : "observed via"
 
     objects {
@@ -83,8 +83,8 @@ erDiagram
         string type "created | updated | scanned | located | image_added | image_removed | identifier_attached | identifier_detached | identifier_replaced | migrated"
         timestamp occurredAt
         string actorUid
-        string source "qr | nfc | manual | camera | system | migration"
-        map location "latitude, longitude, address"
+        string source "Optional"
+        map location "Optional"
         map metadata "Optional"
     }
 
@@ -116,10 +116,10 @@ erDiagram
         timestamp createdAt
         string objectId FK "Optional"
         string placeLabel "Optional"
-        map location "latitude, longitude, address"
+        map location "Optional"
         string note "Optional"
         map metadata "Optional"
-        string visibility "private | linked_object | community | public"
+        string visibility "Optional"
         number schemaVersion "Optional"
         string observerKind "user | device | system"
         string observerUid "Optional (unless kind is user)"
