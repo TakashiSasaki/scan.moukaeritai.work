@@ -98,6 +98,15 @@ export default function AppAboutPage() {
               <ExternalLink size={18} />
               Design Decision Matrix
             </a>
+            <a
+              href="https://github.com/TakashiSasaki/scan.moukaeritai.work/blob/scan.moukaeritai.work/docs/app/bluetooth-global-identity-data-model.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--surface-container-high)] text-[var(--on-surface)] font-bold rounded-full hover:bg-[var(--surface-container-highest)] transition-colors text-sm"
+            >
+              <ExternalLink size={18} />
+              Bluetooth Identity Model
+            </a>
           </div>
         </section>
 

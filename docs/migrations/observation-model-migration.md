@@ -181,6 +181,16 @@ Phase 7D.3a — Database design documentation hardening
 - Phase 7E remains blocked.
 - This is a documentation/design task only. No schema, rules, runtime changes, or Firestore writes were made.
 
+Phase 7D.3b — Bluetooth global identity model decision and visualization
+- design/documentation only
+- Bluetooth identity scope was decided as global
+- RSSI was decided as observation metadata
+- linkedAt was decided as candidate timestamp for bindings/events
+- tagType was decided as map-and-preserve legacy metadata
+- Mermaid data model visualization document was added
+- Phase 7E remains blocked
+- no runtime schema/rules/functions/migration writes were changed
+
 Phase 8: Archive/remove legacy migration tools
 - Archive or remove old legacy migration UI/function after the new migration path is stable.
 - Keep historical migration mapping documentation if useful.
