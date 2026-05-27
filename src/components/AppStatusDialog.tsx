@@ -5,7 +5,6 @@ import { getAppCacheSizes, AppCacheInfo, formatSize } from '../lib/utils';
 import { ConnectionStatus } from './ConnectionStatus';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from '../lib/firebase';
-import { useNavigate } from 'react-router-dom';
 
 interface AppStatusDialogProps {
   isOpen: boolean;
@@ -13,7 +12,6 @@ interface AppStatusDialogProps {
 }
 
 export function AppStatusDialog({ isOpen, onClose }: AppStatusDialogProps) {
-  const navigate = useNavigate();
   const [cacheStats, setCacheStats] = useState<{ totalSize: number; caches: AppCacheInfo[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [ipInfo, setIpInfo] = useState<{ ip: string; reverseDns: string[] } | null>(null);
