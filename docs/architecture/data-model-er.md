@@ -46,14 +46,14 @@ erDiagram
         string canonicalValue
         string status "active | unassigned | retired | lost | replaced"
         string label "Optional"
-        timestamp firstObservedAt
-        string firstObservedBy
-        string firstObservationId
-        timestamp lastObservedAt
-        string lastObservedBy
-        string lastObservationId
+        timestamp firstObservedAt "Optional"
+        string firstObservedBy "Optional"
+        string firstObservationId "Optional"
+        timestamp lastObservedAt "Optional"
+        string lastObservedBy "Optional"
+        string lastObservationId "Optional"
         string lastObservedSource "Optional"
-        string discoveryState "observed | registered | detached | unknown"
+        string discoveryState "Optional"
         number schemaVersion "Optional"
         timestamp createdAt
         timestamp updatedAt
