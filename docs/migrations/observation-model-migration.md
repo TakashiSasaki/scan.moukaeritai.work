@@ -3,7 +3,7 @@
 ## Status
 
 State:
-Current phase: Phase 7D.1 — Legacy items field coverage audit.
+Current phase: Phase 7D.2 — Observable identifier / signal observation model design.
 - Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
@@ -153,15 +153,19 @@ Phase 7D: GitHub Actions controlled dry-run preparation (Completed)
 - Final controlled execution is reserved for Phase 7E with separate explicit approval.
 - See [Phase 7D: GitHub Actions Controlled Dry-run Preparation](phase-7d-github-actions-controlled-dry-run.md).
 
-Phase 7D.1: Legacy items field coverage audit (Current)
+Phase 7D.1: Legacy items field coverage audit (Completed)
 - Read-only audit only.
-- Phase 7E final execution remains blocked until the audit is reviewed.
-- `items.bluetoothTags` is a known suspected gap.
-- `items.tagType` is a known suspected gap or decision-needed field.
-- Additional fields may also require decisions.
-- Source-field coverage audit is required before future migration execution phases.
+- The live-data audit was run and confirmed `items.bluetoothTags` exists in live data.
+- Phase 7E final execution remains blocked.
 - See [Phase 7D.1: Legacy Items Field Coverage Audit](phase-7d1-legacy-items-field-coverage-audit.md).
 - See [Migration Design Checklist](migration-design-checklist.md) for general migration rules.
+
+Phase 7D.2: Observable identifier / signal observation model design (Current)
+- Design-only phase.
+- Prepares a generalized model for Bluetooth tags, Wi-Fi APs, beacons, observation sets, and generic target bindings.
+- Does not modify runtime schema, Firestore rules, or execute writes.
+- Phase 7E remains blocked.
+- See [Phase 7D.2: Observable Identifier and Signal Observation Model](phase-7d2-observable-identifier-signal-observation-model.md).
 
 Phase 8: Archive/remove legacy migration tools
 - Archive or remove old legacy migration UI/function after the new migration path is stable.

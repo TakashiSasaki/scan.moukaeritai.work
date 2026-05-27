@@ -97,9 +97,27 @@ During the review of the current migration strategy, it was identified that `ite
 
 ## Live-data audit result
 
-*Not yet run. Operator-run required.*
+*Scanned 2 legacy items. The following expected fields were observed:*
+- `id`
+- `name`
+- `description`
+- `contextImageUrls`
+- `bluetoothTags`
+- `bluetoothTags[]`
+- `bluetoothTags[].name`
+- `bluetoothTags[].id`
+- `tagType`
+- `mainImageUrl`
+- `location`
+- `location.latitude`
+- `location.longitude`
+- `location.address`
+- `ownerId`
+- `createdAt`
+- `updatedAt`
 
-*(When run, record: scanned document count, field paths found, unexpected field paths, fields absent from code schema, and fields present in code schema but absent from live data.)*
+*Note on array traversal:*
+`bluetoothTags[].rssi` and `bluetoothTags[].linkedAt` were not observed in the available audit output. However, because the audit harness array traversal may be representative rather than exhaustive, optional fields inside later array elements may require a stronger audit before making final decisions based purely on their absence. This does not affect the conclusion that `bluetoothTags`, `bluetoothTags[].id`, and `bluetoothTags[].name` exist in live data and remain migration decision items. No unexpected source fields were observed within the current audit limits. `bluetoothTags` and `tagType` remain decision items.
 
 ## Phase 7E blocking status
 
