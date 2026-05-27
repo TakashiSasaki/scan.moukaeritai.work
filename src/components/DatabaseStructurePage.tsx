@@ -1,5 +1,3 @@
-import React from 'react';
-import { motion } from 'motion/react';
 import { Database, ShieldAlert, BookOpen, GitMerge, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,6 +9,7 @@ export default function DatabaseStructurePage() {
       <header className="sticky top-0 z-10 bg-[var(--surface-container)]/90 backdrop-blur-md border-b border-[var(--outline)] px-4 py-4 flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
+          aria-label="Go back"
           className="p-2 -ml-2 rounded-full hover:bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] transition-colors"
         >
           <ArrowLeft size={24} />

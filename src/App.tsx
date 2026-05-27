@@ -414,11 +414,11 @@ function AppContent() {
           </main>
         } />
         <Route path="/database-structure" element={
-          <main className="flex-1 max-w-4xl mx-auto w-full">
+          <div className="flex-1 max-w-4xl mx-auto w-full">
             <motion.div key="database-structure" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <DatabaseStructurePage />
             </motion.div>
-          </main>
+          </div>
         } />
         <Route path="*" element={
           <MainLayout
