@@ -5,7 +5,6 @@ import { getAppCacheSizes, AppCacheInfo, formatSize } from '../lib/utils';
 import { ConnectionStatus } from './ConnectionStatus';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from '../lib/firebase';
-import { useNavigate } from 'react-router-dom';
 
 interface AppStatusDialogProps {
   isOpen: boolean;
@@ -13,7 +12,6 @@ interface AppStatusDialogProps {
 }
 
 export function AppStatusDialog({ isOpen, onClose }: AppStatusDialogProps) {
-  const navigate = useNavigate();
   const [cacheStats, setCacheStats] = useState<{ totalSize: number; caches: AppCacheInfo[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [ipInfo, setIpInfo] = useState<{ ip: string; reverseDns: string[] } | null>(null);
@@ -88,27 +86,6 @@ export function AppStatusDialog({ isOpen, onClose }: AppStatusDialogProps) {
                       : 'Unknown'}
                   </span>
                 </div>
-              </div>
-            </section>
-
-            <section>
-              <h3 className="text-sm font-bold text-[var(--on-surface-variant)] uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Database size={16} />
-                Database Structure
-              </h3>
-              <div className="bg-[var(--surface-container-highest)] p-4 rounded-2xl border border-[var(--outline)] text-sm flex justify-between items-center">
-                <div className="text-[var(--on-surface-variant)] flex-1 pr-4">
-                  View documentation for Firestore collections and schema relationships.
-                </div>
-                <button
-                  onClick={() => {
-                    onClose();
-                    navigate('/database-structure');
-                  }}
-                  className="px-4 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-xl font-bold whitespace-nowrap"
-                >
-                  View structure
-                </button>
               </div>
             </section>
 

@@ -12,7 +12,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { auth, db, signInWithPopup, googleProvider, onAuthStateChanged, User, signOut } from './lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ThemeProvider, useTheme, ThemeColor, ThemeMode } from './context/ThemeContext';
-import { Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert, Beaker, PlaySquare, Route as RouteIcon, Database } from 'lucide-react';
+import { Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert, Beaker, PlaySquare, Route as RouteIcon, Database, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'react-hot-toast';
 import Dashboard from './components/Dashboard';
@@ -31,6 +31,7 @@ import DemoScreen from './components/DemoScreen';
 import { AppStatusDialog } from './components/AppStatusDialog';
 import { ImageMetadataDialog } from './components/ImageMetadataDialog';
 import DatabaseStructurePage from './components/DatabaseStructurePage';
+import AppAboutPage from './components/AppAboutPage';
 
 type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview';
 
@@ -273,6 +274,15 @@ function AppContent() {
                      <button
                         onClick={() => {
                           setShowProfile(false);
+                          window.open('/about', '_blank', 'noopener,noreferrer');
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
+                     >
+                        <Info size={16} className="text-[var(--primary)]" /> About this app
+                     </button>
+                     <button
+                        onClick={() => {
+                          setShowProfile(false);
                           navigate('/demo');
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
@@ -410,6 +420,13 @@ function AppContent() {
           <main className="flex-1 max-w-4xl mx-auto w-full">
             <motion.div key="library-demo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <LibraryDemoScreen />
+            </motion.div>
+          </main>
+        } />
+        <Route path="/about" element={
+          <main className="flex-1 max-w-4xl mx-auto w-full">
+            <motion.div key="about" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              <AppAboutPage />
             </motion.div>
           </main>
         } />
