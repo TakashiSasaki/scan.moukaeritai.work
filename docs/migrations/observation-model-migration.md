@@ -181,13 +181,16 @@ Phase 7D.3a — Database design documentation hardening
 - Phase 7E remains blocked.
 - This is a documentation/design task only. No schema, rules, runtime changes, or Firestore writes were made.
 
-Phase 7D.3b — Bluetooth global identity model decision and visualization
+Phase 7D.3b — Ownerless global identifier model decision
 - design/documentation only
-- Bluetooth identity scope was decided as global
-- RSSI was decided as observation metadata
-- linkedAt was decided as candidate timestamp for bindings/events
-- tagType was decided as map-and-preserve legacy metadata
-- Mermaid data model visualization document was added
+- identifiers are now conceptually ownerless global entities
+- objects remain owner-owned
+- observations record observers
+- bindings/claims carry owner/assertion context
+- `tagType` is map-and-preserve legacy metadata
+- Bluetooth tag identity follows the ownerless global identifier model
+- RSSI is observation metadata
+- linkedAt is binding/event timestamp candidate
 - Phase 7E remains blocked
 - no runtime schema/rules/functions/migration writes were changed
 

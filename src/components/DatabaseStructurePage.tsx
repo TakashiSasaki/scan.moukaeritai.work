@@ -61,13 +61,13 @@ export default function DatabaseStructurePage() {
             </a>
 
             <a
-              href="https://github.com/TakashiSasaki/scan.moukaeritai.work/blob/scan.moukaeritai.work/docs/app/bluetooth-global-identity-data-model.md"
+              href="https://github.com/TakashiSasaki/scan.moukaeritai.work/blob/scan.moukaeritai.work/docs/app/ownerless-global-identifier-model.md"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--surface-container-high)] text-[var(--on-surface)] font-bold rounded-full hover:bg-[var(--surface-container-highest)] transition-colors w-full sm:w-auto text-sm"
             >
               <ExternalLink size={18} />
-              Bluetooth Identity Model
+              Ownerless Global Identifier Model
             </a>
           </div>
         </div>
