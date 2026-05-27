@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 export default function DatabaseStructurePage() {
   const navigate = useNavigate();
   const GITHUB_DOCS_URL = 'https://github.com/TakashiSasaki/scan.moukaeritai.work/blob/scan.moukaeritai.work/docs/app/database-structure.md';
-  const RAW_DOCS_URL = 'https://raw.githubusercontent.com/TakashiSasaki/scan.moukaeritai.work/scan.moukaeritai.work/docs/app/database-structure.md';
 
   return (
     <div className="bg-[var(--surface-container-lowest)] text-[var(--on-surface)] flex flex-col h-[calc(100vh-8rem)] mt-4 mx-4 rounded-2xl border border-[var(--outline)] overflow-hidden shadow-sm">
