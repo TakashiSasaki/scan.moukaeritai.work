@@ -79,15 +79,26 @@ export default function AppAboutPage() {
             Detailed, canonical documentation regarding the Firestore collections, schemas, fields, and relationships used by this application is maintained on GitHub.
           </p>
 
-          <a
-            href={GITHUB_DOCS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--primary)] text-white font-bold rounded-full hover:opacity-90 transition-opacity"
-          >
-            <ExternalLink size={18} />
-            View database structure documentation
-          </a>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <a
+              href={GITHUB_DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--primary)] text-white font-bold rounded-full hover:opacity-90 transition-opacity"
+            >
+              <ExternalLink size={18} />
+              Database Structure
+            </a>
+            <a
+              href="https://github.com/TakashiSasaki/scan.moukaeritai.work/blob/scan.moukaeritai.work/docs/app/database-design-decision-matrix.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--surface-container-high)] text-[var(--on-surface)] font-bold rounded-full hover:bg-[var(--surface-container-highest)] transition-colors text-sm"
+            >
+              <ExternalLink size={18} />
+              Design Decision Matrix
+            </a>
+          </div>
         </section>
 
         <div className="pb-12"></div>

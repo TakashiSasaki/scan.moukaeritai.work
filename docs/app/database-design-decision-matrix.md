@@ -1,0 +1,33 @@
+# Database Design Decision Matrix
+
+This matrix registers design decisions required for the next phase of the database structure evolution, specifically handling Bluetooth legacy identifiers, observation grouping, and future generic bindings. It tracks items pending before migration Phase 7E.
+
+See the [Database Structure](database-structure.md) document for the current production schema.
+
+## Decision Matrix
+
+| Decision | Current status | Options | Recommended next action | Blocks Phase 7E? | Source documents |
+|---|---|---|---|---|---|
+| Bluetooth tag identity scope | Design-only | Global vs. Owner-scoped | Use owner-scoped Bluetooth tag identity. | Yes | Phase 7D.2, Phase 7D.3 |
+| Bluetooth tag document ID strategy | Design-only | Raw ID vs. UUIDv5 | Use deterministic UUIDv5 identifier key; do not use raw Bluetooth tag ID as document ID. | Yes | Phase 7D.3, Deterministic UUID Policy |
+| Bluetooth tag canonicalization | Design-only | Implicit vs. Explicit `canonicalValue` | Define explicit scheme (e.g. `bluetooth-legacy-tag-id`). | Yes | Phase 7D.3 |
+| Bluetooth object binding semantics | Pending | `objectIdentifierBindings` vs. `identifierTargetBindings` | Decide if legacy Bluetooth tags should use object bindings or wait for generic target bindings. | Yes | Phase 7D.2, Phase 7D.3 |
+| Bluetooth RSSI handling | Design-only | Object attribute vs. Observation metadata | Store RSSI inside observation metadata, not canonical object state. | Yes | Phase 7D.3 |
+| Bluetooth `linkedAt` handling | Design-only | Discard vs. Map to binding timestamp | Use `linkedAt` as a candidate timestamp for bindings/events. | Yes | Phase 7D.3 |
+| `tagType` handling | Needs-decision | Map to identifier kind vs. Drop | Keep as needs-decision until mapping is unambiguous. | Yes | Phase 7D.1 |
+| `observationSetId` | Design-only | None vs. Add to `identifierObservations` | Defer to a future additive schema phase. | No | Phase 7D.2 |
+| `observationSets` collection | Design-only | Implement vs. Defer | Future design, not implemented yet. | No | Phase 7D.2 |
+| `identifierTargetBindings` collection | Design-only | Implement vs. Defer | Future design, not implemented yet. | Yes | Phase 7D.2 |
+| Wi-Fi AP / BSSID support | Not started | Include in identifiers vs. Exclude | Defer implementation; data is highly privacy-sensitive. | No | Phase 7D.2 |
+| BLE beacon vs generic Bluetooth kind | Not started | Distinct kinds vs. Unified | Defer implementation of specific beacon schema. | No | Phase 7D.2 |
+| Gateway/sensor/Android companion ingestion | Not started | Client ingestion vs. Backend/trusted ingestion | Defer implementation; restrict to trusted backend paths due to privacy. | No | Phase 7D.2 |
+| Radio data privacy and retention | Needs-decision | Indefinite vs. Ephemeral | Requires strict security boundaries and retention policies. | No | Phase 7D.2 |
+| Raw legacy snapshot preservation | Pending | Normalized only vs. Save snapshot | Decide whether legacy Bluetooth data should also be saved as raw snapshots for audit. | Yes | Phase 7D.3 |
+| Firestore rules impact | Needs-decision | Restrict vs. Broaden | Must maintain strict owner boundaries without broadening access unnecessarily. | Yes | Phase 7D.2 |
+| TypeScript schema impact | Design-only | Add types vs. Defer | Will require updating `src/types.ts` once binding decisions are finalized. | Yes | Phase 7D.3 |
+| Firebase blueprint impact | Design-only | Update vs. Defer | Will require updating `firebase-blueprint.json` corresponding to schema changes. | Yes | Phase 7D.3 |
+
+## Related Documentation
+
+- [Database Structure](database-structure.md)
+- [Observation Model Migration](../migrations/observation-model-migration.md)
