@@ -3,7 +3,7 @@
 ## Status
 
 State:
-Current phase: Phase 7D.2 — Observable identifier / signal observation model design.
+Current phase: Phase 7D.3 — Bluetooth legacy migration dry-run design.
 - Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
@@ -160,12 +160,20 @@ Phase 7D.1: Legacy items field coverage audit (Completed)
 - See [Phase 7D.1: Legacy Items Field Coverage Audit](phase-7d1-legacy-items-field-coverage-audit.md).
 - See [Migration Design Checklist](migration-design-checklist.md) for general migration rules.
 
-Phase 7D.2: Observable identifier / signal observation model design (Current)
+Phase 7D.2: Observable identifier / signal observation model design (Completed)
 - Design-only phase.
 - Prepares a generalized model for Bluetooth tags, Wi-Fi APs, beacons, observation sets, and generic target bindings.
 - Does not modify runtime schema, Firestore rules, or execute writes.
 - Phase 7E remains blocked.
 - See [Phase 7D.2: Observable Identifier and Signal Observation Model](phase-7d2-observable-identifier-signal-observation-model.md).
+
+Phase 7D.3: Bluetooth legacy migration dry-run design (Current)
+- Design-only phase.
+- Prepares a concrete, non-executing dry-run design for migrating legacy `items.bluetoothTags` based on the 7D.2 model.
+- Does not modify runtime schema, Firestore rules, or execute writes.
+- The Bluetooth legacy migration has not been executed.
+- Phase 7E remains blocked.
+- See [Phase 7D.3: Bluetooth Legacy Migration Dry-run Design](phase-7d3-bluetooth-legacy-migration-dry-run-design.md).
 
 Phase 8: Archive/remove legacy migration tools
 - Archive or remove old legacy migration UI/function after the new migration path is stable.

@@ -306,7 +306,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - `tag-1.0.0` is the immutable migration source baseline.
   - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
   - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
-  - Current phase is Phase 7D.2. (Proceeding on the `1.7.x` version line)
+  - Current phase is Phase 7D.3. (Proceeding on the `1.7.x` version line)
   - Phase 6A imported observation dry-run document is `docs/migrations/phase-6a-imported-observation-dry-run.md`.
   - Phase 6B imported observation execute plan document is `docs/migrations/phase-6b-imported-observation-execute-plan.md`.
   - Phase 7A backend imported observation revalidation dry-run document is `docs/migrations/phase-7a-backend-imported-observation-revalidation-dry-run.md`.
@@ -315,7 +315,8 @@ The application has transitioned from a simple `items` collection to a normalize
   - Phase 7D GitHub Actions controlled dry-run preparation document is `docs/migrations/phase-7d-github-actions-controlled-dry-run.md`.
   - Phase 7D.1 legacy items field coverage audit document is `docs/migrations/phase-7d1-legacy-items-field-coverage-audit.md`.
   - Phase 7D.2 observable identifier / signal observation model design document is `docs/migrations/phase-7d2-observable-identifier-signal-observation-model.md`.
-  - Phase 7D.2 is design-only. Agents must not implement Bluetooth/Wi-Fi ingestion yet, run migrations, write to Firestore, or deploy. Phase 7E remains blocked.
+  - Phase 7D.3 Bluetooth legacy migration dry-run design document is `docs/migrations/phase-7d3-bluetooth-legacy-migration-dry-run-design.md`.
+  - Phase 7D.3 is design-only. Agents must not implement Bluetooth migration yet, write to Firestore, or deploy. Agents must not add UI execution controls or change runtime schema/rules in this phase. Phase 7E remains blocked.
   - Phase 7B permits backend limited execute mode with small batch sizes only. There is no web migration screen execute UI or AdminPanel UI for execution. Do not broaden Firestore rules for clients. Do not create migrationRuns collections or update identifiers/objects/bindings/events.
   - The authoritative migration plan is: `docs/migrations/observation-model-migration.md`
   - `docs/architecture/deterministic-uuid.md` is the authoritative deterministic UUID namespace document.

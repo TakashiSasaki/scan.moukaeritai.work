@@ -320,3 +320,7 @@ Phase 7D.2 does not close the gap by itself. It defines the model needed to clos
 - **Phase 7E-1 — Final controlled execution for imported baseline observations**: Begin importing standard baseline observation data into the newly migrated setup.
 - **Phase 7E-2 — Final controlled execution for Bluetooth legacy identifier migration, if approved**: Execute the `bluetoothTags` migration utilizing the design patterns defined in 7D.2 and planned in 7D.3.
 - **Phase 8 — Archive/remove legacy migration tools only after all migration completeness gates pass**: Complete teardown of old migration tooling once no remaining execution paths or unmigrated gaps exist.
+
+## Follow-up
+
+See [Phase 7D.3: Bluetooth Legacy Migration Dry-run Design](phase-7d3-bluetooth-legacy-migration-dry-run-design.md) for the concrete dry-run translation of this model.
