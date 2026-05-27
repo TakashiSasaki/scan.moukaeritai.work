@@ -23,7 +23,7 @@ Ad hoc string concatenation must not be used for UUIDv5 name payloads.
 ### Canonicalization Rules:
 *   Only valid JSON data types (string, number, boolean, null, object, array) are permitted.
 *   Unsupported runtime values such as `Date`, `Timestamp`, `undefined`, `Map`, `Set`, functions, and cyclic objects must not be directly included in canonical payloads.
-*   Timestamps and runtime-specific values, if needed, must be explicitly converted to stable JSON primitives first before canonicalization.
+*   Timestamps and runtime-specific values, if needed, must be explicitly converted to stable JSON primitives before canonicalization.
 *   Object keys are sorted deterministically according to JCS.
 *   Array order is preserved and treated as semantically meaningful. If a set-like structure is required, the caller must explicitly sort the array before JCS canonicalization.
 *   The output representation must be UTF-8.
