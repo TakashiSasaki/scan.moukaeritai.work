@@ -122,7 +122,7 @@ erDiagram
         string visibility "Optional"
         number schemaVersion "Optional"
         string observerKind "user | device | system"
-        string observerUid "Optional (unless kind is user)"
+        string observerUid "Optional (unless observerKind is user)"
         boolean observerIsAnonymous "Optional"
         string observerDeviceId "Optional"
     }
