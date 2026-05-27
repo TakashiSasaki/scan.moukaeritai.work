@@ -1,4 +1,4 @@
-# Phase 7D.4: Identifier ownerId Implementation Impact Audit
+# Phase 7D.3d: Identifier ownerId Implementation Impact Audit
 
 ## Scope
 
@@ -121,16 +121,16 @@ Option 2 (`identityScope?: 'global' | 'legacy_owner_scoped'`) combined with `own
 
 ## Recommended next phases
 
-- **Phase 7D.5 — Ownerless identifier schema proposal**
+- **Phase 7D.4 — Ownerless identifier schema proposal**
   - documentation/design only
   - choose exact TypeScript field shape
   - choose Firestore rules strategy
   - choose blueprint changes
   - choose claim/binding model
-- **Phase 7D.6 — Additive schema/rules implementation for ownerless identifiers**
+- **Phase 7D.5 — Additive schema/rules implementation for ownerless identifiers**
   - actual code change phase
-  - only after 7D.5 decisions are complete
-- **Phase 7D.7 — Bluetooth legacy read-only dry-run implementation**
+  - only after 7D.4 decisions are complete
+- **Phase 7D.6 — Bluetooth legacy read-only dry-run implementation**
   - no writes
   - uses new identifier identity model
   - reports proposed identifiers/bindings/legacy metadata
