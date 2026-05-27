@@ -129,6 +129,19 @@ export const routeGroups: RouteGroup[] = [
     ]
   },
   {
+    groupName: 'Documentation',
+    routes: [
+      {
+        path: '/database-structure',
+        component: 'DatabaseStructurePage',
+        access: 'signed-in user',
+        navigation: 'app status dialog',
+        purpose: 'Read-only documentation of Firestore collections, relationships, and future schema extension points.',
+        notes: 'Static documentation view only. Does not connect to live database.'
+      }
+    ]
+  },
+  {
     groupName: 'System',
     routes: [
       {
