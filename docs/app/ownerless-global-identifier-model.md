@@ -230,3 +230,11 @@ It must strictly avoid including:
 * implement read-only Bluetooth legacy dry-run
 * classify all source fields before execution
 * keep Phase 7E blocked until completeness gates pass
+
+## Related implementation audit and diagrams
+
+- Phase 7D.4 audits implementation dependencies of optional non-identifying `IdentifierRecord.ownerId`.
+- The identity ER diagram gives a reduced key/reference-only view of the same model.
+- Related docs:
+  - [Database Identity ER Diagram](database-identity-er-diagram.md)
+  - [Phase 7D.4: Identifier ownerId implementation impact audit](../migrations/phase-7d4-identifier-ownerid-implementation-impact-audit.md)

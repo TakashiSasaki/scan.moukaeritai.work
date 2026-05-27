@@ -3,7 +3,7 @@
 ## Status
 
 State:
-Current phase: Phase 7D.3 — Bluetooth legacy migration dry-run design.
+Current phase: Phase 7D.4 — Identifier ownerId implementation impact audit.
 - Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
@@ -167,7 +167,7 @@ Phase 7D.2: Observable identifier / signal observation model design (Completed)
 - Phase 7E remains blocked.
 - See [Phase 7D.2: Observable Identifier and Signal Observation Model](phase-7d2-observable-identifier-signal-observation-model.md).
 
-Phase 7D.3: Bluetooth legacy migration dry-run design (Current)
+Phase 7D.3: Bluetooth legacy migration dry-run design (Completed)
 - Design-only phase.
 - Prepares a concrete, non-executing dry-run design for migrating legacy `items.bluetoothTags` based on the 7D.2 model.
 - Does not modify runtime schema, Firestore rules, or execute writes.

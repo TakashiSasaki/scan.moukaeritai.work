@@ -46,6 +46,9 @@ The current database structure consists of the following collections:
 - **Key Fields:**
   - `identifierKey`: Must equal the document ID.
   - `ownerId`
+
+> Current runtime note:
+> `ownerId` is currently present in `IdentifierRecord`, but this describes the current implementation field, not conceptual identifier ownership. Conceptually, identifier identity is ownerless/global. Future schema work will make `ownerId` optional and non-identifying while preserving compatibility with existing documents.
   - `objectId`: Optional, allowing unassigned identifiers to be representable.
   - `kind`: Current values are `qr`, `nfc`, `manual`, `barcode`, `bluetooth`.
   - `scheme`: Carries important type-specific semantics (e.g., "qr-url-token", "nfc-uid").
@@ -177,7 +180,7 @@ Before completing the observation migration (Phase 7E), several critical design 
 - Whether to introduce `identifierTargetBindings` as a new collection.
 - Whether any legacy Bluetooth data should be preserved as raw legacy snapshot in addition to normalized records.
 
-For the full breakdown of these design choices, see the [Database Design Decision Matrix](database-design-decision-matrix.md), the [Ownerless Global Identifier Model](ownerless-global-identifier-model.md), and the [Bluetooth Global Identity Data Model](bluetooth-global-identity-data-model.md).
+For the full breakdown of these design choices, see the [Database Design Decision Matrix](database-design-decision-matrix.md), the [Ownerless Global Identifier Model](ownerless-global-identifier-model.md), the [Bluetooth Global Identity Data Model](bluetooth-global-identity-data-model.md), and the [Database Identity ER Diagram](database-identity-er-diagram.md).
 
 ## Relationship Diagram
 
