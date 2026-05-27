@@ -157,16 +157,37 @@ flowchart LR
 * If `tagType` conflicts with actual available identifier data (e.g., `tagType = "nfc"` but `bluetoothTags[]` exists), the dry-run should report a semantic warning rather than silently choosing one interpretation.
 * `tagType` must not be added to `identifierSummary.activeKinds` unless there is an actual migrated/active identifier of that kind.
 
+## JCS UUIDv5 identity representation
+
+Ownerless/global identifier semantic identity is represented as JCS-canonical JSON.
+
+*   The Firestore document ID is the UUIDv5 derived from that JCS payload.
+*   This avoids putting raw external values directly in Firestore document paths.
+*   It also avoids delimiter collisions, unsafe path characters, long IDs, and accidental owner/object scoping.
+*   The payload is the semantic identity; the UUIDv5 is its storage key.
+
+**Clarifications:**
+*   `identifierKey` and semantic identity are not arbitrary independent IDs.
+*   `identifierKey` must be reproducible from the stored semantic identity fields.
+*   This is the consistency rule that connects document ID and semantic identity.
+
+**Invariants:**
+*   `identifiers/{identifierKey}.identifierKey == identifierKey`
+*   `identifierKey == UUIDv5(applicationNamespaceUuid, JCS(identifierSemanticIdentityPayload))`
+*   `identifierSemanticIdentityPayload.ownerId` must be absent
+*   `identifierSemanticIdentityPayload.objectId` must be absent
+*   `identifierSemanticIdentityPayload.legacyItemId` must be absent
+
 ## Deterministic identifier identity
 
-Identifier deterministic identity should be based on:
+Identifier deterministic identity is defined by the JCS payload and should be based on:
 
 * `kind`
 * `scheme`
 * `canonicalValue`
 * relevant app/schema namespace metadata
 
-It should not be based on:
+It must strictly avoid including:
 
 * ownerId
 * objectId
@@ -178,15 +199,12 @@ It should not be based on:
 {
   "app": "scan.moukaeritai.work",
   "idKind": "identifier",
-  "idPurpose": "legacy-bluetooth-tag",
+  "idPurpose": "canonical-identifier",
+  "identitySchemaVersion": 1,
+  "canonicalizationVersion": 1,
   "kind": "bluetooth",
   "scheme": "bluetooth-legacy-tag-id",
-  "schemaVersion": 1,
-  "migration": "observation-model-migration",
-  "migrationPhase": "phase-7d3",
-  "baseline": "tag-1.0.0",
-  "sourceCollection": "items",
-  "bluetoothTagCanonicalValue": "<canonicalizedBluetoothTagId>"
+  "canonicalValue": "<canonicalizedBluetoothTagId>"
 }
 ```
 

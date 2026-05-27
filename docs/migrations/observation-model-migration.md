@@ -194,6 +194,15 @@ Phase 7D.3b — Ownerless global identifier model decision
 - Phase 7E remains blocked
 - no runtime schema/rules/functions/migration writes were changed
 
+Phase 7D.3c — JCS UUIDv5 identifier identity specification
+- documentation/specification only
+- identifier semantic identity is represented as JCS-canonical JSON
+- `identifierKey` is UUIDv5 over that JCS payload
+- `ownerId`, `objectId`, and `legacyItemId` are not part of identifier identity
+- `IdentifierRecord.ownerId` is a future optional, non-identifying field
+- Phase 7E remains blocked
+- no runtime schema, rules, blueprint, functions, migrations, or Firestore writes were changed
+
 Phase 8: Archive/remove legacy migration tools
 - Archive or remove old legacy migration UI/function after the new migration path is stable.
 - Keep historical migration mapping documentation if useful.

@@ -8,10 +8,11 @@ See the [Database Structure](database-structure.md) document for the current pro
 
 | Decision | Current status | Options | Recommended next action | Blocks Phase 7E? | Source documents |
 |---|---|---|---|---|---|
-| Identifier ownership model | Decided conceptually; implementation pending | owner-scoped identifiers vs. ownerless global identifiers vs. separate global registry plus owner-scoped claims vs. hybrid by identifier kind | Use ownerless global identifiers conceptually. Decide implementation path before schema changes. | Yes | Ownerless Global Identifier Model, Phase 7D.2, Phase 7D.3 |
+| Identifier semantic identity representation | Decided conceptually; implementation pending | raw canonicalValue as document ID vs. ad hoc string concatenation vs. hash-only key vs. JCS payload + UUIDv5 | Represent identifier semantic identity as JCS-canonical JSON. Derive `identifierKey` as UUIDv5 over the JCS UTF-8 payload using the application-wide UUIDv5 namespace. The payload must not include `ownerId`, `objectId`, or `legacyItemId`. The identifierKey must be recomputable from the JCS payload. | Yes for implementation validation, no for conceptual decision. | Deterministic UUID Policy, Ownerless Global Identifier Model, Bluetooth Global Identity Data Model |
+| Identifier ownership model | Decided conceptually; implementation pending | owner-scoped identifiers vs. ownerless global identifiers vs. separate global registry plus owner-scoped claims vs. hybrid by identifier kind | Use ownerless global identifiers conceptually. `ownerId` becomes optional in a future schema phase and is not part of identity. Decide implementation path before schema changes. | Yes | Ownerless Global Identifier Model, Phase 7D.2, Phase 7D.3 |
 | Bluetooth tag identity scope | Decided | Global vs. Owner-scoped | Bluetooth tag identity follows ownerless global identifier model. `ownerId` and `legacyItemId` must not be part of Bluetooth identifier identity. | No for conceptual decision; Yes for implementation/rules validation | Phase 7D.2, Phase 7D.3, Ownerless Global Identifier Model |
-| Bluetooth tag document ID strategy | Decided | Raw ID vs. UUIDv5 | Use deterministic UUIDv5 identifier key. The payload must not include ownerId or legacyItemId. Collision checks are global. | No | Phase 7D.3, Deterministic UUID Policy |
-| Bluetooth tag canonicalization | Decided | Implicit vs. Explicit `canonicalValue` | Define explicit scheme (e.g. `bluetooth-legacy-tag-id`). Applies before global key generation. | No | Phase 7D.3 |
+| Bluetooth tag document ID strategy | Decided | Raw ID vs. UUIDv5 | Use deterministic UUIDv5 identifier key derived from JCS payload. The payload must not include ownerId, objectId, or legacyItemId. Collision checks are global. | No | Phase 7D.3, Deterministic UUID Policy |
+| Bluetooth tag canonicalization | Decided | Implicit vs. Explicit `canonicalValue` | Define explicit scheme (e.g. `bluetooth-legacy-tag-id`). Applies before global JCS key generation. | No | Phase 7D.3 |
 | Bluetooth object binding semantics | Pending | `objectIdentifierBindings` vs. `identifierTargetBindings` | Decide if legacy Bluetooth tags should use object bindings or wait for generic target bindings. | Yes | Phase 7D.2, Phase 7D.3 |
 | Bluetooth RSSI handling | Decided | Object attribute vs. Observation metadata | Keep RSSI in observation metadata only. | No | Phase 7D.3 |
 | Bluetooth `linkedAt` handling | Decided | Discard vs. Map to binding timestamp | Use `linkedAt` as a candidate timestamp for bindings/events. | No | Phase 7D.3 |
@@ -25,9 +26,9 @@ See the [Database Structure](database-structure.md) document for the current pro
 | Gateway/sensor/Android companion ingestion | Not started | Client ingestion vs. Backend/trusted ingestion | Defer implementation; restrict to trusted backend paths due to privacy. | No | Phase 7D.2 |
 | Radio data privacy and retention | Needs-decision | Indefinite vs. Ephemeral | Requires strict security boundaries and retention policies. | No | Phase 7D.2 |
 | Raw legacy snapshot preservation | Pending | Normalized only vs. Save snapshot | Decide whether legacy Bluetooth data should also be saved as raw snapshots for audit. | Yes | Phase 7D.3 |
-| Firestore rules impact | Needs-decision | Restrict vs. Broaden | Must maintain strict owner boundaries without broadening access unnecessarily. | Yes | Phase 7D.2 |
-| TypeScript schema impact | Design-only | Add types vs. Defer | Will require updating `src/types.ts` once binding decisions are finalized. | Yes | Phase 7D.3 |
-| Firebase blueprint impact | Design-only | Update vs. Defer | Will require updating `firebase-blueprint.json` corresponding to schema changes. | Yes | Phase 7D.3 |
+| Firestore rules impact | Needs-decision | Restrict vs. Broaden | Must maintain strict owner boundaries without broadening access unnecessarily. Future rules must handle optional `ownerId`. Rules changes remain future work. | Yes | Phase 7D.2 |
+| TypeScript schema impact | Design-only | Add types vs. Defer | Will require updating `src/types.ts` once binding decisions are finalized. `ownerId` remains required until a later explicit phase. Schema changes remain future work. | Yes | Phase 7D.3 |
+| Firebase blueprint impact | Design-only | Update vs. Defer | Will require updating `firebase-blueprint.json` corresponding to schema changes. Blueprint changes remain future work. | Yes | Phase 7D.3 |
 
 ## Related Documentation
 

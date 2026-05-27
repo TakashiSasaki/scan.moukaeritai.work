@@ -159,7 +159,8 @@ The current production schema has several intentional limitations reflecting the
 - Bluetooth legacy data is not yet migrated.
 - `tagType` will be preserved in legacy metadata.
 - Future radio/Wi-Fi/BLE metadata must be privacy-sensitive and likely backend/trusted-ingestion only.
-- Current `IdentifierRecord.ownerId` is an implementation caveat. The conceptual model now treats identifiers as ownerless/global. However, the current runtime schema has not yet been changed.
+- Current runtime `IdentifierRecord` still has a required `ownerId`. The conceptual identifier identity is ownerless/global. Future schema work will make `ownerId` optional and non-identifying.
+- The document ID `identifierKey` should be understood conceptually as a deterministic UUIDv5 storage key derived from the JCS semantic identity payload. The semantic identity is based on `kind`, `scheme`, `canonicalValue`, namespace, and version metadata; it is not based on `ownerId`, `objectId`, or `legacyItemId`. The current runtime schema has not yet been updated to enforce this strictly.
 
 ## Design decisions pending before Phase 7E
 
