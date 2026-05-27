@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 export default function DatabaseStructurePage() {
   const navigate = useNavigate();
   const GITHUB_DOCS_URL = 'https://github.com/TakashiSasaki/scan.moukaeritai.work/blob/scan.moukaeritai.work/docs/app/database-structure.md';
-  const RAW_DOCS_URL = 'https://raw.githubusercontent.com/TakashiSasaki/scan.moukaeritai.work/scan.moukaeritai.work/docs/app/database-structure.md';
 
   return (
     <div className="bg-[var(--surface-container-lowest)] text-[var(--on-surface)] flex flex-col h-[calc(100vh-8rem)] mt-4 mx-4 rounded-2xl border border-[var(--outline)] overflow-hidden shadow-sm">
@@ -48,16 +47,17 @@ export default function DatabaseStructurePage() {
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--primary)] text-white font-bold rounded-full hover:opacity-90 transition-opacity w-full sm:w-auto"
             >
               <ExternalLink size={18} />
-              View Docs on GitHub
+              Database Structure
             </a>
 
             <a
-              href={RAW_DOCS_URL}
+              href="https://github.com/TakashiSasaki/scan.moukaeritai.work/blob/scan.moukaeritai.work/docs/app/database-design-decision-matrix.md"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--surface-container-high)] text-[var(--on-surface)] font-bold rounded-full hover:bg-[var(--surface-container-highest)] transition-colors w-full sm:w-auto text-sm"
             >
-              View Raw Markdown
+              <ExternalLink size={18} />
+              Design Decision Matrix
             </a>
           </div>
         </div>

@@ -175,6 +175,12 @@ Phase 7D.3: Bluetooth legacy migration dry-run design (Current)
 - Phase 7E remains blocked.
 - See [Phase 7D.3: Bluetooth Legacy Migration Dry-run Design](phase-7d3-bluetooth-legacy-migration-dry-run-design.md).
 
+Phase 7D.3a — Database design documentation hardening
+- Database structure docs were hardened.
+- Database design decision matrix was added.
+- Phase 7E remains blocked.
+- This is a documentation/design task only. No schema, rules, runtime changes, or Firestore writes were made.
+
 Phase 8: Archive/remove legacy migration tools
 - Archive or remove old legacy migration UI/function after the new migration path is stable.
 - Keep historical migration mapping documentation if useful.
