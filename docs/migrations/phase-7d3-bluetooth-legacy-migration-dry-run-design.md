@@ -74,6 +74,7 @@ For each `items/{legacyItemId}.bluetoothTags[]` entry:
   * for backward compatibility, it may be proposed only if the legacy semantics imply direct attachment to the item/object
   * the design must not assume Bluetooth identifiers are always object-exclusive
   * note that long-term generic target binding may supersede direct `objectId`
+* Current `IdentifierRecord.ownerId` is an implementation caveat; the conceptual model now treats identifiers as ownerless/global.
 * `status = "active"` for attached legacy tags, unless conflict checks indicate otherwise
 * `createdAt` candidate:
   * prefer `bluetoothTags[].linkedAt` if present and valid
@@ -186,7 +187,7 @@ For each proposed Bluetooth identifier:
 * Do not create actual observations in Phase 7D.3.
 * The dry-run may optionally report proposed observation candidates for completeness analysis.
 * RSSI, if present, belongs in observation metadata, not in IdentifierRecord.
-* If `linkedAt` exists, it may serve as observedAt for a legacy association observation, but this requires later explicit approval.
+* If `linkedAt` exists, it is a candidate timestamp for bindings/events.
 * If no event-level observation source exists, avoid inventing detailed observation history.
 
 Bluetooth position/time data should normally live in `identifierObservations`, but legacy `bluetoothTags` may only provide attachment metadata, not true observation logs.
@@ -194,9 +195,9 @@ Bluetooth position/time data should normally live in `identifierObservations`, b
 ## Conflict and deduplication checks
 
 The dry-run checks must detect and report:
-* duplicate Bluetooth tag IDs across different owners are expected to map to the same global identifier.
-* cross-owner observations/bindings must be reported separately.
-* conflicts must distinguish identity collision from ownership/binding conflict.
+* duplicate tag IDs across owners should map to the same global identifier.
+* cross-user observations/bindings are separate records.
+* conflict reports must distinguish identifier identity conflict from binding/claim conflict.
 * existing identifiers with same global key must be checked globally.
 * existing owner-scoped records must be handled through access policy.
 * duplicate Bluetooth tag IDs within the same item
@@ -255,10 +256,9 @@ interface BluetoothLegacyMigrationDryRunResult {
 
 ## `tagType` Preliminary Analysis
 
-* tagType is now decided.
-* tagType must be mapped and preserved in legacy metadata.
+* tagType is now decided: map and preserve in legacy metadata.
 * Preserve raw and normalized values.
-* Do not create identifiers from tagType alone.
+* tagType alone must not create identifiers.
 * Dry-run must report tagType per item and proposed legacy metadata mapping.
 
 ## Source field classification update

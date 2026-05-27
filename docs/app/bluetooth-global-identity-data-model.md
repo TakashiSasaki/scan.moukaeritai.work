@@ -1,5 +1,8 @@
 # Bluetooth Global Identity Data Model
 
+**Note:** This document serves as a Bluetooth-specific appendix. For the primary conceptual model covering all identifiers, see:
+[Ownerless Global Identifier Model](./ownerless-global-identifier-model.md)
+
 ## Scope
 
 This document visualizes the adopted design model for:

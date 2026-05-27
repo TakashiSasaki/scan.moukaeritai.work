@@ -159,19 +159,24 @@ The current production schema has several intentional limitations reflecting the
 - Bluetooth legacy data is not yet migrated.
 - `tagType` will be preserved in legacy metadata.
 - Future radio/Wi-Fi/BLE metadata must be privacy-sensitive and likely backend/trusted-ingestion only.
-- The adopted design now uses global Bluetooth identity, but implementation remains pending.
+- Current `IdentifierRecord.ownerId` is an implementation caveat. The conceptual model now treats identifiers as ownerless/global. However, the current runtime schema has not yet been changed.
 
 ## Design decisions pending before Phase 7E
 
 Before completing the observation migration (Phase 7E), several critical design decisions must be resolved:
 
+- Implementation path for ownerless/global identifiers.
+- Global identifier access policy.
+- Binding/claim model.
+- Observation visibility model.
+- Exact `tagType` field shape in `ObjectRecord.legacy`.
 - Whether to implement Bluetooth legacy migration dry-run as Phase 7D.4 or keep it design-only longer.
 - Whether to create only `objectIdentifierBindings` for legacy Bluetooth tags, or defer to future generic `identifierTargetBindings`.
 - Whether to add `observationSetId` to `IdentifierObservationRecord` in a future additive schema phase.
 - Whether to introduce `identifierTargetBindings` as a new collection.
 - Whether any legacy Bluetooth data should be preserved as raw legacy snapshot in addition to normalized records.
 
-For the full breakdown of these design choices, see the [Database Design Decision Matrix](database-design-decision-matrix.md) and the [Bluetooth Global Identity Data Model](bluetooth-global-identity-data-model.md).
+For the full breakdown of these design choices, see the [Database Design Decision Matrix](database-design-decision-matrix.md), the [Ownerless Global Identifier Model](ownerless-global-identifier-model.md), and the [Bluetooth Global Identity Data Model](bluetooth-global-identity-data-model.md).
 
 ## Relationship Diagram
 
