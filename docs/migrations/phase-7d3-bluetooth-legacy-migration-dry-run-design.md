@@ -198,9 +198,6 @@ The dry-run checks must detect and report:
 * duplicate tag IDs across owners should map to the same global identifier.
 * cross-user observations/bindings are separate records.
 * conflict reports must distinguish identifier identity conflict from binding/claim conflict.
-* duplicate Bluetooth tag IDs across different owners are expected to map to the same global identifier.
-* cross-owner observations/bindings must be reported separately.
-* conflicts must distinguish identity collision from ownership/binding conflict.
 * existing identifiers with same global key must be checked globally.
 * existing owner-scoped records must be handled through access policy.
 * duplicate Bluetooth tag IDs within the same item
@@ -260,7 +257,6 @@ interface BluetoothLegacyMigrationDryRunResult {
 ## `tagType` Preliminary Analysis
 
 * tagType is now decided: map and preserve in legacy metadata.
-* tagType must be mapped and preserved in legacy metadata.
 * Preserve raw and normalized values.
 * tagType alone must not create identifiers.
 * Dry-run must report tagType per item and proposed legacy metadata mapping.
