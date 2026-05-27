@@ -132,7 +132,7 @@ erDiagram
 
 - **`objects`**: Represents physical items being tracked. Contains descriptive data and summaries of identifiers.
 - **`identifiers`**: Represents physical tags (like QR codes, NFC chips) that can be attached to objects.
-- **`objectIdentifierBindings`**: Represents the active or historical canonical relationship between an object and an identifier.
+- **`objectIdentifierBindings`**: Represents the canonical active relationship state between an object and an identifier, NOT an append-only history table (history is recorded in `objectEvents`).
 - **`objectEvents`**: An append-only audit log recording operational history and events for objects and identifiers.
 - **`objectImages`**: Represents media (images) associated with an object, including storage paths and metadata.
 - **`identifierObservations`**: Represents loose evidence or records of an identifier being seen or scanned, which may exist before an object is registered or independently of canonical state.
