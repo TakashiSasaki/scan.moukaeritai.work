@@ -157,22 +157,21 @@ The current production schema has several intentional limitations reflecting the
 - `IdentifierRecord.kind` currently includes `bluetooth`, but not `wifi_ap`, `ble_beacon`, `gateway`, or `sensor_node`.
 - `ObservationSource` includes `ble` and `gateway`, but not `wifi`, `android_companion`, or `sensor_node`.
 - Bluetooth legacy data is not yet migrated.
-- `tagType` remains partially migrated / needs decision.
+- `tagType` will be preserved in legacy metadata.
 - Future radio/Wi-Fi/BLE metadata must be privacy-sensitive and likely backend/trusted-ingestion only.
+- The adopted design now uses global Bluetooth identity, but implementation remains pending.
 
 ## Design decisions pending before Phase 7E
 
 Before completing the observation migration (Phase 7E), several critical design decisions must be resolved:
 
 - Whether to implement Bluetooth legacy migration dry-run as Phase 7D.4 or keep it design-only longer.
-- Whether `bluetoothTags[].id` maps to owner-scoped `identifiers(kind="bluetooth", scheme="bluetooth-legacy-tag-id")`.
 - Whether to create only `objectIdentifierBindings` for legacy Bluetooth tags, or defer to future generic `identifierTargetBindings`.
 - Whether to add `observationSetId` to `IdentifierObservationRecord` in a future additive schema phase.
 - Whether to introduce `identifierTargetBindings` as a new collection.
-- How to resolve `tagType`.
 - Whether any legacy Bluetooth data should be preserved as raw legacy snapshot in addition to normalized records.
 
-For the full breakdown of these design choices, see the [Database Design Decision Matrix](database-design-decision-matrix.md).
+For the full breakdown of these design choices, see the [Database Design Decision Matrix](database-design-decision-matrix.md) and the [Bluetooth Global Identity Data Model](bluetooth-global-identity-data-model.md).
 
 ## Relationship Diagram
 

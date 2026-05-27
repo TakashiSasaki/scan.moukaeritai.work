@@ -66,7 +66,10 @@ For each `items/{legacyItemId}.bluetoothTags[]` entry:
 * `rawValue = bluetoothTags[].id`
 * `canonicalValue = canonicalized bluetoothTags[].id`
 * `label = bluetoothTags[].name`, if present
-* `ownerId = item.ownerId`
+* identity key is global.
+* current schema still contains `ownerId`
+* later implementation must decide whether `ownerId` is registrar/creator, moved to claims/bindings/observations, or handled by another additive structure
+* no runtime schema change occurs in this task
 * `objectId` should be treated carefully:
   * for backward compatibility, it may be proposed only if the legacy semantics imply direct attachment to the item/object
   * the design must not assume Bluetooth identifiers are always object-exclusive
@@ -85,7 +88,7 @@ For each `items/{legacyItemId}.bluetoothTags[]` entry:
 
 The deterministic UUIDv5-based `identifierKey` design uses the existing application deterministic UUID namespace.
 
-We evaluated two options for generating the UUIDv5 payload.
+We evaluated options for generating the UUIDv5 payload.
 
 ### Option A — include `legacyItemId` in the deterministic identifier payload:
 * **Pros:**
@@ -106,9 +109,17 @@ We evaluated two options for generating the UUIDv5 payload.
   * requires stronger conflict reporting when the same tag appears under multiple legacy items
   * requires clear binding semantics
 
+### Option C — global Bluetooth tag identity:
+* **Pros:**
+  * Bluetooth tag identity scope is global.
+  * Same canonical tag maps to the same identifier across users.
+  * Treats the Bluetooth tag strictly as a global identifier/signal source.
+* **Cons:**
+  * Cannot blindly create global publicly-readable identifiers; observations and bindings still need access policy.
+  * Schema/implementation needs handling since current `IdentifierRecord` has `ownerId`.
+
 **Recommendation:**
-Use Option B. The deterministic identifier identity payload should include:
-* `ownerId`
+Use Option C. The deterministic identifier identity payload should include:
 * `idKind: "identifier"`
 * `idPurpose: "legacy-bluetooth-tag"`
 * `kind: "bluetooth"`
@@ -116,13 +127,11 @@ Use Option B. The deterministic identifier identity payload should include:
 * canonicalized Bluetooth tag ID
 * migration/baseline/schema metadata
 
-It should not include `legacyItemId` as part of the identifier identity payload. A Bluetooth tag is the identifier/signal source and should not become a different identifier merely because it appears on multiple items.
-
-However, `legacyItemId` should still appear in:
-* proposed binding metadata
-* dry-run per-item result
-* migration provenance metadata
-* conflict/warning output
+* Bluetooth tag identity is global.
+* `ownerId` must not be part of the identifier identity payload.
+* `legacyItemId` must not be part of the identifier identity payload.
+* `ownerId` remains on observations, bindings, provenance, visibility, and access-control records.
+* `legacyItemId` remains in binding/provenance/dry-run output.
 
 Example canonical JSON payload shape:
 ```json
@@ -136,7 +145,6 @@ Example canonical JSON payload shape:
   "migration": "observation-model-migration",
   "migrationPhase": "phase-7d3",
   "baseline": "tag-1.0.0",
-  "ownerId": "<ownerId>",
   "sourceCollection": "items",
   "bluetoothTagCanonicalValue": "<canonicalizedBluetoothTagId>"
 }
@@ -186,10 +194,15 @@ Bluetooth position/time data should normally live in `identifierObservations`, b
 ## Conflict and deduplication checks
 
 The dry-run checks must detect and report:
+* duplicate Bluetooth tag IDs across different owners are expected to map to the same global identifier.
+* cross-owner observations/bindings must be reported separately.
+* conflicts must distinguish identity collision from ownership/binding conflict.
+* existing identifiers with same global key must be checked globally.
+* existing owner-scoped records must be handled through access policy.
 * duplicate Bluetooth tag IDs within the same item
 * duplicate Bluetooth tag IDs across different items under the same owner
 * existing `identifiers` with the proposed identifierKey
-* existing `identifiers` with same ownerId/kind/scheme/canonicalValue but different key
+* existing `identifiers` with same kind/scheme/canonicalValue but different key
 * existing `objectIdentifierBindings` for the proposed object/identifier pair
 * collisions with QR/NFC/manual/barcode identifiers
 * missing ownerId
@@ -242,30 +255,30 @@ interface BluetoothLegacyMigrationDryRunResult {
 
 ## `tagType` Preliminary Analysis
 
-* Legacy `items.tagType` appears to be a source-level hint about what identifier type was expected for the item.
-* The current legacy migration effectively forces QR semantics in `objects.identifierSummary`, regardless of `tagType`.
-* Therefore, `tagType` is only partially represented and remains a decision item.
-* Phase 7D.3 focuses on Bluetooth tag dry-run design, so it should not resolve `tagType`.
-* If `tagType === "nfc"` or `tagType === "none"` appears in live data, the migration plan may need additional handling.
-* The dry-run should report `tagType` per item alongside Bluetooth candidates so we can detect semantic mismatch, for example a Bluetooth tag on an item whose `tagType` says `nfc`, `qr`, or `none`.
+* tagType is now decided.
+* tagType must be mapped and preserved in legacy metadata.
+* Preserve raw and normalized values.
+* Do not create identifiers from tagType alone.
+* Dry-run must report tagType per item and proposed legacy metadata mapping.
 
 ## Source field classification update
 
-Expected classifications after a future successful Bluetooth migration (not resolved yet):
+Expected classifications after a future successful Bluetooth migration:
 * `bluetoothTags`: `migrated` or `partially-migrated`
 * `bluetoothTags[].id`: `migrated`
 * `bluetoothTags[].name`: `migrated`
 * `bluetoothTags[].rssi`: `derived-only` or `not-observed / observation-metadata-only`, depending on live data
 * `bluetoothTags[].linkedAt`: `migrated` if used as binding timestamp, otherwise `needs-decision`
-* `tagType`: `partially-migrated` / `needs-decision`
+* `tagType`: `migrated` or `partially-migrated` once raw/normalized legacy metadata mapping is implemented. (no longer `needs-decision` as a design matter, implementation validation still required)
 
 ## Privacy and safety
 
 * Bluetooth tag IDs are potentially sensitive.
-* Raw tag IDs should not be printed in full in logs unless explicitly allowed.
+* global identity is adopted;
+* observation/binding visibility remains controlled separately;
+* global identity does not imply public location/RSSI/observation history;
+* raw tag IDs should still be redacted in logs.
 * Dry-run logs should redact, truncate, or hash raw IDs.
-* Owner scoping is mandatory.
-* No public/community visibility should be inferred.
 * No client-side writes should be added.
 
 ## Phase 7D.3 exit criteria
