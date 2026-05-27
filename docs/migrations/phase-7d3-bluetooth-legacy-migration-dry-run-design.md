@@ -87,7 +87,7 @@ For each `items/{legacyItemId}.bluetoothTags[]` entry:
 
 ## Deterministic identifierKey design
 
-The deterministic UUIDv5-based `identifierKey` design uses the existing application deterministic UUID namespace and the JCS JSON Canonicalization Scheme.
+The deterministic UUIDv5-based `identifierKey` design uses the existing application deterministic UUID namespace and the JSON Canonicalization Scheme (JCS).
 
 We evaluated options for generating the UUIDv5 payload.
 
