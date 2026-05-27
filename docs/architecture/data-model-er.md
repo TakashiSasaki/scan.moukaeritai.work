@@ -25,13 +25,13 @@ erDiagram
         string primaryImageUrl
         map identifierSummary "activeKinds, activeIdentifierCount, hasQr, hasNfc"
         map legacy "sourceCollection, legacyItemId"
-        string createdBy
-        string ownerUid
-        string visibility "private | link_shared | community_visible | public_readable"
-        timestamp lastReportedAt
-        string lastReportedBy
-        map lastReportedLocation
-        string lastReportedPlaceLabel
+        string createdBy "Optional"
+        string ownerUid "Optional"
+        string visibility "Optional"
+        timestamp lastReportedAt "Optional"
+        string lastReportedBy "Optional"
+        map lastReportedLocation "Optional"
+        string lastReportedPlaceLabel "Optional"
         timestamp createdAt
         timestamp updatedAt
     }
