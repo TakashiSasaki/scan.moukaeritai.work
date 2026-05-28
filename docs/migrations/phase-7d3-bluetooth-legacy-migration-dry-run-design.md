@@ -122,7 +122,7 @@ We evaluated options for generating the UUIDv5 payload.
 **Recommendation:**
 Use Option C. The deterministic identifier identity payload is JCS-canonicalized and includes:
 * `idKind: "identifier"`
-* * `kind: "bluetooth"`
+* `kind: "bluetooth"`
 * `scheme: "bluetooth-legacy-tag-id"`
 * `canonicalValue`
 * app and namespace version metadata
@@ -139,7 +139,7 @@ Example canonical JSON payload shape:
 {
   "app": "scan.moukaeritai.work",
   "idKind": "identifier",
-    "identitySchemaVersion": 1,
+  "identitySchemaVersion": 1,
   "canonicalizationVersion": 1,
   "kind": "bluetooth",
   "scheme": "bluetooth-legacy-tag-id",
