@@ -3,8 +3,8 @@
 ## Status
 
 State:
-Latest completed phase: Phase 7D.5 — Ownerless identifier runtime schema proposal (documentation/specification only).
-Current next phase: Phase 7D.6 — Additive identifier runtime schema implementation planning (planning/audit).
+Latest completed phase: Phase 7D.7 — Identifier model blockers and implementation readiness (documentation/specification only).
+Current next phase: Phase 7D.8 — Additive identifier runtime schema implementation (bounded additive implementation).
 - Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
@@ -253,3 +253,14 @@ Phase 8: Archive/remove legacy migration tools
 - Old migration implementation is marked as legacy/archive, or at least clearly documented as not for new observation migration.
 - No new Firestore schema/rules/data migration has been introduced.
 - `npm run lint` and `npm run build` pass, if code was changed.
+
+Phase 7D.7 — Identifier model blockers and implementation readiness (Completed)
+- documentation/specification only
+- resolves remaining identifier model blockers prior to runtime implementation
+- decides Bluetooth object binding semantics, raw legacy snapshot preservation, identity version default behavior, status/label initial treatment, legacy schemaVersion compatibility, and optional ownerId staging
+- defines staged Firestore rules transition strategy without modifying rules
+- no runtime schema/rules/blueprint/functions/migrations/Firestore writes changed
+- Phase 7E remains blocked
+- See [Phase 7D.7: Identifier Model Blockers and Readiness](phase-7d7-identifier-model-blockers-and-readiness.md).
+
+
