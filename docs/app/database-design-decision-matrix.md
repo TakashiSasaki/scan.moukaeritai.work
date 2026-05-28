@@ -39,6 +39,7 @@ See the [Database Structure](database-structure.md) document for the current pro
 | Firestore rules impact | Future implementation work (deferred) | Restrict vs. Broaden | Rules updates remain future work. Current runtime may remain owner-scoped. Optional `ownerId`/global identifier behavior requires future rule design, and ACL-specific rule semantics are deferred until ACL introduction. | Yes | Phase 7D.2, Phase 7D.5 |
 | TypeScript schema impact | Design-only | Add types vs. Defer | Will require updating `src/types.ts` once binding decisions are finalized. `ownerId` remains required until a later explicit phase. Schema changes remain future work. | Yes | Phase 7D.3 |
 | Firebase blueprint impact | Design-only | Update vs. Defer | Will require updating `firebase-blueprint.json` corresponding to schema changes. Blueprint changes remain future work. | Yes | Phase 7D.3 |
+| Phase 7D.6 additive runtime schema plan | Planning/audit | N/A (documentation planning row) | Complete IdentifierRecord field classification and runtime dependency audit before any schema/rules/blueprint implementation. | Yes | Phase 7D.6 additive identifier runtime schema implementation plan |
 
 ## Related Documentation
 

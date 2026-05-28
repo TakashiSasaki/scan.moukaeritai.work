@@ -4,7 +4,7 @@
 
 State:
 Latest completed phase: Phase 7D.5 — Ownerless identifier runtime schema proposal (documentation/specification only).
-Current next phase: Phase 7D.6 — Additive runtime schema/rules/blueprint proposal or implementation planning.
+Current next phase: Phase 7D.6 — Additive identifier runtime schema implementation planning (planning/audit).
 - Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
@@ -219,6 +219,14 @@ Phase 7D.5 — Ownerless identifier runtime schema proposal (Completed)
 - Deploy to Firebase Hosting ran automatically after merge and succeeded.
 - This confirms the hosting/build deployment path for this documentation update only.
 - It does not imply runtime schema, Firestore rules, or migration execution changes.
+
+
+Phase 7D.6 — Additive identifier runtime schema implementation planning (Completed)
+- planning/audit only
+- no runtime schema/rules/blueprint/functions/migration/Firestore writes changed
+- creates additive runtime schema implementation plan and dependency audit for ownerless/global identifier v2 transition
+- Phase 7E remains blocked
+- See [Phase 7D.6: Additive Identifier Runtime Schema Plan](phase-7d6-additive-identifier-runtime-schema-plan.md).
 
 Phase 8: Archive/remove legacy migration tools
 - Archive or remove old legacy migration UI/function after the new migration path is stable.
