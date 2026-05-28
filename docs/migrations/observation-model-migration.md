@@ -3,7 +3,7 @@
 ## Status
 
 State:
-Current phase: Phase 7D.4 — Identifier ownerId implementation impact audit.
+Current phase: Phase 7D.5 — Ownerless identifier runtime schema proposal (documentation/specification only).
 - Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.

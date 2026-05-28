@@ -13,7 +13,7 @@
 ## Identity categories
 
 - Object identity: `objects/{objectId}`
-- Identifier semantic identity: JCS payload over `app`, `idKind`, `idPurpose`, `identitySchemaVersion`, `canonicalizationVersion`, `kind`, `scheme`, `canonicalValue`
+- Identifier semantic identity: JCS payload over `app`, `idKind`, `identitySchemaVersion`, `canonicalizationVersion`, `kind`, `scheme`, `canonicalValue`
 - Identifier document identity: `identifiers/{identifierKey}`, where `identifierKey = UUIDv5(applicationNamespaceUuid, JCS(identifierSemanticIdentityPayload))`
 - Observation identity: `identifierObservations/{observationId}`
 - Binding identity: `objectIdentifierBindings/{bindingId}`
@@ -122,7 +122,7 @@ Notes:
 
 ```mermaid
 flowchart TD
-  SemanticPayload["Identifier semantic identity payload<br/>app + idKind + idPurpose<br/>identitySchemaVersion + canonicalizationVersion<br/>kind + scheme + canonicalValue"]
+  SemanticPayload["Identifier semantic identity payload<br/>app + idKind <br/>identitySchemaVersion + canonicalizationVersion<br/>kind + scheme + canonicalValue"]
   JCS["JCS canonical UTF-8 JSON<br/>RFC 8785"]
   UUIDv5["UUIDv5(applicationNamespaceUuid, JCS payload)"]
   IdentifierKey["identifierKey<br/>Firestore document ID"]
@@ -135,7 +135,7 @@ flowchart TD
   LegacyItemId["legacyItemId"]
   ObserverUid["observerUid"]
   BindingTarget["binding target"]
-  Metadata["label/rawValue/RSSI/location/timestamps/visibility"]
+  Metadata["label/rawPayload(or legacy rawValue)/RSSI/location/timestamps/visibility"]
 
   OwnerId -. excluded .-> SemanticPayload
   ObjectId -. excluded .-> SemanticPayload
@@ -145,8 +145,9 @@ flowchart TD
   Metadata -. excluded .-> SemanticPayload
 ```
 
-- `ownerId`, `objectId`, `legacyItemId`, `observerUid`, binding target, label, rawValue, RSSI, location, timestamps, and visibility are not part of identifier identity.
-- `rawValue` may be stored but does not participate in identity.
+- `ownerId`, `objectId`, `legacyItemId`, `observerUid`, binding target, label, rawPayload (or legacy rawValue), RSSI, location, timestamps, and visibility are not part of identifier identity.
+- `identityModelVersion` is stored on `IDENTIFIERS` as runtime interpretation metadata and does not participate in UUIDv5 payload derivation.
+- Future v2 design uses optional non-identifying `rawPayload`; current runtime `rawValue` (legacy/current) also does not participate in identity.
 - `canonicalValue` participates in identity.
 - `identifierKey` is not arbitrary; it is derived from semantic identity.
 
@@ -182,7 +183,7 @@ flowchart LR
 | Entity / concept | Primary/document key | Semantic identity fields | References / foreign keys | Scope |
 |---|---|---|---|---|
 | `objects` | `objectId` | N/A (object identity is document identity) | `ownerId`, `createdBy`, `ownerUid`, `primaryImageId` | Owner-scoped object records |
-| `identifiers` | `identifierKey` | JCS payload over `app`, `idKind`, `idPurpose`, `identitySchemaVersion`, `canonicalizationVersion`, `kind`, `scheme`, `canonicalValue` | current runtime `ownerId`, optional compatibility `objectId`, observation references (`firstObservedBy`, `firstObservationId`, `lastObservedBy`, `lastObservationId`) | Global/ownerless identifier identity; `ownerId` is runtime compatibility, not semantic identity |
+| `identifiers` | `identifierKey` | JCS payload over `app`, `idKind`, `identitySchemaVersion`, `canonicalizationVersion`, `kind`, `scheme`, `canonicalValue` | current runtime `ownerId`, optional compatibility `objectId`, observation references (`firstObservedBy`, `firstObservationId`, `lastObservedBy`, `lastObservationId`) | Global/ownerless identifier identity; `ownerId` is runtime compatibility, not semantic identity |
 | `objectIdentifierBindings` | `bindingId` | N/A for identifier semantics | `ownerId`, `objectId`, `identifierKey`, `attachedBy`, `detachedBy` | Relationship/assertion context; binding is not identifier identity |
 | `identifierObservations` | `observationId` | N/A for identifier semantics | `identifierKey`, `observerUid`, `ownerId`, `objectId`, `observerDeviceId` | Observation/context evidence; not identifier identity |
 | `objectEvents` | `eventId` | N/A for identifier semantics | `ownerId`, `objectId`, `identifierKey`, `actorUid` | Operational/audit history context |

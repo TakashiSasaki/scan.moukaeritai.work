@@ -195,3 +195,13 @@ users
 admins
   └─ grants admin capabilities
 ```
+
+
+## Identifier model limitations / future design notes (Phase 7D.5)
+
+- `identityModelVersion` will be introduced in a future schema phase. Missing or `1` means legacy/current owner-scoped compatibility model; `2` means ownerless/global model.
+- `idPurpose` is not part of canonical identifier payload for UUIDv5 derivation.
+- `scheme` remains part of identifier identity alongside `kind` and `canonicalValue`.
+- Current runtime may still contain `rawValue`; future v2 design uses optional non-identifying `rawPayload` instead.
+- `IdentifierRecord.objectId` is legacy compatibility only and non-authoritative; canonical relation belongs in `objectIdentifierBindings`.
+- ACL-specific fields are intentionally not added in the current phase.

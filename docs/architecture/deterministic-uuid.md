@@ -37,7 +37,6 @@ For identifiers, semantic identity is represented by a structured JCS payload.
 {
   "app": "scan.moukaeritai.work",
   "idKind": "identifier",
-  "idPurpose": "canonical-identifier",
   "identitySchemaVersion": 1,
   "canonicalizationVersion": 1,
   "kind": "<qr|nfc|manual|barcode|bluetooth>",
@@ -49,7 +48,6 @@ For identifiers, semantic identity is represented by a structured JCS payload.
 The payload **must include**:
 *   `app`
 *   `idKind`
-*   `idPurpose`
 *   `identitySchemaVersion`
 *   `canonicalizationVersion`
 *   `kind`
@@ -63,6 +61,9 @@ The payload **must not include**:
 *   `observerUid`
 *   binding target
 *   `label`
+*   `idPurpose` (optional general-purpose separator; canonical identifier payloads do not use it)
+*   `identityModelVersion`
+*   `rawPayload`
 *   `rawValue`
 *   `status`
 *   timestamps
@@ -78,13 +79,21 @@ The `identifierKey` is a deterministic storage-safe projection of this semantic 
 
 `identifiers/{identifierKey}` uses this UUID as the Firestore document ID. The `IdentifierRecord.identifierKey` must equal the document ID.
 
-Note: The semantic identity is not the raw identifier value itself. The raw identifier value may be stored as `rawValue`, but only `canonicalValue` participates in identity.
+Note: The semantic identity is not the raw identifier value itself. In future v2 design, optional `rawPayload` may preserve original source payloads, but `rawPayload` is non-identifying and excluded from UUIDv5 derivation. Current runtime `rawValue` (if present) is also excluded from identity derivation.
+
+
+### Version field separation
+
+* `identitySchemaVersion`: UUIDv5/JCS payload structure version; included in the canonical payload.
+* `canonicalizationVersion`: canonicalization rule version; included in the canonical payload.
+* `identityModelVersion`: runtime interpretation version of `IdentifierRecord`; stored on records and **not** included in UUIDv5 payload.
+
+For canonical identifier payloads, `idKind = "identifier"` is sufficient purpose separation. `idPurpose` remains a general-purpose concept for other deterministic UUID domains, but canonical identifier payloads intentionally omit it.
 
 ## Purpose Separation
 To avoid ID collisions between different entities that might otherwise serialize identically, purpose separation must be done explicitly inside the canonical JSON payload using fields such as:
 *   `app` (e.g., "scan.moukaeritai.work")
 *   `idKind` (e.g., "observation", "object")
-*   `idPurpose`
 *   `schemaVersion`
 *   Domain-specific keys
 

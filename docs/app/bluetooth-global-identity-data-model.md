@@ -5,11 +5,11 @@
 
 ## Scope
 
-This document visualizes the adopted design model for:
+This document visualizes the adopted design model for ordinary unified identifiers where Bluetooth is `kind = "bluetooth"` with a Bluetooth-specific `scheme`, including:
 
 * legacy `items.tagType`
 * legacy `items.bluetoothTags`
-* global Bluetooth identifiers
+* Bluetooth identifiers under the unified identifier model
 * object bindings
 * observations
 * RSSI metadata
@@ -29,7 +29,7 @@ It does not unblock Phase 7E by itself.
 * Bluetooth identifier identity is independent of `ownerId`.
 * Bluetooth identifier identity is independent of `legacyItemId`.
 * `ownerId` remains on owner-specific records such as observations, bindings, claims, visibility records, and migration provenance.
-* `bluetoothTags[].id` maps to `IdentifierRecord.rawValue` and `IdentifierRecord.canonicalValue`.
+* `bluetoothTags[].id` maps to canonicalization input and `IdentifierRecord.canonicalValue`.
 * `bluetoothTags[].name` maps to `IdentifierRecord.label`.
 * `bluetoothTags[].rssi`, if present, belongs to observation metadata.
 * `bluetoothTags[].linkedAt`, if present, is a binding/event timestamp candidate.
@@ -42,7 +42,7 @@ It does not unblock Phase 7E by itself.
 * Global Bluetooth identity means identifier identity must not be owner-scoped.
 * Therefore, implementation will require a careful additive schema/rules design.
 * Possible implementation approaches must be evaluated later:
-  * reinterpret `IdentifierRecord.ownerId` as creator/registrar for global Bluetooth identifiers;
+  * reinterpret `IdentifierRecord.ownerId` as creator/registrar for Bluetooth identifiers under the unified identifier model;
   * add a separate global identifier registry concept;
   * add ownership/claim records separate from identifier identity;
   * use global identifier key while keeping access-controlled owner-scoped observations and bindings.
@@ -54,7 +54,7 @@ It does not unblock Phase 7E by itself.
 | -------------------------------- | -------------------------------------------------------------------------------------------- | ------- |
 | `items.tagType`                  | `ObjectRecord.legacy.tagType.rawValue` and normalized metadata                               | Decided |
 | `items.bluetoothTags[]`          | source array for Bluetooth identifier candidates                                             | Decided |
-| `items.bluetoothTags[].id`       | global Bluetooth `IdentifierRecord.rawValue` / `canonicalValue`                              | Decided |
+| `items.bluetoothTags[].id`       | global Bluetooth canonicalization input / `canonicalValue`                              | Decided |
 | `items.bluetoothTags[].name`     | `IdentifierRecord.label`                                                                     | Decided |
 | `items.bluetoothTags[].rssi`     | `IdentifierObservationRecord.metadata.rssi` candidate                                        | Decided |
 | `items.bluetoothTags[].linkedAt` | binding/event timestamp candidate                                                            | Decided |
@@ -182,6 +182,7 @@ flowchart TD
   Observation --> Time
 ```
 
+* RSSI/gateway/scanner/txPower/linkedAt are not identifier identity fields and belong to observation/binding/event/provenance layers.
 * RSSI is not a stable tag property.
 * RSSI depends on observation context.
 * `linkedAt` is not RSSI-like measurement data; it is an association timestamp candidate.
@@ -194,7 +195,6 @@ The Bluetooth semantic identity payload is JCS-canonicalized. The UUIDv5 key is 
 {
   "app": "scan.moukaeritai.work",
   "idKind": "identifier",
-  "idPurpose": "canonical-identifier",
   "identitySchemaVersion": 1,
   "canonicalizationVersion": 1,
   "kind": "bluetooth",
@@ -206,7 +206,7 @@ The Bluetooth semantic identity payload is JCS-canonicalized. The UUIDv5 key is 
 *Note: Older migration sketches used a Bluetooth-specific field name (`bluetoothTagCanonicalValue`), but the canonical identity payload should now use the generic `canonicalValue` field.*
 
 * `legacyItemId` belongs in binding/provenance output, not identifier identity.
-* `ownerId` belongs in owner-scoped observations/bindings/claims/access-control records, not identifier identity.
+* `ownerId` belongs in owner-scoped observations/bindings/claims/access-control records, not identifier identity. `objectId` and `legacyItemId` are also excluded from identifier identity.
 * global key collision checks must be global, not owner-scoped.
 
 ## Remaining implementation work

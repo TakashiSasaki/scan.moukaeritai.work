@@ -36,8 +36,8 @@ This dry-run design must account for the following source fields:
 * `items.bluetoothTags[].linkedAt`
 
 **Status:**
-* `bluetoothTags[].id` and `bluetoothTags[].name` are confirmed present in live data.
-* `bluetoothTags[].rssi` and `bluetoothTags[].linkedAt` were not observed in the available audit output, but the dry-run design must still define how to handle them if present.
+* `bluetoothTags[].id` and `bluetoothTags[].name` (non-identity metadata candidate) are confirmed present in live data.
+* `bluetoothTags[].rssi` (observation metadata, non-identity) and `bluetoothTags[].linkedAt` (binding/event timestamp candidate, non-identity) were not observed in the available audit output, but the dry-run design must still define how to handle them if present.
 * `tagType` must remain part of the decision analysis.
 
 ## Target model assumptions
@@ -63,7 +63,7 @@ For each `items/{legacyItemId}.bluetoothTags[]` entry:
 * create a proposed `IdentifierRecord`
 * `kind = "bluetooth"`
 * `scheme = "bluetooth-legacy-tag-id"` unless a better scheme is discovered
-* `rawValue = bluetoothTags[].id`
+* `rawPayload` is optional provenance/snapshot data and not required for identity; `bluetoothTags[].id` maps to canonicalization input and `canonicalValue`
 * `canonicalValue = canonicalized bluetoothTags[].id`
 * `label = bluetoothTags[].name`, if present
 * identity key is global.
@@ -77,7 +77,7 @@ For each `items/{legacyItemId}.bluetoothTags[]` entry:
 * Current `IdentifierRecord.ownerId` is an implementation caveat; the conceptual model now treats identifiers as ownerless/global.
 * `status = "active"` for attached legacy tags, unless conflict checks indicate otherwise
 * `createdAt` candidate:
-  * prefer `bluetoothTags[].linkedAt` if present and valid
+  * prefer `bluetoothTags[].linkedAt` (binding/event timestamp candidate, non-identity) if present and valid
   * otherwise use `items.createdAt`
 * `updatedAt` candidate:
   * use `items.updatedAt` if present
@@ -122,8 +122,7 @@ We evaluated options for generating the UUIDv5 payload.
 **Recommendation:**
 Use Option C. The deterministic identifier identity payload is JCS-canonicalized and includes:
 * `idKind: "identifier"`
-* `idPurpose: "canonical-identifier"`
-* `kind: "bluetooth"`
+* * `kind: "bluetooth"`
 * `scheme: "bluetooth-legacy-tag-id"`
 * `canonicalValue`
 * app and namespace version metadata
@@ -140,8 +139,7 @@ Example canonical JSON payload shape:
 {
   "app": "scan.moukaeritai.work",
   "idKind": "identifier",
-  "idPurpose": "canonical-identifier",
-  "identitySchemaVersion": 1,
+    "identitySchemaVersion": 1,
   "canonicalizationVersion": 1,
   "kind": "bluetooth",
   "scheme": "bluetooth-legacy-tag-id",
@@ -157,7 +155,7 @@ To canonicalize `bluetoothTags[].id`:
 * normalize Unicode to NFC if applicable
 * represent the canonical value as a string
 * do not decode base64 unless the legacy semantics are proven
-* store the original value as `rawValue`
+* if preserving original entry snapshots, store them as provenance/snapshot data (e.g., optional `rawPayload`), not as identity payload
 * store the canonicalized value as `canonicalValue`
 
 The dry-run must report empty, missing, non-string, duplicate, or suspicious tag IDs.
@@ -172,7 +170,7 @@ For each proposed Bluetooth identifier:
 * future conceptual collection: `identifierTargetBindings`
 * `relationshipKind` should be documented conceptually as `"attached"` or `"associated"`, but not implemented in current `objectIdentifierBindings`
 * `attachedAt` candidate:
-  * prefer `bluetoothTags[].linkedAt` if present and valid
+  * prefer `bluetoothTags[].linkedAt` (binding/event timestamp candidate, non-identity) if present and valid
   * otherwise use `items.createdAt`
 * `attachedBy` candidate:
   * use `items.ownerId` or migration actor placeholder, depending on existing binding conventions
@@ -264,9 +262,9 @@ interface BluetoothLegacyMigrationDryRunResult {
 Expected classifications after a future successful Bluetooth migration:
 * `bluetoothTags`: `migrated` or `partially-migrated`
 * `bluetoothTags[].id`: `migrated`
-* `bluetoothTags[].name`: `migrated`
-* `bluetoothTags[].rssi`: `derived-only` or `not-observed / observation-metadata-only`, depending on live data
-* `bluetoothTags[].linkedAt`: `migrated` if used as binding timestamp, otherwise `needs-decision`
+* `bluetoothTags[].name` (non-identity metadata candidate): `migrated`
+* `bluetoothTags[].rssi` (observation metadata, non-identity): `derived-only` or `not-observed / observation-metadata-only`, depending on live data
+* `bluetoothTags[].linkedAt` (binding/event timestamp candidate, non-identity): `migrated` if used as binding timestamp, otherwise `needs-decision`
 * `tagType`: `migrated` or `partially-migrated` once raw/normalized legacy metadata mapping is implemented. (no longer `needs-decision` as a design matter, implementation validation still required)
 
 ## Privacy and safety
