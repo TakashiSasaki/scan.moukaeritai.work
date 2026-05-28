@@ -193,9 +193,6 @@ Phase 7D.3b — Ownerless global identifier model decision
 - RSSI is observation metadata
 - linkedAt is binding/event timestamp candidate
 - Phase 7E remains blocked
-- Deploy to Firebase Hosting ran automatically after merge and succeeded.
-- This confirms the hosting/build deployment path for this documentation update only.
-- It does not imply runtime schema, Firestore rules, or migration execution changes.
 - no runtime schema/rules/functions/migration writes were changed
 
 Phase 7D.3c — JCS UUIDv5 identifier identity specification
@@ -219,6 +216,9 @@ Phase 7D.5 — Ownerless identifier runtime schema proposal (Completed)
 - defers ACL fields and `identifierClaims`
 - no runtime schema/rules/blueprint/functions/migrations/Firestore writes changed
 - Phase 7E remains blocked
+- Deploy to Firebase Hosting ran automatically after merge and succeeded.
+- This confirms the hosting/build deployment path for this documentation update only.
+- It does not imply runtime schema, Firestore rules, or migration execution changes.
 
 Phase 8: Archive/remove legacy migration tools
 - Archive or remove old legacy migration UI/function after the new migration path is stable.
