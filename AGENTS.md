@@ -339,3 +339,14 @@ The application has transitioned from a simple `items` collection to a normalize
 - **Source of Truth**:
   - `firebase-blueprint.json` defines the new schema boundaries.
   - Always prefer resolving an identifier via the `identifiers` collection rather than blindly treating a scanned payload as an `objectId`.
+
+
+### Phase 7D.5 documentation decisions (2026-05-28)
+- Canonical identifier registry remains `identifiers/{identifierKey}` (no `globalIdentifiers`).
+- Canonical identifier UUIDv5 payload omits `idPurpose`; `idKind = "identifier"` is sufficient.
+- `identityModelVersion` is runtime interpretation metadata (missing/1 legacy compatibility, 2 ownerless/global) and is excluded from UUIDv5 payload.
+- `scheme` remains part of semantic identifier identity with `kind` + `canonicalValue`.
+- Future v2 design uses optional non-identifying `rawPayload` instead of `rawValue` in design docs.
+- `IdentifierRecord.objectId` is legacy/non-authoritative compatibility only; canonical relation remains `objectIdentifierBindings`.
+- ACL fields and `identifierClaims` are future-only; do not introduce in current phases.
+- Bluetooth remains under unified identifier model via `kind: "bluetooth"` and scheme-specific canonicalization.

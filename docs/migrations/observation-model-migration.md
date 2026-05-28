@@ -3,7 +3,7 @@
 ## Status
 
 State:
-Current phase: Phase 7D.4 — Identifier ownerId implementation impact audit.
+Current phase: Phase 7D.5 — Ownerless identifier runtime schema proposal (documentation/specification only).
 - Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
@@ -202,6 +202,19 @@ Phase 7D.3c — JCS UUIDv5 identifier identity specification
 - `IdentifierRecord.ownerId` is a future optional, non-identifying field
 - Phase 7E remains blocked
 - no runtime schema, rules, blueprint, functions, migrations, or Firestore writes were changed
+
+Phase 7D.5 — Ownerless identifier runtime schema proposal (Completed)
+- documentation/specification only
+- reflects identifier v2 model decisions
+- removes `idPurpose` from canonical identifier payload
+- introduces `identityModelVersion` conceptually as runtime interpretation metadata
+- keeps existing `identifiers` collection as canonical registry
+- keeps `scheme` in semantic identifier identity
+- replaces future `rawValue` design with optional `rawPayload`
+- treats `IdentifierRecord.objectId` as legacy-only / non-authoritative
+- defers ACL fields and `identifierClaims`
+- no runtime schema/rules/blueprint/functions/migrations/Firestore writes changed
+- Phase 7E remains blocked
 
 Phase 8: Archive/remove legacy migration tools
 - Archive or remove old legacy migration UI/function after the new migration path is stable.

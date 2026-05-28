@@ -64,14 +64,9 @@ Phase 7E remains blocked.
 Option A:
 Reinterpret existing `IdentifierRecord.ownerId` as `createdBy` / `registeredBy` for ownerless identifiers.
 
-Option B:
-Introduce a new global identifier registry collection and keep existing `identifiers` as legacy or owner-scoped records during transition.
-
-Option C:
-Refactor `identifiers` into ownerless global records and move owner-specific state into observations, bindings, and claims.
-
-Option D:
-Keep QR/NFC/manual/barcode identifiers owner-scoped for compatibility but make Bluetooth/radio identifiers global. Mark this as less conceptually clean.
+Implementation direction:
+Use the existing `identifiers` collection as the canonical global identifier registry (no `globalIdentifiers` collection).
+Introduce `identityModelVersion` as runtime interpretation metadata in a future schema phase (missing or `1` = legacy/current compatibility model, `2` = ownerless/global model).
 
 ## Mermaid: conceptual ownership separation
 
@@ -199,7 +194,6 @@ It must strictly avoid including:
 {
   "app": "scan.moukaeritai.work",
   "idKind": "identifier",
-  "idPurpose": "canonical-identifier",
   "identitySchemaVersion": 1,
   "canonicalizationVersion": 1,
   "kind": "bluetooth",
@@ -238,3 +232,12 @@ It must strictly avoid including:
 - Related docs:
   - [Database Identity ER Diagram](database-identity-er-diagram.md)
   - [Phase 7D.4: Identifier ownerId implementation impact audit](../migrations/phase-7d4-identifier-ownerid-implementation-impact-audit.md)
+
+
+## Phase 7D.5 decisions reflected
+
+* `scheme` remains part of identifier semantic identity (`kind + scheme + canonicalValue`).
+* Future v2 proposal uses optional `rawPayload?: JsonValue` (non-identifying) instead of `rawValue` in design docs.
+* `IdentifierRecord.objectId` is legacy compatibility only and non-authoritative; canonical relation remains `objectIdentifierBindings`.
+* ACL fields (`visibility`, `communityId`, `accessModelVersion`, `aclPolicy`, readers/writers/editors/allowedUserIds, etc.) are intentionally deferred and must not be added now.
+* `identifierClaims` remains future-only and is not a Phase 7D.5/7D.6 prerequisite.
