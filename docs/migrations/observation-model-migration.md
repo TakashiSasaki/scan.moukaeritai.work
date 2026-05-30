@@ -274,3 +274,12 @@ Phase 7D.8 — Additive identifier runtime schema implementation (Completed)
 - does not deploy
 - Phase 7E remains blocked
 
+Phase 7D.9 — Firestore rules transition design and readiness audit (Completed)
+- design/readiness only
+- audits current rules baseline and runtime write path inventory
+- details source-to-target migration completeness for rules-relevant fields
+- outlines conservative staged transition strategy and future emulator test plan
+- does not modify `firestore.rules`
+- does not execute migrations or create imported/synthetic observations
+- Phase 7E remains blocked
+- See [Phase 7D.9: Firestore Rules Transition Design](phase-7d9-firestore-rules-transition-design.md).
