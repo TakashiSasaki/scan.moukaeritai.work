@@ -6,8 +6,12 @@ import {
 } from '@firebase/rules-unit-testing';
 import { describe, it, beforeAll, afterAll, beforeEach } from 'vitest';
 import { readFileSync } from 'fs';
-import { join } from 'path';
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, getDocs, collection } from 'firebase/firestore';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const PROJECT_ID = 'scan-moukaeritai-work-rules-test';
 let testEnv: RulesTestEnvironment;
@@ -223,8 +227,8 @@ describe('Firestore Rules Baseline', () => {
       const db = testEnv.authenticatedContext(ownerUid).firestore();
       await assertSucceeds(getDoc(doc(db, 'users', nonOwnerUid)));
 
-      // List/queries are blocked for users other than self, testing general query might be tricky without collection reference,
-      // but getting a known document is verified here.
+      // List/queries are blocked for users other than self
+      await assertFails(getDocs(collection(db, 'users')));
     });
   });
 
@@ -254,7 +258,8 @@ describe('Firestore Rules Baseline', () => {
       const db = testEnv.authenticatedContext(nonOwnerUid).firestore();
       await assertFails(getDoc(doc(db, 'objectIdentifierBindings', 'bind1')));
 
-      const evilBinding = { ...validBinding, ownerId: nonOwnerUid }; // mismatch with existing, or trying to create for self on someone else's object
+      // attempting to create a binding for another user
+      const evilBinding = { ...validBinding, ownerId: ownerUid };
       await assertFails(setDoc(doc(db, 'objectIdentifierBindings', 'bind2'), evilBinding));
     });
   });
