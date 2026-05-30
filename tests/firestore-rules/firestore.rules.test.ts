@@ -126,6 +126,9 @@ describe('Firestore Rules Baseline', () => {
 
     it('client writes to identifiers with additive v2 fields (rawPayload) are rejected', async () => {
       const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+      await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
+
       const invalidIdentifier = {
         ...validIdentifier,
         rawPayload: { some: 'json' }, // not allowed in current rules
@@ -136,6 +139,9 @@ describe('Firestore Rules Baseline', () => {
 
     it('client writes to identifiers with additive v2 fields (identityModelVersion) are rejected', async () => {
       const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+      await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
+
       const invalidIdentifier = {
         ...validIdentifier,
         identityModelVersion: 2, // not allowed in current rules
@@ -146,6 +152,9 @@ describe('Firestore Rules Baseline', () => {
 
     it('client writes to identifiers with additive v2 fields (identitySchemaVersion) are rejected', async () => {
       const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+      await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
+
       const invalidIdentifier = {
         ...validIdentifier,
         identitySchemaVersion: 1, // not allowed in current rules
@@ -156,6 +165,9 @@ describe('Firestore Rules Baseline', () => {
 
     it('client writes to identifiers with additive v2 fields (canonicalizationVersion) are rejected', async () => {
       const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+      await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
+
       const invalidIdentifier = {
         ...validIdentifier,
         canonicalizationVersion: 1, // not allowed in current rules
