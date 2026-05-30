@@ -28,7 +28,7 @@ body {
 
 /* App Outer Frame Decoration */
 .app-container {
-  max-width: 600px;
+  width: 100%;
   margin: 0 auto;
   min-height: 100vh;
   position: relative;
