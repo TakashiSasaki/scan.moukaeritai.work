@@ -143,6 +143,15 @@ function AppContent() {
     navigate('/app');
   };
 
+  const handleOpenApp = () => {
+    const from = (location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null)?.from;
+    const targetPath = from?.pathname && from.pathname !== '/'
+      ? `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`
+      : '/app';
+
+    navigate(targetPath);
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--surface)] text-[var(--on-surface-variant)]">
@@ -155,7 +164,7 @@ function AppContent() {
 
   return (
     <Routes>
-      <Route path="/" element={<LandingPage user={user} onLogin={handleLogin} onOpenApp={() => navigate('/app')} />} />
+      <Route path="/" element={<LandingPage user={user} onLogin={handleLogin} onOpenApp={handleOpenApp} />} />
       <Route path="/about" element={<PublicLayout><AppAboutPage /></PublicLayout>} />
       <Route path="*" element={
         <RequireAuth user={user}>
