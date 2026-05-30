@@ -12,7 +12,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { auth, db, signInWithPopup, googleProvider, onAuthStateChanged, User, signOut } from './lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ThemeProvider, useTheme, ThemeColor, ThemeMode } from './context/ThemeContext';
-import { Github, ExternalLink, Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert, Beaker, PlaySquare, Route as RouteIcon, Database, Info } from 'lucide-react';
+import { Github, ExternalLink, Cloud, Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert, Beaker, PlaySquare, Route as RouteIcon, Database, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'react-hot-toast';
 import Dashboard from './components/Dashboard';
@@ -280,6 +280,15 @@ function LandingPage({
             >
               <Github size={14} />
               GitHub リポジトリ
+            </a>
+            <a
+              href="https://chatgpt.com/codex/cloud/settings/environment/6a1250d687a081919a9514acbfad12a5"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-neutral-300 text-xs font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95"
+            >
+              <Cloud size={14} />
+              Codex Cloud 環境
             </a>
           </div>
 
