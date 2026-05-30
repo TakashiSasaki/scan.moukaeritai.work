@@ -115,6 +115,7 @@ To prevent confusion across systems, note the following distinct identifiers use
 - **Workflow Synchronization (CRITICAL)**: Whenever you add, rename, or remove a Cloud Function in `/functions/src/index.ts`, you MUST simultaneously update the `--only` flag in `.github/workflows/deploy-functions.yml` to reflect the exact list of functions. Failure to do so will result in deployment mismatches and missing functions.
 
 ## 9. Communication & Logs
+- Do not commit transient PR-helper, review-reply, scratch, or tool-failure files such as `patch_pr.js`, `reply_payload.json`, one-off local scripts, temporary JSON payloads, generated reply bodies, or similar agent-control artifacts. If such files are needed locally by an agent, they must remain untracked.
 - Critical errors during Firestore operations should be logged using the JSON-structured error format defined in `CaptureForm.tsx` or similar utility handlers to allow for AI-driven diagnostics.
 
 ## 10. Image Provisioning Specifications
@@ -240,12 +241,6 @@ To support the creation of small, efficient QR codes, the system utilizes QR Cod
 - **Lookup Process**: QR/NFC scanning should resolve through `identifiers/{identifierKey}` rather than assuming the scanned payload is a direct `objectId`. The application extracts the payload from a URL (if necessary), normalizes it, and queries the `identifiers` collection.
 - **Routing**: Legacy `/item/:id` URLs redirect to `/object/:id` via `RouteCatalog`, but new design should prefer identifier lookup.
 - **Generation**: Newly generated `objectId`s and normalized identifier tokens MUST always be exclusively uppercase (e.g., `OBJECT-XYZ123`).
-
-## General migration completeness rule
-
-For any data migration, schema change, normalization, import, backfill, or storage reorganization, agents must require a source coverage audit and source-to-target mapping audit before implementation or execution.
-
-Execution must not proceed if any source field remains unclassified, `needs-decision`, or `unmigrated-gap`. For policy details, refer to `docs/migrations/migration-design-checklist.md`.
 
 ## 17. Migration completeness rule
 
