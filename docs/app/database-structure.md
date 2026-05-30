@@ -53,6 +53,10 @@ The current database structure consists of the following collections:
   - `kind`: Current values are `qr`, `nfc`, `manual`, `barcode`, `bluetooth`.
   - `scheme`: Carries important type-specific semantics (e.g., "qr-url-token", "nfc-uid").
   - `rawValue`
+  - `rawPayload`: Optional raw JSON payload for non-identifying data in v2 models.
+  - `identityModelVersion`: Runtime interpretation version. 1 (default) or 2.
+  - `identitySchemaVersion`: Schema version of the canonical identity payload. Defaults to 1 for v2.
+  - `canonicalizationVersion`: Version of the JSON canonicalization algorithm. Defaults to 1 for v2.
   - `canonicalValue`: Carries important type-specific semantics.
   - `status`
   - `label`
@@ -199,9 +203,9 @@ admins
 
 ## Identifier model limitations / future design notes (Phase 7D.5)
 
-- `identityModelVersion` will be introduced in a future schema phase. Missing or `1` means legacy/current owner-scoped compatibility model; `2` means ownerless/global model.
+- `identityModelVersion` is conceptually introduced in Phase 7D.5 and added as an additive runtime field in Phase 7D.8. Missing or `1` means legacy/current owner-scoped compatibility model; `2` means ownerless/global model.
 - `idPurpose` is not part of canonical identifier payload for UUIDv5 derivation.
 - `scheme` remains part of identifier identity alongside `kind` and `canonicalValue`.
-- Current runtime may still contain `rawValue`; future v2 design uses optional non-identifying `rawPayload` instead.
+- Current runtime contains `rawValue` for compatibility and newly added optional non-identifying `rawPayload` for v2 models (Phase 7D.8).
 - `IdentifierRecord.objectId` is legacy compatibility only and non-authoritative; canonical relation belongs in `objectIdentifierBindings`.
 - ACL-specific fields are intentionally not added in the current phase.

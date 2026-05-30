@@ -1,3 +1,11 @@
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JsonValue }
+  | JsonValue[];
+
 import { Timestamp } from 'firebase/firestore';
 
 export type ObservationObserverKind = 'user' | 'device' | 'system';
@@ -118,6 +126,10 @@ export interface IdentifierRecord {
   kind: 'qr' | 'nfc' | 'manual' | 'barcode' | 'bluetooth';
   scheme: string; // e.g., "qr-url-token", "nfc-uid"
   rawValue?: string;
+  rawPayload?: JsonValue;
+  identityModelVersion?: 1 | 2;
+  identitySchemaVersion?: number;
+  canonicalizationVersion?: number;
   canonicalValue: string;
   status: 'active' | 'unassigned' | 'retired' | 'lost' | 'replaced';
   label?: string;

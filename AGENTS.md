@@ -306,7 +306,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - `tag-1.0.0` is the immutable migration source baseline.
   - `scan.moukaeritai.work` is the working branch and may include preparation commits after the baseline.
   - The previous legacy `items` migration is completed. Do not extend the old legacy migration UI/function for new work.
-  - Latest completed phase is Phase 7D.5 (documentation/specification only); next phase is Phase 7D.6 planning for additive runtime schema/rules/blueprint changes. (Proceeding on the `1.7.x` version line)
+  - Latest completed phase is Phase 7D.8 (additive runtime schema implementation); next phase is Phase 7D.9 planning for Firestore rules transition design. (Proceeding on the `1.7.x` version line)
   - Phase 6A imported observation dry-run document is `docs/migrations/phase-6a-imported-observation-dry-run.md`.
   - Phase 6B imported observation execute plan document is `docs/migrations/phase-6b-imported-observation-execute-plan.md`.
   - Phase 7A backend imported observation revalidation dry-run document is `docs/migrations/phase-7a-backend-imported-observation-revalidation-dry-run.md`.
@@ -340,6 +340,13 @@ The application has transitioned from a simple `items` collection to a normalize
   - `firebase-blueprint.json` defines the new schema boundaries.
   - Always prefer resolving an identifier via the `identifiers` collection rather than blindly treating a scanned payload as an `objectId`.
 
+
+### Phase 7D.8 database schema / runtime update (2026-05-30)
+- Additive v2 fields (`rawPayload`, `identityModelVersion`, `identitySchemaVersion`, `canonicalizationVersion`) were added to `IdentifierRecord` runtime and blueprint.
+- `ownerId` remains required for now. `rawValue` remains for compatibility.
+- Pure semantic identifier identity helpers were added (`src/lib/identifierIdentity.ts`).
+- Vitest was added for pure unit testing.
+- Firestore rules, data migrations, and runtime writes were strictly left unmodified.
 
 ### Phase 7D.5 documentation decisions (2026-05-28)
 - Canonical identifier registry remains `identifiers/{identifierKey}` (no `globalIdentifiers`).
