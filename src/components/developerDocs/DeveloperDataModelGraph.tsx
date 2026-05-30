@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import Graph from 'graphology';
 import Sigma from 'sigma';
-import { Share2, Maximize, RotateCcw, Info } from 'lucide-react';
+import { Share2, RotateCcw, Info } from 'lucide-react';
 import { dataModelNodes, dataModelEdges } from '../../lib/developerDataModelGraph';
 
 export default function DeveloperDataModelGraph() {
