@@ -12,25 +12,63 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['icon.svg'],
+        includeAssets: ['icon.svg', 'favicon.svg', 'favicon-48.png', 'apple-touch-icon.svg', 'apple-touch-icon.png', 'pwa-icon-192.svg', 'pwa-icon-192.png', 'pwa-icon-512.svg', 'pwa-icon-512.png', 'maskable-icon.svg', 'maskable-icon-512.png'],
         manifest: {
           name: 'scan.moukaeritai.work',
-          short_name: 'Scan',
+          short_name: 'Scan MW',
+          description: 'Cloud inventory and asset tracking with QR, NFC, and image-based identification.',
           start_url: '/',
           display: 'standalone',
-          background_color: '#ffffff',
-          theme_color: '#ffffff',
+          background_color: '#0f172a',
+          theme_color: '#0f172a',
           icons: [
             {
               src: '/icon.svg',
-              sizes: '192x192 512x512',
+              sizes: 'any',
               type: 'image/svg+xml',
-              purpose: 'any maskable'
+              purpose: 'any'
+            },
+            {
+              src: '/pwa-icon-192.svg',
+              sizes: '192x192',
+              type: 'image/svg+xml',
+              purpose: 'any'
+            },
+            {
+              src: '/pwa-icon-192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: '/pwa-icon-512.svg',
+              sizes: '512x512',
+              type: 'image/svg+xml',
+              purpose: 'any'
+            },
+            {
+              src: '/pwa-icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: '/maskable-icon.svg',
+              sizes: 'any',
+              type: 'image/svg+xml',
+              purpose: 'maskable'
+            },
+            {
+              src: '/maskable-icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable'
             }
           ]
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          navigateFallback: '/index.html',
+          globPatterns: ['**/*.{js,css,html,webmanifest}'],
           maximumFileSizeToCacheInBytes: 6000000,
           runtimeCaching: [
             {

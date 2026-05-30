@@ -21,7 +21,8 @@ export const routeGroups: RouteGroup[] = [
         component: 'LandingPage',
         access: 'public',
         navigation: 'none',
-        purpose: 'public landing/login route'
+        purpose: 'public landing/login and explicit app-entry route',
+        notes: 'Authenticated users remain on the landing page and use the explicit Open App action to enter /app.'
       },
       {
         path: '/app',
@@ -55,10 +56,10 @@ export const routeGroups: RouteGroup[] = [
       {
         path: '/item/:id',
         component: 'Navigate',
-        access: 'all',
+        access: 'signed-in user',
         navigation: 'legacy URL',
         purpose: 'Redirect to /object/:id',
-        notes: 'Legacy support for old QR codes'
+        notes: 'Legacy redirect to /object/:id for old QR codes; implemented under the authenticated app shell.'
       },
       {
         path: '/unassigned',
@@ -160,11 +161,11 @@ export const routeGroups: RouteGroup[] = [
     routes: [
       {
         path: '*',
-        component: 'MainLayout',
-        access: 'all',
+        component: 'AuthenticatedAppLayout',
+        access: 'signed-in user',
         navigation: 'none',
-        purpose: 'delegates main app routes to nested Routes',
-        notes: 'Top-level fallback. Delegates main app routes to nested Routes.'
+        purpose: 'protected fallback that renders the authenticated app shell before delegating app routes to nested Routes',
+        notes: 'Top-level fallback is wrapped by RequireAuth before rendering AuthenticatedAppLayout; its nested fallback renders MainLayout.'
       }
     ]
   }

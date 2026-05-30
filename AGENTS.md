@@ -35,7 +35,7 @@ To prevent confusion across systems, note the following distinct identifiers use
   - The main application flow is built as a unified Single Page Application (SPA) using a state-driven screen toggle approach (e.g., `type Screen = 'dashboard' | 'search' | 'capture' ...`) to maintain state seamlessly without internal URL fragmenting.
   - **Dedicated Routes (Sub-pages)**: Pages like Admin (`/admin`), User Settings (`/settings`), Beta Tests (`/test`), and API Demos (`/demo`) are securely separated using `react-router-dom`. This provides strict access boundaries, dedicated entry points, and prevents the main SPA logic from becoming bloated.
   - **Sticky Top Navigations for Sub-pages**: Dedicated pages use a Sticky Top Navigation header (`sticky top-[57px] z-30 bg-[var(--surface-container-high)]/95 backdrop-blur-xl`) ensuring that critical actions (like "Save" or "Exit" buttons) and tab navigations remain accessible even when the content scrolls vertically.
-  - **Exit Button Consistency**: Every sub-page MUST have an exit button to return to the main app flow (`/`). This button should be standardized visually across all pages, using the format `🚪 Exit` (using the door emoji instead of arrows for clear visual affordance and consistency).
+  - **Exit Button Consistency**: Every authenticated sub-page MUST have an exit button to return to the authenticated app home (`/app`) unless intentionally returning to the public landing/logout flow (`/`). This button should be standardized visually across all pages, using the format `🚪 Exit` (using the door emoji instead of arrows for clear visual affordance and consistency).
   - Primary navigation for regular users is handled by a Sticky Bottom Navigation bar which provides quick access to core functions and is optimized for one-handed use on mobile devices.
 - **Popups and Menus (Click Outside Pattern)**: As a standard UI pattern, any custom dropdowns, modal menus, or popups (e.g., the profile menu) MUST close when the user clicks or taps outside the element. This should be implemented using React's `useRef` and a `useEffect` hook listening to `mousedown` and `touchstart` events on the `document`, rather than relying on transparent full-screen overlay divs which can suffer from z-index and event-bubbling issues.
 
@@ -184,9 +184,11 @@ To maintain clarity for administrators and developers, the application includes 
 - It is for administrators/developers, not SEO (it is not a sitemap.xml).
 - Whenever routes are added, renamed, or removed in the application, you MUST update `src/lib/routeCatalog.ts` (and by extension `SitemapPage.tsx`).
 - Key routes include:
+  - `/`: Public landing/login route. Authenticated users are not automatically redirected; they enter the app explicitly from the landing page via an app-entry button.
+  - `/app`: Authenticated app home.
   - `/object/new`: Create object.
   - `/object/:id`: View/edit object.
-  - `/item/:id`: Legacy redirect to `/object/:id`.
+  - `/item/:id`: Protected legacy redirect to `/object/:id`, implemented under the authenticated app routing shell.
   - `/unassigned`: Handle scanned tags not yet bound.
   - `/admin/migration`: Retired legacy database migration tool (displays deprecation warning).
   - `/admin/sitemap`: The human-readable route map itself.
@@ -207,8 +209,10 @@ When creating panels or pages where users edit settings (e.g., `UserSettingsPane
 ## 14. PWA & App Status Monitoring
 
 - **Service Worker Generation**: Uses `vite-plugin-pwa` with Workbox for manifest and service worker injection. Do not manually author `public/manifest.json` or `public/sw.js`.
-- **Build Failure Avoidance (File Size Limit)**: By default, Workbox's `maximumFileSizeToCacheInBytes` is 2MB. Since React/Vite builds can exceed this in standard chunks (often > 2.5MB depending on imports), this limit has been explicitly increased to 5MB (`5000000` bytes) in `vite.config.ts`. Failing to keep this updated will result in build errors indicating assets won't be precached.
-- **Centralized Health Dialog**: The application surfaces real-time system health data via the `AppStatusDialog` (accessed by clicking the App Icon in the top-left header). This is the standard location for presenting:
+- **Build Failure Avoidance (File Size Limit)**: By default, Workbox's `maximumFileSizeToCacheInBytes` is 2MB. Since React/Vite builds can exceed this in standard chunks (often > 2.5MB depending on imports), this limit has been explicitly increased to 6MB (`6000000` bytes) in `vite.config.ts`. Failing to keep this updated will result in build errors indicating assets won't be precached.
+- **PWA Landing Offline Fallback**: The PWA uses Workbox `navigateFallback: '/index.html'` and precaches the generated app shell so `/` remains available offline after installation without adding runtime caching for Firestore data or dynamic inventory content.
+- **PWA Icon Assets**: The source app icon is `public/icon.svg`; SVG icon assets live in `public/favicon.svg`, `public/apple-touch-icon.svg`, `public/pwa-icon-192.svg`, `public/pwa-icon-512.svg`, and `public/maskable-icon.svg`. PNG fallback assets (`public/favicon-48.png`, `public/apple-touch-icon.png`, `public/pwa-icon-192.png`, `public/pwa-icon-512.png`, `public/maskable-icon-512.png`) are generated by `npm run build` via `scripts/generate-pwa-icons.mjs` for iOS, Android launcher, and maskable install compatibility; do not commit the generated PNG files. Update `vite.config.ts` manifest declarations and `index.html` links together when changing these files.
+- **Centralized Health Dialog**: The application surfaces real-time system health data via the `AppStatusDialog` from the public landing page (`/`) App Status action. The authenticated app header no longer opens this dialog; tapping the app icon/name in that header returns to the landing page.
   - **Firebase Connection Status**: Shows online/offline state of the Firestore connection.
   - **Local Cache Stats**: Exposes Workbox and PWA cache usage by polling the browser's native `caches` API (`getAppCacheSizes` util). This allows users to inspect the footprint of cached assets directly from the UI without dev tools.
 

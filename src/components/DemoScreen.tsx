@@ -32,7 +32,7 @@ export default function DemoScreen() {
               </div>
             </div>
             <button 
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/app')}
               className="px-4 py-2 bg-[var(--surface)] border border-[var(--outline)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface)] rounded-xl font-bold text-sm transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
             >
               🚪 Exit
