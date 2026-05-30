@@ -152,45 +152,105 @@ function AppContent() {
     );
   }
 
+
+  return (
+    <Routes>
+      <Route path="/" element={user ? <Navigate to="/app" replace /> : <LandingPage onLogin={handleLogin} />} />
+      <Route path="/about" element={<PublicLayout><AppAboutPage /></PublicLayout>} />
+      <Route path="*" element={
+        <RequireAuth user={user}>
+          <AuthenticatedAppLayout
+            user={user}
+            isAdmin={isAdmin}
+            showProfile={showProfile}
+            setShowProfile={setShowProfile}
+            profileMenuRef={profileMenuRef}
+            handleLogout={handleLogout}
+            showAppStatus={showAppStatus}
+            setShowAppStatus={setShowAppStatus}
+            onDetected={handleDetected}
+            onCancelScanner={handleCancelScanner}
+          />
+        </RequireAuth>
+      } />
+    </Routes>
+  );
+}
+
+
+function LandingPage({ onLogin }: { onLogin: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-900 p-6 text-white text-center selection:bg-[var(--primary)]/30">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-12 max-w-sm w-full"
+      >
+        <div className="space-y-6">
+          <div className="relative inline-block">
+            <div className="absolute -inset-4 bg-[var(--primary)] rounded-full blur-3xl opacity-20 animate-pulse"></div>
+            <div className="relative bg-neutral-800 p-8 rounded-[40px] border border-neutral-700 shadow-2xl">
+              <Package className="w-24 h-24 text-[var(--primary)] mx-auto" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-4xl font-black tracking-tighter italic whitespace-nowrap">scan.moukaeritai.work</h1>
+            <p className="text-neutral-400 font-medium">
+              Smart Asset Tracking with<br />
+              <span className="text-white">QR, NFC, and Gemini AI.</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <button
+            onClick={onLogin}
+            className="group relative flex items-center justify-center gap-3 bg-white text-neutral-900 px-8 py-5 rounded-[24px] font-bold shadow-xl hover:bg-neutral-100 transition-all w-full active:scale-95 overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-neutral-200/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+            <LogIn size={22} />
+            Continue with Google
+          </button>
+          <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Enterprise Ready • Secure Cloud Sync</p>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function RequireAuth({ user, children }: { user: User | null, children: React.ReactNode }) {
+  const location = useLocation();
   if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-900 p-6 text-white text-center selection:bg-[var(--primary)]/30">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-12 max-w-sm w-full"
-        >
-          <div className="space-y-6">
-            <div className="relative inline-block">
-              <div className="absolute -inset-4 bg-[var(--primary)] rounded-full blur-3xl opacity-20 animate-pulse"></div>
-              <div className="relative bg-neutral-800 p-8 rounded-[40px] border border-neutral-700 shadow-2xl">
-                <Package className="w-24 h-24 text-[var(--primary)] mx-auto" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-4xl font-black tracking-tighter italic whitespace-nowrap">scan.moukaeritai.work</h1>
-              <p className="text-neutral-400 font-medium">
-                Smart Asset Tracking with<br />
-                <span className="text-white">QR, NFC, and Gemini AI.</span>
-              </p>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <button
-              onClick={handleLogin}
-              className="group relative flex items-center justify-center gap-3 bg-white text-neutral-900 px-8 py-5 rounded-[24px] font-bold shadow-xl hover:bg-neutral-100 transition-all w-full active:scale-95 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-neutral-200/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-              <LogIn size={22} />
-              Continue with Google
-            </button>
-            <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Enterprise Ready • Secure Cloud Sync</p>
-          </div>
-        </motion.div>
-      </div>
-    );
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
+  return <>{children}</>;
+}
+
+function PublicLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-[var(--surface-container-high)] flex justify-center selection:bg-[var(--primary)]/30">
+      <div className="app-container flex flex-col w-full transition-colors duration-300">
+        <main className="flex-1 w-full mx-auto max-w-7xl">
+           {children}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function AuthenticatedAppLayout({
+  user,
+  isAdmin,
+  showProfile,
+  setShowProfile,
+  profileMenuRef,
+  handleLogout,
+  showAppStatus,
+  setShowAppStatus,
+  onDetected,
+  onCancelScanner
+}: any) {
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-[var(--surface-container-high)] flex justify-center selection:bg-[var(--primary)]/30">
@@ -209,7 +269,7 @@ function AppContent() {
               onClick={() => setShowProfile(!showProfile)}
               className="flex items-center outline-none ring-[var(--primary)] focus-visible:ring-2 rounded-full"
             >
-              {user.photoURL ? (
+              {user?.photoURL ? (
                 <img 
                   src={user.photoURL} 
                   alt="Profile" 
@@ -218,7 +278,7 @@ function AppContent() {
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-[var(--surface-container-highest)] flex items-center justify-center border border-[var(--outline)] transition-transform hover:scale-105">
-                  <span className="text-xs font-bold text-[var(--on-surface-variant)]">{user.displayName?.[0] || 'U'}</span>
+                  <span className="text-xs font-bold text-[var(--on-surface-variant)]">{user?.displayName?.[0] || 'U'}</span>
                 </div>
               )}
             </button>
@@ -234,7 +294,7 @@ function AppContent() {
                   >
                   <div className="p-4 border-b border-[var(--outline)] bg-[var(--surface)]/50 flex justify-between items-start">
                     <div className="overflow-hidden">
-                      <div className="font-bold text-sm text-[var(--on-surface)] truncate">{user.displayName || 'User'}</div>
+                      <div className="font-bold text-sm text-[var(--on-surface)] truncate">{user?.displayName || 'User'}</div>
                       {isAdmin && (
                         <div className="flex gap-2 mt-1">
                           <div className="text-[10px] text-amber-500 font-bold uppercase tracking-wider bg-amber-500/10 inline-block px-2 py-0.5 rounded-full">Admin</div>
@@ -336,10 +396,10 @@ function AppContent() {
 
       <Routes>
         <Route path="/admin" element={
-          <main className="flex-1 max-w-4xl mx-auto w-full">
+          <main className="flex-1 w-full mx-auto max-w-7xl">
             {isAdmin ? (
                <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                 <AdminPanel onClose={() => navigate('/')} />
+                 <AdminPanel onClose={() => navigate('/app')} />
                </motion.div>
             ) : (
                <div className="p-12 mt-4 text-center bg-[var(--surface)] border border-red-500/20 rounded-2xl mx-4">
@@ -351,7 +411,7 @@ function AppContent() {
           </main>
         } />
         <Route path="/admin/migration" element={
-          <main className="flex-1 max-w-4xl mx-auto w-full">
+          <main className="flex-1 w-full mx-auto max-w-7xl">
             {isAdmin ? (
                <motion.div key="admin-migration" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                  <div className="p-8">
@@ -363,7 +423,7 @@ function AppContent() {
                        The repository is currently entering a new non-destructive observation-model migration phase.
                      </p>
                      <button
-                       onClick={() => navigate('/')}
+                       onClick={() => navigate('/app')}
                        className="px-6 py-2 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors"
                      >
                        Return to Home
@@ -381,10 +441,10 @@ function AppContent() {
           </main>
         } />
         <Route path="/admin/sitemap" element={
-          <main className="flex-1 max-w-4xl mx-auto w-full">
+          <main className="flex-1 w-full mx-auto max-w-7xl">
             {isAdmin ? (
                <motion.div key="admin-sitemap" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                 <SitemapPage onClose={() => navigate('/')} />
+                 <SitemapPage onClose={() => navigate('/app')} />
                </motion.div>
             ) : (
                <div className="p-12 mt-4 text-center bg-[var(--surface)] border border-red-500/20 rounded-2xl mx-4">
@@ -396,42 +456,35 @@ function AppContent() {
           </main>
         } />
         <Route path="/settings" element={
-          <main className="flex-1 max-w-4xl mx-auto w-full">
+          <main className="flex-1 w-full mx-auto max-w-7xl">
             <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <UserSettingsPanel onClose={() => navigate('/')} />
+              <UserSettingsPanel onClose={() => navigate('/app')} />
             </motion.div>
           </main>
         } />
         <Route path="/test" element={
-          <main className="flex-1 max-w-4xl mx-auto w-full">
+          <main className="flex-1 w-full mx-auto max-w-7xl">
             <motion.div key="test" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <TestScreen />
             </motion.div>
           </main>
         } />
         <Route path="/demo" element={
-          <main className="flex-1 max-w-4xl mx-auto w-full">
+          <main className="flex-1 w-full mx-auto max-w-7xl">
             <motion.div key="demo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <DemoScreen />
             </motion.div>
           </main>
         } />
         <Route path="/library-demo" element={
-          <main className="flex-1 max-w-4xl mx-auto w-full">
+          <main className="flex-1 w-full mx-auto max-w-7xl">
             <motion.div key="library-demo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <LibraryDemoScreen />
             </motion.div>
           </main>
         } />
-        <Route path="/about" element={
-          <main className="flex-1 max-w-4xl mx-auto w-full">
-            <motion.div key="about" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <AppAboutPage />
-            </motion.div>
-          </main>
-        } />
         <Route path="/database-structure" element={
-          <div className="flex-1 max-w-4xl mx-auto w-full">
+          <div className="flex-1 w-full mx-auto max-w-7xl">
             <motion.div key="database-structure" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <DatabaseStructurePage />
             </motion.div>
@@ -439,8 +492,8 @@ function AppContent() {
         } />
         <Route path="*" element={
           <MainLayout
-            onDetected={handleDetected}
-            onCancelScanner={handleCancelScanner}
+            onDetected={onDetected}
+            onCancelScanner={onCancelScanner}
             showAppStatus={showAppStatus}
             setShowAppStatus={setShowAppStatus}
           />
@@ -476,7 +529,7 @@ function ObjectCaptureRoute() {
     <CaptureForm
       objectId={id ? sanitizeItemId(id.toUpperCase()) : null}
       initialIdentifier={state?.identifier}
-      onClose={() => { navigate('/'); }}
+      onClose={() => { navigate('/app'); }}
     />
   );
 }
@@ -494,11 +547,11 @@ function MainLayout({ onDetected, onCancelScanner, showAppStatus, setShowAppStat
 
   return (
     <>
-      <main className="flex-1 max-w-4xl mx-auto w-full p-4">
+      <main className="flex-1 w-full mx-auto max-w-7xl p-4 md:p-8">
         <AnimatePresence mode="wait">
           {/* @ts-ignore */}
           <Routes location={location} key={location.pathname}>
-            <Route path="/" element={
+            <Route path="/app" element={
               <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                 <Dashboard onSelectItem={(id) => { navigate(`/object/${encodeURIComponent(id)}`); }} />
               </motion.div>
@@ -542,7 +595,7 @@ function MainLayout({ onDetected, onCancelScanner, showAppStatus, setShowAppStat
       </main>
 
       <nav className="sticky bottom-0 w-full bg-[var(--surface-container)]/90 backdrop-blur-lg border-t border-[var(--outline)] px-6 py-2 pb-safe flex justify-around items-center z-50">
-        <NavButton active={currentPath === '/'} onClick={() => navigate('/')} icon={<Package size={24} />} label="Home" />
+        <NavButton active={currentPath === '/app'} onClick={() => navigate('/app')} icon={<Package size={24} />} label="Home" />
         <NavButton active={currentPath === '/search'} onClick={() => navigate('/search')} icon={<Search size={24} />} label="Search" />
         <div className="relative -top-6">
           <button

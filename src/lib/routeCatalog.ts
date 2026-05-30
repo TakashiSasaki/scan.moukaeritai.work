@@ -18,10 +18,17 @@ export const routeGroups: RouteGroup[] = [
     routes: [
       {
         path: '/',
+        component: 'LandingPage',
+        access: 'public',
+        navigation: 'none',
+        purpose: 'public landing/login route'
+      },
+      {
+        path: '/app',
         component: 'Dashboard',
         access: 'signed-in user',
         navigation: 'bottom Home',
-        purpose: 'object dashboard'
+        purpose: 'authenticated app home'
       },
       {
         path: '/search',
@@ -134,9 +141,9 @@ export const routeGroups: RouteGroup[] = [
       {
         path: '/about',
         component: 'AppAboutPage',
-        access: 'signed-in user',
+        access: 'public',
         navigation: 'profile menu',
-        purpose: 'app explanation and documentation entry point',
+        purpose: 'public app information page',
       },
       {
         path: '/database-structure',
