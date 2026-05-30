@@ -19,7 +19,7 @@ The current `firestore.rules` (baseline from 1.7.x) has the following security p
 - **Owner Isolation:** Almost all collections (`objects`, `identifiers`, `objectIdentifierBindings`, `objectEvents`, `objectImages`, `items`) enforce strict isolation via `isOwner(existing().ownerId)` for reads and `incoming().ownerId == request.auth.uid` for creates.
 - **Admin Access:** Clients satisfying `isAdmin()` have global read/list/delete access on `items`, global read/delete access on `identifierObservations`, and update/delete access on `objectEvents` (but notably *not* global read access on `objectEvents` or `objectImages`). Clients satisfying `isAdmin()` can write the `admins` collection and modify the `role` field when a user updates their own profile. (Note: This is distinct from Backend/Admin SDK access, which bypasses rules entirely).
 - **Observations:** `identifierObservations` allows creation by any authenticated user provided it's a valid sighting/scan record. Updates are strictly disabled (`allow update: if false`). Reads are allowed for the `ownerId` or `observerUid`, and clients satisfying `isAdmin()`.
-- **Users:** Users can read all users (if signed in) but updates are strictly scoped to their own profile (`request.auth.uid == userId`). Modifying the `role` field during that self-update requires `isAdmin()`.
+- **Users:** Signed-in users can `get` known user profile documents, while profile updates are strictly scoped to the authenticated user's own document (`request.auth.uid == userId`). Arbitrary user listing (`list`) is not permitted. Modifying the `role` field during that self-update requires `isAdmin()`.
 - **Admins:** A user can read their own admin document. Clients satisfying `isAdmin()` can read and write the `admins` collection.
 
 **Rules depending on specific fields:**
@@ -66,11 +66,11 @@ Based on the migration completeness rule, the following fields are audited for t
 - `identifierKey`: **migrated** (UUIDv5 canonical implementation in place).
 - `bindingId`: **migrated**.
 - `identifierSummary`: **derived-only**.
-- `rawValue`: **intentionally-discarded** (replaced by `rawPayload` or specific schema fields).
-- `rawPayload`: **migrated** (Introduced as optional JSON in additive schema).
-- `identityModelVersion`: **migrated** (Introduced as 1 | 2).
-- `identitySchemaVersion`: **migrated**.
-- `canonicalizationVersion`: **migrated**.
+- `rawValue`: **preserved-as-legacy-reference** (Preserved for legacy/runtime compatibility and must not be silently dropped. Replaced conceptually in future designs by `rawPayload` or specific schema fields, but remains present in rules and data. `rawPayload` is the preferred additive v2 field).
+- `rawPayload`: **migrated** (Introduced as optional JSON in additive runtime schema; not yet allowed in `firestore.rules`).
+- `identityModelVersion`: **migrated** (Introduced as 1 | 2 in runtime schema; not yet allowed in `firestore.rules`).
+- `identitySchemaVersion`: **migrated** (Introduced in runtime schema; not yet allowed in `firestore.rules`).
+- `canonicalizationVersion`: **migrated** (Introduced in runtime schema; not yet allowed in `firestore.rules`).
 - observation author/source fields (e.g., `observerUid`, `source`): **migrated** (Rules enforce specific sources like 'qr', 'nfc', 'manual', 'camera').
 - imported/synthetic observation markers: **needs-decision** (Not yet allowed by client rules; requires backend execution or future Admin SDK rules).
 
@@ -84,7 +84,7 @@ To safely transition to the ownerless identifier model and support imported obse
 2. **Backend/Admin SDK First:** Do not broaden ordinary client writes to imported observations. Keep imported observation generation and execution purely in the backend/Admin SDK (e.g., via Phase 7E GitHub Actions workflows).
 3. **Privileged Fields:** Clients must not be allowed to write privileged migration/import fields (e.g., synthetic timestamps, `observationType: "imported"`). Rules should explicitly reject these from `incoming()`.
 4. **Staged Rules Updates:**
-   - *Stage 1:* Additive fields (`rawPayload`, `identityModelVersion`) are allowed in rules (completed in 7D.8 planning, pending rule deployment).
+   - *Stage 1:* Additive fields (`rawPayload`, `identityModelVersion`) are designed to be allowed in rules (completed in 7D.8 planning, pending actual `firestore.rules` deployment). Currently, they are not allowed in incoming writes by client rules.
    - *Stage 2:* Implement rules for ownerless identifiers (allowing `ownerId` to be omitted or null for specific identifier creations) but only when created via backend or when specific claims are met.
    - *Stage 3:* Roll out generic target bindings if needed.
 5. **Rollback Considerations:** Since rules are declarative, any breakage can be rolled back by reverting the `firestore.rules` file to the previous commit. Ensure no destructive data migrations accompany rule deployments initially.
@@ -104,7 +104,7 @@ A future emulator test matrix should verify the transition without affecting pro
 Test matrix must include:
 - **Authenticated owner:** Can read/write their own objects, bindings, events, and standard observations.
 - **Non-owner denial:** Cannot read or modify records belonging to other `ownerId`s.
-- **Admin-only behavior:** Admins can read all, update events/observations, and modify users/admins.
+- **Admin-only behavior:** Admins can read all, update/delete `objectEvents`, read/delete `identifierObservations` (but `identifierObservations` update remains denied), and modify users/admins.
 - **Identifier lookup:** Global/ownerless identifiers can be read if binding/claims allow (future state).
 - **Observation creation:** Valid 'qr'/'nfc' sightings are accepted; invalid schemas rejected.
 - **Imported rejection:** Rejection of `observationType: "imported"` or synthetic timestamps by ordinary clients.
@@ -120,6 +120,4 @@ Test matrix must include:
 
 ## Validation performed
 
-- This is a documentation/design task only.
-- Confirmed that `firestore.rules` and runtime logic were not modified.
-- `npm run lint` and `npm run build` were executed to ensure no accidental breakage.
+- PR validation reported `npm ci`, `npm run lint`, `npm run build`, and `npm run test`; the Phase 7D.9 document itself is documentation-only and records no runtime or rules changes.
