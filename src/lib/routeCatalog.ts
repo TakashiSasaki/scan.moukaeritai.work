@@ -161,11 +161,11 @@ export const routeGroups: RouteGroup[] = [
     routes: [
       {
         path: '*',
-        component: 'MainLayout',
+        component: 'AuthenticatedAppLayout',
         access: 'signed-in user',
         navigation: 'none',
-        purpose: 'protected fallback that delegates authenticated app routes to nested Routes',
-        notes: 'Top-level fallback is wrapped by RequireAuth before rendering MainLayout.'
+        purpose: 'protected fallback that renders the authenticated app shell before delegating app routes to nested Routes',
+        notes: 'Top-level fallback is wrapped by RequireAuth before rendering AuthenticatedAppLayout; its nested fallback renders MainLayout.'
       }
     ]
   }

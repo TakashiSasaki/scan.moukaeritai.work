@@ -12,7 +12,7 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['icon.svg', 'favicon.svg', 'apple-touch-icon.svg', 'pwa-icon-192.svg', 'pwa-icon-512.svg', 'maskable-icon.svg'],
+        includeAssets: ['icon.svg', 'favicon.svg', 'favicon-48.png', 'apple-touch-icon.svg', 'apple-touch-icon.png', 'pwa-icon-192.svg', 'pwa-icon-192.png', 'pwa-icon-512.svg', 'pwa-icon-512.png', 'maskable-icon.svg', 'maskable-icon-512.png'],
         manifest: {
           name: 'scan.moukaeritai.work',
           short_name: 'Scan MW',
@@ -35,15 +35,33 @@ export default defineConfig(({mode}) => {
               purpose: 'any'
             },
             {
+              src: '/pwa-icon-192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
               src: '/pwa-icon-512.svg',
               sizes: '512x512',
               type: 'image/svg+xml',
               purpose: 'any'
             },
             {
+              src: '/pwa-icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
               src: '/maskable-icon.svg',
               sizes: 'any',
               type: 'image/svg+xml',
+              purpose: 'maskable'
+            },
+            {
+              src: '/maskable-icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
               purpose: 'maskable'
             }
           ]
