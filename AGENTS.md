@@ -361,3 +361,11 @@ The application has transitioned from a simple `items` collection to a normalize
 - `IdentifierRecord.objectId` is legacy/non-authoritative compatibility only; canonical relation remains `objectIdentifierBindings`.
 - ACL fields and `identifierClaims` are future-only; do not introduce in current phases.
 - Bluetooth remains under unified identifier model via `kind: "bluetooth"` and scheme-specific canonicalization.
+
+## Developer Documentation Constraints
+- Developer documentation is public under `/developer`.
+- The developer docs section has its own internal navigation layout.
+- The route `/developer/data-model-graph` provides a static `sigma.js` visualization of the data model.
+- The data model graph MUST NOT connect to Firestore or inspect live data.
+- Do not bypass these constraints to make developer documentation routes dynamic or read from the database.
+- Route catalog must stay synchronized with developer routes in `src/lib/routeCatalog.ts`.
