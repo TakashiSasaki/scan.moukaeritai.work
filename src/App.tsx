@@ -164,7 +164,16 @@ function AppContent() {
 
   return (
     <Routes>
-      <Route path="/" element={<LandingPage user={user} onLogin={handleLogin} onOpenApp={handleOpenApp} />} />
+      <Route path="/" element={
+        <LandingPage
+          user={user}
+          onLogin={handleLogin}
+          onOpenApp={handleOpenApp}
+          showAppStatus={showAppStatus}
+          onShowAppStatus={() => setShowAppStatus(true)}
+          onCloseAppStatus={() => setShowAppStatus(false)}
+        />
+      } />
       <Route path="/about" element={<PublicLayout><AppAboutPage /></PublicLayout>} />
       <Route path="*" element={
         <RequireAuth user={user}>
@@ -175,8 +184,6 @@ function AppContent() {
             setShowProfile={setShowProfile}
             profileMenuRef={profileMenuRef}
             handleLogout={handleLogout}
-            showAppStatus={showAppStatus}
-            setShowAppStatus={setShowAppStatus}
             onDetected={handleDetected}
             onCancelScanner={handleCancelScanner}
           />
@@ -187,7 +194,21 @@ function AppContent() {
 }
 
 
-function LandingPage({ user, onLogin, onOpenApp }: { user: User | null, onLogin: () => void, onOpenApp: () => void }) {
+function LandingPage({
+  user,
+  onLogin,
+  onOpenApp,
+  showAppStatus,
+  onShowAppStatus,
+  onCloseAppStatus
+}: {
+  user: User | null,
+  onLogin: () => void,
+  onOpenApp: () => void,
+  showAppStatus: boolean,
+  onShowAppStatus: () => void,
+  onCloseAppStatus: () => void
+}) {
   const isAuthenticated = Boolean(user);
 
   return (
@@ -222,6 +243,13 @@ function LandingPage({ user, onLogin, onOpenApp }: { user: User | null, onLogin:
             {isAuthenticated ? <Package size={22} /> : <LogIn size={22} />}
             {isAuthenticated ? 'Open App' : 'Continue with Google'}
           </button>
+          <button
+            onClick={onShowAppStatus}
+            className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-[20px] border border-white/10 bg-white/5 text-neutral-200 font-bold hover:bg-white/10 transition-all active:scale-95"
+          >
+            <Info size={18} />
+            App Status
+          </button>
           {isAuthenticated && (
             <p className="text-xs text-neutral-400 font-medium">
               Signed in as <span className="text-white">{user?.displayName || user?.email || 'your account'}</span>
@@ -230,6 +258,10 @@ function LandingPage({ user, onLogin, onOpenApp }: { user: User | null, onLogin:
           <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Enterprise Ready • Secure Cloud Sync</p>
         </div>
       </motion.div>
+      <AppStatusDialog
+        isOpen={showAppStatus}
+        onClose={onCloseAppStatus}
+      />
     </div>
   );
 }
@@ -261,8 +293,6 @@ function AuthenticatedAppLayout({
   setShowProfile,
   profileMenuRef,
   handleLogout,
-  showAppStatus,
-  setShowAppStatus,
   onDetected,
   onCancelScanner
 }: any) {
@@ -273,12 +303,17 @@ function AuthenticatedAppLayout({
       <div className="app-container flex flex-col w-full transition-colors duration-300">
         <div className="h-1 bg-[var(--primary)]/20 w-1/3 mx-auto mt-2 rounded-full mb-1 sm:block hidden"></div>
         <header className="sticky top-0 z-40 bg-[var(--surface-container)]/80 backdrop-blur-md border-b border-[var(--outline)] px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setShowAppStatus(true)}>
+        <button
+          type="button"
+          className="flex items-center gap-2 cursor-pointer rounded-xl outline-none ring-[var(--primary)] focus-visible:ring-2"
+          onClick={() => navigate('/')}
+          aria-label="Return to landing page"
+        >
           <div className="bg-[var(--primary)] p-1.5 rounded-lg text-[var(--primary-foreground)] transition-all">
             <Package size={20} />
           </div>
           <span className="font-bold text-xl tracking-tight">photo.mw</span>
-        </div>
+        </button>
         <div className="flex items-center gap-3">
           <div className="relative" ref={profileMenuRef}>
             <button 
@@ -510,8 +545,6 @@ function AuthenticatedAppLayout({
           <MainLayout
             onDetected={onDetected}
             onCancelScanner={onCancelScanner}
-            showAppStatus={showAppStatus}
-            setShowAppStatus={setShowAppStatus}
           />
         } />
       </Routes>
@@ -555,7 +588,7 @@ function LegacyItemRedirect() {
   return <Navigate to={`/object/${id}`} replace />;
 }
 
-function MainLayout({ onDetected, onCancelScanner, showAppStatus, setShowAppStatus }: any) {
+function MainLayout({ onDetected, onCancelScanner }: any) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -625,10 +658,6 @@ function MainLayout({ onDetected, onCancelScanner, showAppStatus, setShowAppStat
         <NavButton active={currentPath === '/object/new'} onClick={() => navigate('/object/new')} icon={<PlusCircle size={24} />} label="New" />
       </nav>
 
-      <AppStatusDialog
-        isOpen={showAppStatus}
-        onClose={() => setShowAppStatus(false)}
-      />
     </>
   );
 }
