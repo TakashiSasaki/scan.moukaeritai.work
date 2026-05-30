@@ -22,7 +22,7 @@
     </filter>
   </defs>
 
-  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
   <circle cx="226" cy="206" r="152" fill="#38bdf8" opacity="0.10"/>
   <circle cx="786" cy="820" r="190" fill="#22d3ee" opacity="0.08"/>
 

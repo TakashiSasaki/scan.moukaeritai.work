@@ -303,7 +303,7 @@ export default function UnassignedIdentifierScreen() {
               </button>
 
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/app')}
                 className="w-full flex items-center justify-center gap-2 bg-[var(--surface-container-highest)] text-[var(--on-surface)] py-4 px-6 rounded-2xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 ホームに戻る
@@ -431,7 +431,7 @@ export default function UnassignedIdentifierScreen() {
               </button>
 
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/app')}
                 className="w-full flex items-center justify-center gap-2 bg-[var(--surface-container-highest)] text-[var(--on-surface)] py-4 px-6 rounded-2xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 ホームに戻る
