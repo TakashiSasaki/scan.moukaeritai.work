@@ -35,7 +35,7 @@ To prevent confusion across systems, note the following distinct identifiers use
   - The main application flow is built as a unified Single Page Application (SPA) using a state-driven screen toggle approach (e.g., `type Screen = 'dashboard' | 'search' | 'capture' ...`) to maintain state seamlessly without internal URL fragmenting.
   - **Dedicated Routes (Sub-pages)**: Pages like Admin (`/admin`), User Settings (`/settings`), Beta Tests (`/test`), and API Demos (`/demo`) are securely separated using `react-router-dom`. This provides strict access boundaries, dedicated entry points, and prevents the main SPA logic from becoming bloated.
   - **Sticky Top Navigations for Sub-pages**: Dedicated pages use a Sticky Top Navigation header (`sticky top-[57px] z-30 bg-[var(--surface-container-high)]/95 backdrop-blur-xl`) ensuring that critical actions (like "Save" or "Exit" buttons) and tab navigations remain accessible even when the content scrolls vertically.
-  - **Exit Button Consistency**: Every sub-page MUST have an exit button to return to the main app flow (`/`). This button should be standardized visually across all pages, using the format `🚪 Exit` (using the door emoji instead of arrows for clear visual affordance and consistency).
+  - **Exit Button Consistency**: Every authenticated sub-page MUST have an exit button to return to the authenticated app home (`/app`) unless intentionally returning to the public landing/logout flow (`/`). This button should be standardized visually across all pages, using the format `🚪 Exit` (using the door emoji instead of arrows for clear visual affordance and consistency).
   - Primary navigation for regular users is handled by a Sticky Bottom Navigation bar which provides quick access to core functions and is optimized for one-handed use on mobile devices.
 - **Popups and Menus (Click Outside Pattern)**: As a standard UI pattern, any custom dropdowns, modal menus, or popups (e.g., the profile menu) MUST close when the user clicks or taps outside the element. This should be implemented using React's `useRef` and a `useEffect` hook listening to `mousedown` and `touchstart` events on the `document`, rather than relying on transparent full-screen overlay divs which can suffer from z-index and event-bubbling issues.
 
@@ -184,9 +184,11 @@ To maintain clarity for administrators and developers, the application includes 
 - It is for administrators/developers, not SEO (it is not a sitemap.xml).
 - Whenever routes are added, renamed, or removed in the application, you MUST update `src/lib/routeCatalog.ts` (and by extension `SitemapPage.tsx`).
 - Key routes include:
+  - `/`: Public landing/login route. Authenticated users are not automatically redirected; they enter the app explicitly from the landing page via an app-entry button.
+  - `/app`: Authenticated app home.
   - `/object/new`: Create object.
   - `/object/:id`: View/edit object.
-  - `/item/:id`: Legacy redirect to `/object/:id`.
+  - `/item/:id`: Protected legacy redirect to `/object/:id`, implemented under the authenticated app routing shell.
   - `/unassigned`: Handle scanned tags not yet bound.
   - `/admin/migration`: Retired legacy database migration tool (displays deprecation warning).
   - `/admin/sitemap`: The human-readable route map itself.
