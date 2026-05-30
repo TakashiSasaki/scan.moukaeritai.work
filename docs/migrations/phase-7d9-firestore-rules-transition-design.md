@@ -17,10 +17,10 @@ The current `firestore.rules` (baseline from 1.7.x) has the following security p
 - **Global Safety Net:** All reads and writes are denied by default.
 - **Authentication:** All client access requires authentication (`isSignedIn()`).
 - **Owner Isolation:** Almost all collections (`objects`, `identifiers`, `objectIdentifierBindings`, `objectEvents`, `objectImages`, `items`) enforce strict isolation via `isOwner(existing().ownerId)` for reads and `incoming().ownerId == request.auth.uid` for creates.
-- **Admin Access:** Admins have global read/delete access on certain collections and update access for `objectEvents` and `identifierObservations`. Admins can read/write the `admins` collection and promote users in the `users` collection.
-- **Observations:** `identifierObservations` allows creation by any authenticated user provided it's a valid sighting/scan record. Updates are disabled. Reads are allowed for the `ownerId` or `observerUid`, and admins.
-- **Users:** Users can read all users (if signed in) and update their own profile and settings.
-- **Admins:** Managed by a specific admin helper check (`isAdmin()`).
+- **Admin Access:** Clients satisfying `isAdmin()` have global read/list/delete access on `items`, global read/delete access on `identifierObservations`, and update/delete access on `objectEvents` (but notably *not* global read access on `objectEvents` or `objectImages`). Clients satisfying `isAdmin()` can write the `admins` collection and modify the `role` field when a user updates their own profile. (Note: This is distinct from Backend/Admin SDK access, which bypasses rules entirely).
+- **Observations:** `identifierObservations` allows creation by any authenticated user provided it's a valid sighting/scan record. Updates are strictly disabled (`allow update: if false`). Reads are allowed for the `ownerId` or `observerUid`, and clients satisfying `isAdmin()`.
+- **Users:** Users can read all users (if signed in) but updates are strictly scoped to their own profile (`request.auth.uid == userId`). Modifying the `role` field during that self-update requires `isAdmin()`.
+- **Admins:** A user can read their own admin document. Clients satisfying `isAdmin()` can read and write the `admins` collection.
 
 **Rules depending on specific fields:**
 - `ownerId`: Used heavily in `isOwner()` checks across `objects`, `identifiers`, `objectIdentifierBindings`, `objectEvents`, `objectImages`, `identifierObservations`, and `items`.
@@ -47,14 +47,15 @@ Runtime client write paths in the React application (primarily `src/lib/` and `s
   - client-updated: No (rules explicitly deny `allow update: if false;`).
 - **`objectEvents`**:
   - client-created: Yes (`Scanner.tsx`, `CaptureForm.tsx`, `UnassignedIdentifierScreen.tsx`).
-  - client-updated: backend/Admin SDK only (rules require `isAdmin()`).
+  - client-updated: permitted for signed-in clients satisfying `isAdmin()` according to rules, but practically intended for backend/Admin SDK paths (which bypass rules entirely). Ordinary owner clients cannot update events.
 - **`objectImages`**:
-  - client-created: Yes (`CaptureForm.tsx`).
-  - client-updated: Yes (implied capability, but typically recreated or updated via form).
+  - client-created: Yes (`CaptureForm.tsx` using `setDoc`).
+  - client-updated: No (the rules permit updates, but the React client currently only queries the collection and creates new documents).
 - **`users`**:
   - client-updated: Yes (`useUserSettings.ts`, `App.tsx` on login).
 - **`admins`**:
-  - backend/Admin SDK only (read/write requires `isAdmin()`).
+  - client-read: Yes (users can read their own admin document; clients satisfying `isAdmin()` can read all).
+  - client-updated: permitted for signed-in clients satisfying `isAdmin()` according to rules, but practically intended for backend/Admin SDK paths (which bypass rules entirely).
 
 ## Source coverage / source-to-target audit
 
@@ -121,4 +122,4 @@ Test matrix must include:
 
 - This is a documentation/design task only.
 - Confirmed that `firestore.rules` and runtime logic were not modified.
-- `npm run lint` and `npm run build` will be executed to ensure no accidental breakage.
+- `npm run lint` and `npm run build` were executed to ensure no accidental breakage.
