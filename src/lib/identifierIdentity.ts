@@ -4,7 +4,7 @@ import { IdentifierRecord } from '../types';
  * The canonical payload representing the deterministic semantic identity of an identifier.
  * This object structure strictly omits any ephemeral, owner-scoped, or mutable fields.
  */
-export interface IdentifierSemanticIdentityPayload {
+export type IdentifierSemanticIdentityPayload = {
   app: 'scan.moukaeritai.work';
   idKind: 'identifier';
   identitySchemaVersion: number;
