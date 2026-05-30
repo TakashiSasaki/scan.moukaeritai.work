@@ -153,6 +153,34 @@ export const routeGroups: RouteGroup[] = [
         navigation: 'about page / direct URL',
         purpose: 'Pointer to canonical docs, not a live database browser.',
         notes: 'Static documentation view only. Does not connect to live database.'
+      },
+      {
+        path: '/developer',
+        component: 'DeveloperDocsPage',
+        access: 'public',
+        navigation: 'landing page',
+        purpose: 'public developer docs overview'
+      },
+      {
+        path: '/developer/routes',
+        component: 'DeveloperRoutesDoc',
+        access: 'public',
+        navigation: 'developer docs nav',
+        purpose: 'public developer route documentation'
+      },
+      {
+        path: '/developer/data-model',
+        component: 'DeveloperDataModelDoc',
+        access: 'public',
+        navigation: 'developer docs nav',
+        purpose: 'public data model documentation'
+      },
+      {
+        path: '/developer/data-model-graph',
+        component: 'DeveloperDataModelGraph',
+        access: 'public',
+        navigation: 'developer docs nav',
+        purpose: 'public sigma.js data model visualization'
       }
     ]
   },

@@ -31,6 +31,8 @@ import DemoScreen from './components/DemoScreen';
 import { AppStatusDialog } from './components/AppStatusDialog';
 import { ImageMetadataDialog } from './components/ImageMetadataDialog';
 import DatabaseStructurePage from './components/DatabaseStructurePage';
+import DeveloperDocsPage from './components/developerDocs/DeveloperDocsPage';
+
 import AppAboutPage from './components/AppAboutPage';
 
 type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview';
@@ -175,6 +177,8 @@ function AppContent() {
         />
       } />
       <Route path="/about" element={<PublicLayout><AppAboutPage /></PublicLayout>} />
+      <Route path="/developer/*" element={<PublicLayout><DeveloperDocsPage /></PublicLayout>} />
+
       <Route path="*" element={
         <RequireAuth user={user}>
           <AuthenticatedAppLayout
@@ -210,6 +214,7 @@ function LandingPage({
   onCloseAppStatus: () => void
 }) {
   const isAuthenticated = Boolean(user);
+  const navigate = useNavigate();
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-900 p-6 text-white text-center selection:bg-[var(--primary)]/30">
@@ -250,6 +255,13 @@ function LandingPage({
             <Info size={18} />
             App Status
           </button>
+          <button
+            onClick={() => navigate('/developer')}
+            className="text-xs text-neutral-400 hover:text-white underline underline-offset-4 transition-colors"
+          >
+            Developer Docs
+          </button>
+
           {isAuthenticated && (
             <p className="text-xs text-neutral-400 font-medium">
               Signed in as <span className="text-white">{user?.displayName || user?.email || 'your account'}</span>
