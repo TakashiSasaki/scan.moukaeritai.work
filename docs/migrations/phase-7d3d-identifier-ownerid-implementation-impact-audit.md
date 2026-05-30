@@ -28,7 +28,7 @@ This document audits the implementation impact of making `IdentifierRecord.owner
 - **Current `IdentifierRecord.ownerId` type status**: Required (`ownerId: string;` in `src/types.ts`).
 - **Current `IdentifierRecord.objectId` type status**: Optional (`objectId?: string;` in `src/types.ts`).
 - **Current `IdentifierRecord.identifierKey` invariant**: The document ID must match `identifierKey`. However, the current rules do not yet enforce the strict JCS UUIDv5 payload schema conceptually decided.
-- **Current Firestore rules assumptions for "identifiers"**: `identifiers` rules (line 103+) require `ownerId` during write (`incoming().keys().hasOnly([... 'ownerId' ...])` and `incoming().ownerId == request.auth.uid`) and enforce owner-scoped read (`allow read: if isOwner(existing().ownerId)`).
+- **Current Firestore rules assumptions for "identifiers"**: `identifiers` rules (line 103+) require `ownerId` during write (`incoming().keys().hasOnly([... 'ownerId' ...])` and `incoming().ownerId == request.auth.uid`) and enforce owner-scoped read (`allow get: if isSignedIn() && (existing() == null || existing().ownerId == request.auth.uid)`).
 - **Current blueprint assumptions for "identifiers"**: `firebase-blueprint.json` lists `ownerId` as a required string field in `IdentifierRecord`.
 - **Current query assumptions around "ownerId"**: Queries universally rely on `where('ownerId', '==', uid)` to load the user's identifiers, effectively treating identifiers as "my identifiers" instead of "global identifiers".
 - **Current UI assumptions, if any, around owner-scoped identifiers**: The UI conceptually views identifiers as scoped by the owner. It fetches them based on `ownerId` and assumes any fetched identifier belongs strictly to the user. Global lookup by ID is currently implicitly blocked by security rules and frontend queries filter out unowned identifiers.
@@ -49,7 +49,7 @@ This document audits the implementation impact of making `IdentifierRecord.owner
 
 ## Firestore rules impact
 
-- **Whether identifier read/write rules require "ownerId"**: Yes. `firestore.rules` enforces `allow read: if isOwner(existing().ownerId);` and write rules mandate `incoming().ownerId == request.auth.uid`.
+- **Whether identifier read/write rules require "ownerId"**: Yes. `firestore.rules` enforces `allow get: if isSignedIn() && (existing() == null || existing().ownerId == request.auth.uid);` and write rules mandate `incoming().ownerId == request.auth.uid`.
 - **Whether rules use `resource.data.ownerId == request.auth.uid`**: Yes, used in list operations (`allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;`).
 - **Whether rules use `request.resource.data.ownerId == request.auth.uid`**: Yes, via the custom validation blocks (`incoming().ownerId == request.auth.uid`).
 - **Whether global ownerless identifiers could be read safely under current rules**: No. Read operations would be denied for any user who is not the `ownerId` on the document, and would completely fail for documents lacking an `ownerId`.
