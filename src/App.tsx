@@ -12,7 +12,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { auth, db, signInWithPopup, googleProvider, onAuthStateChanged, User, signOut } from './lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ThemeProvider, useTheme, ThemeColor, ThemeMode } from './context/ThemeContext';
-import { Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert, Beaker, PlaySquare, Route as RouteIcon, Database, Info } from 'lucide-react';
+import { Github, ExternalLink, Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert, Beaker, PlaySquare, Route as RouteIcon, Database, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'react-hot-toast';
 import Dashboard from './components/Dashboard';
@@ -261,6 +261,27 @@ function LandingPage({
           >
             Developer Docs
           </button>
+
+          <div className="flex flex-wrap justify-center gap-2 mt-4 mb-2">
+            <a
+              href="https://jules.google.com/repo/github/TakashiSasaki/scan.moukaeritai.work/overview"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-neutral-300 text-xs font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95"
+            >
+              <ExternalLink size={14} />
+              Jules で開く
+            </a>
+            <a
+              href="https://github.com/TakashiSasaki/scan.moukaeritai.work"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-neutral-300 text-xs font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95"
+            >
+              <Github size={14} />
+              GitHub リポジトリ
+            </a>
+          </div>
 
           {isAuthenticated && (
             <p className="text-xs text-neutral-400 font-medium">
