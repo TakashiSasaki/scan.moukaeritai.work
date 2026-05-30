@@ -140,7 +140,7 @@ function AppContent() {
   };
 
   const handleCancelScanner = () => {
-    navigate('/');
+    navigate('/app');
   };
 
   if (loading) {
@@ -155,7 +155,7 @@ function AppContent() {
 
   return (
     <Routes>
-      <Route path="/" element={user ? <Navigate to="/app" replace /> : <LandingPage onLogin={handleLogin} />} />
+      <Route path="/" element={<LandingPage user={user} onLogin={handleLogin} onOpenApp={() => navigate('/app')} />} />
       <Route path="/about" element={<PublicLayout><AppAboutPage /></PublicLayout>} />
       <Route path="*" element={
         <RequireAuth user={user}>
@@ -178,7 +178,9 @@ function AppContent() {
 }
 
 
-function LandingPage({ onLogin }: { onLogin: () => void }) {
+function LandingPage({ user, onLogin, onOpenApp }: { user: User | null, onLogin: () => void, onOpenApp: () => void }) {
+  const isAuthenticated = Boolean(user);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-900 p-6 text-white text-center selection:bg-[var(--primary)]/30">
       <motion.div
@@ -204,13 +206,18 @@ function LandingPage({ onLogin }: { onLogin: () => void }) {
 
         <div className="space-y-4">
           <button
-            onClick={onLogin}
+            onClick={isAuthenticated ? onOpenApp : onLogin}
             className="group relative flex items-center justify-center gap-3 bg-white text-neutral-900 px-8 py-5 rounded-[24px] font-bold shadow-xl hover:bg-neutral-100 transition-all w-full active:scale-95 overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-neutral-200/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-            <LogIn size={22} />
-            Continue with Google
+            {isAuthenticated ? <Package size={22} /> : <LogIn size={22} />}
+            {isAuthenticated ? 'Open App' : 'Continue with Google'}
           </button>
+          {isAuthenticated && (
+            <p className="text-xs text-neutral-400 font-medium">
+              Signed in as <span className="text-white">{user?.displayName || user?.email || 'your account'}</span>
+            </p>
+          )}
           <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Enterprise Ready • Secure Cloud Sync</p>
         </div>
       </motion.div>
