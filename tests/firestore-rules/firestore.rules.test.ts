@@ -131,6 +131,37 @@ describe('Firestore Rules Baseline', () => {
         rawPayload: { some: 'json' }, // not allowed in current rules
       };
       await assertFails(setDoc(doc(db, 'identifiers', 'ident2'), invalidIdentifier));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { rawPayload: { some: 'json' } }));
+    });
+
+    it('client writes to identifiers with additive v2 fields (identityModelVersion) are rejected', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+      const invalidIdentifier = {
+        ...validIdentifier,
+        identityModelVersion: 2, // not allowed in current rules
+      };
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident3'), invalidIdentifier));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identityModelVersion: 2 }));
+    });
+
+    it('client writes to identifiers with additive v2 fields (identitySchemaVersion) are rejected', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+      const invalidIdentifier = {
+        ...validIdentifier,
+        identitySchemaVersion: 1, // not allowed in current rules
+      };
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident4'), invalidIdentifier));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identitySchemaVersion: 1 }));
+    });
+
+    it('client writes to identifiers with additive v2 fields (canonicalizationVersion) are rejected', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+      const invalidIdentifier = {
+        ...validIdentifier,
+        canonicalizationVersion: 1, // not allowed in current rules
+      };
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident5'), invalidIdentifier));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { canonicalizationVersion: 1 }));
     });
   });
 
@@ -229,6 +260,139 @@ describe('Firestore Rules Baseline', () => {
 
       // List/queries are blocked for users other than self
       await assertFails(getDocs(collection(db, 'users')));
+    });
+  });
+
+  describe('admins', () => {
+    const validAdminData = { grantedAt: serverTimestamp(), grantedBy: adminUid };
+
+    it('user can read their own admin document if it exists', async () => {
+      await setupAdmin();
+      const db = testEnv.authenticatedContext(adminUid).firestore();
+      await assertSucceeds(getDoc(doc(db, 'admins', adminUid)));
+    });
+
+    it('non-admin cannot write admin documents', async () => {
+      const db = testEnv.authenticatedContext(nonOwnerUid).firestore();
+      await assertFails(setDoc(doc(db, 'admins', nonOwnerUid), validAdminData));
+    });
+
+    it('admin can write valid admin documents', async () => {
+      await setupAdmin();
+      const adminDb = testEnv.authenticatedContext(adminUid).firestore();
+      await assertSucceeds(setDoc(doc(adminDb, 'admins', 'new-admin-uid'), validAdminData));
+    });
+
+    it('invalid admin document shape is rejected', async () => {
+      await setupAdmin();
+      const adminDb = testEnv.authenticatedContext(adminUid).firestore();
+      // Test requires specific format
+      await assertFails(setDoc(doc(adminDb, 'admins', 'new-admin-uid'), { someOtherField: true }));
+    });
+  });
+
+  describe('objectImages', () => {
+    const validImageData = {
+      imageId: 'img1',
+      ownerId: ownerUid,
+      objectId: 'obj1',
+      role: 'primary',
+      storagePath: 'images/obj1/img1.jpg',
+      contentType: 'image/jpeg',
+      sizeBytes: 1024,
+      width: 800,
+      height: 600,
+      createdAt: serverTimestamp(),
+      createdBy: ownerUid,
+    };
+
+    it('owner can create/read/update/delete their own object image', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+      // Create
+      await assertSucceeds(setDoc(doc(db, 'objectImages', 'img1'), validImageData));
+
+      // Read
+      await assertSucceeds(getDoc(doc(db, 'objectImages', 'img1')));
+
+      // Update
+      await assertSucceeds(updateDoc(doc(db, 'objectImages', 'img1'), {
+        role: 'detail'
+      }));
+
+      // Delete
+      await assertSucceeds(deleteDoc(doc(db, 'objectImages', 'img1')));
+    });
+
+    it('non-owner cannot read/update/delete another owner’s object image', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'objectImages', 'img1'), validImageData);
+      });
+
+      const db = testEnv.authenticatedContext(nonOwnerUid).firestore();
+
+      // Read
+      await assertFails(getDoc(doc(db, 'objectImages', 'img1')));
+
+      // Update
+      await assertFails(updateDoc(doc(db, 'objectImages', 'img1'), {
+        role: 'detail'
+      }));
+
+      // Delete
+      await assertFails(deleteDoc(doc(db, 'objectImages', 'img1')));
+    });
+
+    it('invalid image payload is rejected', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+      const invalidImageData = { ...validImageData, role: 'invalid-role' };
+
+      await assertFails(setDoc(doc(db, 'objectImages', 'img2'), invalidImageData));
+    });
+  });
+
+  describe('items (legacy collection)', () => {
+    const validItemData = {
+      id: 'item1',
+      ownerId: ownerUid,
+      name: 'Legacy Item',
+      description: 'A test legacy item',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      tagType: 'qr'
+    };
+
+    it('owner can access their own legacy item', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+      await assertSucceeds(setDoc(doc(db, 'items', 'item1'), validItemData));
+      await assertSucceeds(getDoc(doc(db, 'items', 'item1')));
+    });
+
+    it('non-owner cannot access another owner’s legacy item', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'items', 'item1'), validItemData);
+      });
+
+      const db = testEnv.authenticatedContext(nonOwnerUid).firestore();
+      await assertFails(getDoc(doc(db, 'items', 'item1')));
+    });
+
+    it('admin access behaves according to current rules', async () => {
+      await setupAdmin();
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'items', 'item1'), validItemData);
+      });
+
+      const adminDb = testEnv.authenticatedContext(adminUid).firestore();
+      // Admins can get items
+      await assertSucceeds(getDoc(doc(adminDb, 'items', 'item1')));
+    });
+
+    it('invalid item payload is rejected', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+      const invalidItemData = { ...validItemData, tagType: 'invalid-tag-type' };
+
+      await assertFails(setDoc(doc(db, 'items', 'item2'), invalidItemData));
     });
   });
 

@@ -73,6 +73,27 @@ describe('identifierIdentity', () => {
     it('should throw if canonicalValue is missing', () => {
       expect(() => buildIdentifierSemanticIdentityPayload({ kind: 'qr', scheme: 's' })).toThrowError(/canonicalValue/);
     });
+
+    it('changing kind changes the semantic identity payload', () => {
+      const p1 = buildIdentifierSemanticIdentityPayload({ kind: 'qr', scheme: 's', canonicalValue: 'v' });
+      const p2 = buildIdentifierSemanticIdentityPayload({ kind: 'nfc', scheme: 's', canonicalValue: 'v' });
+      expect(p1.kind).not.toEqual(p2.kind);
+      expect(p1).not.toEqual(p2);
+    });
+
+    it('changing scheme changes the semantic identity payload', () => {
+      const p1 = buildIdentifierSemanticIdentityPayload({ kind: 'qr', scheme: 's1', canonicalValue: 'v' });
+      const p2 = buildIdentifierSemanticIdentityPayload({ kind: 'qr', scheme: 's2', canonicalValue: 'v' });
+      expect(p1.scheme).not.toEqual(p2.scheme);
+      expect(p1).not.toEqual(p2);
+    });
+
+    it('changing canonicalValue changes the semantic identity payload', () => {
+      const p1 = buildIdentifierSemanticIdentityPayload({ kind: 'qr', scheme: 's', canonicalValue: 'v1' });
+      const p2 = buildIdentifierSemanticIdentityPayload({ kind: 'qr', scheme: 's', canonicalValue: 'v2' });
+      expect(p1.canonicalValue).not.toEqual(p2.canonicalValue);
+      expect(p1).not.toEqual(p2);
+    });
   });
 
   describe('getIdentifierIdentityModelVersion', () => {
