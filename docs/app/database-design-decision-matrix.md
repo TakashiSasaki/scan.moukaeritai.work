@@ -1,3 +1,4 @@
+| Phase 7D.8 Additive Schema Implementation | Yes | Additive runtime implementation | Adds `rawPayload`, `identityModelVersion`, `identitySchemaVersion`, `canonicalizationVersion` to `IdentifierRecord`. Adds pure semantic payload helper and tests. Updates `firebase-blueprint.json` additively. Does not modify Firestore rules. Phase 7E remains blocked. |
 # Database Design Decision Matrix
 
 This matrix registers design decisions required for the next phase of the database structure evolution, specifically handling Bluetooth legacy identifiers, observation grouping, and future generic bindings. It tracks items pending before migration Phase 7E.

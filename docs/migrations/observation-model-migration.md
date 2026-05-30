@@ -3,8 +3,8 @@
 ## Status
 
 State:
-Latest completed phase: Phase 7D.7 — Identifier model blockers and implementation readiness (documentation/specification only).
-Current next phase: Phase 7D.8 — Additive identifier runtime schema implementation (bounded additive implementation).
+Latest completed phase: Phase 7D.8 — Additive identifier runtime schema implementation (bounded additive implementation).
+Current next phase: Phase 7D.9 — Firestore rules transition design / implementation planning.
 - Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
@@ -263,4 +263,14 @@ Phase 7D.7 — Identifier model blockers and implementation readiness (Completed
 - Phase 7E remains blocked
 - See [Phase 7D.7: Identifier Model Blockers and Readiness](phase-7d7-identifier-model-blockers-and-readiness.md).
 
+Phase 7D.8 — Additive identifier runtime schema implementation (Completed)
+- bounded additive implementation
+- adds IdentifierRecord v2 additive fields
+- adds pure unit-test foundation
+- updates firebase blueprint additively
+- does not write Firestore data
+- does not execute migration
+- does not modify Firestore rules
+- does not deploy
+- Phase 7E remains blocked
 

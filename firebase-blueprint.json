@@ -235,6 +235,33 @@
         "lastSeenAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "rawPayload": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ],
+          "description": "Optional raw JSON payload for non-identifying data in v2 models."
+        },
+        "identityModelVersion": {
+          "type": "number",
+          "enum": [
+            1,
+            2
+          ],
+          "description": "Runtime interpretation version. 1 (default) or 2."
+        },
+        "identitySchemaVersion": {
+          "type": "number",
+          "description": "Schema version of the canonical identity payload. Defaults to 1 for v2."
+        },
+        "canonicalizationVersion": {
+          "type": "number",
+          "description": "Version of the JSON canonicalization algorithm. Defaults to 1 for v2."
         }
       },
       "required": [
