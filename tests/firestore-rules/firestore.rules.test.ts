@@ -124,7 +124,7 @@ describe('Firestore Rules Baseline', () => {
       }));
     });
 
-    it('client writes to identifiers with additive v2 fields (rawPayload) as map are accepted', async () => {
+    it('client writes to identifiers with additive v2 fields as map/versions are accepted on create and update', async () => {
       const db = testEnv.authenticatedContext(ownerUid).firestore();
 
       await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
@@ -132,6 +132,9 @@ describe('Firestore Rules Baseline', () => {
       const validV2Identifier = {
         ...validIdentifier,
         rawPayload: { some: 'json' }, // now allowed
+        identityModelVersion: 2, // now allowed
+        identitySchemaVersion: 1, // now allowed
+        canonicalizationVersion: 1, // now allowed
       };
       await assertSucceeds(setDoc(doc(db, 'identifiers', 'ident2'), { ...validV2Identifier, identifierKey: 'ident2' }));
       await assertSucceeds(updateDoc(doc(db, 'identifiers', 'ident1'), { rawPayload: { some: 'json' }, updatedAt: serverTimestamp() }));

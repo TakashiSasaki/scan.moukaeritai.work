@@ -3,8 +3,8 @@
 ## Status
 
 State:
-Latest completed phase: Phase 7D.8 — Additive identifier runtime schema implementation (bounded additive implementation).
-Current next phase: Phase 7D.10 — Firestore Rules Stage 1 additive fields.
+Latest completed phase: Phase 7D.10 — Firestore Rules Stage 1 additive fields.
+Current next phase: Phase 7E — Migration Execution (Blocked).
 - Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
