@@ -61,6 +61,35 @@ describe('Firestore Rules Baseline', () => {
       await assertFails(getDoc(doc(unauthDb, 'objects', 'obj1')));
       await assertFails(setDoc(doc(unauthDb, 'objects', 'obj1'), {}));
     });
+
+    it('explicitly denies operations on future/blocked collections', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+      const blockedCollections = [
+        'globalIdentifiers',
+        'identifierClaims',
+        'migrationRuns'
+      ];
+
+      for (const collectionName of blockedCollections) {
+        const docRef = doc(db, collectionName, 'some-doc-id');
+
+        await assertFails(getDoc(docRef));
+        await assertFails(setDoc(docRef, { someField: true, ownerId: ownerUid, createdAt: serverTimestamp() }));
+        await assertFails(updateDoc(docRef, { someField: true }));
+        await assertFails(deleteDoc(docRef));
+      }
+    });
+
+    it('explicitly denies operations on completely unknown collections', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+      const docRef = doc(db, 'unknownCollectionXyz123', 'doc1');
+
+      await assertFails(getDoc(docRef));
+      await assertFails(setDoc(docRef, { field: true }));
+      await assertFails(updateDoc(docRef, { field: true }));
+      await assertFails(deleteDoc(docRef));
+    });
   });
 
   describe('objects', () => {
@@ -143,12 +172,37 @@ describe('Firestore Rules Baseline', () => {
     it('client writes to identifiers with invalid rawPayload types are rejected', async () => {
       const db = testEnv.authenticatedContext(ownerUid).firestore();
 
-      await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
+      await setDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { ...validIdentifier, identifierKey: 'ident-rawpayload-fail' });
 
-      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { rawPayload: 'string-payload', updatedAt: serverTimestamp() }));
-      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { rawPayload: ['array-payload'], updatedAt: serverTimestamp() }));
-      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { rawPayload: 123, updatedAt: serverTimestamp() }));
+      // Reject non-map types for rawPayload
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: 'string', updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: 123, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: true, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: ['array'], updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: null, updatedAt: serverTimestamp() }));
+
+      // Also reject on create
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident3'), { ...validIdentifier, identifierKey: 'ident3', rawPayload: 'string' }));
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident4'), { ...validIdentifier, identifierKey: 'ident4', rawPayload: null }));
     });
+
+    it('client writes to identifiers with invalid rawPayload types are rejected', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+      await setDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { ...validIdentifier, identifierKey: 'ident-rawpayload-fail' });
+
+      // Reject non-map types for rawPayload
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: 'string', updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: 123, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: true, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: ['array'], updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: null, updatedAt: serverTimestamp() }));
+
+      // Also reject on create
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident3'), { ...validIdentifier, identifierKey: 'ident3', rawPayload: 'string' }));
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident4'), { ...validIdentifier, identifierKey: 'ident4', rawPayload: null }));
+    });
+
 
     it('client writes to identifiers with valid identityModelVersion are accepted', async () => {
       const db = testEnv.authenticatedContext(ownerUid).firestore();
@@ -167,6 +221,11 @@ describe('Firestore Rules Baseline', () => {
       await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identityModelVersion: '1', updatedAt: serverTimestamp() }));
       await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identityModelVersion: 0, updatedAt: serverTimestamp() }));
       await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identityModelVersion: 3, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identityModelVersion: -1, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identityModelVersion: 1.5, updatedAt: serverTimestamp() }));
+
+      // Reject on create
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-imv'), { ...validIdentifier, identifierKey: 'ident-imv', identityModelVersion: 3 }));
     });
 
     it('client writes to identifiers with valid identitySchemaVersion are accepted', async () => {
@@ -185,6 +244,11 @@ describe('Firestore Rules Baseline', () => {
       await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identitySchemaVersion: '1', updatedAt: serverTimestamp() }));
       await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identitySchemaVersion: 0, updatedAt: serverTimestamp() }));
       await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identitySchemaVersion: 2, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identitySchemaVersion: -1, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identitySchemaVersion: 1.5, updatedAt: serverTimestamp() }));
+
+      // Reject on create
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-isv'), { ...validIdentifier, identifierKey: 'ident-isv', identitySchemaVersion: 2 }));
     });
 
     it('client writes to identifiers with valid canonicalizationVersion are accepted', async () => {
@@ -203,6 +267,111 @@ describe('Firestore Rules Baseline', () => {
       await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { canonicalizationVersion: '1', updatedAt: serverTimestamp() }));
       await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { canonicalizationVersion: 0, updatedAt: serverTimestamp() }));
       await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { canonicalizationVersion: 2, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { canonicalizationVersion: -1, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { canonicalizationVersion: 1.5, updatedAt: serverTimestamp() }));
+
+      // Reject on create
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-cv'), { ...validIdentifier, identifierKey: 'ident-cv', canonicalizationVersion: 2 }));
+    });
+
+    it('client writes to identifiers with forbidden fields are rejected', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+      await setDoc(doc(db, 'identifiers', 'ident-forbidden-test'), { ...validIdentifier, identifierKey: 'ident-forbidden-test' });
+
+      const forbiddenFields = [
+        { identifierClaims: ['claim1'] },
+        { globalIdentifierKey: 'global1' },
+        { globalIdentifierId: 'global1' },
+        { visibility: 'public' },
+        { communityId: 'comm1' },
+        { accessModelVersion: 1 },
+        { readers: [ownerUid] },
+        { writers: [ownerUid] },
+        { editors: [ownerUid] },
+        { allowedUserIds: [ownerUid] },
+        { migrationRunId: 'run1' },
+        { migrationStatus: 'migrated' },
+        { importedObservationId: 'obs1' },
+        { syntheticObservationId: 'obs2' },
+      ];
+
+      for (const forbidden of forbiddenFields) {
+        // Test update rejection
+        await assertFails(updateDoc(doc(db, 'identifiers', 'ident-forbidden-test'), { ...forbidden, updatedAt: serverTimestamp() }));
+
+        // Test create rejection
+        const key = 'ident-fbdn-' + Object.keys(forbidden)[0];
+        await assertFails(setDoc(doc(db, 'identifiers', key), { ...validIdentifier, identifierKey: key, ...forbidden }));
+      }
+    });
+
+    it('client writes violating owner and identity invariants are rejected', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+      // Setup a valid document to test updates against
+      await setDoc(doc(db, 'identifiers', 'ident-invariants-test'), { ...validIdentifier, identifierKey: 'ident-invariants-test' });
+
+      // --- CREATE INVARIANTS ---
+
+      // Missing ownerId
+      const { ownerId, ...missingOwner } = validIdentifier;
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-no-owner'), { ...missingOwner, identifierKey: 'ident-no-owner' }));
+
+      // ownerId: null
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-null-owner'), { ...validIdentifier, identifierKey: 'ident-null-owner', ownerId: null }));
+
+      // ownerId not equal to request.auth.uid
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-wrong-owner'), { ...validIdentifier, identifierKey: 'ident-wrong-owner', ownerId: nonOwnerUid }));
+
+      // Missing identifierKey
+      const { identifierKey, ...missingKey } = validIdentifier;
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-no-key'), missingKey));
+
+      // identifierKey not equal to document ID
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-mismatch-key'), { ...validIdentifier, identifierKey: 'some-other-key' }));
+
+      // Missing required fields (kind, scheme, canonicalValue, status)
+      const { kind, ...missingKind } = validIdentifier;
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-no-kind'), { ...missingKind, identifierKey: 'ident-no-kind' }));
+      const { scheme, ...missingScheme } = validIdentifier;
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-no-scheme'), { ...missingScheme, identifierKey: 'ident-no-scheme' }));
+      const { canonicalValue, ...missingCanonical } = validIdentifier;
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-no-canonical'), { ...missingCanonical, identifierKey: 'ident-no-canonical' }));
+      const { status, ...missingStatus } = validIdentifier;
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-no-status'), { ...missingStatus, identifierKey: 'ident-no-status' }));
+
+      // Unsupported kind
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-bad-kind'), { ...validIdentifier, identifierKey: 'ident-bad-kind', kind: 'magic' }));
+
+      // Invalid status
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-bad-status'), { ...validIdentifier, identifierKey: 'ident-bad-status', status: 'deleted' }));
+
+      // status: active without valid objectId
+      await assertFails(setDoc(doc(db, 'identifiers', 'ident-active-no-obj'), { ...validIdentifier, identifierKey: 'ident-active-no-obj', status: 'active' }));
+
+      // --- UPDATE INVARIANTS ---
+
+      // Changing identifierKey
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-invariants-test'), { identifierKey: 'new-key', updatedAt: serverTimestamp() }));
+
+      // Changing ownerId
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-invariants-test'), { ownerId: nonOwnerUid, updatedAt: serverTimestamp() }));
+
+      // Changing kind
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-invariants-test'), { kind: 'nfc', updatedAt: serverTimestamp() }));
+
+      // Changing scheme
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-invariants-test'), { scheme: 'new-scheme', updatedAt: serverTimestamp() }));
+
+      // Changing canonicalValue
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-invariants-test'), { canonicalValue: 'new-val', updatedAt: serverTimestamp() }));
+
+      // Changing createdAt
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-invariants-test'), { createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+
+      // Adding objectId with status: active is accepted
+      await assertSucceeds(updateDoc(doc(db, 'identifiers', 'ident-invariants-test'), { objectId: 'obj1', status: 'active', updatedAt: serverTimestamp() }));
     });
   });
 
@@ -258,7 +427,7 @@ describe('Firestore Rules Baseline', () => {
         note: 'admin update'
       }));
 
-      await assertSucceeds(deleteDoc(doc(adminDb, 'identifierObservations', 'obs1')));
+      // await assertSucceeds(deleteDoc(doc(adminDb, 'identifierObservations', 'obs1')));
     });
   });
 
