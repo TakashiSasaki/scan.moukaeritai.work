@@ -186,22 +186,7 @@ describe('Firestore Rules Baseline', () => {
       await assertFails(setDoc(doc(db, 'identifiers', 'ident4'), { ...validIdentifier, identifierKey: 'ident4', rawPayload: null }));
     });
 
-    it('client writes to identifiers with invalid rawPayload types are rejected', async () => {
-      const db = testEnv.authenticatedContext(ownerUid).firestore();
 
-      await setDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { ...validIdentifier, identifierKey: 'ident-rawpayload-fail' });
-
-      // Reject non-map types for rawPayload
-      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: 'string', updatedAt: serverTimestamp() }));
-      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: 123, updatedAt: serverTimestamp() }));
-      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: true, updatedAt: serverTimestamp() }));
-      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: ['array'], updatedAt: serverTimestamp() }));
-      await assertFails(updateDoc(doc(db, 'identifiers', 'ident-rawpayload-fail'), { rawPayload: null, updatedAt: serverTimestamp() }));
-
-      // Also reject on create
-      await assertFails(setDoc(doc(db, 'identifiers', 'ident3'), { ...validIdentifier, identifierKey: 'ident3', rawPayload: 'string' }));
-      await assertFails(setDoc(doc(db, 'identifiers', 'ident4'), { ...validIdentifier, identifierKey: 'ident4', rawPayload: null }));
-    });
 
 
     it('client writes to identifiers with valid identityModelVersion are accepted', async () => {
@@ -427,7 +412,7 @@ describe('Firestore Rules Baseline', () => {
         note: 'admin update'
       }));
 
-      // await assertSucceeds(deleteDoc(doc(adminDb, 'identifierObservations', 'obs1')));
+      await assertSucceeds(deleteDoc(doc(adminDb, 'identifierObservations', 'obs1')));
     });
   });
 
