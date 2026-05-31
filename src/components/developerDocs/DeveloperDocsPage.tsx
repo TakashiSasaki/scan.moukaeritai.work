@@ -1,16 +1,22 @@
 import React from 'react';
 import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
-import { Book, GitMerge, Database, Share2, ArrowLeft } from 'lucide-react';
+import { Book, GitMerge, Database, Share2, ArrowLeft, Boxes, AppWindow } from 'lucide-react';
 import DeveloperDocsOverview from './DeveloperDocsOverview';
 import DeveloperRoutesDoc from './DeveloperRoutesDoc';
 import DeveloperDataModelDoc from './DeveloperDataModelDoc';
+import DeveloperAbstractModelDoc from './DeveloperAbstractModelDoc';
+import DeveloperFirestoreModelDoc from './DeveloperFirestoreModelDoc';
 import DeveloperDataModelGraph from './DeveloperDataModelGraph';
+import DeveloperPWADoc from './DeveloperPWADoc';
 
 const navItems = [
   { path: '/developer', label: 'Overview', icon: <Book size={18} />, exact: true },
+  { path: '/developer/pwa', label: 'PWA', icon: <AppWindow size={18} /> },
   { path: '/developer/routes', label: 'Routes', icon: <GitMerge size={18} /> },
-  { path: '/developer/data-model', label: 'Data Model', icon: <Database size={18} /> },
-  { path: '/developer/data-model-graph', label: 'Data Model Graph', icon: <Share2 size={18} /> }
+  { path: '/developer/data-model', label: 'Data Hub', icon: <Database size={18} />, exact: true },
+  { path: '/developer/data-model/abstract', label: 'Abstract Model', icon: <Boxes size={18} /> },
+  { path: '/developer/data-model/firestore', label: 'Firestore Model', icon: <Database size={18} /> },
+  { path: '/developer/data-model-graph', label: 'Data Graph', icon: <Share2 size={18} /> }
 ];
 
 export default function DeveloperDocsPage() {
@@ -61,8 +67,11 @@ export default function DeveloperDocsPage() {
       <main className="flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] relative">
         <Routes>
           <Route path="/" element={<DeveloperDocsOverview />} />
+          <Route path="pwa" element={<DeveloperPWADoc />} />
           <Route path="routes" element={<DeveloperRoutesDoc />} />
           <Route path="data-model" element={<DeveloperDataModelDoc />} />
+          <Route path="data-model/abstract" element={<DeveloperAbstractModelDoc />} />
+          <Route path="data-model/firestore" element={<DeveloperFirestoreModelDoc />} />
           <Route path="data-model-graph" element={<DeveloperDataModelGraph />} />
         </Routes>
       </main>

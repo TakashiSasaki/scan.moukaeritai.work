@@ -169,11 +169,32 @@ export const routeGroups: RouteGroup[] = [
         purpose: 'public developer route documentation'
       },
       {
+        path: '/developer/pwa',
+        component: 'DeveloperPWADoc',
+        access: 'public',
+        navigation: 'developer docs nav',
+        purpose: 'public PWA architecture documentation'
+      },
+      {
         path: '/developer/data-model',
         component: 'DeveloperDataModelDoc',
         access: 'public',
         navigation: 'developer docs nav',
-        purpose: 'public data model documentation'
+        purpose: 'public data model overview hub'
+      },
+      {
+        path: '/developer/data-model/abstract',
+        component: 'DeveloperAbstractModelDoc',
+        access: 'public',
+        navigation: 'developer docs nav',
+        purpose: 'public abstract data model documentation'
+      },
+      {
+        path: '/developer/data-model/firestore',
+        component: 'DeveloperFirestoreModelDoc',
+        access: 'public',
+        navigation: 'developer docs nav',
+        purpose: 'public Firestore implementation documentation'
       },
       {
         path: '/developer/data-model-graph',
