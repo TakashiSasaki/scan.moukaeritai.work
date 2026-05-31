@@ -250,7 +250,12 @@ export default function DeveloperDataModelGraph() {
                className="w-full bg-transparent border border-[var(--outline)] rounded-full py-1.5 pl-9 pr-8 text-sm focus:outline-none focus:border-[var(--primary)]"
              />
              {searchQuery && (
-               <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface)]">
+               <button
+                 type="button"
+                 aria-label="Clear search"
+                 onClick={() => setSearchQuery('')}
+                 className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface)]"
+               >
                  <X size={14} />
                </button>
              )}
@@ -327,7 +332,12 @@ export default function DeveloperDataModelGraph() {
                Details
              </h3>
              {selectedNodeId && (
-               <button onClick={() => setSelectedNodeId(null)} className="p-1 rounded-full hover:bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] transition-colors">
+               <button
+                 type="button"
+                 aria-label="Close details"
+                 onClick={() => setSelectedNodeId(null)}
+                 className="p-1 rounded-full hover:bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] transition-colors"
+               >
                  <X size={16} />
                </button>
              )}

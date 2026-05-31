@@ -48,12 +48,11 @@ describe('developerDataModelGraph', () => {
   it('should have required metadata fields if newly introduced', () => {
     // Assert all nodes have descriptions now that we added them in this PR
     for (const node of dataModelNodes) {
-      if (node.description) {
-        expect(typeof node.description).toBe('string');
-      }
-      if (node.status) {
-        expect(['current', 'legacy', 'future-only', 'blocked', 'transitional']).toContain(node.status);
-      }
+      expect(node.description).toBeDefined();
+      expect(typeof node.description).toBe('string');
+
+      expect(node.status).toBeDefined();
+      expect(['current', 'legacy', 'future-only', 'blocked', 'transitional']).toContain(node.status);
     }
   });
 
