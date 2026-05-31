@@ -98,9 +98,13 @@ service cloud.firestore {
         && (!('lastObservedSource' in incoming()) || incoming().lastObservedSource in ['nfc', 'qr', 'manual', 'barcode', 'camera'])
         && (!('discoveryState' in incoming()) || incoming().discoveryState in ['observed', 'registered', 'detached', 'unknown'])
         && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
+        && (!('rawPayload' in incoming()) || incoming().rawPayload is map)
+        && (!('identityModelVersion' in incoming()) || incoming().identityModelVersion in [1, 2])
+        && (!('identitySchemaVersion' in incoming()) || incoming().identitySchemaVersion == 1)
+        && (!('canonicalizationVersion' in incoming()) || incoming().canonicalizationVersion == 1)
         && incoming().status in ['active', 'unassigned', 'retired', 'lost', 'replaced']
         && (incoming().status in ['unassigned', 'retired', 'lost', 'replaced'] || ('objectId' in incoming() && incoming().objectId is string && incoming().objectId.size() <= 128))
-        && incoming().keys().hasOnly(['identifierKey', 'ownerId', 'objectId', 'kind', 'scheme', 'canonicalValue', 'rawValue', 'label', 'status', 'firstObservedAt', 'firstObservedBy', 'firstObservationId', 'lastObservedAt', 'lastObservedBy', 'lastObservationId', 'lastObservedSource', 'discoveryState', 'schemaVersion', 'createdAt', 'updatedAt', 'lastSeenAt'])
+        && incoming().keys().hasOnly(['identifierKey', 'ownerId', 'objectId', 'kind', 'scheme', 'canonicalValue', 'rawValue', 'rawPayload', 'identityModelVersion', 'identitySchemaVersion', 'canonicalizationVersion', 'label', 'status', 'firstObservedAt', 'firstObservedBy', 'firstObservationId', 'lastObservedAt', 'lastObservedBy', 'lastObservationId', 'lastObservedSource', 'discoveryState', 'schemaVersion', 'createdAt', 'updatedAt', 'lastSeenAt'])
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
 
@@ -123,11 +127,15 @@ service cloud.firestore {
         && (!('lastObservedSource' in incoming()) || incoming().lastObservedSource in ['nfc', 'qr', 'manual', 'barcode', 'camera'])
         && (!('discoveryState' in incoming()) || incoming().discoveryState in ['observed', 'registered', 'detached', 'unknown'])
         && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
+        && (!('rawPayload' in incoming()) || incoming().rawPayload is map)
+        && (!('identityModelVersion' in incoming()) || incoming().identityModelVersion in [1, 2])
+        && (!('identitySchemaVersion' in incoming()) || incoming().identitySchemaVersion == 1)
+        && (!('canonicalizationVersion' in incoming()) || incoming().canonicalizationVersion == 1)
         && incoming().status in ['active', 'unassigned', 'retired', 'lost', 'replaced']
         && (incoming().status in ['unassigned', 'retired', 'lost', 'replaced'] || ('objectId' in incoming() && incoming().objectId is string && incoming().objectId.size() <= 128))
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly(['objectId', 'status', 'label', 'rawValue', 'updatedAt', 'lastSeenAt', 'firstObservedAt', 'firstObservedBy', 'firstObservationId', 'lastObservedAt', 'lastObservedBy', 'lastObservationId', 'lastObservedSource', 'discoveryState', 'schemaVersion']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['objectId', 'status', 'label', 'rawValue', 'rawPayload', 'identityModelVersion', 'identitySchemaVersion', 'canonicalizationVersion', 'updatedAt', 'lastSeenAt', 'firstObservedAt', 'firstObservedBy', 'firstObservationId', 'lastObservedAt', 'lastObservedBy', 'lastObservationId', 'lastObservedSource', 'discoveryState', 'schemaVersion']);
 
       allow delete: if isOwner(existing().ownerId);
     }

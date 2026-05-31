@@ -124,56 +124,85 @@ describe('Firestore Rules Baseline', () => {
       }));
     });
 
-    it('client writes to identifiers with additive v2 fields (rawPayload) are rejected', async () => {
+    it('client writes to identifiers with additive v2 fields as map/versions are accepted on create and update', async () => {
       const db = testEnv.authenticatedContext(ownerUid).firestore();
 
       await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
 
-      const invalidIdentifier = {
+      const validV2Identifier = {
         ...validIdentifier,
-        rawPayload: { some: 'json' }, // not allowed in current rules
+        rawPayload: { some: 'json' }, // now allowed
+        identityModelVersion: 2, // now allowed
+        identitySchemaVersion: 1, // now allowed
+        canonicalizationVersion: 1, // now allowed
       };
-      await assertFails(setDoc(doc(db, 'identifiers', 'ident2'), invalidIdentifier));
-      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { rawPayload: { some: 'json' } }));
+      await assertSucceeds(setDoc(doc(db, 'identifiers', 'ident2'), { ...validV2Identifier, identifierKey: 'ident2' }));
+      await assertSucceeds(updateDoc(doc(db, 'identifiers', 'ident1'), { rawPayload: { some: 'json' }, updatedAt: serverTimestamp() }));
     });
 
-    it('client writes to identifiers with additive v2 fields (identityModelVersion) are rejected', async () => {
+    it('client writes to identifiers with invalid rawPayload types are rejected', async () => {
       const db = testEnv.authenticatedContext(ownerUid).firestore();
 
       await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
 
-      const invalidIdentifier = {
-        ...validIdentifier,
-        identityModelVersion: 2, // not allowed in current rules
-      };
-      await assertFails(setDoc(doc(db, 'identifiers', 'ident3'), invalidIdentifier));
-      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identityModelVersion: 2 }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { rawPayload: 'string-payload', updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { rawPayload: ['array-payload'], updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { rawPayload: 123, updatedAt: serverTimestamp() }));
     });
 
-    it('client writes to identifiers with additive v2 fields (identitySchemaVersion) are rejected', async () => {
+    it('client writes to identifiers with valid identityModelVersion are accepted', async () => {
       const db = testEnv.authenticatedContext(ownerUid).firestore();
 
       await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
 
-      const invalidIdentifier = {
-        ...validIdentifier,
-        identitySchemaVersion: 1, // not allowed in current rules
-      };
-      await assertFails(setDoc(doc(db, 'identifiers', 'ident4'), invalidIdentifier));
-      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identitySchemaVersion: 1 }));
+      await assertSucceeds(updateDoc(doc(db, 'identifiers', 'ident1'), { identityModelVersion: 1, updatedAt: serverTimestamp() }));
+      await assertSucceeds(updateDoc(doc(db, 'identifiers', 'ident1'), { identityModelVersion: 2, updatedAt: serverTimestamp() }));
     });
 
-    it('client writes to identifiers with additive v2 fields (canonicalizationVersion) are rejected', async () => {
+    it('client writes to identifiers with invalid identityModelVersion are rejected', async () => {
       const db = testEnv.authenticatedContext(ownerUid).firestore();
 
       await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
 
-      const invalidIdentifier = {
-        ...validIdentifier,
-        canonicalizationVersion: 1, // not allowed in current rules
-      };
-      await assertFails(setDoc(doc(db, 'identifiers', 'ident5'), invalidIdentifier));
-      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { canonicalizationVersion: 1 }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identityModelVersion: '1', updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identityModelVersion: 0, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identityModelVersion: 3, updatedAt: serverTimestamp() }));
+    });
+
+    it('client writes to identifiers with valid identitySchemaVersion are accepted', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+      await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
+
+      await assertSucceeds(updateDoc(doc(db, 'identifiers', 'ident1'), { identitySchemaVersion: 1, updatedAt: serverTimestamp() }));
+    });
+
+    it('client writes to identifiers with invalid identitySchemaVersion are rejected', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+      await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
+
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identitySchemaVersion: '1', updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identitySchemaVersion: 0, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { identitySchemaVersion: 2, updatedAt: serverTimestamp() }));
+    });
+
+    it('client writes to identifiers with valid canonicalizationVersion are accepted', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+      await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
+
+      await assertSucceeds(updateDoc(doc(db, 'identifiers', 'ident1'), { canonicalizationVersion: 1, updatedAt: serverTimestamp() }));
+    });
+
+    it('client writes to identifiers with invalid canonicalizationVersion are rejected', async () => {
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+      await setDoc(doc(db, 'identifiers', 'ident1'), validIdentifier);
+
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { canonicalizationVersion: '1', updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { canonicalizationVersion: 0, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'identifiers', 'ident1'), { canonicalizationVersion: 2, updatedAt: serverTimestamp() }));
     });
   });
 
