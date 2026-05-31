@@ -4,7 +4,7 @@
 
 State:
 Latest completed phase: Phase 7D.8 — Additive identifier runtime schema implementation (bounded additive implementation).
-Current next phase: Phase 7D.9 — Firestore rules transition design / implementation planning.
+Current next phase: Phase 7D.10 — Firestore Rules Stage 1 additive fields.
 - Version line: Phases 7B+ proceed on the `1.7.x` version line.
 - Immutable migration source baseline: `tag-1.0.0`.
 - Current working branch: `scan.moukaeritai.work`, which may contain migration preparation commits after `tag-1.0.0`.
@@ -283,3 +283,11 @@ Phase 7D.9 — Firestore rules transition design and readiness audit (Completed)
 - does not execute migrations or create imported/synthetic observations
 - Phase 7E remains blocked
 - See [Phase 7D.9: Firestore Rules Transition Design](phase-7d9-firestore-rules-transition-design.md).
+
+Phase 7D.10 — Firestore rules Stage 1 additive fields (Completed)
+- Stage 1 additive identifier rules allowance.
+- Narrow Firestore rules transition.
+- Additive fields only (`rawPayload`, `identityModelVersion`, `identitySchemaVersion`, `canonicalizationVersion`).
+- No ownerless/global identifiers.
+- No Phase 7E execution.
+- See [Phase 7D.10: Firestore Rules Stage 1 Additive Fields](phase-7d10-firestore-rules-stage1-additive-fields.md).
