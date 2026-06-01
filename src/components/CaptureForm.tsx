@@ -14,7 +14,7 @@ import WebcamCapture from './WebcamCapture';
 import { getImageFormatFromUrl } from '../lib/utils';
 import { ImageWithLongPress } from './ImageWithLongPress';
 import { useUserSettings } from '../hooks/useUserSettings';
-import { buildIdentifierKey, normalizeIdentifierInput } from '../lib/identifiers';
+import { buildIdentifierKey, normalizeIdentifierInput, buildStage1IdentifierMetadata } from '../lib/identifiers';
 import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner, findCanonicalBindingsForOwner, buildDetachedBindingPatch, validateIdentifierCanAttach, loadObjectIdentifiersForSummary, mergeIdentifierForSummary } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 import { formatDistanceToNow } from 'date-fns';
@@ -404,7 +404,8 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         canonicalValue,
         status: 'active',
         createdAt: serverTimestamp() as any,
-        updatedAt: serverTimestamp() as any
+        updatedAt: serverTimestamp() as any,
+        ...buildStage1IdentifierMetadata()
       };
 
       const resolvedIdRecord: IdentifierRecord = validationResult?.existingId
@@ -617,6 +618,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
             status: 'active',
             createdAt: serverTimestamp() as any,
             updatedAt: serverTimestamp() as any,
+            ...buildStage1IdentifierMetadata()
           });
         }
       }
@@ -713,7 +715,8 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
                canonicalValue: idr.canonicalValue,
                status: 'active',
                createdAt: serverTimestamp(),
-               updatedAt: serverTimestamp()
+               updatedAt: serverTimestamp(),
+               ...buildStage1IdentifierMetadata()
              });
            }
 

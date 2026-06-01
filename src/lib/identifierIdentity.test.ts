@@ -4,9 +4,37 @@ import {
   getIdentifierIdentityModelVersion,
   isV2IdentifierRecord,
 } from './identifierIdentity';
+import { buildStage1IdentifierMetadata } from './identifiers';
 import { IdentifierRecord } from '../types';
 
 describe('identifierIdentity', () => {
+  describe('buildStage1IdentifierMetadata', () => {
+    it('should return exactly 2, 1, 1 for version metadata', () => {
+      const metadata = buildStage1IdentifierMetadata();
+      expect(metadata).toEqual({
+        identityModelVersion: 2,
+        identitySchemaVersion: 1,
+        canonicalizationVersion: 1,
+      });
+    });
+
+    it('should not include rawPayload', () => {
+      const metadata = buildStage1IdentifierMetadata();
+      expect(metadata).not.toHaveProperty('rawPayload');
+    });
+
+    it('should strictly exclude ownerId, objectId, status, identifierKey, and timestamps', () => {
+      const metadata = buildStage1IdentifierMetadata() as any;
+      expect(metadata).not.toHaveProperty('ownerId');
+      expect(metadata).not.toHaveProperty('objectId');
+      expect(metadata).not.toHaveProperty('status');
+      expect(metadata).not.toHaveProperty('identifierKey');
+      expect(metadata).not.toHaveProperty('createdAt');
+      expect(metadata).not.toHaveProperty('updatedAt');
+      expect(metadata).not.toHaveProperty('lastSeenAt');
+    });
+  });
+
   describe('buildIdentifierSemanticIdentityPayload', () => {
     it('should construct a valid payload with correct constant fields', () => {
       const input: Partial<IdentifierRecord> = {
