@@ -64,5 +64,14 @@ The `firestore.rules.test.ts` suite was updated to ensure:
 ## Rollback Plan
 Since rules are declarative, if any unexpected issues arise, the rollback plan is simply to revert the `firestore.rules` and `tests/firestore-rules/firestore.rules.test.ts` changes to the prior commit (from Phase 7D.9). No data migration was performed, so no data remediation is necessary.
 
+## Runtime Write-Path Alignment (Phase 7D.10 supplement)
+As part of Phase 7D.10 completion, runtime write paths were conservatively aligned with Stage 1 fields:
+- **Creation paths** (such as capturing new identifiers) now emit `identityModelVersion: 2`, `identitySchemaVersion: 1`, and `canonicalizationVersion: 1`.
+- **Update paths** (such as attaching or detaching existing identifiers) intentionally **do not** backfill Stage 1 metadata onto older identifiers. Older identifiers without these fields remain valid legacy-compatible records.
+- **`rawPayload`** is rules-allowed as a map but is intentionally omitted from runtime creation until a specific source payload policy is finalized.
+- `rawValue` remains valid for legacy compatibility.
+- `ownerId` remains required.
+- `objectIdentifierBindings` remains the canonical relation.
+
 ## Phase 7E Status
 Phase 7E (Migration Execution) remains strictly **blocked**. No imported observations can be written by clients, and no backend processes are activated in this phase.

@@ -77,3 +77,16 @@ export function normalizeIdentifierInput(input: string, kind: IdentifierKind = '
     canonicalValue: input.trim().toUpperCase()
   };
 }
+
+/**
+ * Provides the Stage 1 additive metadata for newly created identifier records.
+ * Intentionally omits `rawPayload` until a source payload policy is finalized.
+ * Does not generate `identifierKey` or include `ownerId`, `objectId`, or timestamps.
+ */
+export function buildStage1IdentifierMetadata() {
+  return {
+    identityModelVersion: 2 as const,
+    identitySchemaVersion: 1 as const,
+    canonicalizationVersion: 1 as const,
+  };
+}

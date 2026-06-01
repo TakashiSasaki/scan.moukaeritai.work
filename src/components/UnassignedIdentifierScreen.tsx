@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { db, auth } from '../lib/firebase';
 import { ObjectRecord, IdentifierRecord } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { buildIdentifierKey } from '../lib/identifiers';
+import { buildIdentifierKey, buildStage1IdentifierMetadata } from '../lib/identifiers';
 import { buildActiveBindingId, buildActiveBindingRecord, validateIdentifierCanAttach, findCanonicalBindingsForOwner, loadObjectIdentifiersForSummary, mergeIdentifierForSummary } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 import { createUserIdentifierObservation, UserObservationSource, CreateUserObservationResult } from '../lib/identifierObservations';
@@ -103,7 +103,8 @@ export default function UnassignedIdentifierScreen() {
                canonicalValue: state.canonicalValue,
                status: 'active',
                createdAt: serverTimestamp(),
-               updatedAt: serverTimestamp()
+               updatedAt: serverTimestamp(),
+               ...buildStage1IdentifierMetadata()
             });
         }
 
@@ -181,6 +182,7 @@ export default function UnassignedIdentifierScreen() {
                status: 'active',
                createdAt: serverTimestamp() as any,
                updatedAt: serverTimestamp() as any,
+               ...buildStage1IdentifierMetadata()
              };
 
         const mergedIdentifiers = mergeIdentifierForSummary(allIdentifiers, newIdentifier);
