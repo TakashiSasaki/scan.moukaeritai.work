@@ -288,8 +288,8 @@ Phase 7D.10 — Firestore rules Stage 1 additive fields (Completed)
 - Stage 1 additive identifier rules allowance.
 - Narrow Firestore rules transition.
 - Additive fields only (`rawPayload`, `identityModelVersion`, `identitySchemaVersion`, `canonicalizationVersion`).
-- Runtime creation paths now align by appending Phase 1 metadata (omitting `rawPayload` for now).
-- Update paths intentionally do not backfill Phase 1 metadata.
+- Runtime creation paths now align by appending Stage 1 metadata (omitting `rawPayload` for now).
+- Update paths intentionally do not backfill Stage 1 metadata.
 - No ownerless/global identifiers.
 - No Phase 7E execution.
 - See [Phase 7D.10: Firestore Rules Stage 1 Additive Fields](phase-7d10-firestore-rules-stage1-additive-fields.md).
