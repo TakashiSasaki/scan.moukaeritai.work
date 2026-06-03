@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
+import { Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Book, GitMerge, Database, Share2, ArrowLeft, Boxes, AppWindow } from 'lucide-react';
 import DeveloperDocsOverview from './DeveloperDocsOverview';
 import DeveloperRoutesDoc from './DeveloperRoutesDoc';
@@ -21,9 +21,10 @@ const navItems = [
 
 export default function DeveloperDocsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
-    <div className="bg-[var(--surface-container-lowest)] text-[var(--on-surface)] flex flex-col h-[calc(100vh-8rem)] mt-4 mx-4 rounded-2xl border border-[var(--outline)] overflow-hidden shadow-sm">
+    <div className="bg-[var(--surface-container-lowest)] text-[var(--on-surface)] flex flex-col h-[calc(100vh-8rem)] mt-2 mx-2 md:mx-3 rounded-2xl border border-[var(--outline)] overflow-hidden shadow-sm">
       <header className="bg-[var(--surface-container-lowest)]/80 backdrop-blur-md border-b border-[var(--outline)] px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
@@ -42,26 +43,41 @@ export default function DeveloperDocsPage() {
           </div>
         </div>
 
-        {/* Horizontal Nav for Mobile / Secondary Nav */}
-        <nav className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.exact}
-              className={({ isActive }) =>
-                `flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                  isActive
-                    ? 'bg-[var(--primary)] text-[var(--primary-foreground)]'
-                    : 'bg-[var(--surface-container)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]'
-                }`
-              }
+                {/* Responsive Nav */}
+        <div className="w-full md:w-auto mt-2 md:mt-0">
+          <div className="md:hidden">
+            <select
+              value={location.pathname}
+              onChange={(e) => navigate(e.target.value)}
+              className="w-full bg-[var(--surface-container)] text-[var(--on-surface)] border border-[var(--outline)] rounded-xl px-4 py-2 text-sm appearance-none"
             >
-              {item.icon}
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+              {navItems.map((item) => (
+                <option key={item.path} value={item.path}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <nav className="hidden md:flex flex-wrap items-center gap-2">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.exact}
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                    isActive
+                      ? 'bg-[var(--primary)] text-[var(--primary-foreground)]'
+                      : 'bg-[var(--surface-container)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]'
+                  }`
+                }
+              >
+                {item.icon}
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] relative">

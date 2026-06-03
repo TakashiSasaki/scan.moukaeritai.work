@@ -10,6 +10,7 @@ export default function DeveloperDataModelGraph() {
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isGraphContainerReady, setIsGraphContainerReady] = useState(false);
 
   // Filtering state
   const [activeNodeTypes, setActiveNodeTypes] = useState<Set<string>>(new Set(dataModelNodes.map(n => n.type)));
@@ -27,8 +28,24 @@ export default function DeveloperDataModelGraph() {
     return dataModelEdges.filter(e => e.source === selectedNodeId || e.target === selectedNodeId);
   }, [selectedNodeId]);
 
+
   useEffect(() => {
     if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          setIsGraphContainerReady(true);
+          observer.disconnect();
+          break;
+        }
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isGraphContainerReady || !containerRef.current) return;
 
     // Initialize Graphology
     const graph = new Graph();
@@ -55,7 +72,7 @@ export default function DeveloperDataModelGraph() {
         size: size,
         label: node.label,
         color: color,
-        type: node.type,
+        nodeKind: node.type,
         originalColor: color,
       });
     });
@@ -112,7 +129,7 @@ export default function DeveloperDataModelGraph() {
         sigmaRef.current = null;
       }
     };
-  }, []); // Graph topology is static
+  }, [isGraphContainerReady]); // Graph topology is static
 
   // Apply filters and search
   useEffect(() => {
@@ -134,7 +151,7 @@ export default function DeveloperDataModelGraph() {
 
     // 1. Apply type filters
     graph.forEachNode((node, attrs) => {
-      if (!activeNodeTypes.has(attrs.type)) {
+      if (!activeNodeTypes.has(attrs.nodeKind)) {
         graph.setNodeAttribute(node, 'hidden', true);
       }
     });
@@ -209,7 +226,7 @@ export default function DeveloperDataModelGraph() {
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-[1400px] mx-auto h-full flex flex-col gap-4">
+    <div className="p-4 md:p-6 w-full max-w-none mx-0 h-full flex flex-col gap-4">
       {/* Header & Controls */}
       <section className="bg-[var(--surface-container)] rounded-3xl p-4 md:p-6 border border-[var(--outline)] shrink-0 flex flex-col gap-4 z-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -261,43 +278,45 @@ export default function DeveloperDataModelGraph() {
              )}
            </div>
 
-           <div className="flex flex-col gap-2 flex-1">
-             <div className="flex flex-wrap items-center gap-2">
-               <span className="text-xs font-bold text-[var(--on-surface-variant)] flex items-center gap-1 uppercase tracking-wider mr-2 min-w-[50px]">
+           <div className="flex flex-col gap-4 flex-1">
+             {/* Node Filters */}
+             <div>
+               <span className="text-xs font-bold text-[var(--on-surface-variant)] flex items-center gap-1 uppercase tracking-wider mb-2">
                  <Filter size={12} /> Nodes
                </span>
-               {allNodeTypes.map(type => (
-                 <button
-                   key={type}
-                   onClick={() => toggleNodeType(type)}
-                   className={`text-[10px] px-2 py-1 rounded-full border transition-colors ${
-                     activeNodeTypes.has(type)
-                       ? 'bg-[var(--primary)]/10 border-[var(--primary)] text-[var(--primary)]'
-                       : 'bg-transparent border-[var(--outline)] text-[var(--on-surface-variant)] hover:border-[var(--primary)]'
-                   }`}
-                 >
-                   {type}
-                 </button>
-               ))}
+               <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2">
+                 {allNodeTypes.map(type => (
+                   <label key={type} className="flex items-center gap-2 text-xs text-[var(--on-surface)] cursor-pointer hover:bg-[var(--surface-container)] p-1 rounded transition-colors">
+                     <input
+                       type="checkbox"
+                       checked={activeNodeTypes.has(type)}
+                       onChange={() => toggleNodeType(type)}
+                       className="rounded border-[var(--outline)] text-[var(--primary)] focus:ring-[var(--primary)]"
+                     />
+                     <span className="truncate">{type}</span>
+                   </label>
+                 ))}
+               </div>
              </div>
 
-             <div className="flex flex-wrap items-center gap-2">
-               <span className="text-xs font-bold text-[var(--on-surface-variant)] flex items-center gap-1 uppercase tracking-wider mr-2 min-w-[50px]">
+             {/* Edge Filters */}
+             <div>
+               <span className="text-xs font-bold text-[var(--on-surface-variant)] flex items-center gap-1 uppercase tracking-wider mb-2">
                  <Filter size={12} /> Edges
                </span>
-               {allEdgeTypes.map(type => (
-                 <button
-                   key={type}
-                   onClick={() => toggleEdgeType(type)}
-                   className={`text-[10px] px-2 py-1 rounded-full border transition-colors ${
-                     activeEdgeTypes.has(type)
-                       ? 'bg-[var(--on-surface)] border-[var(--on-surface-variant)] text-[var(--surface)]'
-                       : 'bg-transparent border-[var(--outline)] text-[var(--on-surface-variant)] hover:border-[var(--primary)]'
-                   }`}
-                 >
-                   {type}
-                 </button>
-               ))}
+               <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2">
+                 {allEdgeTypes.map(type => (
+                   <label key={type} className="flex items-center gap-2 text-xs text-[var(--on-surface)] cursor-pointer hover:bg-[var(--surface-container)] p-1 rounded transition-colors">
+                     <input
+                       type="checkbox"
+                       checked={activeEdgeTypes.has(type)}
+                       onChange={() => toggleEdgeType(type)}
+                       className="rounded border-[var(--outline)] text-[var(--primary)] focus:ring-[var(--primary)]"
+                     />
+                     <span className="truncate">{type}</span>
+                   </label>
+                 ))}
+               </div>
              </div>
            </div>
         </div>
