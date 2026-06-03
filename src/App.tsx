@@ -69,7 +69,6 @@ function AppContent() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
-  const [showAppStatus, setShowAppStatus] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -171,9 +170,19 @@ function AppContent() {
           user={user}
           onLogin={handleLogin}
           onOpenApp={handleOpenApp}
-          showAppStatus={showAppStatus}
-          onShowAppStatus={() => setShowAppStatus(true)}
-          onCloseAppStatus={() => setShowAppStatus(false)}
+          showAppStatus={false}
+          onShowAppStatus={() => navigate('/status')}
+          onCloseAppStatus={() => navigate('/')}
+        />
+      } />
+      <Route path="/status" element={
+        <LandingPage
+          user={user}
+          onLogin={handleLogin}
+          onOpenApp={handleOpenApp}
+          showAppStatus={true}
+          onShowAppStatus={() => navigate('/status')}
+          onCloseAppStatus={() => navigate('/')}
         />
       } />
       <Route path="/about" element={<PublicLayout><AppAboutPage /></PublicLayout>} />

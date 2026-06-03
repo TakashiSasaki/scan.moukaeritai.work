@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Graph from 'graphology';
 import Sigma from 'sigma';
-import { Share2, RotateCcw, Info, Search, X, Filter } from 'lucide-react';
+import { Share2, RotateCcw, Info, Search, X, Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { dataModelNodes, dataModelEdges, GraphNode, GraphEdge } from '../../lib/developerDataModelGraph';
 
 export default function DeveloperDataModelGraph() {
@@ -11,6 +12,7 @@ export default function DeveloperDataModelGraph() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isGraphContainerReady, setIsGraphContainerReady] = useState(false);
+  const [isControlsOpen, setIsControlsOpen] = useState(false);
 
   // Filtering state
   const [activeNodeTypes, setActiveNodeTypes] = useState<Set<string>>(new Set(dataModelNodes.map(n => n.type)));
@@ -173,6 +175,13 @@ export default function DeveloperDataModelGraph() {
       });
     }
 
+    // 2.5. Hide edges connected to hidden nodes
+    graph.forEachEdge((edge, attrs, source, target) => {
+      if (graph.getNodeAttribute(source, 'hidden') || graph.getNodeAttribute(target, 'hidden')) {
+        graph.setEdgeAttribute(edge, 'hidden', true);
+      }
+    });
+
     // 3. Highlight selected node and its neighbors
     if (selectedNodeId && graph.hasNode(selectedNodeId)) {
       const neighbors = new Set<string>();
@@ -194,6 +203,8 @@ export default function DeveloperDataModelGraph() {
         }
       });
     }
+
+    sigmaRef.current.refresh();
 
   }, [searchQuery, activeNodeTypes, activeEdgeTypes, selectedNodeId]);
 
@@ -239,26 +250,39 @@ export default function DeveloperDataModelGraph() {
               Interactive visualization of collections, fields, and relationships.
             </p>
           </div>
-          <div className="flex gap-2">
-             <button
-              onClick={clearFilters}
-              className="px-4 py-2 bg-[var(--surface-container-high)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface)] rounded-full text-sm font-medium transition-colors border border-[var(--outline)]"
+          <div className="flex gap-2 items-center">
+            <button
+              onClick={() => setIsControlsOpen(!isControlsOpen)}
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--surface-container-high)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface)] rounded-full text-sm font-medium transition-colors border border-[var(--outline)]"
             >
-              Clear Filters
+              <Filter size={16} />
+              <span className="hidden sm:inline">Filters & Search</span>
+              {isControlsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             <button
               onClick={handleReset}
               className="flex items-center gap-2 px-4 py-2 bg-[var(--surface-container-high)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface)] rounded-full text-sm font-medium transition-colors border border-[var(--outline)]"
+              title="Reset View"
             >
-              <RotateCcw size={16} /> Reset View
+              <RotateCcw size={16} />
+              <span className="hidden sm:inline">Reset View</span>
             </button>
           </div>
         </div>
 
-        {/* Toolbar */}
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center bg-[var(--surface-container-lowest)] p-3 rounded-2xl border border-[var(--outline)]">
-           <div className="relative w-full lg:w-64 shrink-0">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)]" size={16} />
+        <AnimatePresence>
+          {isControlsOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="flex flex-col gap-4 bg-[var(--surface-container-lowest)] p-4 rounded-2xl border border-[var(--outline)]">
+                <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center w-full">
+                  <div className="relative w-full lg:w-64 shrink-0">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)]" size={16} />
              <input
                type="text"
                placeholder="Search nodes..."
@@ -300,26 +324,40 @@ export default function DeveloperDataModelGraph() {
              </div>
 
              {/* Edge Filters */}
-             <div>
-               <span className="text-xs font-bold text-[var(--on-surface-variant)] flex items-center gap-1 uppercase tracking-wider mb-2">
-                 <Filter size={12} /> Edges
-               </span>
-               <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2">
-                 {allEdgeTypes.map(type => (
-                   <label key={type} className="flex items-center gap-2 text-xs text-[var(--on-surface)] cursor-pointer hover:bg-[var(--surface-container)] p-1 rounded transition-colors">
-                     <input
-                       type="checkbox"
-                       checked={activeEdgeTypes.has(type)}
-                       onChange={() => toggleEdgeType(type)}
-                       className="rounded border-[var(--outline)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                     />
-                     <span className="truncate">{type}</span>
-                   </label>
-                 ))}
-               </div>
-             </div>
-           </div>
-        </div>
+                    <div>
+                      <span className="text-xs font-bold text-[var(--on-surface-variant)] flex items-center gap-1 uppercase tracking-wider mb-2">
+                        <Filter size={12} /> Edges
+                      </span>
+                      <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2">
+                        {allEdgeTypes.map(type => (
+                          <label key={type} className="flex items-center gap-2 text-xs text-[var(--on-surface)] cursor-pointer hover:bg-[var(--surface-container)] p-1 rounded transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={activeEdgeTypes.has(type)}
+                              onChange={() => toggleEdgeType(type)}
+                              className="rounded border-[var(--outline)] text-[var(--primary)] focus:ring-[var(--primary)]"
+                            />
+                            <span className="truncate">{type}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Clear Filters Button inside dropdown */}
+                  <div className="shrink-0 pt-4 lg:pt-0 lg:pl-4 lg:border-l border-[var(--outline)] self-stretch flex items-center">
+                    <button
+                      onClick={clearFilters}
+                      className="w-full lg:w-auto px-4 py-2 bg-[var(--surface-container-high)] hover:bg-red-500/10 hover:text-red-500 text-[var(--on-surface-variant)] rounded-xl text-sm font-medium transition-colors border border-[var(--outline)] hover:border-red-500/30 whitespace-nowrap"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
       {/* Main Graph Area */}
