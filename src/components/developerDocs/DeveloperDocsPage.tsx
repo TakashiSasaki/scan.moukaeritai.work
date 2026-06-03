@@ -80,7 +80,7 @@ export default function DeveloperDocsPage() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] relative">
+      <main className="flex-1 bg-[var(--surface-container-lowest)] relative">
         <Routes>
           <Route path="/" element={<DeveloperDocsOverview />} />
           <Route path="pwa" element={<DeveloperPWADoc />} />
