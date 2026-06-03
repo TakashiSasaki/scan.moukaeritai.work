@@ -284,7 +284,7 @@ export default function DeveloperDataModelGraph() {
                <span className="text-xs font-bold text-[var(--on-surface-variant)] flex items-center gap-1 uppercase tracking-wider mb-2">
                  <Filter size={12} /> Nodes
                </span>
-               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-auto-fit min-[200px] gap-2">
+               <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2">
                  {allNodeTypes.map(type => (
                    <label key={type} className="flex items-center gap-2 text-xs text-[var(--on-surface)] cursor-pointer hover:bg-[var(--surface-container)] p-1 rounded transition-colors">
                      <input
@@ -304,7 +304,7 @@ export default function DeveloperDataModelGraph() {
                <span className="text-xs font-bold text-[var(--on-surface-variant)] flex items-center gap-1 uppercase tracking-wider mb-2">
                  <Filter size={12} /> Edges
                </span>
-               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-auto-fit min-[200px] gap-2">
+               <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2">
                  {allEdgeTypes.map(type => (
                    <label key={type} className="flex items-center gap-2 text-xs text-[var(--on-surface)] cursor-pointer hover:bg-[var(--surface-container)] p-1 rounded transition-colors">
                      <input
