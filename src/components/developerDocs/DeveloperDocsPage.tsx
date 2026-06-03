@@ -24,7 +24,7 @@ export default function DeveloperDocsPage() {
   const location = useLocation();
 
   return (
-    <div className="bg-[var(--surface-container-lowest)] text-[var(--on-surface)] flex flex-col h-[calc(100vh-8rem)] mt-2 mx-2 md:mx-3 rounded-2xl border border-[var(--outline)] overflow-hidden shadow-sm">
+    <div className="bg-[var(--surface-container-lowest)] text-[var(--on-surface)] flex flex-col min-h-screen">
       <header className="bg-[var(--surface-container-lowest)]/80 backdrop-blur-md border-b border-[var(--outline)] px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
@@ -80,7 +80,7 @@ export default function DeveloperDocsPage() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] relative">
+      <main className="flex-1 bg-[var(--surface-container-lowest)] relative">
         <Routes>
           <Route path="/" element={<DeveloperDocsOverview />} />
           <Route path="pwa" element={<DeveloperPWADoc />} />
