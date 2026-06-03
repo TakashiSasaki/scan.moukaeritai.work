@@ -25,6 +25,14 @@ export const routeGroups: RouteGroup[] = [
         notes: 'Authenticated users remain on the landing page and use the explicit Open App action to enter /app.'
       },
       {
+        path: '/status',
+        component: 'LandingPage',
+        access: 'public',
+        navigation: 'landing page',
+        purpose: 'public app status modal overlay',
+        notes: 'Renders the LandingPage with the AppStatusDialog open.'
+      },
+      {
         path: '/app',
         component: 'Dashboard',
         access: 'signed-in user',
