@@ -1,5 +1,6 @@
 import React from 'react';
-import { GitMerge, Layout, ShieldAlert, Globe } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { GitMerge, Layout, ShieldAlert, Globe, ExternalLink } from 'lucide-react';
 import { routeGroups } from '../../lib/routeCatalog';
 
 export default function DeveloperRoutesDoc() {
@@ -30,9 +31,20 @@ export default function DeveloperRoutesDoc() {
               {group.routes.map((route) => (
                 <div key={route.path} className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-2xl p-4 flex flex-col md:flex-row gap-4 hover:bg-[var(--surface-container-high)] transition-colors">
                   <div className="md:w-1/3 flex flex-col gap-1">
-                    <code className="text-sm font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-1 rounded-md self-start">
-                      {route.path}
-                    </code>
+                    {route.path.includes(':') || route.path.includes('*') ? (
+                      <code className="text-sm font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-1 rounded-md self-start">
+                        {route.path}
+                      </code>
+                    ) : (
+                      <Link
+                        to={route.path}
+                        className="text-sm font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-1 rounded-md self-start hover:bg-[var(--primary)]/20 hover:underline flex items-center gap-1 transition-colors"
+                        title={`Go to ${route.path}`}
+                      >
+                        {route.path}
+                        <ExternalLink size={12} className="opacity-70" />
+                      </Link>
+                    )}
                     <span className="text-xs text-[var(--on-surface-variant)] font-medium">
                       {route.component}
                     </span>
