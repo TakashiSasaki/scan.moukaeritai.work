@@ -22,8 +22,8 @@ The application maintains a strict separation between pure unit tests and Firest
 - **Command**: `npm run test:rules`
 - **Purpose**: Tests specifically targeting `firestore.rules` using the local Firestore emulator.
 - **Constraints**:
-  - Requires the Firebase emulator to be running.
-  - The `npm run test:rules` script automatically starts the emulator wrapper, runs the suite, and shuts it down.
+  - Does not require the Firebase emulator to be already running.
+  - The `npm run test:rules` script automatically starts the emulator, runs the suite, and shuts it down.
   - Located strictly under `tests/firestore-rules/`.
   - These tests assert the **current baseline only**. Stage 1 rules broadening (like allowing client writes for additive v2 fields or global identifiers) is **intentionally omitted** here.
 
