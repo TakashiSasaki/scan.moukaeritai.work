@@ -3,7 +3,7 @@ import { Boxes, Info } from 'lucide-react';
 
 export default function DeveloperAbstractModelDoc() {
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-8 pb-24">
+    <div className="p-3 md:p-4 lg:p-6 w-full max-w-none mx-0 space-y-8 pb-24">
       <section className="bg-[var(--surface-container)] rounded-3xl p-6 border border-[var(--outline)]">
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
           <Boxes className="text-[var(--primary)]" size={24} />
