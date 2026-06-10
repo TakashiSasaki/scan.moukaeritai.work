@@ -30,10 +30,10 @@ To finalize the legacy items transition, an administrator must manually perform 
 4. [ ] **Field Classification Audit:** Explicitly classify every legacy source field using the following statuses. Ensure no field remains as `unmigrated-gap` or `needs-decision`.
     *   `migrated`
     *   `partially-migrated`
+    *   `derived-only`
     *   `preserved-as-legacy-reference`
     *   `preserved-as-raw-snapshot`
     *   `intentionally-discarded`
-    *   `not-observed`
 
 ## Pragmatic Handling of `bluetoothTags` and `tagType`
 

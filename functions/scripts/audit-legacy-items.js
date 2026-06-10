@@ -1,11 +1,15 @@
-import * as admin from 'firebase-admin';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { createRequire } from 'module';
+import fs from 'fs';
+
+const require = createRequire(import.meta.url);
+const appletConfig = JSON.parse(fs.readFileSync('../firebase-applet-config.json', 'utf8'));
 
 // Initialize Firebase Admin (Assumes GOOGLE_APPLICATION_CREDENTIALS is set)
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
+const app = getApps().length ? getApps()[0] : initializeApp();
 
-const db = admin.firestore();
+const db = getFirestore(app, appletConfig.firestoreDatabaseId);
 
 // Safety overrides to strictly prevent accidental writes
 db.collection = new Proxy(db.collection, {
@@ -116,7 +120,7 @@ async function auditLegacyItem(legacyItemId) {
 async function main() {
   const args = process.argv.slice(2);
   if (args.length === 0) {
-    console.error("Usage: node audit-legacy-items.js <legacyItemId1> [legacyItemId2] ...");
+    console.error("Usage: cd functions && node scripts/audit-legacy-items.js <legacyItemId1> [legacyItemId2] ...");
     console.error("This script is read-only and requires explicit legacy item IDs.");
     process.exit(1);
   }
