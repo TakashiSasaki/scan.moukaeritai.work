@@ -25,6 +25,7 @@ The core data model consists of:
 * New identifier creation paths emit Stage 1 metadata.
 * `rawPayload` is allowed by rules as a map but is intentionally omitted by the runtime until a formal source payload policy is finalized.
 * **Phase 7E migration execution remains blocked.**
+* Old `items` finalization is a small, bounded cleanup separate from Phase 7E.
 
 ## Local Development
 
@@ -74,3 +75,4 @@ npm run build
 * [Observation Model Migration Spec](docs/migrations/observation-model-migration.md)
 * [Phase 7D.10 Rules Additive Fields](docs/migrations/phase-7d10-firestore-rules-stage1-additive-fields.md)
 * [Deterministic UUID Architecture](docs/architecture/deterministic-uuid.md)
+* [Legacy Items Finalization Plan](docs/migrations/legacy-items-finalization-plan.md)

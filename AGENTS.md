@@ -293,7 +293,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - Detaching an identifier sets its status to `unassigned`, updates matching active bindings to `detached`, updates `objects.identifierSummary`, and writes the `identifier_detached` event in a single Firestore `writeBatch` for atomicity.
   - Direct NFC attachment is scanner-driven, handled outside of `CaptureForm`. Users should be directed to the scanner flow for NFC identifiers.
 - **Legacy Migration**:
-  - A dedicated admin-only Cloud Function (`migrateInventoryModel`) safely translates legacy `items` into the normalized collections: `objects`, `identifiers`, `objectIdentifierBindings`, `objectImages`, and `objectEvents`. **Note: This function is now retired and must not be extended.**
+  - A dedicated admin-only Cloud Function (`migrateInventoryModel`) safely translated legacy `items` into the normalized collections: `objects`, `identifiers`, `objectIdentifierBindings`, `objectImages`, and `objectEvents`. **Note: This function is now retired and must not be extended. The old items finalization is a small, bounded cleanup, entirely separate from Phase 7E. Phase 7E remains blocked.**
   - Missing `currentLocation` is represented by field absence, not by `null`.
   - The UI formerly provided a `/admin/migration` page to run a Dry Run and an Execute phase. **Note: This UI is retired in Phase 0 and now displays a deprecation message.**
   - **Non-destructive**: Migration does not delete legacy items or Storage files. Legacy `items` are kept intact. If the app tries to load a legacy item that isn't migrated, the user is warned to run the migration first.
