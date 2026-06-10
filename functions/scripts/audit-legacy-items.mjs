@@ -120,7 +120,7 @@ async function auditLegacyItem(legacyItemId) {
 async function main() {
   const args = process.argv.slice(2);
   if (args.length === 0) {
-    console.error("Usage: cd functions && node scripts/audit-legacy-items.js <legacyItemId1> [legacyItemId2] ...");
+    console.error("Usage: cd functions && node scripts/audit-legacy-items.mjs <legacyItemId1> [legacyItemId2] ...");
     console.error("This script is read-only and requires explicit legacy item IDs.");
     process.exit(1);
   }
@@ -132,4 +132,7 @@ async function main() {
   }
 }
 
-main().catch(console.error);
+main().catch((e) => {
+  console.error("Audit failed:", e);
+  process.exit(1);
+});
