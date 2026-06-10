@@ -25,7 +25,7 @@ The application maintains a strict separation between pure unit tests and Firest
   - Does not require the Firebase emulator to be already running.
   - The `npm run test:rules` script automatically starts the emulator, runs the suite, and shuts it down.
   - Located strictly under `tests/firestore-rules/`.
-  - These tests assert the **current baseline only**. Stage 1 rules broadening (like allowing client writes for additive v2 fields or global identifiers) is **intentionally omitted** here.
+  - These tests assert the **current Phase 7D.10 baseline**. Stage 1 rules broadening is now active, meaning additive v2 fields (`rawPayload`, `identityModelVersion`, `identitySchemaVersion`, `canonicalizationVersion`) are allowed, while invalid values and future/blocked fields remain rejected.
 
 ### Linting and Building
 - **Lint**: `npm run lint` strictly runs TypeScript type checking (`--noEmit`) without modifying files.
