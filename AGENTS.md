@@ -353,6 +353,10 @@ The application has transitioned from a simple `items` collection to a normalize
 
 
 ### Entity / Fact / Projection Model Polish (2026-06-XX)
+- Phase 1 write-builder helpers live in `src/lib/entityFactProjectionWrites.ts`.
+- These helpers are pure payload builders and must not perform Firestore writes directly.
+- Runtime components must not call them for dual-write behavior until the migration plan phase explicitly allows it.
+
 - Documentation and explanation pages should present Entity / Fact / Projection as the primary model.
 - Legacy runtime names such as identifiers and objectIdentifierBindings should be described as current implementation compatibility layers, not as the long-term conceptual model.
 - Do not remove legacy terms from docs while the runtime still uses them; instead, map them to Marker and Association.
