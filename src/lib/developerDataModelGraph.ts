@@ -24,17 +24,23 @@ export interface GraphEdge {
 export const dataModelNodes: GraphNode[] = [
   // Collections
   { id: 'col_objects', label: 'objects', type: 'collection', x: 0, y: 0, description: 'Core physical asset records.', status: 'current' },
-  { id: 'col_identifiers', label: 'identifiers', type: 'collection', x: 4, y: 0, description: 'Lookup records for scannable tags (e.g. QR, NFC). Currently migrating to an ownerless/global model.', status: 'current' },
-  { id: 'col_objectIdentifierBindings', label: 'objectIdentifierBindings', type: 'collection', x: 2, y: -2, description: 'Canonical active relationship state tying an identifier to an object.', status: 'current' },
-  { id: 'col_identifierObservations', label: 'identifierObservations', type: 'collection', x: 6, y: -2, description: 'Time-series evidence records of scans or sightings.', status: 'current' },
-  { id: 'col_objectEvents', label: 'objectEvents', type: 'collection', x: 0, y: 4, description: 'Append-only operational history/audit log for objects.', status: 'current' },
+  { id: 'col_identifiers', label: 'identifiers (maps to markers)', type: 'collection', x: 4, y: 0, description: 'Lookup records for scannable tags. Now legacy, maps to Marker.', status: 'legacy' },
+  { id: 'col_objectIdentifierBindings', label: 'objectIdentifierBindings (maps to associations)', type: 'collection', x: 2, y: -2, description: 'Canonical active relationship. Maps to Association.', status: 'legacy' },
+  { id: 'col_identifierObservations', label: 'identifierObservations (maps to observations)', type: 'collection', x: 6, y: -2, description: 'Time-series evidence records. Maps to Observation.', status: 'legacy' },
+  { id: 'col_objectEvents', label: 'objectEvents (maps to events)', type: 'collection', x: 0, y: 4, description: 'Append-only operational history. Maps to Event.', status: 'legacy' },
   { id: 'col_objectImages', label: 'objectImages', type: 'collection', x: 0, y: -4, description: 'Normalized storage for images associated with objects.', status: 'current' },
   { id: 'col_items', label: 'items (legacy)', type: 'collection', x: -4, y: 0, description: 'Original flat data model combining object, tags, and images. Now legacy.', status: 'legacy' },
   { id: 'col_users', label: 'users', type: 'collection', x: -6, y: -2, description: 'Standard mapping for authenticated user data.', status: 'current' },
   { id: 'col_admins', label: 'admins', type: 'collection', x: -6, y: 2, description: 'System administrators with elevated privileges.', status: 'current' },
 
+  // New Concept Nodes
+  { id: 'concept_marker', label: 'Marker (Entity)', type: 'futureConcept', x: 8, y: -1, description: 'Timeless identity node replacing identifier.', status: 'future-only' },
+  { id: 'concept_association', label: 'Association (Fact)', type: 'futureConcept', x: 3, y: -3, description: 'Temporal fact replacing binding.', status: 'future-only' },
+  { id: 'concept_observation', label: 'Observation (Fact)', type: 'futureConcept', x: 8, y: -3, description: 'Temporal evidence fact.', status: 'future-only' },
+  { id: 'concept_place', label: 'Place (Entity)', type: 'futureConcept', x: -2, y: -6, description: 'Independent place entity.', status: 'future-only' },
+
   // Semantic Identity Payload
-  { id: 'payload_semanticIdentity', label: 'Identifier semantic identity payload', type: 'semanticIdentityPayload', x: 8, y: 2, description: 'The strictly canonical JSON payload used to generate deterministic UUIDv5 identifierKeys.', status: 'current' },
+  { id: 'payload_semanticIdentity', label: 'Identifier semantic identity payload', type: 'semanticIdentityPayload', x: 8, y: 2, description: 'The strictly canonical JSON payload used to generate deterministic UUIDv5 identifierKeys.', status: 'legacy' },
 
   // Fields
   { id: 'fld_identifierKey', label: 'identifierKey', type: 'field', x: 4, y: 2, description: 'UUIDv5 document ID derived from the semantic identity payload.', status: 'current' },
@@ -56,9 +62,10 @@ export const dataModelNodes: GraphNode[] = [
   { id: 'fld_label', label: 'label (excluded)', type: 'field', x: 12, y: 5, description: 'Mutable human-readable label excluded from deterministic identity.', status: 'current' },
 
   // Relationships/Concepts
-  { id: 'rel_binding', label: 'Object-Identifier Binding', type: 'relationship', x: 2, y: 0, description: 'Canonical mapping tying an identifier to an object.', status: 'current' },
+  { id: 'rel_binding', label: 'Object-Identifier Binding', type: 'relationship', x: 2, y: 0, description: 'Canonical mapping tying an identifier to an object.', status: 'legacy' },
   { id: 'rel_legacy', label: 'Legacy objectId compatibility', type: 'legacyCompatibility', x: 4, y: -4, description: 'Retaining objectId on identifiers for backward compatibility.', status: 'legacy' },
-  { id: 'rel_ownerless', label: 'Ownerless global identifier model', type: 'futureConcept', x: 8, y: -4, description: 'Directional shift to stop relying on ownerId for identifier identity.', status: 'future-only' },
+  { id: 'rel_ownerless', label: 'Ownerless global identifier model', type: 'futureConcept', x: 8, y: -4, description: 'Directional shift to stop relying on ownerId for identifier identity.', status: 'legacy' },
+  { id: 'rel_entityFact', label: 'Entity/Fact Separation', type: 'futureConcept', x: 5, y: -7, description: 'Entities are timeless nodes; Facts are temporal nodes.', status: 'future-only' },
   { id: 'rel_rules', label: 'Firestore rules transition', type: 'ruleImpact', x: -4, y: -4, description: 'Incremental stages for Firestore security rules changes.', status: 'transitional' },
   { id: 'rel_phase7e', label: 'Phase 7E migration execution blocked', type: 'migrationPhase', x: -4, y: 2, description: 'Execution of legacy item observation backfill is blocked.', status: 'blocked' },
   { id: 'rel_acl', label: 'ACL future-only', type: 'futureConcept', x: 6, y: -6, description: 'Future granular access control on identifiers (currently rejected).', status: 'future-only' },
@@ -66,6 +73,11 @@ export const dataModelNodes: GraphNode[] = [
 ];
 
 export const dataModelEdges: GraphEdge[] = [
+  // Concept Mappings
+  { id: 'e_map1', source: 'col_identifiers', target: 'concept_marker', type: 'canonicalRelation', label: 'maps to', description: 'Identifiers are mapped to Markers conceptually.' },
+  { id: 'e_map2', source: 'col_objectIdentifierBindings', target: 'concept_association', type: 'canonicalRelation', label: 'maps to', description: 'Bindings become associations.' },
+  { id: 'e_map3', source: 'col_identifierObservations', target: 'concept_observation', type: 'canonicalRelation', label: 'maps to', description: 'Identifier Observations become Observations.' },
+
   // Collection to Fields
   { id: 'e1', source: 'col_identifiers', target: 'fld_identifierKey', type: 'hasField', label: 'has', description: 'Identifiers use identifierKey as document ID.' },
   { id: 'e2', source: 'col_identifiers', target: 'fld_objectId', type: 'hasField', label: 'legacy ref', description: 'Legacy non-authoritative reference.' },

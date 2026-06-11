@@ -22,47 +22,70 @@ export default function DeveloperAbstractModelDoc() {
       </section>
 
       <section className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-2xl p-6">
-        <h3 className="text-lg font-bold text-[var(--on-surface)] mb-4">Core Domain Entities</h3>
+        <h3 className="text-lg font-bold text-[var(--on-surface)] mb-4">Core Domain Model: Entity / Fact / Projection</h3>
+        <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4 flex gap-3 text-sm mb-6">
+          <Info className="text-green-500 shrink-0" size={20} />
+          <p className="text-[var(--on-surface)]">
+            <strong>Entity = timeless identity node. Fact = temporal node. Projection = derived read model.</strong><br/>
+            Object / Marker / Place are independent Entities. Association / Observation / Measurement / Event are Facts.
+            Summary records are derived and rebuildable from Facts.
+          </p>
+        </div>
         <ul className="space-y-4 text-sm">
           <li>
-            <strong className="text-[var(--primary)] block mb-1">Object</strong>
-            <p className="text-[var(--on-surface-variant)]">The central entity representing a physical item or asset being tracked. Objects have an owner and carry descriptive metadata, state (active, archived, lost), and a unified location derived from observation history.</p>
+            <strong className="text-[var(--primary)] block mb-1">Object (Entity)</strong>
+            <p className="text-[var(--on-surface-variant)]">The central entity representing a physical item or asset being tracked. Objects are timeless identity nodes without domain time.</p>
           </li>
           <li>
-            <strong className="text-[var(--primary)] block mb-1">Identifier</strong>
-            <p className="text-[var(--on-surface-variant)]">A scannable tag (e.g., QR, NFC, Bluetooth, barcode) attached to or associated with an Object. Crucially, identifiers identify things but are not themselves the object. Identifiers are moving towards a global/ownerless model.</p>
+            <strong className="text-[var(--primary)] block mb-1">Marker (Entity)</strong>
+            <p className="text-[var(--on-surface-variant)]">A scannable tag (e.g., QR, NFC, Bluetooth, barcode) acting as a timeless identity node. Replaces the legacy "Identifier" concept.</p>
           </li>
           <li>
-            <strong className="text-[var(--primary)] block mb-1">Observation</strong>
-            <p className="text-[var(--on-surface-variant)]">Evidence that an identifier was seen or scanned at a particular place and time. Observations do not strictly require an existing Object (loose evidence without a formal custody model). They capture sightings and scanner proximity events.</p>
+            <strong className="text-[var(--primary)] block mb-1">Place (Entity)</strong>
+            <p className="text-[var(--on-surface-variant)]">An independent entity representing a location. Replaces using ad-hoc location fields directly.</p>
           </li>
           <li>
-            <strong className="text-[var(--primary)] block mb-1">Binding</strong>
-            <p className="text-[var(--on-surface-variant)]">The canonical relation establishing that a particular Identifier is currently attached to a particular Object. Objects and identifiers are related canonically through bindings, removing direct legacy associations.</p>
+            <strong className="text-[var(--primary)] block mb-1">Association (Fact)</strong>
+            <p className="text-[var(--on-surface-variant)]">A typed hyperedge connecting participants (e.g. Object and Marker). It contains domain time and replaces the legacy "Binding" concept.</p>
           </li>
           <li>
-            <strong className="text-[var(--primary)] block mb-1">Event</strong>
-            <p className="text-[var(--on-surface-variant)]">An append-only record describing the object's lifecycle and operational history. Binding creations, metadata updates, status changes, and other important operations are recorded as events.</p>
+            <strong className="text-[var(--primary)] block mb-1">Observation (Fact)</strong>
+            <p className="text-[var(--on-surface-variant)]">Evidence that a Marker was seen or scanned at a particular place and time. Time-series evidence records.</p>
           </li>
           <li>
-            <strong className="text-[var(--primary)] block mb-1">Image</strong>
-            <p className="text-[var(--on-surface-variant)]">Media (photos) belonging to Objects, providing visual context or proof of state.</p>
+            <strong className="text-[var(--primary)] block mb-1">Measurement (Fact)</strong>
+            <p className="text-[var(--on-surface-variant)]">Quantitative evidence, such as GPS coordinates or Bluetooth RSSI values taken at a moment in time.</p>
           </li>
           <li>
-            <strong className="text-[var(--primary)] block mb-1">Legacy Item</strong>
-            <p className="text-[var(--on-surface-variant)]">The older, flat model where tags and history were embedded directly into the item object. Legacy items remain in the system purely as compatibility and migration source material.</p>
+            <strong className="text-[var(--primary)] block mb-1">Event (Fact)</strong>
+            <p className="text-[var(--on-surface-variant)]">An application-level or business-level occurrence, like an Object being created or archived.</p>
           </li>
           <li>
-            <strong className="text-[var(--primary)] block mb-1">User/Admin</strong>
-            <p className="text-[var(--on-surface-variant)]">Users own objects and create observations. Admins have system-wide access to dashboards, migration controls, and analytics.</p>
+            <strong className="text-[var(--primary)] block mb-1">Summary (Projection)</strong>
+            <p className="text-[var(--on-surface-variant)]">Derived read models (ObjectSummary, MarkerSummary, PlaceSummary) used for application performance and UX. They are not the source of truth.</p>
           </li>
         </ul>
       </section>
 
       <section className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-2xl p-6">
-        <h3 className="text-lg font-bold text-[var(--on-surface)] mb-4">Semantic Identifier Identity</h3>
+        <h3 className="text-lg font-bold text-[var(--on-surface)] mb-4">Legacy Concepts</h3>
         <p className="text-[var(--on-surface-variant)] text-sm mb-4">
-          The concept of an identifier's "identity" is strictly controlled to ensure deterministic resolution. An identifier is uniquely known by a canonical payload, not simply its raw value.
+          The current implementation is migrating away from older concepts. The following are kept for backward compatibility during the transition:
+        </p>
+        <ul className="space-y-4 text-sm mb-6">
+          <li>
+            <strong className="text-orange-500 block mb-1">Identifier & Binding</strong>
+            <p className="text-[var(--on-surface-variant)]">Conceptually map to <strong>Marker</strong> and <strong>Association</strong>. The older logic treats bindings as the primary relation.</p>
+          </li>
+          <li>
+            <strong className="text-orange-500 block mb-1">Legacy Item</strong>
+            <p className="text-[var(--on-surface-variant)]">The Tag 1.0 flat model where tags and history were embedded directly into the item object.</p>
+          </li>
+        </ul>
+
+        <h4 className="font-bold text-[var(--on-surface)] mb-2">Semantic Identifier Identity (Legacy)</h4>
+        <p className="text-[var(--on-surface-variant)] text-sm mb-4">
+          Formerly the center of the identity model, an identifier was uniquely known by a canonical payload, not simply its raw value. This is being replaced by the Marker entity.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
           <div>

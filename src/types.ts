@@ -34,6 +34,9 @@ export interface ObservationLocation {
 
 export type IdentifierDiscoveryState = 'observed' | 'registered' | 'detached' | 'unknown';
 
+/**
+ * Conceptually maps to ObservationDoc with observationType = "marker_observed".
+ */
 export type IdentifierObservationRecord = {
   /**
    * observationId must equal document ID.
@@ -119,6 +122,9 @@ export interface ObjectRecord {
   updatedAt: Timestamp;
 }
 
+/**
+ * Conceptually maps to MarkerDoc.
+ */
 export interface IdentifierRecord {
   identifierKey: string; // Must equal document ID
   ownerId: string;
@@ -147,6 +153,12 @@ export interface IdentifierRecord {
   lastSeenAt?: Timestamp;
 }
 
+/**
+ * Conceptually maps to AssociationDoc with associationType = "object_has_marker".
+ * Note:
+ *   objectIdentifierBindings conceptually maps to associations.
+ *   identifiers conceptually maps to markers.
+ */
 export interface ObjectIdentifierBindingRecord {
   bindingId: string; // Must equal document ID
   ownerId: string;

@@ -29,19 +29,19 @@ describe('developerDataModelGraph', () => {
 
   it('should include the core collections', () => {
     const coreCollections = [
-      'objects',
-      'identifiers',
-      'objectIdentifierBindings',
-      'identifierObservations',
-      'objectEvents',
-      'objectImages',
+      'col_objects',
+      'col_identifiers',
+      'col_objectIdentifierBindings',
+      'col_identifierObservations',
+      'col_objectEvents',
+      'col_objectImages',
     ];
 
     const collectionNodes = dataModelNodes.filter(n => n.type === 'collection');
-    const collectionLabels = collectionNodes.map(n => n.label);
+    const collectionIds = collectionNodes.map(n => n.id);
 
     for (const core of coreCollections) {
-      expect(collectionLabels).toContain(core);
+      expect(collectionIds).toContain(core);
     }
   });
 
