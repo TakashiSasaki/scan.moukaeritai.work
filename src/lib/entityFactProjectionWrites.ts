@@ -54,7 +54,8 @@ export function stripUndefinedDeep<T>(value: T): T {
     return value;
   }
   if (Array.isArray(value)) {
-    return value.map(item => stripUndefinedDeep(item)) as unknown as T;
+    // Drop undefined and sparse holes, preserve null, keep order, recursively clean elements.
+    return value.filter(item => item !== undefined).map(item => stripUndefinedDeep(item)) as unknown as T;
   }
   if (isPlainObject(value)) {
     const result: Record<string, unknown> = {};

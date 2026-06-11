@@ -33,10 +33,14 @@ describe('entityFactProjectionWrites', () => {
       expect(stripUndefinedDeep({ a: null })).toEqual({ a: null });
     });
 
-    it('preserves arrays but cleans object elements', () => {
+    it('preserves arrays but cleans object elements and drops undefined elements', () => {
+      expect(stripUndefinedDeep([1, undefined, 2])).toEqual([1, 2]);
+      // eslint-disable-next-line no-sparse-arrays
+      expect(stripUndefinedDeep([1, , 2])).toEqual([1, 2]);
+      expect(stripUndefinedDeep([1, null, 2])).toEqual([1, null, 2]);
       const input = [1, undefined, { a: 2, b: undefined }];
       const result = stripUndefinedDeep(input);
-      expect(result).toEqual([1, undefined, { a: 2 }]);
+      expect(result).toEqual([1, { a: 2 }]);
     });
 
     it('preserves Timestamp-like objects', () => {
