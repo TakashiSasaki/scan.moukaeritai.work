@@ -43,9 +43,25 @@ export type FactIndexFields = {
   userIds?: string[];
 };
 
+export type FactProvenanceSource =
+  | 'user_confirmed'
+  | 'user_report'
+  | 'marker_observation'
+  | 'location_measurement'
+  | 'trusted_reader'
+  | 'system_inference'
+  | 'admin_import'
+  | 'migration'
+  | 'import'
+  | 'legacy_observation'
+  | 'legacy_event'
+  | 'legacy_mapping';
+
 export type FactProvenance = {
-  source: string;
+  source: FactProvenanceSource;
   confidence: 'confirmed' | 'high' | 'medium' | 'low' | 'unknown';
+  actorUid?: string;
+  sourceFactIds?: string[];
 };
 
 // -----------------------------------------------------------------------------
@@ -78,6 +94,11 @@ export type EventTime = {
 
 export type ObjectDoc = {
   objectId: string;
+  /**
+   * Conceptual model: ownerId is not part of entity identity.
+   * Current implementation: ownerId may still be required by Firestore rules and owner-scoped runtime paths.
+   * Migration direction: keep ownerId for compatibility now; do not include it in semantic identity.
+   */
   ownerId: string;
   name?: string;
   description?: string;
@@ -129,6 +150,11 @@ export type NativeMarkerId = {
 
 export type MarkerDoc = {
   markerKey: string;
+  /**
+   * Conceptual model: ownerId is not part of entity identity.
+   * Current implementation: ownerId may still be required by Firestore rules and owner-scoped runtime paths.
+   * Migration direction: keep ownerId for compatibility now; do not include it in semantic identity.
+   */
   ownerId?: string;
 
   medium: MarkerMedium;
@@ -154,6 +180,11 @@ export type MarkerDoc = {
 
 export type PlaceDoc = {
   placeId: string;
+  /**
+   * Conceptual model: ownerId is not part of entity identity.
+   * Current implementation: ownerId may still be required by Firestore rules and owner-scoped runtime paths.
+   * Migration direction: keep ownerId for compatibility now; do not include it in semantic identity.
+   */
   ownerId: string;
   label?: string;
   _meta?: PersistenceMeta;

@@ -57,6 +57,44 @@ describe('Entity Fact Projection Mapping', () => {
     expect(result.payloadLayer).toBe('radio_signal');
   });
 
+  it('should map felica-idm IdentifierRecord to felica_idm NativeMarkerId', () => {
+    const timestamp = Timestamp.now();
+    const legacy: IdentifierRecord = {
+      identifierKey: 'NFC:FELICA-IDM:ABC',
+      ownerId: 'USER-1',
+      kind: 'nfc',
+      scheme: 'felica-idm',
+      canonicalValue: 'ABC',
+      status: 'active',
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+
+    const result = legacyIdentifierToMarkerDoc(legacy);
+
+    expect(result.nativeId?.kind).toBe('felica_idm');
+    expect(result.nativeId?.normalizedValue).toBe('ABC');
+  });
+
+  it('should map nfc-uid IdentifierRecord to unknown NativeMarkerId', () => {
+    const timestamp = Timestamp.now();
+    const legacy: IdentifierRecord = {
+      identifierKey: 'NFC:NFC-UID:XYZ',
+      ownerId: 'USER-1',
+      kind: 'nfc',
+      scheme: 'nfc-uid',
+      canonicalValue: 'XYZ',
+      status: 'active',
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+
+    const result = legacyIdentifierToMarkerDoc(legacy);
+
+    expect(result.nativeId?.kind).toBe('unknown');
+    expect(result.nativeId?.normalizedValue).toBe('XYZ');
+  });
+
   it('should map ObjectIdentifierBindingRecord to AssociationDoc', () => {
     const timestamp = Timestamp.now();
     const legacy: ObjectIdentifierBindingRecord = {

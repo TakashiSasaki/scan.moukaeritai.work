@@ -214,6 +214,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
             console.warn("Reverse geocoding failed", e);
           }
 
+          // TODO(entity-fact-projection): migrate currentLocation writes to measurements/objectSummaries.
           setData(prev => ({
             ...prev,
             currentLocation: {
@@ -493,7 +494,6 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
 
         const summary = computeIdentifierSummary(newIdentifiers);
 
-        // TODO(entity-fact-projection): move currentLocation writes toward measurements and objectSummaries.
         batch.update(doc(db, 'objects', objectId), {
           identifierSummary: summary,
           updatedAt: serverTimestamp()
@@ -567,7 +567,6 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       const newIdentifiers = currentIdentifiers.filter(i => i.identifierKey !== idr.identifierKey);
       const summary = computeIdentifierSummary(newIdentifiers);
 
-      // TODO(entity-fact-projection): move currentLocation writes toward measurements and objectSummaries.
       batch.update(doc(db, 'objects', objectId), {
         identifierSummary: summary,
         updatedAt: serverTimestamp()
