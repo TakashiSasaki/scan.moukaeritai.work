@@ -622,4 +622,254 @@ describe('Firestore Rules Baseline', () => {
       await assertFails(setDoc(doc(db, 'objectIdentifierBindings', 'bind2'), evilBinding));
     });
   });
+
+  describe('Entity / Fact / Projection target collection rules', () => {
+    describe('markers (Entity)', () => {
+      const validMarker = {
+        markerKey: 'marker1',
+        ownerId: ownerUid,
+        medium: 'nfc',
+        payloadLayer: 'native_carrier_id',
+        payloadKind: 'iso14443_uid',
+        stability: 'stable',
+        _meta: { createdAt: serverTimestamp() }
+      };
+
+      it('owner can create valid marker', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertSucceeds(setDoc(doc(db, 'markers', 'marker1'), validMarker));
+      });
+
+      it('non-owner cannot read owner-scoped marker', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'markers', 'marker1'), validMarker);
+        });
+        const db = testEnv.authenticatedContext(nonOwnerUid).firestore();
+        await assertFails(getDoc(doc(db, 'markers', 'marker1')));
+      });
+
+      it('anonymous cannot create marker', async () => {
+        const db = testEnv.unauthenticatedContext().firestore();
+        await assertFails(setDoc(doc(db, 'markers', 'marker2'), validMarker));
+      });
+
+      it('invalid markerKey or mismatched markerKey is rejected', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'markers', 'marker_mismatch'), validMarker));
+      });
+
+      it('unknown extra fields are rejected', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        const invalidMarker = { ...validMarker, badField: true };
+        await assertFails(setDoc(doc(db, 'markers', 'marker1'), invalidMarker));
+      });
+    });
+
+    describe('places (Entity)', () => {
+      const validPlace = {
+        placeId: 'place1',
+        ownerId: ownerUid,
+        label: 'Main Office'
+      };
+
+      it('owner can create valid place', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertSucceeds(setDoc(doc(db, 'places', 'place1'), validPlace));
+      });
+
+      it('non-owner cannot read owner-scoped place', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'places', 'place1'), validPlace);
+        });
+        const db = testEnv.authenticatedContext(nonOwnerUid).firestore();
+        await assertFails(getDoc(doc(db, 'places', 'place1')));
+      });
+
+      it('anonymous cannot create place', async () => {
+        const db = testEnv.unauthenticatedContext().firestore();
+        await assertFails(setDoc(doc(db, 'places', 'place2'), validPlace));
+      });
+    });
+
+    describe('associations (Fact)', () => {
+      const validAssoc = {
+        associationId: 'assoc1',
+        associationType: 'object_has_marker',
+        participants: [{role: 'object', ref: {id: 'obj1', entityType: 'object'}}, {role: 'marker', ref: {id: 'marker1', entityType: 'marker'}}],
+        participantKeys: ['object:obj1', 'marker:marker1'],
+        userIds: [ownerUid],
+        legacy: { ownerId: ownerUid },
+        time: { validFrom: serverTimestamp() },
+        status: 'active'
+      };
+
+      it('user can create object_has_marker association when legacy.ownerId == uid', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertSucceeds(setDoc(doc(db, 'associations', 'assoc1'), validAssoc));
+      });
+
+      it('user can read association when legacy.ownerId == uid', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'associations', 'assoc1'), validAssoc);
+        });
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertSucceeds(getDoc(doc(db, 'associations', 'assoc1')));
+      });
+
+      it('different user cannot read it', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'associations', 'assoc1'), validAssoc);
+        });
+        const db = testEnv.authenticatedContext(nonOwnerUid).firestore();
+        await assertFails(getDoc(doc(db, 'associations', 'assoc1')));
+      });
+
+      it('normal user cannot update association', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'associations', 'assoc1'), validAssoc);
+        });
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(updateDoc(doc(db, 'associations', 'assoc1'), { status: 'detached' }));
+      });
+    });
+
+    describe('observations (Fact)', () => {
+      const validObs = {
+        observationId: 'obs1',
+        observationType: 'marker_observed',
+        participants: [{role: 'marker', ref: {id: 'marker1', entityType: 'marker'}}],
+        participantKeys: ['marker:marker1'],
+        userIds: [ownerUid],
+        time: { observedAt: serverTimestamp() }
+      };
+
+      it('user can create observation when userIds contains uid', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertSucceeds(setDoc(doc(db, 'observations', 'obs1'), validObs));
+      });
+
+      it('different user cannot read it', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'observations', 'obs1'), validObs);
+        });
+        const db = testEnv.authenticatedContext(nonOwnerUid).firestore();
+        await assertFails(getDoc(doc(db, 'observations', 'obs1')));
+      });
+
+      it('normal user cannot update it', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'observations', 'obs1'), validObs);
+        });
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(updateDoc(doc(db, 'observations', 'obs1'), { note: 'update' }));
+      });
+    });
+
+    describe('measurements (Fact)', () => {
+      const validMeas = {
+        measurementId: 'meas1',
+        measurementType: 'location',
+        participants: [{role: 'object', ref: {id: 'obj1', entityType: 'object'}}],
+        participantKeys: ['object:obj1'],
+        userIds: [ownerUid],
+        time: { measuredAt: serverTimestamp() }
+      };
+
+      it('user can create measurement when userIds contains uid or legacy.ownerId == uid', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertSucceeds(setDoc(doc(db, 'measurements', 'meas1'), validMeas));
+      });
+
+      it('different user cannot read it', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'measurements', 'meas1'), validMeas);
+        });
+        const db = testEnv.authenticatedContext(nonOwnerUid).firestore();
+        await assertFails(getDoc(doc(db, 'measurements', 'meas1')));
+      });
+
+      it('normal user cannot update it', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'measurements', 'meas1'), validMeas);
+        });
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(updateDoc(doc(db, 'measurements', 'meas1'), { note: 'update' }));
+      });
+    });
+
+    describe('events (Fact)', () => {
+      const validEvent = {
+        eventId: 'evt1',
+        eventType: 'object_created',
+        participants: [{role: 'object', ref: {id: 'obj1', entityType: 'object'}}],
+        participantKeys: ['object:obj1'],
+        userIds: [ownerUid],
+        time: { occurredAt: serverTimestamp() }
+      };
+
+      it('user can create event when userIds contains uid or legacy.ownerId == uid', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertSucceeds(setDoc(doc(db, 'events', 'evt1'), validEvent));
+      });
+
+      it('different user cannot read it', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'events', 'evt1'), validEvent);
+        });
+        const db = testEnv.authenticatedContext(nonOwnerUid).firestore();
+        await assertFails(getDoc(doc(db, 'events', 'evt1')));
+      });
+
+      it('normal user cannot update it', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'events', 'evt1'), validEvent);
+        });
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(updateDoc(doc(db, 'events', 'evt1'), { note: 'update' }));
+      });
+    });
+
+    describe('summaries (Projection)', () => {
+      const validSummary = {
+        objectId: 'obj1',
+        asOf: serverTimestamp()
+      };
+
+      it('normal user cannot create/update summary', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'objectSummaries', 'obj1'), validSummary));
+      });
+
+      it('admin can create/update summary', async () => {
+        await setupAdmin();
+        const adminDb = testEnv.authenticatedContext(adminUid).firestore();
+        await assertSucceeds(setDoc(doc(adminDb, 'objectSummaries', 'obj1'), validSummary));
+        await assertSucceeds(updateDoc(doc(adminDb, 'objectSummaries', 'obj1'), { lastMeasuredAt: serverTimestamp() }));
+      });
+
+      it('normal user can read summary if they own the parent entity', async () => {
+        await setupAdmin();
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const db = context.firestore();
+          // create parent entity
+          await setDoc(doc(db, 'objects', 'obj1'), {
+            objectId: 'obj1',
+            ownerId: ownerUid,
+            name: 'Test Object',
+            status: 'active',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+          // create summary
+          await setDoc(doc(db, 'objectSummaries', 'obj1'), validSummary);
+        });
+
+        const ownerDb = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertSucceeds(getDoc(doc(ownerDb, 'objectSummaries', 'obj1')));
+
+        const nonOwnerDb = testEnv.authenticatedContext(nonOwnerUid).firestore();
+        await assertFails(getDoc(doc(nonOwnerDb, 'objectSummaries', 'obj1')));
+      });
+    });
+  });
 });

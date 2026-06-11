@@ -197,19 +197,4 @@ Data validation ideas:
 
 ## 13. Recommended Next PR
 
-Recommended next PR:
-Prepare Firestore rules, indexes, and blueprint entries for target Entity / Fact / Projection collections without changing runtime reads or writes.
-
-Suggested files:
-- `firestore.rules`
-- `firebase-blueprint.json`
-- Firestore rules tests, if emulator setup is available
-- documentation notes for required indexes, if needed
-
-Constraints:
-- No Scanner/CaptureForm runtime changes.
-- No dual-write behavior yet.
-- No backfill scripts.
-- No production read/write migration.
-
-(Note: Explanatory documentation refresh can proceed in parallel and does not change runtime behavior).
+After rules/index/blueprint preparation is merged and validated, the next runtime PR may add controlled Scanner observation dual-write behind an explicit migration phase gate. Scanner reads must remain on legacy identifiers until the read-switching phase.
