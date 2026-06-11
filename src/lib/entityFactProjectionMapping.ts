@@ -19,19 +19,19 @@ import { buildFactIndexFields } from './factParticipants';
  * Maps legacy IdentifierRecord to MarkerDoc.
  * Domain time (createdAt, updatedAt, firstObservedAt, etc.) is EXCLUDED from top-level properties.
  */
-export function legacyIdentifierToMarkerDoc(identifier: IdentifierRecord): MarkerDoc & { payload?: any } {
+export function legacyIdentifierToMarkerDoc(identifier: IdentifierRecord): MarkerDoc {
   const legacyData: Record<string, unknown> = {
     sourceCollection: 'identifiers',
+    legacyObjectId: identifier.objectId,
     legacyIdentifierKey: identifier.identifierKey,
     legacyKind: identifier.kind,
     legacyScheme: identifier.scheme,
     legacyCanonicalValue: identifier.canonicalValue,
+    rawValue: identifier.rawValue,
+    rawPayload: identifier.rawPayload,
     identityModelVersion: identifier.identityModelVersion,
     identitySchemaVersion: identifier.identitySchemaVersion,
     canonicalizationVersion: identifier.canonicalizationVersion,
-    rawValue: identifier.rawValue,
-    rawPayload: identifier.rawPayload,
-    legacyObjectId: identifier.objectId,
     discoveryState: identifier.discoveryState,
     schemaVersion: identifier.schemaVersion,
 
@@ -50,14 +50,48 @@ export function legacyIdentifierToMarkerDoc(identifier: IdentifierRecord): Marke
 
   Object.keys(legacyData).forEach(k => legacyData[k] === undefined && delete legacyData[k]);
 
-  const result: MarkerDoc & { payload?: any } = {
+  let medium: import('../types/entityFactProjection').MarkerMedium = 'unknown';
+  let payloadLayer: import('../types/entityFactProjection').MarkerPayloadLayer = 'encoded_payload';
+  let mediumSubtype: string | undefined;
+
+  if (identifier.kind === 'qr') {
+    medium = 'visual_code';
+    mediumSubtype = 'qr';
+    payloadLayer = 'encoded_payload';
+  } else if (identifier.kind === 'barcode') {
+    medium = 'visual_code';
+    mediumSubtype = 'barcode';
+    payloadLayer = 'encoded_payload';
+  } else if (identifier.kind === 'nfc') {
+    medium = 'nfc';
+    if (identifier.scheme === 'nfc-uid' || identifier.scheme === 'felica-idm') {
+      payloadLayer = 'native_carrier_id';
+    } else {
+      payloadLayer = 'encoded_payload';
+    }
+  } else if (identifier.kind === 'manual') {
+    medium = 'manual';
+    payloadLayer = 'manual_input';
+  } else if (identifier.kind === 'bluetooth') {
+    medium = 'bluetooth';
+    payloadLayer = 'radio_signal';
+  }
+
+  let nativeId: import('../types/entityFactProjection').NativeMarkerId | undefined;
+  if (identifier.kind === 'nfc' && identifier.scheme === 'nfc-uid') {
+    nativeId = { kind: 'unknown', normalizedValue: identifier.canonicalValue };
+  } else if (identifier.kind === 'nfc' && identifier.scheme === 'felica-idm') {
+    nativeId = { kind: 'felica_idm', normalizedValue: identifier.canonicalValue };
+  }
+
+  const result: MarkerDoc = {
     markerKey: identifier.identifierKey,
     ownerId: identifier.ownerId,
-    markerType: identifier.kind === 'bluetooth' ? 'ble' : identifier.kind,
-    payload: {
-      payloadKind: identifier.scheme,
-      canonical: identifier.canonicalValue,
-    },
+    medium,
+    payloadLayer,
+    payloadKind: identifier.scheme,
+    canonicalPayload: identifier.canonicalValue,
+    stability: 'unknown',
     _meta: {
       createdAt: identifier.createdAt,
       updatedAt: identifier.updatedAt,
@@ -65,6 +99,9 @@ export function legacyIdentifierToMarkerDoc(identifier: IdentifierRecord): Marke
     },
     legacy: Object.keys(legacyData).length > 0 ? legacyData : undefined
   };
+
+  if (mediumSubtype) result.mediumSubtype = mediumSubtype;
+  if (nativeId) result.nativeId = nativeId;
 
   if (result._meta?.schemaVersion === undefined) delete result._meta.schemaVersion;
 
@@ -74,28 +111,31 @@ export function legacyIdentifierToMarkerDoc(identifier: IdentifierRecord): Marke
 /**
  * Maps legacy ObjectIdentifierBindingRecord to AssociationDoc.
  */
-export function legacyIdentifierBindingToAssociationDoc(binding: ObjectIdentifierBindingRecord): AssociationDoc & { time: { startedAt?: any } } {
-  const indexFields = buildFactIndexFields([
+export function legacyIdentifierBindingToAssociationDoc(binding: ObjectIdentifierBindingRecord): AssociationDoc {
+  const participants: import('../types/entityFactProjection').Participant[] = [
     { role: 'object', ref: { entityType: 'object', id: binding.objectId } },
     { role: 'marker', ref: { entityType: 'marker', id: binding.identifierKey } }
-  ]);
+  ];
+  const indexFields = buildFactIndexFields(participants);
 
   const legacyData: Record<string, unknown> = {
     sourceCollection: 'objectIdentifierBindings',
     attachedBy: binding.attachedBy,
     detachedBy: binding.detachedBy,
     ownerId: binding.ownerId,
+    attachedAt: binding.attachedAt,
+    detachedAt: binding.detachedAt,
   };
   Object.keys(legacyData).forEach(k => legacyData[k] === undefined && delete legacyData[k]);
 
-  const result: any = {
+  const result: AssociationDoc = {
+    participants,
     ...indexFields,
     associationId: binding.bindingId,
     associationType: 'object_has_marker',
     time: {
-      startedAt: binding.attachedAt,
-      attachedAt: binding.attachedAt,
-      detachedAt: binding.detachedAt,
+      validFrom: binding.attachedAt,
+      validUntil: binding.detachedAt,
     },
     status: binding.status === 'replaced' ? 'superseded' : binding.status,
     note: binding.note,
@@ -107,9 +147,9 @@ export function legacyIdentifierBindingToAssociationDoc(binding: ObjectIdentifie
     legacy: Object.keys(legacyData).length > 0 ? legacyData : undefined
   };
 
-  if (result.time.detachedAt === undefined) delete result.time.detachedAt;
+  if (result.time.validUntil === undefined) delete result.time.validUntil;
   if (result.note === undefined) delete result.note;
-  if (result._meta.createdBy === undefined) delete result._meta.createdBy;
+  if (result._meta?.createdBy === undefined) delete result._meta.createdBy;
 
   return result;
 }
@@ -152,6 +192,7 @@ export function legacyIdentifierObservationToObservationDoc(observation: Identif
   Object.keys(legacyData).forEach(k => legacyData[k] === undefined && delete legacyData[k]);
 
   const result: any = {
+    participants,
     ...indexFields,
     observationId: observation.observationId,
     observationType: 'marker_observed',
@@ -228,6 +269,7 @@ export function legacyObjectEventToEventDoc(event: ObjectEventRecord): EventDoc 
   Object.keys(legacyData).forEach(k => legacyData[k] === undefined && delete legacyData[k]);
 
   return {
+    participants,
     ...indexFields,
     eventId: event.eventId,
     eventType: newEventType,
