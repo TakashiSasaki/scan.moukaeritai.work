@@ -349,6 +349,12 @@ The application has transitioned from a simple `items` collection to a normalize
   - Always prefer resolving an identifier via the `identifiers` collection rather than blindly treating a scanned payload as an `objectId`.
 
 
+### Entity / Fact / Projection Model Polish (2026-06-XX)
+- Added `FactProvenanceSource` union to restrict `FactProvenance.source` values (`user_confirmed`, `user_report`, `marker_observation`, `location_measurement`, `trusted_reader`, `system_inference`, `admin_import`, `migration`, `import`, `legacy_observation`, `legacy_event`, `legacy_mapping`).
+- Added new `FactProvenance` metadata fields (`actorUid`, `sourceFactIds`).
+- `ownerId` policy in Entity docs (Object, Marker, Place): In the conceptual model, `ownerId` is not part of entity identity. However, in the current implementation, it remains required by Firestore rules and owner-scoped runtime paths. Migration direction is to keep `ownerId` for compatibility now and not include it in semantic identity.
+- NFC `nativeId` conservative mapping policy: `felica-idm` maps to `nativeId.kind = 'felica_idm'`. `nfc-uid` remains `nativeId.kind = 'unknown'` unless the legacy scheme clearly distinguishes ISO14443/ISO15693. Raw scheme/canonical values are preserved under legacy mapping.
+
 ### Phase 7D.8 database schema / runtime update (2026-05-30)
 - Additive v2 fields (`rawPayload`, `identityModelVersion`, `identitySchemaVersion`, `canonicalizationVersion`) were added to `IdentifierRecord` runtime and blueprint.
 - `ownerId` remains required for now. `rawValue` remains for compatibility.
