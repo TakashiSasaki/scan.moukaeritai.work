@@ -354,6 +354,11 @@ The application has transitioned from a simple `items` collection to a normalize
 
 
 ### Entity / Fact / Projection Model Polish (2026-06-11)
+
+- Target collection rules/indexes/blueprint entries may be prepared before runtime dual-write.
+- Rules must remain conservative and owner/participant scoped.
+- Projection summaries are derived read models; do not treat them as client-owned source-of-truth documents.
+- Runtime components must not call target write-builder helpers until the migration phase explicitly allows dual-write.
 - Phase 1 write-builder helpers live in `src/lib/entityFactProjectionWrites.ts`.
 - These helpers are pure payload builders and must not perform Firestore writes directly.
 - Runtime components must not call the write-builder helpers for dual-write behavior until the migration plan phase explicitly allows it.

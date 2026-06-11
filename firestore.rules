@@ -327,5 +327,174 @@ service cloud.firestore {
       allow read: if isAdmin() || request.auth.uid == adminId;
       allow write: if isAdmin() && isValidAdmin(incoming());
     }
+
+
+    // =========================================================================
+    // TARGET ENTITY / FACT / PROJECTION COLLECTIONS
+    // =========================================================================
+
+    // --- MARKERS (Target Entity) ---
+    match /markers/{markerKey} {
+      allow read: if isAdmin() || isOwner(existing().ownerId);
+      allow create: if isSignedIn()
+        && incoming().markerKey == markerKey
+        && incoming().ownerId == request.auth.uid
+        && incoming().medium in ['visual_code', 'nfc', 'rfid', 'bluetooth', 'manual', 'visual_recognition', 'unknown']
+        && (!('mediumSubtype' in incoming()) || incoming().mediumSubtype is string)
+        && incoming().payloadLayer in ['encoded_payload', 'native_carrier_id', 'radio_signal', 'connected_payload', 'derived_fingerprint', 'manual_input']
+        && incoming().payloadKind is string
+        && (!('canonicalPayload' in incoming()) || incoming().canonicalPayload is string)
+        && (!('nativeId' in incoming()) || (incoming().nativeId is map && 'kind' in incoming().nativeId && 'normalizedValue' in incoming().nativeId))
+        && incoming().stability in ['stable', 'semi_stable', 'rotating', 'session', 'derived', 'unknown']
+        && (!('privacy' in incoming()) || incoming().privacy is map)
+        && (!('_meta' in incoming()) || incoming()._meta is map)
+        && (!('legacy' in incoming()) || incoming().legacy is map)
+        && incoming().keys().hasOnly(['markerKey', 'ownerId', 'medium', 'mediumSubtype', 'payloadLayer', 'payloadKind', 'canonicalPayload', 'nativeId', 'stability', 'privacy', '_meta', 'legacy']);
+      allow update: if isSignedIn()
+        && isOwner(existing().ownerId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().markerKey == existing().markerKey
+        && incoming().medium == existing().medium
+        && incoming().payloadLayer == existing().payloadLayer
+        && incoming().payloadKind == existing().payloadKind; // Immutable identity fields
+      allow delete: if isAdmin() || isOwner(existing().ownerId);
+    }
+
+    // --- PLACES (Target Entity) ---
+    match /places/{placeId} {
+      allow read: if isAdmin() || isOwner(existing().ownerId);
+      allow create: if isSignedIn()
+        && incoming().placeId == placeId
+        && incoming().ownerId == request.auth.uid
+        && (!('label' in incoming()) || incoming().label is string)
+        && (!('_meta' in incoming()) || incoming()._meta is map)
+        && (!('legacy' in incoming()) || incoming().legacy is map);
+      allow update: if isSignedIn()
+        && isOwner(existing().ownerId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().placeId == existing().placeId;
+      allow delete: if isAdmin() || isOwner(existing().ownerId);
+    }
+
+    // --- ASSOCIATIONS (Target Fact) ---
+    match /associations/{associationId} {
+      allow read: if isAdmin() || (isSignedIn() && (request.auth.uid in existing().userIds || existing().get(['legacy', 'ownerId'], '') == request.auth.uid));
+      allow create: if isSignedIn()
+        && incoming().associationId == associationId
+        && (request.auth.uid in incoming().userIds || incoming().get(['legacy', 'ownerId'], '') == request.auth.uid)
+        && incoming().associationType is string
+        && incoming().participants is list
+        && incoming().participantKeys is list
+        && (!('objectIds' in incoming()) || incoming().objectIds is list)
+        && (!('markerKeys' in incoming()) || incoming().markerKeys is list)
+        && (!('placeIds' in incoming()) || incoming().placeIds is list)
+        && (!('readerIds' in incoming()) || incoming().readerIds is list)
+        && (!('deviceIds' in incoming()) || incoming().deviceIds is list)
+        && (!('userIds' in incoming()) || incoming().userIds is list)
+        && incoming().time is map
+        && (!('status' in incoming()) || incoming().status in ['active', 'detached', 'superseded', 'replaced'])
+        && (!('provenance' in incoming()) || incoming().provenance is map)
+        && (!('note' in incoming()) || incoming().note is string)
+        && (!('_meta' in incoming()) || incoming()._meta is map)
+        && (!('legacy' in incoming()) || incoming().legacy is map);
+      allow update: if isAdmin(); // Append-only fact, client update denied
+      allow delete: if isAdmin();
+    }
+
+    // --- OBSERVATIONS (Target Fact) ---
+    match /observations/{observationId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid in existing().userIds);
+      allow create: if isSignedIn()
+        && incoming().observationId == observationId
+        && request.auth.uid in incoming().userIds
+        && incoming().observationType is string
+        && incoming().participants is list
+        && incoming().participantKeys is list
+        && (!('objectIds' in incoming()) || incoming().objectIds is list)
+        && (!('markerKeys' in incoming()) || incoming().markerKeys is list)
+        && (!('placeIds' in incoming()) || incoming().placeIds is list)
+        && (!('readerIds' in incoming()) || incoming().readerIds is list)
+        && (!('deviceIds' in incoming()) || incoming().deviceIds is list)
+        && (!('userIds' in incoming()) || incoming().userIds is list)
+        && incoming().time is map
+        && 'observedAt' in incoming().time
+        && (!('source' in incoming()) || incoming().source is string)
+        && (!('provenance' in incoming()) || incoming().provenance is map)
+        && (!('note' in incoming()) || incoming().note is string)
+        && (!('payload' in incoming()) || incoming().payload is map)
+        && (!('_meta' in incoming()) || incoming()._meta is map)
+        && (!('legacy' in incoming()) || incoming().legacy is map);
+      allow update: if isAdmin(); // Append-only fact, client update denied
+      allow delete: if isAdmin();
+    }
+
+    // --- MEASUREMENTS (Target Fact) ---
+    match /measurements/{measurementId} {
+      allow read: if isAdmin() || (isSignedIn() && (request.auth.uid in existing().userIds || existing().get(['legacy', 'ownerId'], '') == request.auth.uid));
+      allow create: if isSignedIn()
+        && incoming().measurementId == measurementId
+        && (request.auth.uid in incoming().userIds || incoming().get(['legacy', 'ownerId'], '') == request.auth.uid)
+        && incoming().measurementType is string
+        && incoming().participants is list
+        && incoming().participantKeys is list
+        && (!('objectIds' in incoming()) || incoming().objectIds is list)
+        && (!('markerKeys' in incoming()) || incoming().markerKeys is list)
+        && (!('placeIds' in incoming()) || incoming().placeIds is list)
+        && (!('readerIds' in incoming()) || incoming().readerIds is list)
+        && (!('deviceIds' in incoming()) || incoming().deviceIds is list)
+        && (!('userIds' in incoming()) || incoming().userIds is list)
+        && incoming().time is map
+        && 'measuredAt' in incoming().time
+        && (!('position' in incoming()) || incoming().position is map)
+        && (!('place' in incoming()) || incoming().place is map)
+        && (!('signal' in incoming()) || incoming().signal is map)
+        && (!('provenance' in incoming()) || incoming().provenance is map)
+        && (!('note' in incoming()) || incoming().note is string)
+        && (!('_meta' in incoming()) || incoming()._meta is map)
+        && (!('legacy' in incoming()) || incoming().legacy is map);
+      allow update: if isAdmin(); // Append-only fact, client update denied
+      allow delete: if isAdmin();
+    }
+
+    // --- EVENTS (Target Fact) ---
+    match /events/{eventId} {
+      allow read: if isAdmin() || (isSignedIn() && (request.auth.uid in existing().userIds || existing().get(['legacy', 'ownerId'], '') == request.auth.uid));
+      allow create: if isSignedIn()
+        && incoming().eventId == eventId
+        && (request.auth.uid in incoming().userIds || incoming().get(['legacy', 'ownerId'], '') == request.auth.uid)
+        && incoming().eventType is string
+        && incoming().participants is list
+        && incoming().participantKeys is list
+        && (!('objectIds' in incoming()) || incoming().objectIds is list)
+        && (!('markerKeys' in incoming()) || incoming().markerKeys is list)
+        && (!('placeIds' in incoming()) || incoming().placeIds is list)
+        && (!('readerIds' in incoming()) || incoming().readerIds is list)
+        && (!('deviceIds' in incoming()) || incoming().deviceIds is list)
+        && (!('userIds' in incoming()) || incoming().userIds is list)
+        && incoming().time is map
+        && 'occurredAt' in incoming().time
+        && (!('provenance' in incoming()) || incoming().provenance is map)
+        && (!('note' in incoming()) || incoming().note is string)
+        && (!('_meta' in incoming()) || incoming()._meta is map)
+        && (!('legacy' in incoming()) || incoming().legacy is map);
+      allow update: if isAdmin(); // Append-only fact, client update denied
+      allow delete: if isAdmin();
+    }
+
+    // --- PROJECTIONS (Derived Summaries) ---
+    match /objectSummaries/{objectId} {
+      allow read: if isAdmin() || isOwner(existing().get(['legacy', 'ownerId'], ''));
+      allow create, update, delete: if isAdmin(); // Summaries are projections, not ordinary client-owned records
+    }
+
+    match /markerSummaries/{markerKey} {
+      allow read: if isAdmin() || isOwner(existing().get(['legacy', 'ownerId'], ''));
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /placeSummaries/{placeId} {
+      allow read: if isAdmin() || isOwner(existing().get(['legacy', 'ownerId'], ''));
+      allow create, update, delete: if isAdmin();
+    }
   }
 }

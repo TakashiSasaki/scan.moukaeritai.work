@@ -661,6 +661,448 @@
           "description": "UID of the user who granted this admin right"
         }
       }
+    },
+    "MarkerDoc": {
+      "title": "MarkerDoc (Target Migration Schema)",
+      "description": "Target conceptual marker identity.",
+      "type": "object",
+      "properties": {
+        "markerKey": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "medium": {
+          "type": "string"
+        },
+        "mediumSubtype": {
+          "type": "string"
+        },
+        "payloadLayer": {
+          "type": "string"
+        },
+        "payloadKind": {
+          "type": "string"
+        },
+        "canonicalPayload": {
+          "type": "string"
+        },
+        "nativeId": {
+          "type": "object"
+        },
+        "stability": {
+          "type": "string"
+        },
+        "privacy": {
+          "type": "object"
+        },
+        "_meta": {
+          "type": "object"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "markerKey",
+        "medium",
+        "payloadLayer",
+        "payloadKind",
+        "stability"
+      ]
+    },
+    "PlaceDoc": {
+      "title": "PlaceDoc (Target Migration Schema)",
+      "description": "Target conceptual place identity.",
+      "type": "object",
+      "properties": {
+        "placeId": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "_meta": {
+          "type": "object"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "placeId",
+        "ownerId"
+      ]
+    },
+    "AssociationDoc": {
+      "title": "AssociationDoc (Target Migration Schema)",
+      "description": "Target conceptual relationship between entities.",
+      "type": "object",
+      "properties": {
+        "associationId": {
+          "type": "string"
+        },
+        "associationType": {
+          "type": "string"
+        },
+        "participants": {
+          "type": "array"
+        },
+        "participantKeys": {
+          "type": "array"
+        },
+        "objectIds": {
+          "type": "array"
+        },
+        "markerKeys": {
+          "type": "array"
+        },
+        "placeIds": {
+          "type": "array"
+        },
+        "readerIds": {
+          "type": "array"
+        },
+        "deviceIds": {
+          "type": "array"
+        },
+        "userIds": {
+          "type": "array"
+        },
+        "time": {
+          "type": "object"
+        },
+        "status": {
+          "type": "string"
+        },
+        "provenance": {
+          "type": "object"
+        },
+        "note": {
+          "type": "string"
+        },
+        "_meta": {
+          "type": "object"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "associationId",
+        "associationType",
+        "participants",
+        "participantKeys",
+        "time"
+      ]
+    },
+    "ObservationDoc": {
+      "title": "ObservationDoc (Target Migration Schema)",
+      "description": "Target conceptual observation event.",
+      "type": "object",
+      "properties": {
+        "observationId": {
+          "type": "string"
+        },
+        "observationType": {
+          "type": "string"
+        },
+        "participants": {
+          "type": "array"
+        },
+        "participantKeys": {
+          "type": "array"
+        },
+        "objectIds": {
+          "type": "array"
+        },
+        "markerKeys": {
+          "type": "array"
+        },
+        "placeIds": {
+          "type": "array"
+        },
+        "readerIds": {
+          "type": "array"
+        },
+        "deviceIds": {
+          "type": "array"
+        },
+        "userIds": {
+          "type": "array"
+        },
+        "time": {
+          "type": "object"
+        },
+        "source": {
+          "type": "string"
+        },
+        "provenance": {
+          "type": "object"
+        },
+        "note": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "object"
+        },
+        "_meta": {
+          "type": "object"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "observationId",
+        "observationType",
+        "participants",
+        "participantKeys",
+        "time"
+      ]
+    },
+    "MeasurementDoc": {
+      "title": "MeasurementDoc (Target Migration Schema)",
+      "description": "Target conceptual telemetry or measurement event.",
+      "type": "object",
+      "properties": {
+        "measurementId": {
+          "type": "string"
+        },
+        "measurementType": {
+          "type": "string"
+        },
+        "participants": {
+          "type": "array"
+        },
+        "participantKeys": {
+          "type": "array"
+        },
+        "objectIds": {
+          "type": "array"
+        },
+        "markerKeys": {
+          "type": "array"
+        },
+        "placeIds": {
+          "type": "array"
+        },
+        "readerIds": {
+          "type": "array"
+        },
+        "deviceIds": {
+          "type": "array"
+        },
+        "userIds": {
+          "type": "array"
+        },
+        "time": {
+          "type": "object"
+        },
+        "position": {
+          "type": "object"
+        },
+        "place": {
+          "type": "object"
+        },
+        "signal": {
+          "type": "object"
+        },
+        "provenance": {
+          "type": "object"
+        },
+        "note": {
+          "type": "string"
+        },
+        "_meta": {
+          "type": "object"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "measurementId",
+        "measurementType",
+        "participants",
+        "participantKeys",
+        "time"
+      ]
+    },
+    "EventDoc": {
+      "title": "EventDoc (Target Migration Schema)",
+      "description": "Target conceptual operational event log.",
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "eventType": {
+          "type": "string"
+        },
+        "participants": {
+          "type": "array"
+        },
+        "participantKeys": {
+          "type": "array"
+        },
+        "objectIds": {
+          "type": "array"
+        },
+        "markerKeys": {
+          "type": "array"
+        },
+        "placeIds": {
+          "type": "array"
+        },
+        "readerIds": {
+          "type": "array"
+        },
+        "deviceIds": {
+          "type": "array"
+        },
+        "userIds": {
+          "type": "array"
+        },
+        "time": {
+          "type": "object"
+        },
+        "provenance": {
+          "type": "object"
+        },
+        "note": {
+          "type": "string"
+        },
+        "_meta": {
+          "type": "object"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "eventId",
+        "eventType",
+        "participants",
+        "participantKeys",
+        "time"
+      ]
+    },
+    "ObjectSummaryDoc": {
+      "title": "ObjectSummaryDoc (Target Migration Schema)",
+      "description": "Target derived projection for object state.",
+      "type": "object",
+      "properties": {
+        "objectId": {
+          "type": "string"
+        },
+        "currentPlaceId": {
+          "type": "string"
+        },
+        "currentPosition": {
+          "type": "object"
+        },
+        "activeMarkerKeys": {
+          "type": "array"
+        },
+        "lastObservedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastMeasuredAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "derivedFromFactIds": {
+          "type": "array"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "objectId",
+        "asOf"
+      ]
+    },
+    "MarkerSummaryDoc": {
+      "title": "MarkerSummaryDoc (Target Migration Schema)",
+      "description": "Target derived projection for marker state.",
+      "type": "object",
+      "properties": {
+        "markerKey": {
+          "type": "string"
+        },
+        "relatedObjectIds": {
+          "type": "array"
+        },
+        "lastObservedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastObservedPlaceId": {
+          "type": "string"
+        },
+        "recentObservationCount": {
+          "type": "number"
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "derivedFromFactIds": {
+          "type": "array"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "markerKey",
+        "asOf"
+      ]
+    },
+    "PlaceSummaryDoc": {
+      "title": "PlaceSummaryDoc (Target Migration Schema)",
+      "description": "Target derived projection for place state.",
+      "type": "object",
+      "properties": {
+        "placeId": {
+          "type": "string"
+        },
+        "currentObjectIds": {
+          "type": "array"
+        },
+        "currentMarkerKeys": {
+          "type": "array"
+        },
+        "lastActivityAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "derivedFromFactIds": {
+          "type": "array"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "placeId",
+        "asOf"
+      ]
     }
   },
   "firestore": {
@@ -699,6 +1141,42 @@
     "/admins/{adminId}": {
       "schema": "Admin",
       "description": "List of administrative users to enable RBAC."
+    },
+    "/markers/{markerKey}": {
+      "schema": "MarkerDoc",
+      "description": "Target collection for physical scannable markers."
+    },
+    "/places/{placeId}": {
+      "schema": "PlaceDoc",
+      "description": "Target collection for physical locations/zones."
+    },
+    "/associations/{associationId}": {
+      "schema": "AssociationDoc",
+      "description": "Target collection for bindings between entities (e.g. object to marker)."
+    },
+    "/observations/{observationId}": {
+      "schema": "ObservationDoc",
+      "description": "Target collection for scans or encounters."
+    },
+    "/measurements/{measurementId}": {
+      "schema": "MeasurementDoc",
+      "description": "Target collection for telemetry and position info."
+    },
+    "/events/{eventId}": {
+      "schema": "EventDoc",
+      "description": "Target collection for operational audit logs."
+    },
+    "/objectSummaries/{objectId}": {
+      "schema": "ObjectSummaryDoc",
+      "description": "Target projection for derived current object state."
+    },
+    "/markerSummaries/{markerKey}": {
+      "schema": "MarkerSummaryDoc",
+      "description": "Target projection for derived current marker state."
+    },
+    "/placeSummaries/{placeId}": {
+      "schema": "PlaceSummaryDoc",
+      "description": "Target projection for derived current place state."
     }
   }
 }
