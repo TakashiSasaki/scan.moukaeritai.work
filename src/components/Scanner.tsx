@@ -147,6 +147,7 @@ export default function Scanner({ onCancel }: ScannerProps) {
       const identifierKey = buildIdentifierKey(identifierData.kind, identifierData.scheme, identifierData.canonicalValue);
 
       // 2. Lookup in Identifiers Collection
+      // TODO(entity-fact-projection): migrate identifiers lookup to markers/associations once rules and indexes exist.
       const idRef = doc(db, 'identifiers', identifierKey);
       const idSnap = await getDoc(idRef);
 

@@ -86,12 +86,21 @@ To prevent confusion across systems, note the following distinct identifiers use
 - **Firestore Schema Architecture**:
   - `users/{uid}`: Synchronized from Firebase Auth. Stores user profiles.
   - `admins/{uid}`: Handles Role-Based Access Control (RBAC). The presence of a document grants admin privileges.
-  - `objects/{objectId}`: The core inventory object document.
-  - `identifiers/{identifierKey}`: Maps QR/NFC/manual/barcode/Bluetooth identifiers to objects.
-  - `objectIdentifierBindings/{bindingId}`: Canonical active relationship state between objects and identifiers (not a historical log).
-  - `objectImages/{imageId}`: Records image metadata and Storage references.
-  - `objectEvents/{eventId}`: Records append-only operational events (including attachment/detachment history).
-  - `items/{itemId}`: Legacy-only and used as migration input.
+  - **Current implementation collections**:
+    - `objects/{objectId}`: The core inventory object document.
+    - `identifiers/{identifierKey}`: Maps QR/NFC/manual/barcode/Bluetooth identifiers to objects.
+    - `objectIdentifierBindings/{bindingId}`: Canonical active relationship state between objects and identifiers (not a historical log).
+    - `objectImages/{imageId}`: Records image metadata and Storage references.
+    - `objectEvents/{eventId}`: Records append-only operational events (including attachment/detachment history).
+    - `items/{itemId}`: Legacy-only and used as migration input.
+  - **Target Conceptual Model**: The application is moving toward an Entity / Fact / Projection architecture as defined in `docs/architecture/entity-fact-projection-data-model.md`.
+    - Entity collections: `objects`, `markers`, `places`
+    - Fact collections: `associations`, `observations`, `measurements`, `events`
+    - Projection collections: `objectSummaries`, `markerSummaries`, `placeSummaries`
+  - Current mappings:
+    - `identifiers` conceptually maps to `markers`
+    - `objectIdentifierBindings` conceptually maps to `associations`
+    - `identifierObservations` conceptually maps to `observations`
 - **Legacy Identifiers for Backend Resources**: The frontend deployment target uses the current domain name (`scan-moukaeritai-work`), but backend Firebase resources (Firestore Database, Storage Bucket) intentionally retain the legacy identifier `photo-moukaeritai-work`. This is reflected in `firebase-applet-config.json` and must not be altered to match the hosting name.
 - **Cloud Storage Strategy**:
   - Images captured via the application are stored in the designated Firebase Storage bucket (`photo-moukaeritai-work`).
@@ -272,11 +281,11 @@ The application has transitioned from a simple `items` collection to a normalize
     - `objects.identifierSummary` is denormalized and should be recomputed from active identifiers when needed.
     - When adding, repairing, or detaching identifiers (e.g., in `CaptureForm`), the summary should be recomputed from the current Firestore identifier state where practical, not only from potentially stale local component state. Use `loadObjectIdentifiersForSummary()` to fetch the source data, and keep local component state updated after a successful write.
     - `objects.primaryImageUrl` is denormalized and should be kept in sync with the primary `objectImages` record.
-  - **`identifiers`**: Represents a physical tag (QR, NFC) or a logical code (barcode, manual). One object can have zero or more identifiers. One identifier can have at most one active object.
-  - **`objectIdentifierBindings`**: Stores canonical relationship state between objects and identifiers. Active binding records use deterministic IDs formatted as `${objectId}__${identifierKey}__active`. There must be at most one active binding for a given `(objectId, identifierKey)` pair. Repeated attach of the same identifier to the same object should be idempotent. Reassignment to another object must be explicit and must record events. *Note: Client code should not rely on direct missing-document reads (`getDoc()`) for `objectIdentifierBindings` without checking rules, instead use owner-scoped queries.* **Important:** `objectIdentifierBindings` is NOT a historical log table. The existence of an identifier document does not imply the existence of a binding document.
+  - **`identifiers`**: Represents a physical tag (QR, NFC) or a logical code (barcode, manual). Conceptually maps to `markers`. One object can have zero or more identifiers. One identifier can have at most one active object.
+  - **`objectIdentifierBindings`**: Stores canonical relationship state between objects and identifiers. Conceptually maps to `associations`. Active binding records use deterministic IDs formatted as `${objectId}__${identifierKey}__active`. There must be at most one active binding for a given `(objectId, identifierKey)` pair. Repeated attach of the same identifier to the same object should be idempotent. Reassignment to another object must be explicit and must record events. *Note: Client code should not rely on direct missing-document reads (`getDoc()`) for `objectIdentifierBindings` without checking rules, instead use owner-scoped queries.* **Important:** `objectIdentifierBindings` is NOT a historical log table. The existence of an identifier document does not imply the existence of a binding document.
   - **Document ID Conventions**:
     - `objects/{objectId}`: Field `objectId` must equal the document ID.
-    - `identifiers/{identifierKey}`: Field `identifierKey` must equal the document ID.
+    - `identifiers/{identifierKey}`: Field `identifierKey` must equal the document ID. Conceptually maps to `markers`.
     - `objectIdentifierBindings/{bindingId}`: Field `bindingId` must equal the document ID. Canonical active binding IDs are deterministic: `${objectId}__${identifierKey}__active`.
     - `objectEvents/{eventId}`: Field `eventId` must equal the document ID. Normal client-created events may use `uuidv4()`. Migration events may use deterministic IDs such as `${objectId}-migrated`.
     - `objectImages/{imageId}`: Field `imageId` must equal the document ID. Normal uploaded images may use `uuidv4()`. Migration images may use deterministic IDs such as `${objectId}-primary` and `${objectId}-context-${idx}`.

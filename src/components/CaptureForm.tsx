@@ -131,6 +131,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       }
 
       // 2. Load Identifiers
+      // TODO(entity-fact-projection): migrate identifiers lookup to markers/associations once rules and indexes exist.
       const idQ = query(
         collection(db, 'identifiers'),
         where('ownerId', '==', auth.currentUser.uid),
@@ -425,6 +426,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         const batch = writeBatch(db);
 
         if (!isIdempotentAttach) {
+          // TODO(entity-fact-projection): migrate marker writes from identifiers to markers.
           const idRef = doc(db, 'identifiers', idKey);
           if (validationResult.existingId) {
              batch.update(idRef, {
@@ -437,6 +439,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
           }
         }
 
+        // TODO(entity-fact-projection): migrate objectIdentifierBindings to associations.
         const bindRef = doc(db, 'objectIdentifierBindings', bindId);
         const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, objectId, idKey);
         const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindId);
@@ -490,6 +493,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
 
         const summary = computeIdentifierSummary(newIdentifiers);
 
+        // TODO(entity-fact-projection): move currentLocation writes toward measurements and objectSummaries.
         batch.update(doc(db, 'objects', objectId), {
           identifierSummary: summary,
           updatedAt: serverTimestamp()
@@ -537,6 +541,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
 
     setLoading(true);
     try {
+      // TODO(entity-fact-projection): migrate marker writes from identifiers to markers.
       const idRef = doc(db, 'identifiers', idr.identifierKey);
       // We search for the current active binding because previous bindings might have used uuidv4
       const activeBindings = await findActiveBindingsForOwner(db, auth.currentUser.uid, objectId, idr.identifierKey);
@@ -562,6 +567,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       const newIdentifiers = currentIdentifiers.filter(i => i.identifierKey !== idr.identifierKey);
       const summary = computeIdentifierSummary(newIdentifiers);
 
+      // TODO(entity-fact-projection): move currentLocation writes toward measurements and objectSummaries.
       batch.update(doc(db, 'objects', objectId), {
         identifierSummary: summary,
         updatedAt: serverTimestamp()
@@ -691,6 +697,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         // Bind any identifiers that were added while in "New Object" mode
         // including the initialIdentifier (which is already added to activeIdentifiers list above)
         for (const idr of activeIdentifiers) {
+           // TODO(entity-fact-projection): migrate marker writes from identifiers to markers.
            const idRef = doc(db, 'identifiers', idr.identifierKey);
 
            const validation = validationResults.get(idr.identifierKey);
@@ -721,6 +728,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
            }
 
            const bindId = buildActiveBindingId(data.objectId!, idr.identifierKey);
+           // TODO(entity-fact-projection): migrate objectIdentifierBindings to associations.
            const bindRef = doc(db, 'objectIdentifierBindings', bindId);
            const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, data.objectId!, idr.identifierKey);
            const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindId);
