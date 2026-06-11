@@ -11,9 +11,7 @@ export default function DeveloperDataModelDoc() {
           Data Model Hub
         </h2>
         <p className="text-[var(--on-surface-variant)] text-sm leading-relaxed mb-4">
-          The application uses a normalized Firestore data model focused on physical object tracking,
-          immutable operational history, and deterministic identifier resolution. The data model is
-          currently undergoing a phased non-destructive migration towards an Entity / Fact / Projection architecture.
+          The application uses a normalized Firestore data model for physical object tracking, immutable fact history, and derived read projections. The model is undergoing a phased, non-destructive migration toward an Entity / Fact / Projection architecture.
         </p>
       </section>
 
@@ -51,7 +49,7 @@ export default function DeveloperDataModelDoc() {
           The system is continuously evolving from its initial design (the "legacy `items` model") to a robust, distributed scanning framework. Key ongoing transitions include:
         </p>
         <ul className="list-disc list-inside space-y-2 text-sm text-[var(--on-surface-variant)]">
-          <li><strong>Marker migration:</strong> Transitioning identifiers to globally addressable Markers. The earlier ownerless/global identifier work is now treated as part of the broader Marker identity model. The current runtime still uses identifiers, but the long-term conceptual term is Marker.</li>
+          <li><strong>Marker identity:</strong> Transitioning identifiers to globally addressable Markers. The older "ownerless/global identifier" concept is a legacy design thread informing this Marker identity model. The current runtime still uses identifiers, but the long-term conceptual term is Marker.</li>
           <li><strong>Association migration:</strong> Capturing connection state in explicit Association records instead of mutating the main object.</li>
           <li><strong>Observation / Measurement facts:</strong> Normalizing how user sightings, background scans, and telemetry enter the system securely as immutable Facts.</li>
           <li><strong>Projection summaries:</strong> Utilizing derived, easily queryable read models (like ObjectSummary or MarkerSummary) built from underlying Facts and Entities.</li>

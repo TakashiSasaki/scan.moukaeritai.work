@@ -52,7 +52,7 @@ describe('developerDataModelGraph', () => {
       expect(typeof node.description).toBe('string');
 
       expect(node.status).toBeDefined();
-      expect(['current', 'legacy', 'future-only', 'blocked', 'transitional']).toContain(node.status);
+      expect(['current', 'legacy', 'migration target', 'future-only', 'blocked', 'transitional']).toContain(node.status);
     }
   });
 

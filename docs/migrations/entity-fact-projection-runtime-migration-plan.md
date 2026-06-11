@@ -198,11 +198,18 @@ Data validation ideas:
 ## 13. Recommended Next PR
 
 Recommended next PR:
-Add write-builder helpers for new collections without calling them from runtime. (Completed)
+Prepare Firestore rules, indexes, and blueprint entries for target Entity / Fact / Projection collections without changing runtime reads or writes.
 
 Suggested files:
-- `src/lib/entityFactProjectionWrites.ts`
-- `tests/model/entityFactProjectionWrites.test.ts`
+- `firestore.rules`
+- `firebase-blueprint.json`
+- Firestore rules tests, if emulator setup is available
+- documentation notes for required indexes, if needed
 
-No runtime behavior changes.
-No Firestore rules changes.
+Constraints:
+- No Scanner/CaptureForm runtime changes.
+- No dual-write behavior yet.
+- No backfill scripts.
+- No production read/write migration.
+
+(Note: Explanatory documentation refresh can proceed in parallel and does not change runtime behavior).

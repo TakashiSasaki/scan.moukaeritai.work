@@ -352,10 +352,10 @@ The application has transitioned from a simple `items` collection to a normalize
   - Always prefer resolving an identifier via the `identifiers` collection rather than blindly treating a scanned payload as an `objectId`.
 
 
-### Entity / Fact / Projection Model Polish (2026-06-XX)
+### Entity / Fact / Projection Model Polish (2026-06-11)
 - Phase 1 write-builder helpers live in `src/lib/entityFactProjectionWrites.ts`.
 - These helpers are pure payload builders and must not perform Firestore writes directly.
-- Runtime components must not call them for dual-write behavior until the migration plan phase explicitly allows it.
+- Runtime components must not call the write-builder helpers for dual-write behavior until the migration plan phase explicitly allows it.
 
 - Documentation and explanation pages should present Entity / Fact / Projection as the primary model.
 - Legacy runtime names such as identifiers and objectIdentifierBindings should be described as current implementation compatibility layers, not as the long-term conceptual model.

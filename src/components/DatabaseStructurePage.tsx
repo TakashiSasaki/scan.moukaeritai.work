@@ -32,7 +32,7 @@ export default function DatabaseStructurePage() {
           <h2 className="text-xl font-bold text-[var(--on-surface)] mb-4">Architecture Documentation</h2>
 
           <p className="text-sm text-[var(--on-surface-variant)] leading-relaxed mb-6">
-            The canonical data model and architectural documentation is maintained centrally in the repository under <code className="bg-[var(--surface-container-highest)] px-1.5 py-0.5 rounded font-mono text-xs">docs/</code>.
+            The canonical data model and architectural documentation is maintained centrally in the repository under <code className="bg-[var(--surface-container-highest)] px-1.5 py-0.5 rounded font-mono text-xs">docs/</code>. These links are documentation pointers and do not provide a live database browser. No live data is fetched or displayed here.
           </p>
 
           <div className="space-y-3 flex flex-col items-center">
