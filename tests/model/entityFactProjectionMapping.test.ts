@@ -28,9 +28,12 @@ describe('Entity Fact Projection Mapping', () => {
     const result = legacyIdentifierToMarkerDoc(legacy);
 
     expect(result.markerKey).toBe('QR:URL:ABC');
-    expect(result.markerType).toBe('qr');
-    expect(result.payload.payloadKind).toBe('url');
-    expect(result.payload.canonical).toBe('ABC');
+    expect(result.medium).toBe('visual_code');
+    expect(result.mediumSubtype).toBe('qr');
+    expect(result.payloadLayer).toBe('encoded_payload');
+    expect(result.payloadKind).toBe('url');
+    expect(result.canonicalPayload).toBe('ABC');
+    expect(result.stability).toBe('unknown');
     expect(result._meta?.createdAt).toBe(timestamp);
     expect(result._meta?.updatedAt).toBe(timestamp);
   });
@@ -50,7 +53,8 @@ describe('Entity Fact Projection Mapping', () => {
 
     const result = legacyIdentifierToMarkerDoc(legacy);
 
-    expect(result.markerType).toBe('ble');
+    expect(result.medium).toBe('bluetooth');
+    expect(result.payloadLayer).toBe('radio_signal');
   });
 
   it('should map ObjectIdentifierBindingRecord to AssociationDoc', () => {
@@ -76,7 +80,7 @@ describe('Entity Fact Projection Mapping', () => {
     expect(result.participantKeys).toContain('marker:QR:URL:ABC');
     expect(result.objectIds).toContain('OBJECT-1');
     expect(result.markerKeys).toContain('QR:URL:ABC');
-    expect(result.time.startedAt).toBe(timestamp);
+    expect(result.time.validFrom).toBe(timestamp);
     expect(result._meta?.createdAt).toBe(timestamp);
     expect(result._meta?.createdBy).toBe('USER-1');
   });
@@ -147,5 +151,56 @@ describe('Entity Fact Projection Mapping', () => {
     expect(result.source).toBe('qr');
     expect(result.provenance.confidence).toBe('high');
     expect(result._meta?.createdAt).toBe(timestamp);
+  });
+
+  it('should map legacy ObjectEventRecord to EventDoc', async () => {
+    const timestamp = Timestamp.now();
+    const legacy = {
+      eventId: 'EV-1',
+      ownerId: 'USER-1',
+      objectId: 'OBJ-1',
+      type: 'scanned',
+      occurredAt: timestamp,
+      actorUid: 'USER-1'
+    } as any;
+    const m = await import('../../src/lib/entityFactProjectionMapping');
+    const res = m.legacyObjectEventToEventDoc(legacy);
+    expect(res.eventType).toBe('object_scanned');
+  });
+
+  it('should map legacy ObjectRecord to ObjectDoc', async () => {
+    const timestamp = Timestamp.now();
+    const legacy = {
+      objectId: 'OBJ-1',
+      ownerId: 'USER-1',
+      name: 'Thing',
+      description: 'A thing',
+      status: 'active',
+      currentLocation: { latitude: 0, longitude: 0 },
+      createdAt: timestamp,
+      updatedAt: timestamp
+    } as any;
+    const m = await import('../../src/lib/entityFactProjectionMapping');
+    const res = m.legacyObjectToObjectDoc(legacy);
+    expect((res as any).currentLocation).toBeUndefined();
+    expect(res._meta?.createdAt).toBe(timestamp);
+  });
+
+  it('should map legacy ObjectRecord to ObjectSummaryDoc', async () => {
+    const timestamp = Timestamp.now();
+    const legacy = {
+      objectId: 'OBJ-1',
+      ownerId: 'USER-1',
+      name: 'Thing',
+      description: 'A thing',
+      status: 'active',
+      currentLocation: { latitude: 10, longitude: 20 },
+      createdAt: timestamp,
+      updatedAt: timestamp
+    } as any;
+    const m = await import('../../src/lib/entityFactProjectionMapping');
+    const res = m.legacyObjectToObjectSummaryDoc(legacy);
+    expect(res.currentPosition?.latitude).toBe(10);
+    expect(res.currentPosition?.longitude).toBe(20);
   });
 });

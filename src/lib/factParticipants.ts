@@ -43,19 +43,19 @@ export function buildFactIndexFields(participants: Participant[]): FactIndexFiel
       case 'place':
         placeIds.add(id);
         break;
-      default:
-        // Handle specific roles mapping to unknown entity types if necessary,
-        // though typically role and entityType align or are mapped contextually.
-        // For derived index arrays like readerIds, we might infer from role or entityType:
-        if (p.role === 'reader') readerIds.add(id);
-        if (p.role === 'device') deviceIds.add(id);
-        if (p.role === 'user') userIds.add(id);
+      case 'reader':
+        readerIds.add(id);
+        break;
+      case 'device':
+        deviceIds.add(id);
+        break;
+      case 'user':
+        userIds.add(id);
         break;
     }
   }
 
   const result: FactIndexFields = {
-    participants, // The original array order is preserved
     participantKeys,
   };
 

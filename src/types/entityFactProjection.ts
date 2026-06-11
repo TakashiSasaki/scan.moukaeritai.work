@@ -13,8 +13,8 @@ export type JsonValue =
   | JsonValue[];
 
 export type PersistenceMeta = {
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
   schemaVersion?: number;
   createdBy?: string;
 };
@@ -34,7 +34,6 @@ export type Participant = {
 };
 
 export type FactIndexFields = {
-  participants: Participant[];
   participantKeys: string[];
   objectIds?: string[];
   markerKeys?: string[];
@@ -46,7 +45,7 @@ export type FactIndexFields = {
 
 export type FactProvenance = {
   source: string;
-  confidence: 'confirmed' | 'high' | 'medium' | 'low' | 'unverified';
+  confidence: 'confirmed' | 'high' | 'medium' | 'low' | 'unknown';
 };
 
 // -----------------------------------------------------------------------------
@@ -54,8 +53,8 @@ export type FactProvenance = {
 // -----------------------------------------------------------------------------
 
 export type AssociationTime = {
-  attachedAt: Timestamp;
-  detachedAt?: Timestamp;
+  validFrom?: Timestamp;
+  validUntil?: Timestamp;
 };
 
 export type ObservationTime = {
@@ -87,27 +86,70 @@ export type ObjectDoc = {
   legacy?: Record<string, unknown>;
 };
 
+export type MarkerMedium =
+  | 'visual_code'
+  | 'nfc'
+  | 'rfid'
+  | 'bluetooth'
+  | 'manual'
+  | 'visual_recognition'
+  | 'unknown';
+
+export type MarkerPayloadLayer =
+  | 'encoded_payload'
+  | 'native_carrier_id'
+  | 'radio_signal'
+  | 'connected_payload'
+  | 'derived_fingerprint'
+  | 'manual_input';
+
+export type MarkerStability =
+  | 'stable'
+  | 'semi_stable'
+  | 'rotating'
+  | 'session'
+  | 'derived'
+  | 'unknown';
+
+export type NativeMarkerId = {
+  kind:
+    | 'iso14443_uid'
+    | 'felica_idm'
+    | 'iso15693_uid'
+    | 'rfid_epc'
+    | 'rfid_tid'
+    | 'ble_public_address'
+    | 'ble_random_static_address'
+    | 'ble_resolvable_private_address'
+    | 'ble_non_resolvable_private_address'
+    | 'unknown';
+
+  normalizedValue: string;
+};
+
 export type MarkerDoc = {
   markerKey: string;
-  ownerId: string;
-  markerType?: string; // Replaces 'kind' or 'scheme' in the broader sense
-  _meta?: PersistenceMeta;
-  legacy?: {
-    sourceCollection?: string;
-    legacyIdentifierKey?: string;
-    legacyKind?: string;
-    legacyScheme?: string;
-    legacyCanonicalValue?: string;
-    identityModelVersion?: number;
-    identitySchemaVersion?: number;
-    canonicalizationVersion?: number;
-    rawValue?: string;
-    rawPayload?: JsonValue;
-    legacyObjectId?: string;
-    discoveryState?: string;
-    schemaVersion?: number;
-    [key: string]: unknown;
+  ownerId?: string;
+
+  medium: MarkerMedium;
+  mediumSubtype?: string;
+
+  payloadLayer: MarkerPayloadLayer;
+  payloadKind: string;
+  canonicalPayload?: string;
+
+  nativeId?: NativeMarkerId;
+
+  stability: MarkerStability;
+
+  privacy?: {
+    trackingSensitive: boolean;
+    userConsentRequired: boolean;
+    allowBackgroundObservation: boolean;
   };
+
+  _meta?: PersistenceMeta;
+  legacy?: Record<string, unknown>;
 };
 
 export type PlaceDoc = {
@@ -123,6 +165,7 @@ export type PlaceDoc = {
 // -----------------------------------------------------------------------------
 
 export type AssociationDoc = FactIndexFields & {
+  participants: Participant[];
   associationId: string;
   associationType: 'object_has_marker' | string;
   time: AssociationTime;
@@ -134,6 +177,7 @@ export type AssociationDoc = FactIndexFields & {
 };
 
 export type ObservationDoc = FactIndexFields & {
+  participants: Participant[];
   observationId: string;
   observationType: 'marker_observed' | 'sighting' | 'scan' | 'proximity' | 'gateway_seen' | 'imported' | string;
   time: ObservationTime;
@@ -146,6 +190,7 @@ export type ObservationDoc = FactIndexFields & {
 };
 
 export type MeasurementDoc = FactIndexFields & {
+  participants: Participant[];
   measurementId: string;
   measurementType:
     | 'location'
@@ -185,6 +230,7 @@ export type MeasurementDoc = FactIndexFields & {
 };
 
 export type EventDoc = FactIndexFields & {
+  participants: Participant[];
   eventId: string;
   eventType:
     | 'object_created'
