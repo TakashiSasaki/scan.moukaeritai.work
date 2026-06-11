@@ -695,7 +695,7 @@ describe('Firestore Rules Baseline', () => {
       const validAssoc = {
         associationId: 'assoc1',
         associationType: 'object_has_marker',
-        participants: [],
+        participants: [{role: 'object', ref: {id: 'obj1', entityType: 'object'}}, {role: 'marker', ref: {id: 'marker1', entityType: 'marker'}}],
         participantKeys: ['object:obj1', 'marker:marker1'],
         userIds: [ownerUid],
         legacy: { ownerId: ownerUid },
@@ -737,7 +737,7 @@ describe('Firestore Rules Baseline', () => {
       const validObs = {
         observationId: 'obs1',
         observationType: 'marker_observed',
-        participants: [],
+        participants: [{role: 'marker', ref: {id: 'marker1', entityType: 'marker'}}],
         participantKeys: ['marker:marker1'],
         userIds: [ownerUid],
         time: { observedAt: serverTimestamp() }
@@ -769,7 +769,7 @@ describe('Firestore Rules Baseline', () => {
       const validMeas = {
         measurementId: 'meas1',
         measurementType: 'location',
-        participants: [],
+        participants: [{role: 'object', ref: {id: 'obj1', entityType: 'object'}}],
         participantKeys: ['object:obj1'],
         userIds: [ownerUid],
         time: { measuredAt: serverTimestamp() }
@@ -801,7 +801,7 @@ describe('Firestore Rules Baseline', () => {
       const validEvent = {
         eventId: 'evt1',
         eventType: 'object_created',
-        participants: [],
+        participants: [{role: 'object', ref: {id: 'obj1', entityType: 'object'}}],
         participantKeys: ['object:obj1'],
         userIds: [ownerUid],
         time: { occurredAt: serverTimestamp() }
@@ -845,6 +845,30 @@ describe('Firestore Rules Baseline', () => {
         const adminDb = testEnv.authenticatedContext(adminUid).firestore();
         await assertSucceeds(setDoc(doc(adminDb, 'objectSummaries', 'obj1'), validSummary));
         await assertSucceeds(updateDoc(doc(adminDb, 'objectSummaries', 'obj1'), { lastMeasuredAt: serverTimestamp() }));
+      });
+
+      it('normal user can read summary if they own the parent entity', async () => {
+        await setupAdmin();
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const db = context.firestore();
+          // create parent entity
+          await setDoc(doc(db, 'objects', 'obj1'), {
+            objectId: 'obj1',
+            ownerId: ownerUid,
+            name: 'Test Object',
+            status: 'active',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+          // create summary
+          await setDoc(doc(db, 'objectSummaries', 'obj1'), validSummary);
+        });
+
+        const ownerDb = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertSucceeds(getDoc(doc(ownerDb, 'objectSummaries', 'obj1')));
+
+        const nonOwnerDb = testEnv.authenticatedContext(nonOwnerUid).firestore();
+        await assertFails(getDoc(doc(nonOwnerDb, 'objectSummaries', 'obj1')));
       });
     });
   });

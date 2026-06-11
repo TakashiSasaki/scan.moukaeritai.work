@@ -334,6 +334,15 @@ service cloud.firestore {
     // =========================================================================
 
     // --- MARKERS (Target Entity) ---
+
+    // Helper to verify that participant arrays have consistent sizes
+    function isValidFactParticipants(data) {
+      return data.participants is list
+        && data.participantKeys is list
+        && data.participants.size() == data.participantKeys.size()
+        && data.participants.size() <= 20;
+    }
+
     match /markers/{markerKey} {
       allow read: if isAdmin() || isOwner(existing().ownerId);
       allow create: if isSignedIn()
@@ -383,8 +392,7 @@ service cloud.firestore {
         && incoming().associationId == associationId
         && (request.auth.uid in incoming().userIds || incoming().get(['legacy', 'ownerId'], '') == request.auth.uid)
         && incoming().associationType is string
-        && incoming().participants is list
-        && incoming().participantKeys is list
+        && isValidFactParticipants(incoming())
         && (!('objectIds' in incoming()) || incoming().objectIds is list)
         && (!('markerKeys' in incoming()) || incoming().markerKeys is list)
         && (!('placeIds' in incoming()) || incoming().placeIds is list)
@@ -408,8 +416,7 @@ service cloud.firestore {
         && incoming().observationId == observationId
         && request.auth.uid in incoming().userIds
         && incoming().observationType is string
-        && incoming().participants is list
-        && incoming().participantKeys is list
+        && isValidFactParticipants(incoming())
         && (!('objectIds' in incoming()) || incoming().objectIds is list)
         && (!('markerKeys' in incoming()) || incoming().markerKeys is list)
         && (!('placeIds' in incoming()) || incoming().placeIds is list)
@@ -435,8 +442,7 @@ service cloud.firestore {
         && incoming().measurementId == measurementId
         && (request.auth.uid in incoming().userIds || incoming().get(['legacy', 'ownerId'], '') == request.auth.uid)
         && incoming().measurementType is string
-        && incoming().participants is list
-        && incoming().participantKeys is list
+        && isValidFactParticipants(incoming())
         && (!('objectIds' in incoming()) || incoming().objectIds is list)
         && (!('markerKeys' in incoming()) || incoming().markerKeys is list)
         && (!('placeIds' in incoming()) || incoming().placeIds is list)
@@ -463,8 +469,7 @@ service cloud.firestore {
         && incoming().eventId == eventId
         && (request.auth.uid in incoming().userIds || incoming().get(['legacy', 'ownerId'], '') == request.auth.uid)
         && incoming().eventType is string
-        && incoming().participants is list
-        && incoming().participantKeys is list
+        && isValidFactParticipants(incoming())
         && (!('objectIds' in incoming()) || incoming().objectIds is list)
         && (!('markerKeys' in incoming()) || incoming().markerKeys is list)
         && (!('placeIds' in incoming()) || incoming().placeIds is list)
@@ -483,17 +488,17 @@ service cloud.firestore {
 
     // --- PROJECTIONS (Derived Summaries) ---
     match /objectSummaries/{objectId} {
-      allow read: if isAdmin() || isOwner(existing().get(['legacy', 'ownerId'], ''));
+      allow read: if isAdmin() || (isSignedIn() && isOwner(get(/databases/$(database)/documents/objects/$(objectId)).data.ownerId));
       allow create, update, delete: if isAdmin(); // Summaries are projections, not ordinary client-owned records
     }
 
     match /markerSummaries/{markerKey} {
-      allow read: if isAdmin() || isOwner(existing().get(['legacy', 'ownerId'], ''));
+      allow read: if isAdmin() || (isSignedIn() && isOwner(get(/databases/$(database)/documents/markers/$(markerKey)).data.ownerId));
       allow create, update, delete: if isAdmin();
     }
 
     match /placeSummaries/{placeId} {
-      allow read: if isAdmin() || isOwner(existing().get(['legacy', 'ownerId'], ''));
+      allow read: if isAdmin() || (isSignedIn() && isOwner(get(/databases/$(database)/documents/places/$(placeId)).data.ownerId));
       allow create, update, delete: if isAdmin();
     }
   }
