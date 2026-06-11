@@ -34,10 +34,10 @@ describe('factParticipants', () => {
         { role: 'object', ref: { entityType: 'object', id: 'OBJ-B' } },
         { role: 'marker', ref: { entityType: 'marker', id: 'MK-1' } },
         { role: 'place', ref: { entityType: 'place', id: 'PLC-1' } },
-        { role: 'reader', ref: { entityType: 'event', id: 'RDR-1' } }, // 'reader' role maps to readerIds
-        { role: 'device', ref: { entityType: 'observation', id: 'DEV-1' } }, // 'device' role maps to deviceIds
-        { role: 'user', ref: { entityType: 'association', id: 'USR-2' } }, // 'user' role maps to userIds
-        { role: 'user', ref: { entityType: 'association', id: 'USR-1' } },
+        { role: 'reader', ref: { entityType: 'reader', id: 'RDR-1' } },
+        { role: 'device', ref: { entityType: 'device', id: 'DEV-1' } },
+        { role: 'user', ref: { entityType: 'user', id: 'USR-2' } },
+        { role: 'user', ref: { entityType: 'user', id: 'USR-1' } },
         { role: 'object', ref: { entityType: 'object', id: 'OBJ-A' } },
         { role: 'object', ref: { entityType: 'object', id: 'OBJ-A' } }, // Duplicate
       ];
@@ -49,14 +49,14 @@ describe('factParticipants', () => {
 
       // Keys should be sorted
       expect(fields.participantKeys).toEqual([
-        'association:USR-1',
-        'association:USR-2',
-        'event:RDR-1',
+        'device:DEV-1',
         'marker:MK-1',
         'object:OBJ-A',
         'object:OBJ-B',
-        'observation:DEV-1',
         'place:PLC-1',
+        'reader:RDR-1',
+        'user:USR-1',
+        'user:USR-2',
       ]);
 
       // Derived fields

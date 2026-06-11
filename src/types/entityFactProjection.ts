@@ -24,7 +24,7 @@ export type PersistenceMeta = {
 // -----------------------------------------------------------------------------
 
 export type EntityRef = {
-  entityType: 'object' | 'marker' | 'place' | 'association' | 'observation' | 'measurement' | 'event' | 'user';
+  entityType: 'object' | 'marker' | 'place' | 'association' | 'observation' | 'measurement' | 'event' | 'user' | 'reader' | 'device';
   id: string; // The generic ID (e.g. objectId, markerKey, placeId)
 };
 
