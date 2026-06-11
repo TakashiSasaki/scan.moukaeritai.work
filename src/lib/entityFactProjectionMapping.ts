@@ -13,19 +13,29 @@ import {
 } from '../types';
 
 export function legacyIdentifierToMarkerDoc(legacy: IdentifierRecord): MarkerDoc {
-  return {
+  const payload: MarkerDoc['payload'] = {
+    payloadKind: legacy.scheme,
+    canonical: legacy.canonicalValue
+  };
+  if (legacy.rawPayload !== undefined) {
+    payload.raw = legacy.rawPayload;
+  }
+
+  const _meta: NonNullable<MarkerDoc['_meta']> = {};
+  if (legacy.createdAt !== undefined) _meta.createdAt = legacy.createdAt;
+  if (legacy.updatedAt !== undefined) _meta.updatedAt = legacy.updatedAt;
+
+  const doc: MarkerDoc = {
     markerKey: legacy.identifierKey,
     markerType: legacy.kind === 'bluetooth' ? 'ble' : legacy.kind,
-    payload: {
-      payloadKind: legacy.scheme,
-      canonical: legacy.canonicalValue,
-      raw: legacy.rawPayload
-    },
-    _meta: {
-      createdAt: legacy.createdAt,
-      updatedAt: legacy.updatedAt
-    }
+    payload
   };
+
+  if (Object.keys(_meta).length > 0) {
+    doc._meta = _meta;
+  }
+
+  return doc;
 }
 
 export function legacyIdentifierBindingToAssociationDoc(legacy: ObjectIdentifierBindingRecord): AssociationDoc {
@@ -52,7 +62,17 @@ export function legacyIdentifierBindingToAssociationDoc(legacy: ObjectIdentifier
     status = 'superseded';
   }
 
-  return {
+  const time: AssociationDoc['time'] = {};
+  if (legacy.attachedAt !== undefined) time.startedAt = legacy.attachedAt;
+  if (legacy.detachedAt !== undefined) time.endedAt = legacy.detachedAt;
+
+  const _meta: NonNullable<AssociationDoc['_meta']> = {};
+  if (legacy.createdAt !== undefined) _meta.createdAt = legacy.createdAt;
+  if (legacy.attachedBy !== undefined) _meta.createdBy = legacy.attachedBy;
+  if (legacy.updatedAt !== undefined) _meta.updatedAt = legacy.updatedAt;
+  if (legacy.detachedBy !== undefined) _meta.updatedBy = legacy.detachedBy;
+
+  const doc: AssociationDoc = {
     associationId: legacy.bindingId,
     associationType: 'object_has_marker',
     participants,
@@ -60,22 +80,21 @@ export function legacyIdentifierBindingToAssociationDoc(legacy: ObjectIdentifier
     participantKeys,
     objectIds: [legacy.objectId],
     markerKeys: [legacy.identifierKey],
-    time: {
-      startedAt: legacy.attachedAt,
-      endedAt: legacy.detachedAt
-    },
+    time,
     provenance: {
       source: 'user_confirmed', // Defaulting to user confirmed for manual bindings
       confidence: 'confirmed'
-    },
-    note: legacy.note,
-    _meta: {
-      createdAt: legacy.createdAt,
-      createdBy: legacy.attachedBy,
-      updatedAt: legacy.updatedAt,
-      updatedBy: legacy.detachedBy
     }
   };
+
+  if (legacy.note !== undefined) {
+    doc.note = legacy.note;
+  }
+  if (Object.keys(_meta).length > 0) {
+    doc._meta = _meta;
+  }
+
+  return doc;
 }
 
 export function legacyIdentifierObservationToObservationDoc(legacy: IdentifierObservationRecord): ObservationDoc {
@@ -121,26 +140,34 @@ export function legacyIdentifierObservationToObservationDoc(legacy: IdentifierOb
     confidence = 'high';
   }
 
-  return {
+  const time: ObservationDoc['time'] = {
+    observedAt: legacy.observedAt
+  };
+  if (legacy.receivedAt !== undefined) {
+    time.receivedAt = legacy.receivedAt;
+  }
+
+  const _meta: NonNullable<ObservationDoc['_meta']> = {};
+  if (legacy.createdAt !== undefined) _meta.createdAt = legacy.createdAt;
+
+  const doc: ObservationDoc = {
     observationId: legacy.observationId,
     observationType: 'marker_observed',
     participants,
     participantKeys,
-    objectIds: objectIds.length > 0 ? objectIds : undefined,
-    userIds: userIds.length > 0 ? userIds : undefined,
     markerKeys: [legacy.identifierKey],
-    time: {
-      observedAt: legacy.observedAt,
-      receivedAt: legacy.receivedAt
-    },
+    time,
     source: legacy.source,
     provenance: {
       source: provenanceSource,
       confidence
-    },
-    note: legacy.note,
-    _meta: {
-      createdAt: legacy.createdAt
     }
   };
+
+  if (objectIds.length > 0) doc.objectIds = objectIds;
+  if (userIds.length > 0) doc.userIds = userIds;
+  if (legacy.note !== undefined) doc.note = legacy.note;
+  if (Object.keys(_meta).length > 0) doc._meta = _meta;
+
+  return doc;
 }
