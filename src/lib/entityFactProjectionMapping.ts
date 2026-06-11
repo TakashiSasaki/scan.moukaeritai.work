@@ -34,6 +34,18 @@ export function legacyIdentifierToMarkerDoc(identifier: IdentifierRecord): Marke
     legacyObjectId: identifier.objectId,
     discoveryState: identifier.discoveryState,
     schemaVersion: identifier.schemaVersion,
+
+    // Preserve legacy lifecycle and audit fields
+    status: identifier.status,
+    label: identifier.label,
+    firstObservedAt: identifier.firstObservedAt,
+    firstObservedBy: identifier.firstObservedBy,
+    firstObservationId: identifier.firstObservationId,
+    lastObservedAt: identifier.lastObservedAt,
+    lastObservedBy: identifier.lastObservedBy,
+    lastObservationId: identifier.lastObservationId,
+    lastObservedSource: identifier.lastObservedSource,
+    lastSeenAt: identifier.lastSeenAt,
   };
 
   Object.keys(legacyData).forEach(k => legacyData[k] === undefined && delete legacyData[k]);
@@ -117,6 +129,11 @@ export function legacyIdentifierObservationToObservationDoc(observation: Identif
   const observerUid = (observation as any).observerUid;
   if (observerUid) {
     participants.push({ role: 'user', ref: { entityType: 'user', id: observerUid } });
+  }
+
+  const observerDeviceId = (observation as any).observerDeviceId;
+  if (observerDeviceId) {
+    participants.push({ role: 'device', ref: { entityType: 'device', id: observerDeviceId } });
   }
 
   const indexFields = buildFactIndexFields(participants);
