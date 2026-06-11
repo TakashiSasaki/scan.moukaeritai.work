@@ -20,6 +20,24 @@ import { buildFactIndexFields } from './factParticipants';
  * Domain time (createdAt, updatedAt, firstObservedAt, etc.) is EXCLUDED from top-level properties.
  */
 export function legacyIdentifierToMarkerDoc(identifier: IdentifierRecord): MarkerDoc & { payload?: any } {
+  const legacyData: Record<string, unknown> = {
+    sourceCollection: 'identifiers',
+    legacyIdentifierKey: identifier.identifierKey,
+    legacyKind: identifier.kind,
+    legacyScheme: identifier.scheme,
+    legacyCanonicalValue: identifier.canonicalValue,
+    identityModelVersion: identifier.identityModelVersion,
+    identitySchemaVersion: identifier.identitySchemaVersion,
+    canonicalizationVersion: identifier.canonicalizationVersion,
+    rawValue: identifier.rawValue,
+    rawPayload: identifier.rawPayload,
+    legacyObjectId: identifier.objectId,
+    discoveryState: identifier.discoveryState,
+    schemaVersion: identifier.schemaVersion,
+  };
+
+  Object.keys(legacyData).forEach(k => legacyData[k] === undefined && delete legacyData[k]);
+
   const result: MarkerDoc & { payload?: any } = {
     markerKey: identifier.identifierKey,
     ownerId: identifier.ownerId,
@@ -33,22 +51,11 @@ export function legacyIdentifierToMarkerDoc(identifier: IdentifierRecord): Marke
       updatedAt: identifier.updatedAt,
       schemaVersion: identifier.schemaVersion,
     },
-    legacy: {
-      sourceCollection: 'identifiers',
-      legacyIdentifierKey: identifier.identifierKey,
-      legacyKind: identifier.kind,
-      legacyScheme: identifier.scheme,
-      legacyCanonicalValue: identifier.canonicalValue,
-      identityModelVersion: identifier.identityModelVersion,
-      identitySchemaVersion: identifier.identitySchemaVersion,
-      canonicalizationVersion: identifier.canonicalizationVersion,
-      rawValue: identifier.rawValue,
-      rawPayload: identifier.rawPayload,
-      legacyObjectId: identifier.objectId,
-      discoveryState: identifier.discoveryState,
-      schemaVersion: identifier.schemaVersion,
-    }
+    legacy: Object.keys(legacyData).length > 0 ? legacyData : undefined
   };
+
+  if (result._meta?.schemaVersion === undefined) delete result._meta.schemaVersion;
+
   return result;
 }
 
@@ -61,7 +68,15 @@ export function legacyIdentifierBindingToAssociationDoc(binding: ObjectIdentifie
     { role: 'marker', ref: { entityType: 'marker', id: binding.identifierKey } }
   ]);
 
-  return {
+  const legacyData: Record<string, unknown> = {
+    sourceCollection: 'objectIdentifierBindings',
+    attachedBy: binding.attachedBy,
+    detachedBy: binding.detachedBy,
+    ownerId: binding.ownerId,
+  };
+  Object.keys(legacyData).forEach(k => legacyData[k] === undefined && delete legacyData[k]);
+
+  const result: any = {
     ...indexFields,
     associationId: binding.bindingId,
     associationType: 'object_has_marker',
@@ -77,13 +92,14 @@ export function legacyIdentifierBindingToAssociationDoc(binding: ObjectIdentifie
       updatedAt: binding.updatedAt,
       createdBy: binding.attachedBy,
     },
-    legacy: {
-      sourceCollection: 'objectIdentifierBindings',
-      attachedBy: binding.attachedBy,
-      detachedBy: binding.detachedBy,
-      ownerId: binding.ownerId,
-    }
+    legacy: Object.keys(legacyData).length > 0 ? legacyData : undefined
   };
+
+  if (result.time.detachedAt === undefined) delete result.time.detachedAt;
+  if (result.note === undefined) delete result.note;
+  if (result._meta.createdBy === undefined) delete result._meta.createdBy;
+
+  return result;
 }
 
 /**
@@ -105,7 +121,20 @@ export function legacyIdentifierObservationToObservationDoc(observation: Identif
 
   const indexFields = buildFactIndexFields(participants);
 
-  return {
+  const legacyData: Record<string, unknown> = {
+    sourceCollection: 'identifierObservations',
+    ownerId: observation.ownerId,
+    observationType: observation.observationType, // Original type (e.g. 'sighting')
+    placeLabel: observation.placeLabel,
+    location: observation.location,
+    visibility: observation.visibility,
+    observerKind: observation.observerKind,
+    observerIsAnonymous: (observation as any).observerIsAnonymous,
+    observerDeviceId: (observation as any).observerDeviceId,
+  };
+  Object.keys(legacyData).forEach(k => legacyData[k] === undefined && delete legacyData[k]);
+
+  const result: any = {
     ...indexFields,
     observationId: observation.observationId,
     observationType: 'marker_observed',
@@ -125,18 +154,15 @@ export function legacyIdentifierObservationToObservationDoc(observation: Identif
       schemaVersion: observation.schemaVersion,
       updatedAt: observation.createdAt, // Observation is append-only, but _meta requires updatedAt
     },
-    legacy: {
-      sourceCollection: 'identifierObservations',
-      ownerId: observation.ownerId,
-      observationType: observation.observationType, // Original type (e.g. 'sighting')
-      placeLabel: observation.placeLabel,
-      location: observation.location,
-      visibility: observation.visibility,
-      observerKind: observation.observerKind,
-      observerIsAnonymous: (observation as any).observerIsAnonymous,
-      observerDeviceId: (observation as any).observerDeviceId,
-    }
+    legacy: Object.keys(legacyData).length > 0 ? legacyData : undefined
   };
+
+  if (result.time.receivedAt === undefined) delete result.time.receivedAt;
+  if (result.note === undefined) delete result.note;
+  if (result.payload === undefined) delete result.payload;
+  if (result._meta.schemaVersion === undefined) delete result._meta.schemaVersion;
+
+  return result;
 }
 
 /**
@@ -174,6 +200,16 @@ export function legacyObjectEventToEventDoc(event: ObjectEventRecord): EventDoc 
     default: newEventType = 'custom'; break;
   }
 
+  const legacyData: Record<string, unknown> = {
+    sourceCollection: 'objectEvents',
+    legacyType: event.type,
+    ownerId: event.ownerId,
+    source: event.source,
+    location: event.location,
+    metadata: event.metadata,
+  };
+  Object.keys(legacyData).forEach(k => legacyData[k] === undefined && delete legacyData[k]);
+
   return {
     ...indexFields,
     eventId: event.eventId,
@@ -187,14 +223,7 @@ export function legacyObjectEventToEventDoc(event: ObjectEventRecord): EventDoc 
       createdAt: event.occurredAt,
       updatedAt: event.occurredAt,
     },
-    legacy: {
-      sourceCollection: 'objectEvents',
-      legacyType: event.type,
-      ownerId: event.ownerId,
-      source: event.source,
-      location: event.location,
-      metadata: event.metadata,
-    }
+    legacy: Object.keys(legacyData).length > 0 ? legacyData : undefined
   };
 }
 
@@ -202,7 +231,16 @@ export function legacyObjectEventToEventDoc(event: ObjectEventRecord): EventDoc 
  * Maps legacy ObjectRecord to ObjectDoc.
  */
 export function legacyObjectToObjectDoc(obj: ObjectRecord): ObjectDoc {
-  return {
+  const legacyData: Record<string, unknown> = {
+    sourceCollection: 'objects',
+    legacyObjectLegacyInfo: obj.legacy,
+    createdBy: obj.createdBy,
+    ownerUid: obj.ownerUid,
+    visibility: obj.visibility,
+  };
+  Object.keys(legacyData).forEach(k => legacyData[k] === undefined && delete legacyData[k]);
+
+  const result: any = {
     objectId: obj.objectId,
     ownerId: obj.ownerId,
     name: obj.name,
@@ -212,36 +250,46 @@ export function legacyObjectToObjectDoc(obj: ObjectRecord): ObjectDoc {
       createdAt: obj.createdAt,
       updatedAt: obj.updatedAt,
     },
-    legacy: {
-      sourceCollection: 'objects',
-      legacyObjectLegacyInfo: obj.legacy,
-      createdBy: obj.createdBy,
-      ownerUid: obj.ownerUid,
-      visibility: obj.visibility,
-    }
+    legacy: Object.keys(legacyData).length > 0 ? legacyData : undefined
   };
+
+  if (result.name === undefined) delete result.name;
+  if (result.description === undefined) delete result.description;
+  if (result.status === undefined) delete result.status;
+
+  return result;
 }
 
 /**
  * Maps legacy ObjectRecord to ObjectSummaryDoc.
  */
 export function legacyObjectToObjectSummaryDoc(obj: ObjectRecord): ObjectSummaryDoc {
-  return {
+  const legacyData: Record<string, unknown> = {
+    sourceCollection: 'objects',
+    identifierSummary: obj.identifierSummary,
+    currentLocation: obj.currentLocation,
+    lastReportedBy: obj.lastReportedBy,
+    lastReportedLocation: obj.lastReportedLocation,
+    lastReportedPlaceLabel: obj.lastReportedPlaceLabel,
+  };
+  Object.keys(legacyData).forEach(k => legacyData[k] === undefined && delete legacyData[k]);
+
+  const result: any = {
     objectId: obj.objectId,
-    activeMarkerKeys: obj.identifierSummary?.activeKinds || [], // Rough mapping, as we don't have keys directly in summary
+    // activeMarkerKeys cannot be reliably mapped directly from activeKinds (e.g. 'qr' is not a markerKey).
+    // It should be derived properly via associations later.
+    // We intentionally omit activeMarkerKeys here.
     lastObservedAt: obj.lastReportedAt,
     currentPosition: obj.currentLocation ? {
       latitude: obj.currentLocation.latitude,
       longitude: obj.currentLocation.longitude,
     } : undefined,
     asOf: obj.updatedAt,
-    legacy: {
-      sourceCollection: 'objects',
-      identifierSummary: obj.identifierSummary,
-      currentLocation: obj.currentLocation,
-      lastReportedBy: obj.lastReportedBy,
-      lastReportedLocation: obj.lastReportedLocation,
-      lastReportedPlaceLabel: obj.lastReportedPlaceLabel,
-    }
+    legacy: Object.keys(legacyData).length > 0 ? legacyData : undefined
   };
+
+  if (result.lastObservedAt === undefined) delete result.lastObservedAt;
+  if (result.currentPosition === undefined) delete result.currentPosition;
+
+  return result;
 }
