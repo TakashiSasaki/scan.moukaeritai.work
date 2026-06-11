@@ -357,6 +357,9 @@ The application has transitioned from a simple `items` collection to a normalize
 - These helpers are pure payload builders and must not perform Firestore writes directly.
 - Runtime components must not call them for dual-write behavior until the migration plan phase explicitly allows it.
 
+- Documentation and explanation pages should present Entity / Fact / Projection as the primary model.
+- Legacy runtime names such as identifiers and objectIdentifierBindings should be described as current implementation compatibility layers, not as the long-term conceptual model.
+- Do not remove legacy terms from docs while the runtime still uses them; instead, map them to Marker and Association.
 - The Entity / Fact / Projection Runtime Migration Plan is documented at `docs/migrations/entity-fact-projection-runtime-migration-plan.md`. This plan outlines the phased approach to transition from the legacy Identifier/Binding model to the Entity/Fact/Projection model.
 - Added `FactProvenanceSource` union to restrict `FactProvenance.source` values (`user_confirmed`, `user_report`, `marker_observation`, `location_measurement`, `trusted_reader`, `system_inference`, `admin_import`, `migration`, `import`, `legacy_observation`, `legacy_event`, `legacy_mapping`).
 - Added new `FactProvenance` metadata fields (`actorUid`, `sourceFactIds`).

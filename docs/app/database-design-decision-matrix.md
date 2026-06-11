@@ -1,5 +1,9 @@
 # Database Design Decision Matrix
 
+> Status note:
+> This document predates the Entity / Fact / Projection terminology. The legacy term "Identifier" now conceptually maps to "Marker", and "Binding" maps to "Association". Use `docs/architecture/entity-fact-projection-data-model.md` and `docs/migrations/entity-fact-projection-runtime-migration-plan.md` as the current architectural references.
+
+
 This matrix registers design decisions required for the next phase of the database structure evolution, specifically handling Bluetooth legacy identifiers, observation grouping, and future generic bindings. It tracks items pending before migration Phase 7E.
 
 See the [Database Structure](database-structure.md) document for the current production schema.
