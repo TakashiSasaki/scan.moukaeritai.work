@@ -77,6 +77,10 @@ export function legacyIdentifierToMarkerDoc(identifier: IdentifierRecord): Marke
     payloadLayer = 'radio_signal';
   }
 
+  // Conservative NFC nativeId mapping policy:
+  // - felica-idm maps to nativeId.kind = 'felica_idm'
+  // - nfc-uid remains nativeId.kind = 'unknown' unless the legacy scheme clearly distinguishes ISO14443 / ISO15693
+  // - raw scheme/canonical value is preserved under legacy
   let nativeId: import('../types/entityFactProjection').NativeMarkerId | undefined;
   if (identifier.kind === 'nfc' && identifier.scheme === 'nfc-uid') {
     nativeId = { kind: 'unknown', normalizedValue: identifier.canonicalValue };
