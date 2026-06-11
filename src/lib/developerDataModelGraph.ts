@@ -8,7 +8,7 @@ export interface GraphNode {
   x: number;
   y: number;
   description?: string;
-  status?: 'current' | 'legacy' | 'future-only' | 'blocked' | 'transitional';
+  status?: 'current' | 'legacy' | 'migration target' | 'future-only' | 'blocked' | 'transitional';
   notes?: string;
 }
 
@@ -33,11 +33,11 @@ export const dataModelNodes: GraphNode[] = [
   { id: 'col_users', label: 'users', type: 'collection', x: -6, y: -2, description: 'Standard mapping for authenticated user data.', status: 'current' },
   { id: 'col_admins', label: 'admins', type: 'collection', x: -6, y: 2, description: 'System administrators with elevated privileges.', status: 'current' },
 
-  // New Concept Nodes
-  { id: 'concept_marker', label: 'Marker (Entity)', type: 'futureConcept', x: 8, y: -1, description: 'Timeless identity node replacing identifier.', status: 'future-only' },
-  { id: 'concept_association', label: 'Association (Fact)', type: 'futureConcept', x: 3, y: -3, description: 'Temporal fact replacing binding.', status: 'future-only' },
-  { id: 'concept_observation', label: 'Observation (Fact)', type: 'futureConcept', x: 8, y: -3, description: 'Temporal evidence fact.', status: 'future-only' },
-  { id: 'concept_place', label: 'Place (Entity)', type: 'futureConcept', x: -2, y: -6, description: 'Independent place entity.', status: 'future-only' },
+  // Target Concept Nodes
+  { id: 'concept_marker', label: 'Marker (Entity)', type: 'futureConcept', x: 8, y: -1, description: 'Timeless identity node replacing identifier.', status: 'migration target' },
+  { id: 'concept_association', label: 'Association (Fact)', type: 'futureConcept', x: 3, y: -3, description: 'Temporal fact replacing binding.', status: 'migration target' },
+  { id: 'concept_observation', label: 'Observation (Fact)', type: 'futureConcept', x: 8, y: -3, description: 'Temporal evidence fact.', status: 'migration target' },
+  { id: 'concept_place', label: 'Place (Entity)', type: 'futureConcept', x: -2, y: -6, description: 'Independent place entity.', status: 'migration target' },
 
   // Semantic Identity Payload
   { id: 'payload_semanticIdentity', label: 'Identifier semantic identity payload', type: 'semanticIdentityPayload', x: 8, y: 2, description: 'The strictly canonical JSON payload used to generate deterministic UUIDv5 identifierKeys.', status: 'legacy' },
@@ -65,25 +65,25 @@ export const dataModelNodes: GraphNode[] = [
   { id: 'rel_binding', label: 'Object-Identifier Binding', type: 'relationship', x: 2, y: 0, description: 'Canonical mapping tying an identifier to an object.', status: 'legacy' },
   { id: 'rel_legacy', label: 'Legacy objectId compatibility', type: 'legacyCompatibility', x: 4, y: -4, description: 'Retaining objectId on identifiers for backward compatibility.', status: 'legacy' },
   { id: 'rel_ownerless', label: 'Ownerless global identifier model', type: 'futureConcept', x: 8, y: -4, description: 'Directional shift to stop relying on ownerId for identifier identity.', status: 'legacy' },
-  { id: 'rel_entityFact', label: 'Entity/Fact Separation', type: 'futureConcept', x: 5, y: -7, description: 'Entities are timeless nodes; Facts are temporal nodes.', status: 'future-only' },
+  { id: 'rel_entityFact', label: 'Entity/Fact Separation', type: 'futureConcept', x: 5, y: -7, description: 'Entities are timeless nodes; Facts are temporal nodes.', status: 'migration target' },
   { id: 'rel_rules', label: 'Firestore rules transition', type: 'ruleImpact', x: -4, y: -4, description: 'Incremental stages for Firestore security rules changes.', status: 'transitional' },
   { id: 'rel_phase7e', label: 'Phase 7E migration execution blocked', type: 'migrationPhase', x: -4, y: 2, description: 'Execution of legacy item observation backfill is blocked.', status: 'blocked' },
   { id: 'rel_acl', label: 'ACL future-only', type: 'futureConcept', x: 6, y: -6, description: 'Future granular access control on identifiers (currently rejected).', status: 'future-only' },
   { id: 'rel_claims', label: 'identifierClaims future-only', type: 'futureConcept', x: 8, y: -6, description: 'Future mechanism to assert ownership without hard locks.', status: 'future-only' },
   // Target Entity Collections
-  { id: 'col_markers', label: 'markers', type: 'collection', x: 2, y: 12, description: 'Target migration destination for physical, scannable tags.', status: 'future-only' },
-  { id: 'col_places', label: 'places', type: 'collection', x: 4, y: 12, description: 'Target migration destination for stable physical locations or zones.', status: 'future-only' },
+  { id: 'col_markers', label: 'markers', type: 'collection', x: 2, y: 12, description: 'Target migration destination for physical, scannable tags.', status: 'migration target' },
+  { id: 'col_places', label: 'places', type: 'collection', x: 4, y: 12, description: 'Target migration destination for stable physical locations or zones.', status: 'migration target' },
 
   // Target Fact Collections
-  { id: 'col_associations', label: 'associations', type: 'collection', x: 0, y: 14, description: 'Target migration destination for binding entities together.', status: 'future-only' },
-  { id: 'col_observations', label: 'observations', type: 'collection', x: 2, y: 14, description: 'Target migration destination for scans or encounters.', status: 'future-only' },
-  { id: 'col_measurements', label: 'measurements', type: 'collection', x: 4, y: 14, description: 'Target migration destination for spatial telemetry logs.', status: 'future-only' },
-  { id: 'col_events', label: 'events', type: 'collection', x: -2, y: 14, description: 'Target migration destination for operational audit logs.', status: 'future-only' },
+  { id: 'col_associations', label: 'associations', type: 'collection', x: 0, y: 14, description: 'Target migration destination for binding entities together.', status: 'migration target' },
+  { id: 'col_observations', label: 'observations', type: 'collection', x: 2, y: 14, description: 'Target migration destination for scans or encounters.', status: 'migration target' },
+  { id: 'col_measurements', label: 'measurements', type: 'collection', x: 4, y: 14, description: 'Target migration destination for spatial telemetry logs.', status: 'migration target' },
+  { id: 'col_events', label: 'events', type: 'collection', x: -2, y: 14, description: 'Target migration destination for operational audit logs.', status: 'migration target' },
 
   // Target Projection Collections
-  { id: 'col_objectSummaries', label: 'objectSummaries', type: 'collection', x: -2, y: 16, description: 'Derived read model for current object state.', status: 'future-only' },
-  { id: 'col_markerSummaries', label: 'markerSummaries', type: 'collection', x: 2, y: 16, description: 'Derived read model for current marker state.', status: 'future-only' },
-  { id: 'col_placeSummaries', label: 'placeSummaries', type: 'collection', x: 4, y: 16, description: 'Derived read model for current place state.', status: 'future-only' },
+  { id: 'col_objectSummaries', label: 'objectSummaries', type: 'collection', x: -2, y: 16, description: 'Derived read model for current object state.', status: 'migration target' },
+  { id: 'col_markerSummaries', label: 'markerSummaries', type: 'collection', x: 2, y: 16, description: 'Derived read model for current marker state.', status: 'migration target' },
+  { id: 'col_placeSummaries', label: 'placeSummaries', type: 'collection', x: 4, y: 16, description: 'Derived read model for current place state.', status: 'migration target' },
 
   // Specific legacy fields as nodes for mapping
   { id: 'fld_objects_currentLocation', label: 'objects.currentLocation', type: 'field', x: -2, y: -2, description: 'Legacy current location field.', status: 'legacy' },

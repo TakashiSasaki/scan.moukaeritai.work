@@ -2,15 +2,17 @@
 
 This document is the canonical source for the `scan.moukaeritai.work` database structure explanation. It describes both the current production runtime schema and the target Entity / Fact / Projection model.
 
+Current runtime collections remain authoritative until migration phases explicitly switch reads/writes. Target collections are migration destinations unless explicitly marked as current runtime.
+
 **Note:** This is documentation only. It does not provide a live database browser and contains no live data.
 
 ## 1. Target Conceptual Model
 
 The long-term database architecture follows an Entity / Fact / Projection model:
 
-- **Entity Collections:** Timeless identity nodes (e.g., `objects`, `markers`, `places`).
-- **Fact Collections:** Temporal records containing domain time and operational history (e.g., `associations`, `observations`, `measurements`, `events`).
-- **Projection Collections:** Derived, rebuildable read models summarizing state (e.g., `objectSummaries`, `markerSummaries`, `placeSummaries`).
+- **Entity Collections:** Timeless identity nodes. (e.g., `Object`, `Marker`, `Place`).
+- **Fact Collections:** Temporal records carrying domain time and operational history. Domain time belongs to Facts, not Entities. (e.g., `Association`, `Observation`, `Measurement`, `Event`).
+- **Projection Collections:** Derived, rebuildable read models summarizing state. Summary records are not the source of truth. (e.g., `ObjectSummary`, `MarkerSummary`, `PlaceSummary`).
 
 ## 2. Current Production Runtime Schema
 
@@ -162,6 +164,11 @@ The current runtime still relies on several legacy and transitional collections.
 ### `admins`
 - **Purpose:** Defines which users have administrative capabilities. The document ID matches the user's UID. It is an admin marker/config collection. No live user data is documented here.
 
+### `items`
+- **Purpose:** Legacy import source for the original flat data model.
+- **Status:** Legacy compatibility / historical import source.
+- **Runtime note:** Not the long-term model; retained only for compatibility and audit context.
+
 ## 3. Current-to-Target Mapping
 
 | Current runtime | Target model |
@@ -203,26 +210,41 @@ Projections are derived, easily queryable read models built from Facts and Entit
 
 ## 7. Legacy / Compatibility Collections and Fields
 
-The following collections and fields are part of the current runtime compatibility but are expected to map to the new Entity / Fact / Projection structure:
-
+### Current runtime compatibility
 - `items`: Legacy import source for the previous object model.
 - `objects.currentLocation`: Current runtime compatibility state representing the latest known position; conceptually maps to future `measurements` and `objectSummaries.currentPosition`.
 - `objects.identifierSummary`: Current runtime denormalized state summarizing identifier presence; conceptually moving toward `objectSummaries` and `markerSummaries`.
 - `identifiers`: Current runtime collection mapping to `markers`.
-- `identifiers.ownerId`: Included in the current runtime for compatibility, but conceptually identifier identity is ownerless/global.
 - `identifiers.objectId`: Legacy compatibility field, non-authoritative.
 - `objectIdentifierBindings`: Current runtime collection mapping to `associations`.
 - `identifierObservations`: Current runtime collection mapping to `observations`.
 - `objectEvents`: Current runtime collection mapping to `events`.
-- `legacy` fields: Embedded metadata fields (e.g., `objects.legacy`, `identifiers.legacy`) preserving import provenance and older schema values (such as `tagType`).
+- `legacy` fields: Embedded metadata fields (e.g., `objects.legacy`, `identifiers.legacy`) preserving import provenance and older schema values. `tagType` is preserved in legacy metadata where applicable.
+- `identifierKey` should be understood as a deterministic storage key derived from semantic identity payload, not from `ownerId`/`objectId`/`legacyItemId`.
 
-*(Historical Note: Planned concepts like `globalIdentifiers`, `identifierClaims`, `identifierTargetBindings`, and `observationSets` found in older design documents are future-only or historical design notes, not current runtime collections).*
+### Current runtime limitations
+- `objectIdentifierBindings` is currently object-only. Canonical current runtime relation belongs in `objectIdentifierBindings`; target relation belongs in `associations`.
+- `IdentifierRecord.kind` currently includes `bluetooth`, but not `wifi_ap`, `ble_beacon`, `gateway`, or `sensor_node`.
+- `ObservationSource` includes `ble` and `gateway`, but not `wifi`, `android_companion`, or `sensor_node`.
+- Bluetooth legacy data is not yet migrated.
+
+### Historical / future-only design notes
+- `identifierTargetBindings` is not implemented.
+- `observationSets` is not implemented.
+- ACL-specific fields are intentionally not active in the current runtime phase.
+- Do not present future-only planned concepts as implemented runtime collections.
 
 ## 8. Privacy, Ownership, and Compatibility Notes
 
+### Ownership and identity
 - **Object Ownership:** `objects` are strictly owned by a user (`ownerId`).
-- **Identifier Identity:** Conceptually, identifier identity (like a physical QR code or Bluetooth MAC) is global and ownerless. The current runtime `identifiers` collection retains `ownerId` for compatibility and scoped rules, but the target `markers` model will decouple global physical identity from private bindings.
+- **Identifier Identity:** Conceptually, identifier identity (like a physical QR code or Bluetooth MAC) is global and ownerless. The current runtime `IdentifierRecord.ownerId` is still required by compatibility/runtime paths, but it is not part of conceptual marker identity.
+
+### Observation and ingestion limits
 - **Client Limitations:** Client-created observations must remain limited by rules and do not imply backend ingestion systems are available.
+
+### Radio / Bluetooth / privacy notes
+- Future radio/Wi-Fi/BLE metadata must be privacy-sensitive and likely backend/trusted-ingestion only.
 
 ## 9. Migration Status
 
@@ -234,12 +256,24 @@ The system is undergoing a phased migration to the Entity / Fact / Projection mo
 
 ```text
 users
-  └─ owns ─ objects (Entity)
+  └─ owns ─ objects
               ├─ has images ─ objectImages
-              ├─ has events ─ objectEvents (Fact)
-              └─ bound via ─ objectIdentifierBindings (Fact / Association) ─ identifiers (Entity / Marker)
-                                                                               └─ observed by ─ identifierObservations (Fact)
+              ├─ has events ─ objectEvents
+              │                 (current runtime; maps to `events`)
+              └─ bound via ─ objectIdentifierBindings
+                                (current runtime; maps to `associations`)
+                                  └─ identifiers
+                                      (current runtime; maps to `markers`)
+                                        └─ observed by ─ identifierObservations
+                                                          (current runtime; maps to `observations`)
 
 admins
   └─ grants admin capabilities
+```
+
+**Target Conceptual Model:**
+```text
+objects / markers / places
+  └─ facts: associations / observations / measurements / events
+        └─ projections: objectSummaries / markerSummaries / placeSummaries
 ```

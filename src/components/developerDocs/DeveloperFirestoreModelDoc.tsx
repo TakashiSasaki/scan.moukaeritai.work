@@ -95,7 +95,7 @@ export default function DeveloperFirestoreModelDoc() {
 
         <section className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-2xl p-6">
           <h3 className="text-lg font-bold text-[var(--on-surface)] mb-4 text-emerald-500">Target Entity Collections</h3>
-          <p className="text-sm text-[var(--on-surface-variant)] mb-4">These represent the target migration destination for timeless identity nodes.</p>
+          <p className="text-sm text-[var(--on-surface-variant)] mb-4">These represent the migration destinations for timeless identity nodes. <strong>Note:</strong> Pure builder helpers now exist for target Entity / Fact / Projection payloads, but runtime components do not call them until the migration plan phase explicitly allows dual-write behavior. They are not production-active read/write paths.</p>
           <ul className="space-y-2 text-sm text-[var(--on-surface)] list-disc pl-5">
             <li><strong>objects:</strong> Active in production.</li>
             <li><strong>markers:</strong> Migration target (currently implemented as <code>identifiers</code>).</li>
@@ -105,7 +105,7 @@ export default function DeveloperFirestoreModelDoc() {
 
         <section className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-2xl p-6">
           <h3 className="text-lg font-bold text-[var(--on-surface)] mb-4 text-emerald-500">Target Fact Collections</h3>
-          <p className="text-sm text-[var(--on-surface-variant)] mb-4">These represent the target migration destination for temporal operational history.</p>
+          <p className="text-sm text-[var(--on-surface-variant)] mb-4">These represent the migration destinations for temporal operational history. <strong>Note:</strong> Pure builder helpers now exist for target Entity / Fact / Projection payloads, but runtime components do not call them until the migration plan phase explicitly allows dual-write behavior. They are not production-active read/write paths.</p>
           <ul className="space-y-2 text-sm text-[var(--on-surface)] list-disc pl-5">
             <li><strong>associations:</strong> Migration target (currently implemented as <code>objectIdentifierBindings</code>).</li>
             <li><strong>observations:</strong> Migration target (currently implemented as <code>identifierObservations</code>).</li>
@@ -116,11 +116,11 @@ export default function DeveloperFirestoreModelDoc() {
 
         <section className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-2xl p-6">
           <h3 className="text-lg font-bold text-[var(--on-surface)] mb-4 text-emerald-500">Target Projection Collections</h3>
-          <p className="text-sm text-[var(--on-surface-variant)] mb-4">These represent the target migration destination for derived read models.</p>
+          <p className="text-sm text-[var(--on-surface-variant)] mb-4">These represent the migration destinations for derived read models. <strong>Note:</strong> Pure builder helpers now exist for target Entity / Fact / Projection payloads, but runtime components do not call them until the migration plan phase explicitly allows dual-write behavior. They are not production-active read/write paths.</p>
           <ul className="space-y-2 text-sm text-[var(--on-surface)] list-disc pl-5">
-            <li><strong>objectSummaries:</strong> Derived read model.</li>
-            <li><strong>markerSummaries:</strong> Derived read model.</li>
-            <li><strong>placeSummaries:</strong> Derived read model.</li>
+            <li><strong>objectSummaries:</strong> Derived read model (migration target).</li>
+            <li><strong>markerSummaries:</strong> Derived read model (migration target).</li>
+            <li><strong>placeSummaries:</strong> Derived read model (migration target).</li>
           </ul>
         </section>
 

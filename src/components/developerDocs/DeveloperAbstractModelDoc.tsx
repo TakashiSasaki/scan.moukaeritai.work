@@ -125,9 +125,9 @@ export default function DeveloperAbstractModelDoc() {
           Several concepts are part of the long-term domain model but are not yet fully implemented or are blocked:
         </p>
         <ul className="space-y-3 text-sm text-[var(--on-surface-variant)]">
-          <li><strong>Global Ownerless Model (Marker Identity):</strong> The earlier ownerless/global identifier work is now treated as part of the broader Marker identity model. Markers are inherently ownerless and globally discoverable, relying entirely on Associations and access control for security.</li>
+          <li><strong>Marker Identity & Ownership:</strong> The long-term Marker identity model is informed by the earlier ownerless/global identifier work. However, runtime ownership, access control, and global discoverability remain migration-phase decisions. Current runtime still uses identifiers with <code>ownerId</code> and <code>objectId</code> compatibility fields.</li>
           <li><strong>Marker Claims:</strong> Future mechanism to allow users to assert ownership or custody over a globally-resolved Marker without needing absolute database-level write locks. This replaces the older concept of 'Identifier Claims'.</li>
-          <li><strong>Access Control Lists (ACL):</strong> Fine-grained permissions (<code>visibility</code>, <code>readers</code>, <code>writers</code>) on Markers/Identifiers. Currently strictly forbidden.</li>
+          <li><strong>Access Control Lists (ACL):</strong> Fine-grained permissions (<code>visibility</code>, <code>readers</code>, <code>writers</code>) on Markers/Identifiers. Currently strictly forbidden in the current runtime phase.</li>
         </ul>
       </section>
     </div>
