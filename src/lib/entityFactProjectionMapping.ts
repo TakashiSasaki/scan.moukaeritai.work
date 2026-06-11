@@ -280,6 +280,10 @@ export function legacyObjectEventToEventDoc(event: ObjectEventRecord): EventDoc 
     time: {
       occurredAt: event.occurredAt,
     },
+    provenance: {
+      source: 'legacy_event',
+      confidence: 'high'
+    },
     _meta: {
       // EventDoc needs createdAt/updatedAt for _meta if we map strictly,
       // but ObjectEventRecord only has occurredAt. We use occurredAt.

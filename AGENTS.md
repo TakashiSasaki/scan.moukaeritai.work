@@ -350,6 +350,7 @@ The application has transitioned from a simple `items` collection to a normalize
 
 
 ### Entity / Fact / Projection Model Polish (2026-06-XX)
+- The Entity / Fact / Projection Runtime Migration Plan is documented at `docs/migrations/entity-fact-projection-runtime-migration-plan.md`. This plan outlines the phased approach to transition from the legacy Identifier/Binding model to the Entity/Fact/Projection model.
 - Added `FactProvenanceSource` union to restrict `FactProvenance.source` values (`user_confirmed`, `user_report`, `marker_observation`, `location_measurement`, `trusted_reader`, `system_inference`, `admin_import`, `migration`, `import`, `legacy_observation`, `legacy_event`, `legacy_mapping`).
 - Added new `FactProvenance` metadata fields (`actorUid`, `sourceFactIds`).
 - `ownerId` policy in Entity docs (Object, Marker, Place): In the conceptual model, `ownerId` is not part of entity identity. However, in the current implementation, it remains required by Firestore rules and owner-scoped runtime paths. Migration direction is to keep `ownerId` for compatibility now and not include it in semantic identity.
