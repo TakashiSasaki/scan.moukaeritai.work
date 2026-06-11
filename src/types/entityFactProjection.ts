@@ -1,81 +1,61 @@
 import { Timestamp } from 'firebase/firestore';
 
+// -----------------------------------------------------------------------------
+// Base / Utility Types
+// -----------------------------------------------------------------------------
+
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JsonValue }
+  | JsonValue[];
+
+export type PersistenceMeta = {
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  schemaVersion?: number;
+  createdBy?: string;
+};
+
+// -----------------------------------------------------------------------------
+// References & Participants
+// -----------------------------------------------------------------------------
+
 export type EntityRef = {
-  entityType: 'object' | 'marker' | 'place' | 'reader' | 'device' | 'user' | 'observation' | 'measurement' | 'event';
-  id: string;
+  entityType: 'object' | 'marker' | 'place' | 'association' | 'observation' | 'measurement' | 'event' | 'user' | 'reader' | 'device';
+  id: string; // The generic ID (e.g. objectId, markerKey, placeId)
 };
 
 export type Participant = {
-  role: string;
+  role: 'object' | 'marker' | 'place' | 'device' | 'reader' | 'user' | string;
   ref: EntityRef;
 };
 
-export type FactProvenance = {
-  source: 'user_report' | 'user_confirmed' | 'device_gps' | 'web_nfc' | 'trusted_reader' | 'untrusted_reader' | 'system' | 'imported';
-  confidence: 'confirmed' | 'high' | 'medium' | 'low';
-};
-
 export type FactIndexFields = {
+  participants: Participant[];
   participantKeys: string[];
   objectIds?: string[];
   markerKeys?: string[];
   placeIds?: string[];
-  deviceIds?: string[];
   readerIds?: string[];
+  deviceIds?: string[];
   userIds?: string[];
 };
 
-export type PersistenceMeta = {
-  createdAt?: Timestamp;
-  createdBy?: string;
-  updatedAt?: Timestamp;
-  updatedBy?: string;
+export type FactProvenance = {
+  source: string;
+  confidence: 'confirmed' | 'high' | 'medium' | 'low' | 'unverified';
 };
 
-export type ObjectDoc = {
-  objectId: string;
-  name: string;
-  description: string;
-  status: 'active' | 'archived' | 'lost' | 'disposed';
-  _meta?: PersistenceMeta;
-};
-
-export type MarkerDoc = {
-  markerKey: string;
-  markerType: 'qr' | 'nfc' | 'ble' | 'barcode' | 'manual' | 'uhf_rfid';
-  payload: {
-    payloadKind: string;
-    canonical: string;
-    raw?: unknown;
-  };
-  _meta?: PersistenceMeta;
-};
-
-export type PlaceDoc = {
-  placeId: string;
-  name: string;
-  description: string;
-  boundary?: {
-    type: 'polygon' | 'radius';
-    coordinates: number[][];
-  };
-  _meta?: PersistenceMeta;
-};
+// -----------------------------------------------------------------------------
+// Time Interfaces
+// -----------------------------------------------------------------------------
 
 export type AssociationTime = {
-  startedAt?: Timestamp;
-  endedAt?: Timestamp;
-};
-
-export type AssociationDoc = FactIndexFields & {
-  associationId: string;
-  associationType: 'object_has_marker' | 'object_in_place' | 'marker_in_place' | 'reader_in_place' | 'custom';
-  participants: Participant[];
-  status: 'active' | 'inactive' | 'superseded' | 'detached' | 'disputed' | 'archived';
-  time: AssociationTime;
-  provenance: FactProvenance;
-  note?: string;
-  _meta?: PersistenceMeta;
+  attachedAt: Timestamp;
+  detachedAt?: Timestamp;
 };
 
 export type ObservationTime = {
@@ -83,31 +63,103 @@ export type ObservationTime = {
   receivedAt?: Timestamp;
 };
 
-export type ObservationDoc = FactIndexFields & {
-  observationId: string;
-  observationType: 'marker_observed' | 'object_sighted' | 'place_visited' | 'custom';
-  participants: Participant[];
-  time: ObservationTime;
-  source: 'nfc' | 'qr' | 'manual' | 'barcode' | 'ble' | 'camera' | 'gateway' | 'import' | 'web_nfc';
-  payload?: {
-    payloadKind: string;
-    canonical: string;
-    raw?: unknown;
-  };
-  provenance: FactProvenance;
-  note?: string;
-  _meta?: PersistenceMeta;
-};
-
 export type MeasurementTime = {
   measuredAt: Timestamp;
+  receivedAt?: Timestamp;
+};
+
+export type EventTime = {
+  occurredAt: Timestamp;
+  receivedAt?: Timestamp;
+};
+
+// -----------------------------------------------------------------------------
+// Entities (Timeless nodes)
+// -----------------------------------------------------------------------------
+
+export type ObjectDoc = {
+  objectId: string;
+  ownerId: string;
+  name?: string;
+  description?: string;
+  status?: string;
+  _meta?: PersistenceMeta;
+  legacy?: Record<string, unknown>;
+};
+
+export type MarkerDoc = {
+  markerKey: string;
+  ownerId: string;
+  markerType?: string; // Replaces 'kind' or 'scheme' in the broader sense
+  _meta?: PersistenceMeta;
+  legacy?: {
+    sourceCollection?: string;
+    legacyIdentifierKey?: string;
+    legacyKind?: string;
+    legacyScheme?: string;
+    legacyCanonicalValue?: string;
+    identityModelVersion?: number;
+    identitySchemaVersion?: number;
+    canonicalizationVersion?: number;
+    rawValue?: string;
+    rawPayload?: JsonValue;
+    legacyObjectId?: string;
+    discoveryState?: string;
+    schemaVersion?: number;
+    [key: string]: unknown;
+  };
+};
+
+export type PlaceDoc = {
+  placeId: string;
+  ownerId: string;
+  label?: string;
+  _meta?: PersistenceMeta;
+  legacy?: Record<string, unknown>;
+};
+
+// -----------------------------------------------------------------------------
+// Facts (Temporal nodes)
+// -----------------------------------------------------------------------------
+
+export type AssociationDoc = FactIndexFields & {
+  associationId: string;
+  associationType: 'object_has_marker' | string;
+  time: AssociationTime;
+  provenance?: FactProvenance;
+  status?: 'active' | 'detached' | 'replaced' | string;
+  note?: string;
+  _meta?: PersistenceMeta;
+  legacy?: Record<string, unknown>;
+};
+
+export type ObservationDoc = FactIndexFields & {
+  observationId: string;
+  observationType: 'marker_observed' | 'sighting' | 'scan' | 'proximity' | 'gateway_seen' | 'imported' | string;
+  time: ObservationTime;
+  provenance?: FactProvenance;
+  source?: string;
+  note?: string;
+  payload?: Record<string, unknown>;
+  _meta?: PersistenceMeta;
+  legacy?: Record<string, unknown>;
 };
 
 export type MeasurementDoc = FactIndexFields & {
   measurementId: string;
-  measurementType: 'location' | 'gps_position' | 'manual_place' | 'proximity' | 'ble_rssi' | 'rfid_read' | 'distance' | 'signal' | 'custom';
-  participants: Participant[];
+  measurementType:
+    | 'location'
+    | 'gps_position'
+    | 'manual_place'
+    | 'proximity'
+    | 'ble_rssi'
+    | 'rfid_read'
+    | 'distance'
+    | 'signal'
+    | 'custom'
+    | string;
   time: MeasurementTime;
+  provenance?: FactProvenance;
   position?: {
     latitude: number;
     longitude: number;
@@ -127,24 +179,46 @@ export type MeasurementDoc = FactIndexFields & {
     antennaId?: string;
     gatewayId?: string;
   };
-  provenance: FactProvenance;
   note?: string;
   _meta?: PersistenceMeta;
-};
-
-export type EventTime = {
-  occurredAt: Timestamp;
+  legacy?: Record<string, unknown>;
 };
 
 export type EventDoc = FactIndexFields & {
   eventId: string;
-  eventType: 'object_created' | 'object_updated' | 'object_archived' | 'marker_registered' | 'marker_retired' | 'association_created' | 'association_ended' | 'summary_recomputed' | 'imported' | 'custom';
-  participants: Participant[];
+  eventType:
+    | 'object_created'
+    | 'object_updated'
+    | 'object_archived'
+    | 'object_scanned'
+    | 'object_located'
+    | 'object_image_added'
+    | 'object_image_removed'
+    | 'marker_registered'
+    | 'marker_retired'
+    | 'marker_attached_to_object'
+    | 'marker_detached_from_object'
+    | 'marker_replaced_on_object'
+    | 'association_created'
+    | 'association_ended'
+    | 'summary_recomputed'
+    | 'imported'
+    | 'custom'
+    | string;
   time: EventTime;
-  provenance: FactProvenance;
+  provenance?: FactProvenance;
   note?: string;
   _meta?: PersistenceMeta;
+  legacy?: {
+    sourceCollection?: string;
+    legacyType?: string;
+    [key: string]: unknown;
+  };
 };
+
+// -----------------------------------------------------------------------------
+// Projections (Summaries)
+// -----------------------------------------------------------------------------
 
 export type ObjectSummaryDoc = {
   objectId: string;
@@ -159,6 +233,7 @@ export type ObjectSummaryDoc = {
   lastMeasuredAt?: Timestamp;
   asOf: Timestamp;
   derivedFromFactIds?: string[];
+  legacy?: Record<string, unknown>;
 };
 
 export type MarkerSummaryDoc = {
@@ -169,6 +244,7 @@ export type MarkerSummaryDoc = {
   recentObservationCount?: number;
   asOf: Timestamp;
   derivedFromFactIds?: string[];
+  legacy?: Record<string, unknown>;
 };
 
 export type PlaceSummaryDoc = {
@@ -178,4 +254,5 @@ export type PlaceSummaryDoc = {
   lastActivityAt?: Timestamp;
   asOf: Timestamp;
   derivedFromFactIds?: string[];
+  legacy?: Record<string, unknown>;
 };

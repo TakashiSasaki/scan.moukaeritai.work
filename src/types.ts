@@ -35,6 +35,7 @@ export interface ObservationLocation {
 export type IdentifierDiscoveryState = 'observed' | 'registered' | 'detached' | 'unknown';
 
 /**
+ * Legacy/current implementation type.
  * Conceptually maps to ObservationDoc with observationType = "marker_observed".
  */
 export type IdentifierObservationRecord = {
@@ -87,6 +88,12 @@ export type IdentifierObservationRecord = {
     }
 );
 
+/**
+ * Legacy/current implementation type.
+ * Conceptually maps to ObjectDoc.
+ * Currently contains denormalized legacy/current fields such as currentLocation and identifierSummary;
+ * these should migrate toward Measurement/Summary in future PRs.
+ */
 export interface ObjectRecord {
   objectId: string; // Must equal document ID
   ownerId: string;
@@ -123,6 +130,7 @@ export interface ObjectRecord {
 }
 
 /**
+ * Legacy/current implementation type.
  * Conceptually maps to MarkerDoc.
  */
 export interface IdentifierRecord {
@@ -154,6 +162,7 @@ export interface IdentifierRecord {
 }
 
 /**
+ * Legacy/current implementation type.
  * Conceptually maps to AssociationDoc with associationType = "object_has_marker".
  * Note:
  *   objectIdentifierBindings conceptually maps to associations.
@@ -174,6 +183,10 @@ export interface ObjectIdentifierBindingRecord {
   updatedAt: Timestamp;
 }
 
+/**
+ * Legacy/current implementation type.
+ * Current runtime event implementation and maps conceptually to EventDoc.
+ */
 export interface ObjectEventRecord {
   eventId: string; // Must equal document ID
   ownerId: string;
