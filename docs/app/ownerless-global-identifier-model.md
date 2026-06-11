@@ -1,5 +1,9 @@
 # Ownerless Global Identifier Model
 
+> Status note:
+> This document predates the Entity / Fact / Projection terminology. The legacy term "Identifier" now conceptually maps to "Marker", and "Binding" maps to "Association". Use `docs/architecture/entity-fact-projection-data-model.md` and `docs/migrations/entity-fact-projection-runtime-migration-plan.md` as the current architectural references.
+
+
 ## Scope
 
 This document defines the conceptual data model in which identifiers are global/ownerless entities.

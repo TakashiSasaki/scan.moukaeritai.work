@@ -69,7 +69,26 @@ export const dataModelNodes: GraphNode[] = [
   { id: 'rel_rules', label: 'Firestore rules transition', type: 'ruleImpact', x: -4, y: -4, description: 'Incremental stages for Firestore security rules changes.', status: 'transitional' },
   { id: 'rel_phase7e', label: 'Phase 7E migration execution blocked', type: 'migrationPhase', x: -4, y: 2, description: 'Execution of legacy item observation backfill is blocked.', status: 'blocked' },
   { id: 'rel_acl', label: 'ACL future-only', type: 'futureConcept', x: 6, y: -6, description: 'Future granular access control on identifiers (currently rejected).', status: 'future-only' },
-  { id: 'rel_claims', label: 'identifierClaims future-only', type: 'futureConcept', x: 8, y: -6, description: 'Future mechanism to assert ownership without hard locks.', status: 'future-only' }
+  { id: 'rel_claims', label: 'identifierClaims future-only', type: 'futureConcept', x: 8, y: -6, description: 'Future mechanism to assert ownership without hard locks.', status: 'future-only' },
+  // Target Entity Collections
+  { id: 'col_markers', label: 'markers', type: 'collection', x: 2, y: 12, description: 'Target migration destination for physical, scannable tags.', status: 'future-only' },
+  { id: 'col_places', label: 'places', type: 'collection', x: 4, y: 12, description: 'Target migration destination for stable physical locations or zones.', status: 'future-only' },
+
+  // Target Fact Collections
+  { id: 'col_associations', label: 'associations', type: 'collection', x: 0, y: 14, description: 'Target migration destination for binding entities together.', status: 'future-only' },
+  { id: 'col_observations', label: 'observations', type: 'collection', x: 2, y: 14, description: 'Target migration destination for scans or encounters.', status: 'future-only' },
+  { id: 'col_measurements', label: 'measurements', type: 'collection', x: 4, y: 14, description: 'Target migration destination for spatial telemetry logs.', status: 'future-only' },
+  { id: 'col_events', label: 'events', type: 'collection', x: -2, y: 14, description: 'Target migration destination for operational audit logs.', status: 'future-only' },
+
+  // Target Projection Collections
+  { id: 'col_objectSummaries', label: 'objectSummaries', type: 'collection', x: -2, y: 16, description: 'Derived read model for current object state.', status: 'future-only' },
+  { id: 'col_markerSummaries', label: 'markerSummaries', type: 'collection', x: 2, y: 16, description: 'Derived read model for current marker state.', status: 'future-only' },
+  { id: 'col_placeSummaries', label: 'placeSummaries', type: 'collection', x: 4, y: 16, description: 'Derived read model for current place state.', status: 'future-only' },
+
+  // Specific legacy fields as nodes for mapping
+  { id: 'fld_objects_currentLocation', label: 'objects.currentLocation', type: 'field', x: -2, y: -2, description: 'Legacy current location field.', status: 'legacy' },
+  { id: 'fld_objects_identifierSummary', label: 'objects.identifierSummary', type: 'field', x: -4, y: -2, description: 'Legacy identifier summary field.', status: 'legacy' }
+
 ];
 
 export const dataModelEdges: GraphEdge[] = [
@@ -77,6 +96,18 @@ export const dataModelEdges: GraphEdge[] = [
   { id: 'e_map1', source: 'col_identifiers', target: 'concept_marker', type: 'canonicalRelation', label: 'maps to', description: 'Identifiers are mapped to Markers conceptually.' },
   { id: 'e_map2', source: 'col_objectIdentifierBindings', target: 'concept_association', type: 'canonicalRelation', label: 'maps to', description: 'Bindings become associations.' },
   { id: 'e_map3', source: 'col_identifierObservations', target: 'concept_observation', type: 'canonicalRelation', label: 'maps to', description: 'Identifier Observations become Observations.' },
+
+
+  // Mappings to Target Architecture
+  { id: 'e_map_identifiers', source: 'col_identifiers', target: 'col_markers', type: 'legacyCompatibility', label: 'maps to', description: 'Identifiers will become markers.' },
+  { id: 'e_map_bindings', source: 'col_objectIdentifierBindings', target: 'col_associations', type: 'legacyCompatibility', label: 'maps to', description: 'Bindings will become associations.' },
+  { id: 'e_map_observations', source: 'col_identifierObservations', target: 'col_observations', type: 'legacyCompatibility', label: 'maps to', description: 'IdentifierObservations will become observations.' },
+  { id: 'e_map_events', source: 'col_objectEvents', target: 'col_events', type: 'legacyCompatibility', label: 'maps to', description: 'ObjectEvents will become events.' },
+
+  { id: 'e_map_loc_meas', source: 'fld_objects_currentLocation', target: 'col_measurements', type: 'legacyCompatibility', label: 'migrates to', description: 'objects.currentLocation migrates to measurements.' },
+  { id: 'e_map_loc_sum', source: 'fld_objects_currentLocation', target: 'col_objectSummaries', type: 'legacyCompatibility', label: 'projects to', description: 'objects.currentLocation projects to objectSummaries.' },
+  { id: 'e_map_sum_obj', source: 'fld_objects_identifierSummary', target: 'col_objectSummaries', type: 'legacyCompatibility', label: 'migrates to', description: 'objects.identifierSummary migrates to objectSummaries.' },
+  { id: 'e_map_sum_mark', source: 'fld_objects_identifierSummary', target: 'col_markerSummaries', type: 'legacyCompatibility', label: 'contributes to', description: 'objects.identifierSummary contributes to markerSummaries.' },
 
   // Collection to Fields
   { id: 'e1', source: 'col_identifiers', target: 'fld_identifierKey', type: 'hasField', label: 'has', description: 'Identifiers use identifierKey as document ID.' },

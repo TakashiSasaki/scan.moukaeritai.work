@@ -25,11 +25,16 @@ export default function DeveloperAbstractModelDoc() {
         <h3 className="text-lg font-bold text-[var(--on-surface)] mb-4">Core Domain Model: Entity / Fact / Projection</h3>
         <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4 flex gap-3 text-sm mb-6">
           <Info className="text-green-500 shrink-0" size={20} />
-          <p className="text-[var(--on-surface)]">
-            <strong>Entity = timeless identity node. Fact = temporal node. Projection = derived read model.</strong><br/>
-            Object / Marker / Place are independent Entities. Association / Observation / Measurement / Event are Facts.
-            Summary records are derived and rebuildable from Facts.
-          </p>
+          <div className="text-[var(--on-surface)]">
+            <ul className="list-disc pl-5 space-y-2 mb-4">
+            <li>Object / Marker / Place are <strong>Entities</strong>.</li>
+            <li>Association / Observation / Measurement / Event are <strong>Facts</strong>.</li>
+            <li>Summary records are <strong>Projections</strong>.</li>
+            <li>Entities are timeless identity nodes.</li>
+            <li>Domain time belongs to Facts.</li>
+            <li>Summary records are derived and rebuildable.</li>
+          </ul>
+          </div>
         </div>
         <ul className="space-y-4 text-sm">
           <li>
@@ -120,9 +125,9 @@ export default function DeveloperAbstractModelDoc() {
           Several concepts are part of the long-term domain model but are not yet fully implemented or are blocked:
         </p>
         <ul className="space-y-3 text-sm text-[var(--on-surface-variant)]">
-          <li><strong>Global Ownerless Model:</strong> The conceptual shift where identifiers are inherently ownerless and globally discoverable, relying entirely on bindings and access control for security rather than a strict <code>ownerId</code> boundary.</li>
-          <li><strong>Identifier Claims:</strong> Future mechanism to allow users to assert ownership or custody over a globally-resolved identifier without needing absolute database-level write locks.</li>
-          <li><strong>Access Control Lists (ACL):</strong> Fine-grained permissions (<code>visibility</code>, <code>readers</code>, <code>writers</code>) on identifiers. Currently strictly forbidden.</li>
+          <li><strong>Global Ownerless Model (Marker Identity):</strong> The earlier ownerless/global identifier work is now treated as part of the broader Marker identity model. Markers are inherently ownerless and globally discoverable, relying entirely on Associations and access control for security.</li>
+          <li><strong>Marker Claims:</strong> Future mechanism to allow users to assert ownership or custody over a globally-resolved Marker without needing absolute database-level write locks. This replaces the older concept of 'Identifier Claims'.</li>
+          <li><strong>Access Control Lists (ACL):</strong> Fine-grained permissions (<code>visibility</code>, <code>readers</code>, <code>writers</code>) on Markers/Identifiers. Currently strictly forbidden.</li>
         </ul>
       </section>
     </div>

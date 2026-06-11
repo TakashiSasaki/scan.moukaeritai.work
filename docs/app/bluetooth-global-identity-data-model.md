@@ -1,5 +1,9 @@
 # Bluetooth Global Identity Data Model
 
+> Status note:
+> This document predates the Entity / Fact / Projection terminology. The legacy term "Identifier" now conceptually maps to "Marker", and "Binding" maps to "Association". Use `docs/architecture/entity-fact-projection-data-model.md` and `docs/migrations/entity-fact-projection-runtime-migration-plan.md` as the current architectural references.
+
+
 **Note:** This document serves as a Bluetooth-specific appendix. For the primary conceptual model covering all identifiers, see:
 [Ownerless Global Identifier Model](./ownerless-global-identifier-model.md)
 

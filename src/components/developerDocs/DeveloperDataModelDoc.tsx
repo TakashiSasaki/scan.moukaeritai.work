@@ -13,7 +13,7 @@ export default function DeveloperDataModelDoc() {
         <p className="text-[var(--on-surface-variant)] text-sm leading-relaxed mb-4">
           The application uses a normalized Firestore data model focused on physical object tracking,
           immutable operational history, and deterministic identifier resolution. The data model is
-          currently undergoing a phased non-destructive migration towards an observation-aware model.
+          currently undergoing a phased non-destructive migration towards an Entity / Fact / Projection architecture.
         </p>
       </section>
 
@@ -24,7 +24,7 @@ export default function DeveloperDataModelDoc() {
               <Boxes size={24} />
             </div>
             <h4 className="font-bold text-[var(--on-surface)]">Abstract Model</h4>
-            <p className="text-xs text-[var(--on-surface-variant)]">Conceptual domain model covering Objects, Identifiers, Observations, and Semantic Identity.</p>
+            <p className="text-xs text-[var(--on-surface-variant)]">Conceptual model covering Entity / Fact / Projection: Objects, Markers, Places, Associations, Observations, Measurements, Events, and Summaries.</p>
           </Link>
 
           <Link to="/developer/data-model/firestore" className="bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] border border-[var(--outline)] rounded-2xl p-6 transition-colors flex flex-col items-center text-center gap-3 group">
@@ -32,7 +32,7 @@ export default function DeveloperDataModelDoc() {
               <Database size={24} />
             </div>
             <h4 className="font-bold text-[var(--on-surface)]">Firestore Implementation</h4>
-            <p className="text-xs text-[var(--on-surface-variant)]">Concrete Firestore collections, document structures, ID semantics, and migration statuses.</p>
+            <p className="text-xs text-[var(--on-surface-variant)]">Current runtime collections and target migration collections.</p>
           </Link>
 
           <Link to="/developer/data-model-graph" className="bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] border border-[var(--outline)] rounded-2xl p-6 transition-colors flex flex-col items-center text-center gap-3 group">
@@ -40,7 +40,7 @@ export default function DeveloperDataModelDoc() {
               <Share2 size={24} />
             </div>
             <h4 className="font-bold text-[var(--on-surface)]">Data Model Graph</h4>
-            <p className="text-xs text-[var(--on-surface-variant)]">Interactive visual representation of the collections, fields, relationships, and boundaries.</p>
+            <p className="text-xs text-[var(--on-surface-variant)]">Visual representation of current and target collections, fields, and migration boundaries.</p>
           </Link>
         </div>
       </section>
@@ -51,9 +51,10 @@ export default function DeveloperDataModelDoc() {
           The system is continuously evolving from its initial design (the "legacy `items` model") to a robust, distributed scanning framework. Key ongoing transitions include:
         </p>
         <ul className="list-disc list-inside space-y-2 text-sm text-[var(--on-surface-variant)]">
-          <li><strong>Ownerless Identifiers:</strong> Moving towards a model where identifiers (tags) are globally addressable and lack a singular <code>ownerId</code> affecting identity.</li>
-          <li><strong>Observation Ingestion:</strong> Normalizing how user sightings, background Bluetooth scans, and imported legacy data enter the system securely (Phase 7E is currently blocked).</li>
-          <li><strong>Immutable Binding History:</strong> Capturing connection state in `objectIdentifierBindings` and `objectEvents` instead of appending inline arrays to a main object.</li>
+          <li><strong>Marker migration:</strong> Transitioning identifiers to globally addressable Markers. The earlier ownerless/global identifier work is now treated as part of the broader Marker identity model. The current runtime still uses identifiers, but the long-term conceptual term is Marker.</li>
+          <li><strong>Association migration:</strong> Capturing connection state in explicit Association records instead of mutating the main object.</li>
+          <li><strong>Observation / Measurement facts:</strong> Normalizing how user sightings, background scans, and telemetry enter the system securely as immutable Facts.</li>
+          <li><strong>Projection summaries:</strong> Utilizing derived, easily queryable read models (like ObjectSummary or MarkerSummary) built from underlying Facts and Entities.</li>
         </ul>
       </section>
     </div>
