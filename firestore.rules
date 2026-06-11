@@ -336,6 +336,21 @@ service cloud.firestore {
     // --- MARKERS (Target Entity) ---
 
     // Helper to verify that participant arrays have consistent sizes
+
+    // Check that ordinary clients only create facts for entities they own
+    function isFactEntitiesOwnedByUser(data) {
+      return (!('objectIds' in data) || data.objectIds.size() == 0 || (
+        data.objectIds.size() == 1 &&
+        isOwner(get(/databases/$(database)/documents/objects/$(data.objectIds[0])).data.ownerId)
+      )) && (!('markerKeys' in data) || data.markerKeys.size() == 0 || (
+        data.markerKeys.size() == 1 &&
+        isOwner(get(/databases/$(database)/documents/markers/$(data.markerKeys[0])).data.ownerId)
+      )) && (!('placeIds' in data) || data.placeIds.size() == 0 || (
+        data.placeIds.size() == 1 &&
+        isOwner(get(/databases/$(database)/documents/places/$(data.placeIds[0])).data.ownerId)
+      ));
+    }
+
     function isValidFactParticipants(data) {
       return data.participants is list
         && data.participantKeys is list
@@ -365,7 +380,15 @@ service cloud.firestore {
         && incoming().markerKey == existing().markerKey
         && incoming().medium == existing().medium
         && incoming().payloadLayer == existing().payloadLayer
-        && incoming().payloadKind == existing().payloadKind; // Immutable identity fields
+        && incoming().payloadKind == existing().payloadKind
+        && (!('mediumSubtype' in incoming()) || incoming().mediumSubtype is string)
+        && (!('canonicalPayload' in incoming()) || incoming().canonicalPayload is string)
+        && (!('nativeId' in incoming()) || (incoming().nativeId is map && 'kind' in incoming().nativeId && 'normalizedValue' in incoming().nativeId))
+        && incoming().stability in ['stable', 'semi_stable', 'rotating', 'session', 'derived', 'unknown']
+        && (!('privacy' in incoming()) || incoming().privacy is map)
+        && (!('_meta' in incoming()) || incoming()._meta is map)
+        && (!('legacy' in incoming()) || incoming().legacy is map)
+        && incoming().keys().hasOnly(['markerKey', 'ownerId', 'medium', 'mediumSubtype', 'payloadLayer', 'payloadKind', 'canonicalPayload', 'nativeId', 'stability', 'privacy', '_meta', 'legacy']);
       allow delete: if isAdmin() || isOwner(existing().ownerId);
     }
 
@@ -393,6 +416,7 @@ service cloud.firestore {
         && (request.auth.uid in incoming().userIds || incoming().get(['legacy', 'ownerId'], '') == request.auth.uid)
         && incoming().associationType is string
         && isValidFactParticipants(incoming())
+        && isFactEntitiesOwnedByUser(incoming())
         && (!('objectIds' in incoming()) || incoming().objectIds is list)
         && (!('markerKeys' in incoming()) || incoming().markerKeys is list)
         && (!('placeIds' in incoming()) || incoming().placeIds is list)
@@ -417,6 +441,7 @@ service cloud.firestore {
         && request.auth.uid in incoming().userIds
         && incoming().observationType is string
         && isValidFactParticipants(incoming())
+        && isFactEntitiesOwnedByUser(incoming())
         && (!('objectIds' in incoming()) || incoming().objectIds is list)
         && (!('markerKeys' in incoming()) || incoming().markerKeys is list)
         && (!('placeIds' in incoming()) || incoming().placeIds is list)
@@ -443,6 +468,7 @@ service cloud.firestore {
         && (request.auth.uid in incoming().userIds || incoming().get(['legacy', 'ownerId'], '') == request.auth.uid)
         && incoming().measurementType is string
         && isValidFactParticipants(incoming())
+        && isFactEntitiesOwnedByUser(incoming())
         && (!('objectIds' in incoming()) || incoming().objectIds is list)
         && (!('markerKeys' in incoming()) || incoming().markerKeys is list)
         && (!('placeIds' in incoming()) || incoming().placeIds is list)
@@ -470,6 +496,7 @@ service cloud.firestore {
         && (request.auth.uid in incoming().userIds || incoming().get(['legacy', 'ownerId'], '') == request.auth.uid)
         && incoming().eventType is string
         && isValidFactParticipants(incoming())
+        && isFactEntitiesOwnedByUser(incoming())
         && (!('objectIds' in incoming()) || incoming().objectIds is list)
         && (!('markerKeys' in incoming()) || incoming().markerKeys is list)
         && (!('placeIds' in incoming()) || incoming().placeIds is list)
