@@ -101,6 +101,9 @@ To prevent confusion across systems, note the following distinct identifiers use
     - `identifiers` conceptually maps to `markers`
     - `objectIdentifierBindings` conceptually maps to `associations`
     - `identifierObservations` conceptually maps to `observations`
+  - **Runtime migration planning**:
+    - The phased runtime migration plan is documented in `docs/migrations/entity-fact-projection-runtime-migration-plan.md`.
+    - Agents must consult that plan before changing `Scanner.tsx` or `CaptureForm.tsx` reads/writes from `identifiers` / `objectIdentifierBindings` toward `markers` / `associations` / `observations` / `measurements` / summaries.
 - **Legacy Identifiers for Backend Resources**: The frontend deployment target uses the current domain name (`scan-moukaeritai-work`), but backend Firebase resources (Firestore Database, Storage Bucket) intentionally retain the legacy identifier `photo-moukaeritai-work`. This is reflected in `firebase-applet-config.json` and must not be altered to match the hosting name.
 - **Cloud Storage Strategy**:
   - Images captured via the application are stored in the designated Firebase Storage bucket (`photo-moukaeritai-work`).

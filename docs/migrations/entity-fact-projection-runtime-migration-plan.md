@@ -1,7 +1,7 @@
 # Entity-Fact-Projection Runtime Migration Plan
 
 Status: Planning
-Scope: Phase 1 Runtime Migration (Writes & Reads)
+Scope: Planning document for phased runtime migration; no runtime behavior changes
 Non-goals: Destructive migration, modifying historical legacy data
 
 ## 1. Current Runtime Model
