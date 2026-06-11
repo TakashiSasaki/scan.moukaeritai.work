@@ -71,6 +71,7 @@ describe('Entity Fact Projection Mapping', () => {
 
     expect(result.associationId).toBe('BINDING-1');
     expect(result.associationType).toBe('object_has_marker');
+    expect(result.status).toBe('active');
     expect(result.participantKeys).toContain('object:OBJECT-1');
     expect(result.participantKeys).toContain('marker:QR:URL:ABC');
     expect(result.objectIds).toContain('OBJECT-1');
@@ -78,6 +79,42 @@ describe('Entity Fact Projection Mapping', () => {
     expect(result.time.startedAt).toBe(timestamp);
     expect(result._meta?.createdAt).toBe(timestamp);
     expect(result._meta?.createdBy).toBe('USER-1');
+  });
+
+  it('should map detached ObjectIdentifierBindingRecord to detached AssociationDoc', () => {
+    const timestamp = Timestamp.now();
+    const legacy: ObjectIdentifierBindingRecord = {
+      bindingId: 'BINDING-2',
+      ownerId: 'USER-1',
+      objectId: 'OBJECT-1',
+      identifierKey: 'QR:URL:ABC',
+      status: 'detached',
+      attachedAt: timestamp,
+      attachedBy: 'USER-1',
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+
+    const result = legacyIdentifierBindingToAssociationDoc(legacy);
+    expect(result.status).toBe('detached');
+  });
+
+  it('should map replaced ObjectIdentifierBindingRecord to superseded AssociationDoc', () => {
+    const timestamp = Timestamp.now();
+    const legacy: ObjectIdentifierBindingRecord = {
+      bindingId: 'BINDING-3',
+      ownerId: 'USER-1',
+      objectId: 'OBJECT-1',
+      identifierKey: 'QR:URL:ABC',
+      status: 'replaced',
+      attachedAt: timestamp,
+      attachedBy: 'USER-1',
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+
+    const result = legacyIdentifierBindingToAssociationDoc(legacy);
+    expect(result.status).toBe('superseded');
   });
 
   it('should map IdentifierObservationRecord to ObservationDoc', () => {
@@ -103,6 +140,7 @@ describe('Entity Fact Projection Mapping', () => {
     expect(result.participantKeys).toContain('object:OBJECT-1');
     expect(result.participantKeys).toContain('user:USER-1');
     expect(result.objectIds).toContain('OBJECT-1');
+    expect(result.userIds).toContain('USER-1');
     expect(result.markerKeys).toContain('QR:URL:ABC');
     expect(result.time.observedAt).toBe(timestamp);
     expect(result.time.receivedAt).toBe(timestamp);

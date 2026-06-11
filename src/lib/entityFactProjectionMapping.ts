@@ -45,10 +45,18 @@ export function legacyIdentifierBindingToAssociationDoc(legacy: ObjectIdentifier
     `marker:${legacy.identifierKey}`
   ];
 
+  let status: AssociationDoc['status'] = 'active';
+  if (legacy.status === 'detached') {
+    status = 'detached';
+  } else if (legacy.status === 'replaced') {
+    status = 'superseded';
+  }
+
   return {
     associationId: legacy.bindingId,
     associationType: 'object_has_marker',
     participants,
+    status,
     participantKeys,
     objectIds: [legacy.objectId],
     markerKeys: [legacy.identifierKey],
@@ -91,12 +99,14 @@ export function legacyIdentifierObservationToObservationDoc(legacy: IdentifierOb
   }
 
   // Handle observer identity
+  const userIds: string[] = [];
   if (legacy.observerKind === 'user' && legacy.observerUid) {
     participants.push({
       role: 'user',
       ref: { entityType: 'user', id: legacy.observerUid }
     });
     participantKeys.push(`user:${legacy.observerUid}`);
+    userIds.push(legacy.observerUid);
   }
 
   let provenanceSource: FactProvenance['source'] = 'user_report';
@@ -117,6 +127,7 @@ export function legacyIdentifierObservationToObservationDoc(legacy: IdentifierOb
     participants,
     participantKeys,
     objectIds: objectIds.length > 0 ? objectIds : undefined,
+    userIds: userIds.length > 0 ? userIds : undefined,
     markerKeys: [legacy.identifierKey],
     time: {
       observedAt: legacy.observedAt,

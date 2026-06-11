@@ -22,6 +22,7 @@ export type FactIndexFields = {
   placeIds?: string[];
   deviceIds?: string[];
   readerIds?: string[];
+  userIds?: string[];
 };
 
 export type PersistenceMeta = {
@@ -70,6 +71,7 @@ export type AssociationDoc = FactIndexFields & {
   associationId: string;
   associationType: 'object_has_marker' | 'object_in_place' | 'marker_in_place' | 'reader_in_place' | 'custom';
   participants: Participant[];
+  status: 'active' | 'inactive' | 'superseded' | 'detached' | 'disputed' | 'archived';
   time: AssociationTime;
   provenance: FactProvenance;
   note?: string;
