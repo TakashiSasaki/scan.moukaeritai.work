@@ -138,7 +138,7 @@ describe('entityFactProjectionWrites', () => {
   });
 
   describe('buildObjectHasMarkerAssociationWrite', () => {
-    it('creates object + marker participants and derived index fields', () => {
+    it('creates object + marker participants and derived index fields, defaulting status to active', () => {
       const result = buildObjectHasMarkerAssociationWrite({
         associationId: 'assoc-1',
         objectId: 'obj-1',
@@ -146,6 +146,7 @@ describe('entityFactProjectionWrites', () => {
         actorUid: 'user-1'
       });
       expect(result.data.associationType).toBe('object_has_marker');
+      expect(result.data.status).toBe('active');
       expect(result.data.participants).toHaveLength(2);
       expect(result.data.participantKeys).toEqual(['marker:mk-1', 'object:obj-1']);
       expect(result.data.objectIds).toEqual(['obj-1']);
