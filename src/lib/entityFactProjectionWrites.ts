@@ -246,7 +246,7 @@ export function buildObjectHasMarkerAssociationWrite(input: {
     provenance = { source: 'legacy_mapping', confidence: 'high' };
   }
 
-  const associationStatus = input.status === 'replaced' ? 'superseded' : input.status;
+  const associationStatus = input.status === 'replaced' ? 'superseded' : (input.status || 'active');
 
   let legacyData = input.legacy ? { ...input.legacy } : {};
   if (input.ownerId !== undefined && legacyData.ownerId === undefined) {
