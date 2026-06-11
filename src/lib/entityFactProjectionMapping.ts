@@ -254,6 +254,8 @@ export function legacyObjectToObjectDoc(obj: ObjectRecord): ObjectDoc {
     createdBy: obj.createdBy,
     ownerUid: obj.ownerUid,
     visibility: obj.visibility,
+    primaryImageId: obj.primaryImageId,
+    primaryImageUrl: obj.primaryImageUrl,
   };
   Object.keys(legacyData).forEach(k => legacyData[k] === undefined && delete legacyData[k]);
 
@@ -288,6 +290,8 @@ export function legacyObjectToObjectSummaryDoc(obj: ObjectRecord): ObjectSummary
     lastReportedBy: obj.lastReportedBy,
     lastReportedLocation: obj.lastReportedLocation,
     lastReportedPlaceLabel: obj.lastReportedPlaceLabel,
+    primaryImageId: obj.primaryImageId,
+    primaryImageUrl: obj.primaryImageUrl,
   };
   Object.keys(legacyData).forEach(k => legacyData[k] === undefined && delete legacyData[k]);
 
