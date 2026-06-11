@@ -94,9 +94,10 @@ To prevent confusion across systems, note the following distinct identifiers use
     - `objectEvents/{eventId}`: Records append-only operational events (including attachment/detachment history).
     - `items/{itemId}`: Legacy-only and used as migration input.
   - **Target Conceptual Model**: The application is moving toward an Entity / Fact / Projection architecture as defined in `docs/architecture/entity-fact-projection-data-model.md`.
-    - Entity collections: `objects`, `markers`, `places`
-    - Fact collections: `associations`, `observations`, `measurements`, `events`
+    - Entity collections: `objects`, `markers`, `places` (Do not use `locations`).
+    - Fact collections: `associations`, `observations`, `measurements`, `events` (Do not use `bindings`).
     - Projection collections: `objectSummaries`, `markerSummaries`, `placeSummaries`
+    - Note: Domain time fields (e.g., `createdAt`, `updatedAt`, `lastSeenAt`) must not be placed directly on new Entity records. They belong in Fact or Summary layers.
   - Current mappings:
     - `identifiers` conceptually maps to `markers`
     - `objectIdentifierBindings` conceptually maps to `associations`
@@ -285,7 +286,7 @@ The application has transitioned from a simple `items` collection to a normalize
     - When adding, repairing, or detaching identifiers (e.g., in `CaptureForm`), the summary should be recomputed from the current Firestore identifier state where practical, not only from potentially stale local component state. Use `loadObjectIdentifiersForSummary()` to fetch the source data, and keep local component state updated after a successful write.
     - `objects.primaryImageUrl` is denormalized and should be kept in sync with the primary `objectImages` record.
   - **`identifiers`**: Represents a physical tag (QR, NFC) or a logical code (barcode, manual). Conceptually maps to `markers`. One object can have zero or more identifiers. One identifier can have at most one active object.
-  - **`objectIdentifierBindings`**: Stores canonical relationship state between objects and identifiers. Conceptually maps to `associations`. Active binding records use deterministic IDs formatted as `${objectId}__${identifierKey}__active`. There must be at most one active binding for a given `(objectId, identifierKey)` pair. Repeated attach of the same identifier to the same object should be idempotent. Reassignment to another object must be explicit and must record events. *Note: Client code should not rely on direct missing-document reads (`getDoc()`) for `objectIdentifierBindings` without checking rules, instead use owner-scoped queries.* **Important:** `objectIdentifierBindings` is NOT a historical log table. The existence of an identifier document does not imply the existence of a binding document.
+  - **`objectIdentifierBindings`**: Stores canonical relationship state between objects and identifiers. Conceptually maps to `associations` (do not create a new `bindings` collection). Active binding records use deterministic IDs formatted as `${objectId}__${identifierKey}__active`. There must be at most one active binding for a given `(objectId, identifierKey)` pair. Repeated attach of the same identifier to the same object should be idempotent. Reassignment to another object must be explicit and must record events. *Note: Client code should not rely on direct missing-document reads (`getDoc()`) for `objectIdentifierBindings` without checking rules, instead use owner-scoped queries.* **Important:** `objectIdentifierBindings` is NOT a historical log table. The existence of an identifier document does not imply the existence of a binding document.
   - **Document ID Conventions**:
     - `objects/{objectId}`: Field `objectId` must equal the document ID.
     - `identifiers/{identifierKey}`: Field `identifierKey` must equal the document ID. Conceptually maps to `markers`.

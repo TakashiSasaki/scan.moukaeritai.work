@@ -100,6 +100,10 @@ export interface ObjectRecord {
   name: string;
   description: string;
   status: 'active' | 'archived' | 'lost' | 'disposed';
+  /**
+   * Legacy/current implementation.
+   * Conceptually maps to a future MeasurementDoc or ObjectSummaryDoc.currentPosition.
+   */
   currentLocation?: {
     latitude: number;
     longitude: number;
@@ -147,9 +151,11 @@ export interface IdentifierRecord {
   canonicalValue: string;
   status: 'active' | 'unassigned' | 'retired' | 'lost' | 'replaced';
   label?: string;
+  /** Legacy/current implementation. Maps conceptually to oldest ObservationDoc. */
   firstObservedAt?: Timestamp;
   firstObservedBy?: string;
   firstObservationId?: string;
+  /** Legacy/current implementation. Maps conceptually to newest ObservationDoc or MarkerSummaryDoc. */
   lastObservedAt?: Timestamp;
   lastObservedBy?: string;
   lastObservationId?: string;
@@ -158,6 +164,7 @@ export interface IdentifierRecord {
   schemaVersion?: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  /** Legacy/current implementation. Maps conceptually to newest ObservationDoc or MarkerSummaryDoc. */
   lastSeenAt?: Timestamp;
 }
 
@@ -174,7 +181,9 @@ export interface ObjectIdentifierBindingRecord {
   objectId: string;
   identifierKey: string;
   status: 'active' | 'detached' | 'replaced';
+  /** Legacy/current implementation. Conceptually domain time belonging to AssociationDoc. */
   attachedAt: Timestamp;
+  /** Legacy/current implementation. Conceptually domain time belonging to AssociationDoc. */
   detachedAt?: Timestamp;
   attachedBy: string;
   detachedBy?: string;

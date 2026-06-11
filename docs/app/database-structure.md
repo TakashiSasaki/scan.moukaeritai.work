@@ -189,13 +189,13 @@ Entities are timeless identity nodes.
 
 - `objects`: Represents physical items or assets being tracked. Currently active in production.
 - `markers`: Target concept for physical, scannable tags used to look up objects. Currently represented in production by `identifiers`.
-- `places`: Target concept for stable physical locations or zones.
+- `places`: Target concept for stable physical locations or zones. (Do not use `locations` as a top-level collection).
 
 ## 5. Fact Collections
 
 Facts are temporal, immutable records of events or states at a specific point in time.
 
-- `associations`: Target concept representing bindings between entities (e.g., object to marker). Currently represented by `objectIdentifierBindings`.
+- `associations`: Target concept representing bindings between entities (e.g., object to marker). Currently represented by `objectIdentifierBindings`. (Do not use `bindings` as a top-level collection).
 - `observations`: Target concept for scans or encounters with a marker. Currently represented by `identifierObservations`.
 - `measurements`: Target concept for telemetry or spatial measurements (e.g., GPS coordinates at a point in time). Currently partially handled via legacy `objects.currentLocation`.
 - `events`: Target concept for operational audit logs. Currently represented by `objectEvents`.
@@ -216,7 +216,7 @@ Projections are derived, easily queryable read models built from Facts and Entit
 - `objects.identifierSummary`: Current runtime denormalized state summarizing identifier presence; conceptually moving toward `objectSummaries` and `markerSummaries`.
 - `identifiers`: Current runtime collection mapping to `markers`.
 - `identifiers.objectId`: Legacy compatibility field, non-authoritative.
-- `objectIdentifierBindings`: Current runtime collection mapping to `associations`.
+- `objectIdentifierBindings`: Current runtime collection mapping to `associations`. (Conceptually maps to associations, not a new bindings collection).
 - `identifierObservations`: Current runtime collection mapping to `observations`.
 - `objectEvents`: Current runtime collection mapping to `events`.
 - `legacy` fields: Embedded metadata fields (e.g., `objects.legacy`, `identifiers.legacy`) preserving import provenance and older schema values. `tagType` is preserved in legacy metadata where applicable.
