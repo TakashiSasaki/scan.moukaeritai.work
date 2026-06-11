@@ -96,8 +96,8 @@ Using existing mapping helpers in `src/lib/entityFactProjectionMapping.ts` as re
 **Phase 0: Foundation already added**
 - Types, mapping helpers, participant helpers, tests, TODO comments.
 
-**Phase 1: Add new collection write helpers**
-- Add pure write-builder functions for markers, associations, observations, measurements, events, summaries.
+**Phase 1: Add new collection write helpers (Completed)**
+- Add pure write-builder functions for markers, associations, observations, measurements, events, summaries in `src/lib/entityFactProjectionWrites.ts`.
 - Do not call them from runtime yet.
 - Add tests only.
 
@@ -198,7 +198,7 @@ Data validation ideas:
 ## 13. Recommended Next PR
 
 Recommended next PR:
-Add write-builder helpers for new collections without calling them from runtime.
+Add write-builder helpers for new collections without calling them from runtime. (Completed)
 
 Suggested files:
 - `src/lib/entityFactProjectionWrites.ts`

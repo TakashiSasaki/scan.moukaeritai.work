@@ -353,6 +353,10 @@ The application has transitioned from a simple `items` collection to a normalize
 
 
 ### Entity / Fact / Projection Model Polish (2026-06-XX)
+- Phase 1 write-builder helpers live in `src/lib/entityFactProjectionWrites.ts`.
+- These helpers are pure payload builders and must not perform Firestore writes directly.
+- Runtime components must not call them for dual-write behavior until the migration plan phase explicitly allows it.
+
 - The Entity / Fact / Projection Runtime Migration Plan is documented at `docs/migrations/entity-fact-projection-runtime-migration-plan.md`. This plan outlines the phased approach to transition from the legacy Identifier/Binding model to the Entity/Fact/Projection model.
 - Added `FactProvenanceSource` union to restrict `FactProvenance.source` values (`user_confirmed`, `user_report`, `marker_observation`, `location_measurement`, `trusted_reader`, `system_inference`, `admin_import`, `migration`, `import`, `legacy_observation`, `legacy_event`, `legacy_mapping`).
 - Added new `FactProvenance` metadata fields (`actorUid`, `sourceFactIds`).
