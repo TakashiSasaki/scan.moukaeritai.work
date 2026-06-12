@@ -615,7 +615,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
           .catch((error) => {
             console.warn('[capture-association-transition-dual-write] failed', error);
           });
-        } else if (!isIdempotentAttach) {
+        } else {
           writeCaptureMarkerAssociationShadow({
             objectId: objectId,
             actorUid: auth.currentUser.uid,

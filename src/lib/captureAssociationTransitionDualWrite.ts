@@ -59,7 +59,17 @@ export async function writeCaptureAssociationTransitionShadow(
     }
 
     const markerRef = doc(db, 'markers', input.markerKey);
-    const markerSnap = await getDoc(markerRef);
+    let markerSnap;
+    try {
+      markerSnap = await getDoc(markerRef);
+    } catch (e: any) {
+      if (e.code === 'permission-denied') {
+        // Current rules block reading unowned/missing markers.
+        // Treat as missing rather than a hard failure to allow fallbacks.
+        return { status: 'skipped_marker_missing' };
+      }
+      throw e;
+    }
 
     if (!markerSnap.exists()) {
       return { status: 'skipped_marker_missing' };
