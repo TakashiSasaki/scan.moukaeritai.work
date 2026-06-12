@@ -31,10 +31,12 @@ describe('Projection Reconstruction Helpers', () => {
     const activeAssoc = { status: 'active', time: { validFrom: ts(100), validUntil: ts(200) } } as AssociationDoc;
     const detachedAssoc = { status: 'detached', time: { validFrom: ts(100), validUntil: ts(200) } } as AssociationDoc;
     const replacedAssoc = { status: 'replaced', time: { validFrom: ts(100), validUntil: ts(200) } } as AssociationDoc;
+    const supersededAssoc = { status: 'superseded', time: { validFrom: ts(100), validUntil: ts(200) } } as AssociationDoc;
 
     expect(getAssociationEffectiveTransitionTime(activeAssoc)?.toMillis()).toBe(100);
     expect(getAssociationEffectiveTransitionTime(detachedAssoc)?.toMillis()).toBe(200);
-    expect(getAssociationEffectiveTransitionTime(replacedAssoc)).toBeUndefined();
+    expect(getAssociationEffectiveTransitionTime(replacedAssoc)?.toMillis()).toBe(200);
+    expect(getAssociationEffectiveTransitionTime(supersededAssoc)?.toMillis()).toBe(200);
   });
 });
 
@@ -208,7 +210,7 @@ describe('reconstructPlaceSummary', () => {
     const mPlaceField: MeasurementDoc = { measurementId: 'm2', place: { placeId: 'p1' }, objectIds: ['obj3'], time: { measuredAt: ts(400) } } as any;
 
     const res = reconstructPlaceSummary({ placeId: 'p1', observations: [o], measurements: [m, mPlaceField], events: [eOtherPlace], asOf });
-    expect(res.currentObjectIds).toEqual(['obj1', 'obj3']);
+    expect(res.currentObjectIds).toEqual(['obj1']);
     expect(res.currentMarkerKeys).toEqual(['mk1']);
   });
 

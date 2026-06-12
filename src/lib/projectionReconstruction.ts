@@ -35,7 +35,7 @@ export function getAssociationEffectiveTransitionTime(
   if (association.status === 'active') {
     return association.time?.validFrom;
   }
-  if (association.status === 'detached') {
+  if (association.status === 'detached' || association.status === 'superseded' || association.status === 'replaced') {
     return association.time?.validUntil;
   }
   return undefined;
@@ -283,7 +283,7 @@ export function reconstructPlaceSummary(input: {
 
   // Measurements
   for (const m of measurements) {
-    if (m.placeIds?.includes(placeId) || m.place?.placeId === placeId) {
+    if (m.placeIds?.includes(placeId)) {
       if (m.objectIds) m.objectIds.forEach((id) => currentObjectIds.add(id));
       if (m.markerKeys) m.markerKeys.forEach((k) => currentMarkerKeys.add(k));
       if (m.time?.measuredAt) updateActivity(m.measurementId, m.time.measuredAt);
