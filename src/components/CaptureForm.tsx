@@ -591,7 +591,25 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
                 }
               }).then(res => {
                 if (res.status === 'written' || res.status === 'skipped_disabled' || res.status === 'skipped_association_exists') {
-                  // Do nothing, silent expected states
+                  // If marker is successfully created or already existed somehow, write the active transition fact
+                  void writeCaptureAssociationTransitionShadow(db, {
+                    objectId: objectId,
+                    markerKey: idKey,
+                    actorUid: auth.currentUser!.uid,
+                    transition: 'active',
+                    legacy: {
+                      sourceCollection: 'objectIdentifierBindings',
+                      bindingId: bindId,
+                      ownerId: auth.currentUser!.uid,
+                      attachedBy: auth.currentUser!.uid,
+                      runtimePath: 'CaptureForm.handleAddIdentifier'
+                    }
+                  }).then(transRes => {
+                    if (transRes.status === 'written' || transRes.status === 'skipped_disabled') return;
+                    console.info('[capture-association-transition-dual-write]', transRes);
+                  }).catch(transErr => {
+                    console.warn('[capture-association-transition-dual-write] failed', transErr);
+                  });
                 } else if (res.status === 'skipped_object_missing' || res.status === 'skipped_object_not_owned' || res.status === 'skipped_marker_not_owned') {
                   console.info('[capture-marker-association-dual-write]', res);
                 } else {
