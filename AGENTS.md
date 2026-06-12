@@ -378,6 +378,9 @@ The application has transitioned from a simple `items` collection to a normalize
 - Rules must remain conservative and owner/participant scoped.
 - Projection summaries are derived read models; do not treat them as client-owned source-of-truth documents. They must not be written by ordinary client runtime.
 - Projection reconstruction must follow `docs/migrations/projection-reconstruction-semantics.md`.
+- Projection reconstruction logic should remain pure and Firestore-free in `src/lib/projectionReconstruction.ts`.
+- Backend/admin code may later call these reducers to write summaries.
+- Ordinary client runtime must not write projection summaries.
 - Read switching to summaries must be separately feature-gated and must not happen before projection validation/reconciliation is fully complete.
 - Runtime components must not call target write-builder helpers until the migration phase explicitly allows dual-write.
 - Phase 1 write-builder helpers live in `src/lib/entityFactProjectionWrites.ts`.

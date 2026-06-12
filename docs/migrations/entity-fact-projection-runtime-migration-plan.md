@@ -138,6 +138,7 @@ Using existing mapping helpers in `src/lib/entityFactProjectionMapping.ts` as re
 
 **Phase 5: Read switching**
 - Projection reconstruction semantics are defined in `docs/migrations/projection-reconstruction-semantics.md`.
+- Pure projection reconstruction reducers have been added in `src/lib/projectionReconstruction.ts`. Backend/admin projection write paths and automated reconciliation remain future work.
 - `objectSummaries`, `markerSummaries`, and `placeSummaries` are backend/admin-written derived read models.
 - Projection generation and reconciliation are prerequisites for read switching.
 - UI reads from summaries and facts.
