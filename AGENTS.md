@@ -394,7 +394,10 @@ The application has transitioned from a simple `items` collection to a normalize
     - CaptureForm marker/association dual-write must remain feature-gated by `VITE_ENABLE_CAPTURE_MARKER_ASSOCIATION_DUAL_WRITE`.
     - CaptureForm reads must remain on legacy `identifiers`/`objectIdentifierBindings` until read-switching phase.
     - Target marker/association failures must not break legacy save or attach flows.
-    - Do not implement target detach semantics without a separate design.
+    - Target association detach must be represented append-only.
+    - Do not update existing active Association Facts from client runtime code.
+    - Do not implement target detach runtime writes without following `docs/migrations/target-association-detach-semantics.md`.
+    - Existing legacy detach behavior remains authoritative until target detach shadow-write is separately implemented and validated.
   - **Phase 4 CaptureForm currentLocation Measurement Dual-Write Guardrails:**
     - CaptureForm currentLocation measurement dual-write must remain feature-gated.
     - Do not stop writing `objects.currentLocation` until read switching and summary migration are explicitly planned.
