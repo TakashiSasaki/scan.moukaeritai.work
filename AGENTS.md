@@ -378,7 +378,6 @@ The application has transitioned from a simple `items` collection to a normalize
 - Rules must remain conservative and owner/participant scoped.
 - Projection summaries are derived read models; do not treat them as client-owned source-of-truth documents. They must not be written by ordinary client runtime.
 - Projection reconstruction must follow `docs/migrations/projection-reconstruction-semantics.md`.
-- Projection reconstruction logic should remain pure and Firestore-free in `src/lib/projectionReconstruction.ts`.
 - Backend/admin code may later call these reducers to write summaries.
 - Ordinary client runtime must not write projection summaries.
 - Read switching to summaries must be separately feature-gated and must not happen before projection validation/reconciliation is fully complete.
@@ -444,11 +443,10 @@ The application has transitioned from a simple `items` collection to a normalize
 ## Entity/Fact/Projection Guardrails
 - Projection recompute must remain backend/admin-only.
 - Single-target recompute is a foundation; do not add broad backfill or read switching without a separate plan.
-- Do not duplicate projection reconstruction semantics outside `src/lib/projectionReconstruction.ts`.
-- `packages/efp-model` is the canonical pure EFP model package.
-- The package must remain free of Firebase client SDK, Firebase Admin SDK, Firebase Functions, React, and Vite imports.
+- The canonical pure EFP model/types/reducers/utilities live in `packages/efp-model`.
 - Root EFP files under `src/lib` and `src/types` are compatibility re-export shims unless explicitly migrated.
-- Do not duplicate shared EFP logic in functions/src.
-- Do not import root frontend src/** modules from functions/src.
-- Do not make frontend code import from functions/src.
-- Do not claim Functions projection recompute is unblocked until `@scan/efp-model` consumption is validated in the functions deployment artifact.
+- The package must remain free of Firebase client SDK, Firebase Admin SDK, Firebase Functions, React, and Vite imports.
+- functions/src/** must not import source files outside functions/.
+- functions/src/** must not import ../../src/** or ../../packages/**.
+- @scan/efp-model source imports from functions/src are prohibited until the package is included as a proper functions deployment dependency.
+- recomputeProjectionSummary may exist only as a disabled stub until Functions package-consumption validation is complete.

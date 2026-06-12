@@ -7,6 +7,7 @@ The Firebase project (`moukaeritaid`) is shared with other applications. As a re
 ## Packaging Boundaries
 
 Cloud Functions runtime code must not import root frontend source files unless they are packaged into the functions deployment artifact through an explicit shared package or build pipeline.
+Functions source files under `functions/src` must not import files outside the `functions/` directory. This includes `../../src/**` and `../../packages/**` source imports. Shared code must be consumed only through a dependency that is included in the functions deployment artifact.
 
 ## Allowed Deployments
 
