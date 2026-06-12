@@ -11,7 +11,8 @@
     "lint": "tsc --noEmit",
     "test": "vitest run",
     "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/firestore-rules/ --config vitest.rules.config.ts\"",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:functions-boundary": "node scripts/validate-functions-import-boundary.mjs"
   },
   "dependencies": {
     "@google-cloud/monitoring": "^5.3.2",
