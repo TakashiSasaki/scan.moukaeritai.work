@@ -4,10 +4,14 @@ import {
   stripUndefinedDeep,
   safeIdPart,
   buildObjectHasMarkerAssociationId,
+  buildObjectHasMarkerDetachedAssociationId,
+  buildObjectHasMarkerActiveTransitionAssociationId,
   buildMarkerWrite,
   buildMarkerWriteFromIdentifierInput,
   buildAssociationWrite,
   buildObjectHasMarkerAssociationWrite,
+  buildObjectHasMarkerDetachedAssociationWrite,
+  buildObjectHasMarkerActiveTransitionAssociationWrite,
   buildObservationWrite,
   buildMarkerObservedWrite,
   buildMeasurementWrite,
@@ -64,6 +68,18 @@ describe('entityFactProjectionWrites', () => {
 
     it('buildObjectHasMarkerAssociationId is deterministic', () => {
       expect(buildObjectHasMarkerAssociationId('obj/1', 'mk*2')).toBe('object_has_marker__obj_1__mk_2');
+    });
+
+    it('buildObjectHasMarkerDetachedAssociationId is deterministic and prefixed', () => {
+      const id = buildObjectHasMarkerDetachedAssociationId('obj/1', 'mk*2', 'tx-1');
+      expect(id).toBe('object_has_marker_detached__obj_1__mk_2__tx-1');
+      expect(id).not.toEqual(buildObjectHasMarkerAssociationId('obj/1', 'mk*2'));
+    });
+
+    it('buildObjectHasMarkerActiveTransitionAssociationId is deterministic and prefixed', () => {
+      const id = buildObjectHasMarkerActiveTransitionAssociationId('obj/1', 'mk*2', 'tx-2');
+      expect(id).toBe('object_has_marker_active__obj_1__mk_2__tx-2');
+      expect(id).not.toEqual(buildObjectHasMarkerAssociationId('obj/1', 'mk*2'));
     });
   });
 
@@ -165,6 +181,52 @@ describe('entityFactProjectionWrites', () => {
       });
       expect(result.data.status).toBe('superseded');
       expect(result.data.legacy).toEqual({ other: true, ownerId: 'owner-1' });
+    });
+  });
+
+  describe('buildObjectHasMarkerDetachedAssociationWrite', () => {
+    it('sets status to detached and populates validUntil', () => {
+      const ts = Timestamp.now();
+      const result = buildObjectHasMarkerDetachedAssociationWrite({
+        associationId: 'assoc-det',
+        objectId: 'obj-1',
+        markerKey: 'mk-1',
+        detachedAt: ts
+      });
+      expect(result.data.status).toBe('detached');
+      expect(result.data.time.validUntil).toBe(ts);
+      expect(result.data.time.validFrom).toBeUndefined();
+    });
+
+    it('populates validFrom when attachedAt is provided', () => {
+      const attachedTs = Timestamp.fromMillis(1000);
+      const detachedTs = Timestamp.fromMillis(2000);
+      const result = buildObjectHasMarkerDetachedAssociationWrite({
+        associationId: 'assoc-det2',
+        objectId: 'obj-1',
+        markerKey: 'mk-1',
+        attachedAt: attachedTs,
+        detachedAt: detachedTs
+      });
+      expect(result.data.time.validFrom).toBe(attachedTs);
+      expect(result.data.time.validUntil).toBe(detachedTs);
+    });
+  });
+
+  describe('buildObjectHasMarkerActiveTransitionAssociationWrite', () => {
+    it('sets status to active and populates validFrom', () => {
+      const ts = Timestamp.now();
+      const result = buildObjectHasMarkerActiveTransitionAssociationWrite({
+        associationId: 'assoc-act',
+        objectId: 'obj-1',
+        markerKey: 'mk-1',
+        attachedAt: ts
+      });
+      expect(result.data.status).toBe('active');
+      expect(result.data.time.validFrom).toBe(ts);
+      expect(result.data.time.validUntil).toBeUndefined();
+      expect(result.data.participants).toHaveLength(2);
+      expect(result.data.participantKeys).toEqual(['marker:mk-1', 'object:obj-1']);
     });
   });
 
