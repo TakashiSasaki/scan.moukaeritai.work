@@ -137,6 +137,7 @@ export default function SearchScreen({ onSelectItem }: SearchScreenProps) {
             onClick={() => fileInputRef.current?.click()}
             className="p-2 text-[var(--on-surface-variant)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-xl transition-all"
             title="Search with photo"
+            aria-label="Search with photo"
           >
             {isVisualSearching ? (
               <Sparkles className="animate-pulse text-[var(--primary)]" size={20} />

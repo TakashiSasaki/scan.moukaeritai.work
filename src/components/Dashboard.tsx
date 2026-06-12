@@ -180,6 +180,7 @@ export default function Dashboard({ onSelectItem }: DashboardProps) {
                       onClick={(e) => handleDeleteItem(e, obj.objectId)}
                       className="p-2 text-[var(--on-surface-variant)] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all flex-shrink-0"
                       title="Delete object"
+                      aria-label="Delete object"
                     >
                       <Trash2 size={18} />
                     </button>

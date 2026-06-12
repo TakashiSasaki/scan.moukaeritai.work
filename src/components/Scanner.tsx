@@ -219,6 +219,7 @@ export default function Scanner({ onCancel }: ScannerProps) {
       <div className="absolute top-6 right-6 z-50">
         <button 
           onClick={onCancel}
+          aria-label="Close scanner"
           className="bg-black/40 backdrop-blur-xl text-white p-3 rounded-full hover:bg-black/60 transition-colors border border-white/10"
         >
           <X size={24} />

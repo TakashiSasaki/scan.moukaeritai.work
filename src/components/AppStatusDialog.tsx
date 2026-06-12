@@ -65,6 +65,7 @@ export function AppStatusDialog({ isOpen, onClose }: AppStatusDialogProps) {
             </h2>
             <button
               onClick={onClose}
+              aria-label="Close dialog"
               className="p-2 -mr-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] rounded-full transition-colors"
             >
               <X size={20} />

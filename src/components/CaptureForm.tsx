@@ -1092,6 +1092,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         <div className="flex items-center gap-2">
           <button
             onClick={onClose}
+            aria-label="Close form"
             className="p-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] rounded-xl transition-all"
           >
             <X size={24} />
@@ -1215,6 +1216,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
                      disabled={loading}
                      className="p-2 text-[var(--on-surface-variant)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
                      title="Detach Identifier"
+                     aria-label="Detach Identifier"
                    >
                      <Trash2 size={16} />
                    </button>
