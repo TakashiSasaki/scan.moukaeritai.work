@@ -4,6 +4,8 @@ This document defines the rules for reconstructing Projection summaries (`object
 
 *Implementation Note: The pure reconstruction functions live in `src/lib/projectionReconstruction.ts`. They do not access Firestore and are intended to be called later by backend/admin projection generation and reconciliation tooling.*
 
+**Blocked:** Backend/admin single-target projection recompute is deferred until a shared-code packaging strategy is designed. Currently, the `src/lib/projectionReconstruction.ts` reducers cannot be imported safely into Cloud Functions without breaking deployment packaging boundaries or duplicating logic.
+
 ## Principles
 
 The design of projection summaries strictly adheres to the following principles:

@@ -1,5 +1,5 @@
-import type { Timestamp } from 'firebase/firestore';
 import type {
+  Timestamp,
   AssociationDoc,
   MeasurementDoc,
   ObservationDoc,
