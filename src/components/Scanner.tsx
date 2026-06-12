@@ -5,6 +5,7 @@ import { db, auth } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { normalizeIdentifierInput, buildIdentifierKey } from '../lib/identifiers';
+import { writeScannerObservationShadow } from '../lib/scannerObservationDualWrite';
 import { ObjectEventRecord } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import toast from 'react-hot-toast';
@@ -167,6 +168,23 @@ export default function Scanner({ onCancel }: ScannerProps) {
             actorUid: auth.currentUser.uid,
             source: kind
           } as ObjectEventRecord);
+
+          // Phase 2: Dual-write observation shadow
+          void writeScannerObservationShadow({
+            markerKey: identifierKey,
+            objectId: idRecord.objectId,
+            actorUid: auth.currentUser.uid,
+            source: kind,
+            scannedValue,
+          })
+            .then((result) => {
+              if (result.status !== 'written' && result.status !== 'skipped_disabled') {
+                console.info('[scanner-observation-dual-write]', result);
+              }
+            })
+            .catch((error) => {
+              console.warn('[scanner-observation-dual-write] failed', error);
+            });
 
           toast.success('Found matching object!', { id: 'resolveTag' });
           navigate(`/object/${idRecord.objectId}`);

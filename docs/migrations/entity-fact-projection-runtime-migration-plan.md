@@ -101,10 +101,15 @@ Using existing mapping helpers in `src/lib/entityFactProjectionMapping.ts` as re
 - Do not call them from runtime yet.
 - Add tests only.
 
-**Phase 2: Controlled dual-write for scanner observations**
+**Phase 2: Controlled dual-write for scanner observations (In Progress)**
 - Scanner continues reading identifiers.
-- Scanner additionally writes `ObservationDoc` for marker scans if rules/indexes exist.
-- `objectEvents` scan write remains until new event/observation path is validated.
+- Scanner additionally writes `ObservationDoc` for marker scans via a non-blocking shadow path.
+- `objectEvents` scan write remains authoritative.
+- *Implementation Notes*:
+  - Feature-gated by `VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE`.
+  - Target observations are skipped if the target marker is missing or not owned by the current user.
+  - If `objectId` is present but the object is missing or unowned, `objectId` is omitted from the observation rather than failing the write.
+  - Target observation failures must not break user-facing scan behaviors.
 
 **Phase 3: Controlled dual-write for marker attachment**
 - CaptureForm continues writing `identifiers` / `objectIdentifierBindings`.
