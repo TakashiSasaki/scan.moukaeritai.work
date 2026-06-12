@@ -1,0 +1,11 @@
+{
+  "projectId": "moukaeritaid",
+  "ownedFunctions": [
+    "getAppMetrics",
+    "identifyMatches",
+    "describeImage",
+    "getClientIp",
+    "migrateInventoryModel",
+    "scanExecuteImportedObservationBatch"
+  ]
+}

@@ -7,7 +7,7 @@
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
     "test": "npx --yes tsx test-client-ip.ts",
-    "deploy": "firebase deploy --only functions:getAppMetrics,functions:identifyMatches,functions:describeImage,functions:getClientIp,functions:migrateInventoryModel,functions:scanExecuteImportedObservationBatch --project moukaeritaid",
+    "deploy": "firebase deploy --only \"$(node ../scripts/verify-functions-deploy-targets.mjs)\" --project moukaeritaid --non-interactive",
     "logs": "firebase functions:log"
   },
   "engines": {

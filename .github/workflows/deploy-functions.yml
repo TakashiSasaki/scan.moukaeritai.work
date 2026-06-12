@@ -37,5 +37,12 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}'
 
+      - name: Verify Deploy Targets
+        id: verify-targets
+        run: |
+          DEPLOY_TARGETS="$(node scripts/verify-functions-deploy-targets.mjs)"
+          echo "Generated deploy targets: $DEPLOY_TARGETS"
+          echo "DEPLOY_TARGETS=$DEPLOY_TARGETS" >> $GITHUB_ENV
+
       - name: Deploy to Firebase
-        run: npx --yes firebase-tools deploy --only "functions:getAppMetrics,functions:identifyMatches,functions:describeImage,functions:getClientIp,functions:migrateInventoryModel,functions:scanExecuteImportedObservationBatch" --project moukaeritaid --non-interactive
+        run: npx --yes firebase-tools deploy --only "$DEPLOY_TARGETS" --project moukaeritaid --non-interactive
