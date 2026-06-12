@@ -444,8 +444,9 @@ The application has transitioned from a simple `items` collection to a normalize
 ## Entity/Fact/Projection Guardrails
 - Projection recompute must remain backend/admin-only.
 - Single-target recompute is a foundation; do not add broad backfill or read switching without a separate plan.
-- Do not import root frontend `src/**` modules from `functions/src` unless they are packaged through an explicit shared package or build pipeline.
-- Do not duplicate EFP projection reducer semantics inside `functions/src`.
-- Do not make frontend code import from `functions/src`.
-- Do not use symlinks as a shared-code strategy.
-- Backend/admin projection recompute remains blocked until shared EFP packaging is implemented.
+- Canonical pure EFP types/reducers/utilities live in packages/efp-model.
+- Root src/lib and src/types EFP files may be compatibility re-export shims only.
+- Do not duplicate shared EFP logic in functions/src.
+- Do not import root frontend src/** modules from functions/src.
+- Do not make frontend code import from functions/src.
+- Do not claim backend/admin projection recompute is unblocked until Functions packaging of @scan/efp-model is validated.

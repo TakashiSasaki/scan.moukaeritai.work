@@ -2,9 +2,7 @@
 
 This document defines the rules for reconstructing Projection summaries (`objectSummaries`, `markerSummaries`, `placeSummaries`) from target Entity and Fact collections in the Entity/Fact/Projection data model.
 
-*Implementation Note: The pure reconstruction functions live in `src/lib/projectionReconstruction.ts`. They do not access Firestore and are intended to be called later by backend/admin projection generation and reconciliation tooling.*
-
-**Blocked:** The reducers are pure and currently live under `src/lib`. Backend/admin callers must not import them from Functions until the shared-code packaging strategy is implemented.
+*Implementation Note: Canonical pure projection reducers live in packages/efp-model. The legacy src/lib/projectionReconstruction.ts path is a compatibility re-export.*
 
 ## Principles
 
