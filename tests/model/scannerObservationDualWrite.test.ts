@@ -96,6 +96,21 @@ describe('scannerObservationDualWrite', () => {
       expect(result.status).toBe('skipped_marker_not_owned');
     });
 
+    it('returns skipped_missing_marker if marker read fails with permission denied', async () => {
+      vi.stubEnv('VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE', 'true');
+
+      vi.mocked(firestoreModule.getDoc).mockRejectedValueOnce(new Error('Permission denied'));
+
+      const result = await writeScannerObservationShadow({
+        markerKey: mockMarkerKey,
+        actorUid: mockActorUid,
+        source: 'qr',
+      });
+
+      expect(result.status).toBe('skipped_missing_marker');
+      expect(result.reason).toBe('Marker missing or not readable');
+    });
+
     it('writes successfully when marker is owned and object is omitted', async () => {
       vi.stubEnv('VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE', 'true');
 

@@ -30,16 +30,22 @@ export async function writeScannerObservationShadow(input: {
 
   try {
     // 1. Verify marker exists and is owned by actorUid
-    const markerRef = doc(db, 'markers', input.markerKey);
-    const markerSnap = await getDoc(markerRef);
+    try {
+      const markerRef = doc(db, 'markers', input.markerKey);
+      const markerSnap = await getDoc(markerRef);
 
-    if (!markerSnap.exists()) {
-      return { status: 'skipped_missing_marker', reason: 'Marker document not found' };
-    }
+      if (!markerSnap.exists()) {
+        return { status: 'skipped_missing_marker', reason: 'Marker document not found' };
+      }
 
-    const markerData = markerSnap.data();
-    if (markerData.ownerId !== input.actorUid) {
-      return { status: 'skipped_marker_not_owned', reason: 'Marker ownerId does not match actorUid' };
+      const markerData = markerSnap.data();
+      if (markerData.ownerId !== input.actorUid) {
+        return { status: 'skipped_marker_not_owned', reason: 'Marker ownerId does not match actorUid' };
+      }
+    } catch (error) {
+      // If getting the marker fails (e.g., permission denied because it's missing or unowned),
+      // treat it as skipped instead of failing the entire write.
+      return { status: 'skipped_missing_marker', reason: 'Marker missing or not readable' };
     }
 
     // 2. Verify object exists and is owned by actorUid (if objectId is provided)
