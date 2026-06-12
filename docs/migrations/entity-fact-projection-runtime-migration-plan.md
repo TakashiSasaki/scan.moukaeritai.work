@@ -125,9 +125,12 @@ Using existing mapping helpers in `src/lib/entityFactProjectionMapping.ts` as re
   - Detach target semantics are deferred to a separate PR/design.
 
 **Phase 4: currentLocation migration**
-- CaptureForm stops treating `ObjectRecord.currentLocation` as canonical.
-- Writes `MeasurementDoc` for GPS/manual location.
-- Updates `ObjectSummaryDoc.currentPosition` as a derived projection.
+- CaptureForm currentLocation measurement shadow dual-write is feature-gated by `VITE_ENABLE_CAPTURE_LOCATION_MEASUREMENT_DUAL_WRITE`.
+- Legacy `objects.currentLocation` remains authoritative.
+- Shadow `MeasurementDoc` writes happen only after the legacy object save/update succeeds.
+- A measurement is written only for a location captured during the current form session, not for every save of an object that already has `currentLocation`.
+- Reverse-geocoded address is preserved as measurement legacy metadata, not promoted to `Place`.
+- `objectSummaries.currentPosition` is deferred to a separate backend/admin-generated projection PR.
 
 **Phase 5: Read switching**
 - UI reads from summaries and facts.

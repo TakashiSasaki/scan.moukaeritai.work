@@ -16,6 +16,7 @@ import { ImageWithLongPress } from './ImageWithLongPress';
 import { useUserSettings } from '../hooks/useUserSettings';
 import { buildIdentifierKey, normalizeIdentifierInput, buildStage1IdentifierMetadata } from '../lib/identifiers';
 import { writeCaptureMarkerAssociationShadow } from '../lib/captureMarkerAssociationDualWrite';
+import { writeCaptureLocationMeasurementShadow } from '../lib/captureLocationMeasurementDualWrite';
 import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner, findCanonicalBindingsForOwner, buildDetachedBindingPatch, validateIdentifierCanAttach, loadObjectIdentifiersForSummary, mergeIdentifierForSummary } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 import { formatDistanceToNow } from 'date-fns';
@@ -66,6 +67,12 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
     description: '',
     status: 'active',
   });
+  const [pendingLocationMeasurement, setPendingLocationMeasurement] = useState<{
+    latitude: number;
+    longitude: number;
+    accuracyMeters?: number;
+    address?: string;
+  } | null>(null);
 
   // State for associated data
   const [identifiers, setIdentifiers] = useState<IdentifierRecord[]>([]);
@@ -215,6 +222,11 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
             console.warn("Reverse geocoding failed", e);
           }
 
+          const accuracyMeters =
+            Number.isFinite(position.coords.accuracy) && position.coords.accuracy >= 0
+              ? position.coords.accuracy
+              : undefined;
+
           // TODO(entity-fact-projection): migrate currentLocation writes to measurements/objectSummaries.
           setData(prev => ({
             ...prev,
@@ -225,6 +237,13 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
               updatedAt: serverTimestamp() as any
             }
           }));
+
+          setPendingLocationMeasurement({
+            latitude: lat,
+            longitude: lng,
+            accuracyMeters,
+            address
+          });
           toast.success('Location updated');
         },
         (error) => {
@@ -501,6 +520,37 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         });
 
         await batch.commit();
+
+        // --- Shadow dual-write for capture location measurement (Update) ---
+        if (pendingLocationMeasurement) {
+          writeCaptureLocationMeasurementShadow({
+            objectId: objectId,
+            actorUid: auth.currentUser!.uid,
+            latitude: pendingLocationMeasurement.latitude,
+            longitude: pendingLocationMeasurement.longitude,
+            accuracyMeters: pendingLocationMeasurement.accuracyMeters,
+            address: pendingLocationMeasurement.address
+          })
+          .then((result) => {
+            if (result.status === 'written' || result.status === 'skipped_disabled') {
+              return;
+            }
+            if (
+              result.status === 'skipped_invalid_location' ||
+              result.status === 'skipped_object_missing' ||
+              result.status === 'skipped_object_not_owned'
+            ) {
+              console.info('[capture-location-measurement-dual-write]', result);
+              return;
+            }
+            console.warn('[capture-location-measurement-dual-write] failed', result);
+          })
+          .catch((error) => {
+            console.warn('[capture-location-measurement-dual-write] failed', error);
+          });
+
+          setPendingLocationMeasurement(null);
+        }
 
         // --- Shadow dual-write for marker/association (Attach) ---
         writeCaptureMarkerAssociationShadow({
@@ -802,6 +852,37 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
 
         await commitBatch();
 
+        // --- Shadow dual-write for capture location measurement (New Object) ---
+        if (pendingLocationMeasurement) {
+          writeCaptureLocationMeasurementShadow({
+            objectId: data.objectId!,
+            actorUid: auth.currentUser!.uid,
+            latitude: pendingLocationMeasurement.latitude,
+            longitude: pendingLocationMeasurement.longitude,
+            accuracyMeters: pendingLocationMeasurement.accuracyMeters,
+            address: pendingLocationMeasurement.address
+          })
+          .then((result) => {
+            if (result.status === 'written' || result.status === 'skipped_disabled') {
+              return;
+            }
+            if (
+              result.status === 'skipped_invalid_location' ||
+              result.status === 'skipped_object_missing' ||
+              result.status === 'skipped_object_not_owned'
+            ) {
+              console.info('[capture-location-measurement-dual-write]', result);
+              return;
+            }
+            console.warn('[capture-location-measurement-dual-write] failed', result);
+          })
+          .catch((error) => {
+            console.warn('[capture-location-measurement-dual-write] failed', error);
+          });
+
+          setPendingLocationMeasurement(null);
+        }
+
         // --- Shadow dual-write for marker/association (New Object) ---
         for (const idr of activeIdentifiers) {
           writeCaptureMarkerAssociationShadow({
@@ -831,6 +912,37 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         // Update
         await updateDoc(docRef, payload);
         await recordEvent('updated');
+
+        // --- Shadow dual-write for capture location measurement (Update) ---
+        if (pendingLocationMeasurement) {
+          writeCaptureLocationMeasurementShadow({
+            objectId: data.objectId!,
+            actorUid: auth.currentUser!.uid,
+            latitude: pendingLocationMeasurement.latitude,
+            longitude: pendingLocationMeasurement.longitude,
+            accuracyMeters: pendingLocationMeasurement.accuracyMeters,
+            address: pendingLocationMeasurement.address
+          })
+          .then((result) => {
+            if (result.status === 'written' || result.status === 'skipped_disabled') {
+              return;
+            }
+            if (
+              result.status === 'skipped_invalid_location' ||
+              result.status === 'skipped_object_missing' ||
+              result.status === 'skipped_object_not_owned'
+            ) {
+              console.info('[capture-location-measurement-dual-write]', result);
+              return;
+            }
+            console.warn('[capture-location-measurement-dual-write] failed', result);
+          })
+          .catch((error) => {
+            console.warn('[capture-location-measurement-dual-write] failed', error);
+          });
+
+          setPendingLocationMeasurement(null);
+        }
       }
 
       toast.success('Saved successfully');
