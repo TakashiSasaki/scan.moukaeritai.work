@@ -213,6 +213,8 @@ Controlled Scanner observation dual-write, gated and without read switching. Sca
 
 Before implementing controlled Scanner observation dual-write (Phase 2), the following prerequisites derived from builder/rules contract tests must be met:
 
+- write-builder/rules contract tests are in place.
+- Firebase Functions deployment safety guard is in place if Functions deployment is touched.
 - **Controlled Scanner observation dual-write must pass `actorUid`:** User-scoped rules authorize the write based on `userIds`. If `actorUid` is missing, the write will fail.
 - **Target marker document must exist:** Before writing an observation with `markerKeys` under the current rules, the target marker must already be created and owned by the current user.
 - **Owned target object requirement:** If `objectId` is included in the target observation, the corresponding target object must exist and be owned by the current user.

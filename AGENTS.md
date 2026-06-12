@@ -352,6 +352,14 @@ The application has transitioned from a simple `items` collection to a normalize
   - `firebase-blueprint.json` defines the new schema boundaries.
   - Always prefer resolving an identifier via the `identifiers` collection rather than blindly treating a scanned payload as an `objectId`.
 
+### Deployment and Operations
+
+- **Firebase Functions Safety**:
+  - The Firebase project is shared with other applications.
+  - Never use broad `firebase deploy --only functions` from this repository.
+  - Functions deployments must use an explicit allowlist of repository-owned function names (see `docs/deployment/firebase-functions-deploy-safety.md`).
+  - Do not rename callable Functions without a staged migration plan.
+  - Do not delete remote Functions unless the deletion is explicitly requested and the function is confirmed to be owned by this repository.
 
 ### Entity / Fact / Projection Model Polish (2026-06-11)
 
