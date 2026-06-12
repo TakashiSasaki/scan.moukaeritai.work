@@ -7,7 +7,7 @@ import type {
   ObjectSummaryDoc,
   MarkerSummaryDoc,
   PlaceSummaryDoc,
-} from './entityFactProjection';
+} from './entityFactProjection.js';
 
 // -----------------------------------------------------------------------------
 // Timestamp & Timeline Helpers
