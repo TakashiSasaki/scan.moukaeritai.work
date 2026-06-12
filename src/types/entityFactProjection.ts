@@ -1,8 +1,15 @@
-import { Timestamp } from 'firebase/firestore';
-
 // -----------------------------------------------------------------------------
 // Base / Utility Types
 // -----------------------------------------------------------------------------
+
+export interface Timestamp {
+  seconds: number;
+  nanoseconds: number;
+  toMillis(): number;
+  toDate(): Date;
+  isEqual(other: Timestamp): boolean;
+  valueOf(): string;
+}
 
 export type JsonValue =
   | string

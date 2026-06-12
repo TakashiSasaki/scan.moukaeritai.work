@@ -12,8 +12,8 @@ import type {
   MeasurementDoc,
   ObservationDoc,
   EventDoc,
+  Timestamp as ClientTimestamp,
 } from "../../src/types/entityFactProjection";
-import type { Timestamp as ClientTimestamp } from "firebase/firestore";
 
 const appletConfig = {
   firestoreDatabaseId: "photo-moukaeritai-work"

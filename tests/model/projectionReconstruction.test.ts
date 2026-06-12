@@ -28,10 +28,10 @@ describe('Projection Reconstruction Helpers', () => {
   });
 
   it('getAssociationEffectiveTransitionTime uses correct timestamp field based on status', () => {
-    const activeAssoc = { status: 'active', time: { validFrom: ts(100), validUntil: ts(200) } } as AssociationDoc;
-    const detachedAssoc = { status: 'detached', time: { validFrom: ts(100), validUntil: ts(200) } } as AssociationDoc;
-    const replacedAssoc = { status: 'replaced', time: { validFrom: ts(100), validUntil: ts(200) } } as AssociationDoc;
-    const supersededAssoc = { status: 'superseded', time: { validFrom: ts(100), validUntil: ts(200) } } as AssociationDoc;
+    const activeAssoc = { status: 'active', time: { validFrom: ts(100), validUntil: ts(200) } } as unknown as AssociationDoc;
+    const detachedAssoc = { status: 'detached', time: { validFrom: ts(100), validUntil: ts(200) } } as unknown as AssociationDoc;
+    const replacedAssoc = { status: 'replaced', time: { validFrom: ts(100), validUntil: ts(200) } } as unknown as AssociationDoc;
+    const supersededAssoc = { status: 'superseded', time: { validFrom: ts(100), validUntil: ts(200) } } as unknown as AssociationDoc;
 
     expect(getAssociationEffectiveTransitionTime(activeAssoc)?.toMillis()).toBe(100);
     expect(getAssociationEffectiveTransitionTime(detachedAssoc)?.toMillis()).toBe(200);

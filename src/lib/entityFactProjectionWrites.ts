@@ -1,5 +1,5 @@
-import { Timestamp } from 'firebase/firestore';
 import {
+  Timestamp,
   MarkerDoc,
   AssociationDoc,
   ObservationDoc,
