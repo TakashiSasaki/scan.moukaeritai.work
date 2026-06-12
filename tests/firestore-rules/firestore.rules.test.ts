@@ -416,6 +416,177 @@ describe('Firestore Rules Baseline', () => {
     });
   });
 
+  describe('Target Entity / Fact / Projection Collections', () => {
+    describe('markers (Entity)', () => {
+      const validMarker = {
+        markerKey: 'm1',
+        ownerId: ownerUid,
+        medium: 'visual_code',
+        payloadLayer: 'encoded_payload',
+        payloadKind: 'url',
+        stability: 'stable'
+      };
+
+      it('validates shape and immutability on update', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'markers', 'm1'), validMarker);
+        });
+
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+        // Changing immutable fields (medium) fails
+        await assertFails(updateDoc(doc(db, 'markers', 'm1'), { medium: 'nfc' }));
+
+        // Adding valid fields succeeds
+        await assertSucceeds(updateDoc(doc(db, 'markers', 'm1'), { canonicalPayload: 'test' }));
+
+        // Changing it once set fails
+        await assertFails(updateDoc(doc(db, 'markers', 'm1'), { canonicalPayload: 'changed' }));
+
+        // Adding unknown field fails
+        await assertFails(updateDoc(doc(db, 'markers', 'm1'), { unknownField: 'test' }));
+      });
+    });
+
+    describe('places (Entity)', () => {
+      const validPlace = {
+        placeId: 'p1',
+        ownerId: ownerUid,
+        label: 'My Place'
+      };
+
+      it('rejects unknown fields on create and update', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+
+        await assertFails(setDoc(doc(db, 'places', 'p1'), { ...validPlace, unknownField: true }));
+        await assertSucceeds(setDoc(doc(db, 'places', 'p1'), validPlace));
+
+        await assertFails(updateDoc(doc(db, 'places', 'p1'), { unknownField: true }));
+        await assertSucceeds(updateDoc(doc(db, 'places', 'p1'), { label: 'New Label' }));
+      });
+    });
+
+    describe('associations (Fact)', () => {
+      const validAssociation = {
+        associationId: 'a1',
+        associationType: 'binding',
+        participants: [{role: 'user', ref: {id: ownerUid, entityType: 'user'}}],
+        participantKeys: [`user:${ownerUid}`],
+        userIds: [ownerUid],
+        time: { validFrom: serverTimestamp() }
+      };
+
+      it('rejects unknown fields', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'associations', 'a1'), { ...validAssociation, unknown: true }));
+      });
+
+      it('rejects invalid time type', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'associations', 'a1'), { ...validAssociation, time: { validFrom: 'not-a-timestamp' } }));
+      });
+
+      it('allows access via legacy.ownerId', async () => {
+        const legacyAssoc = { ...validAssociation, associationId: 'a2', userIds: [], legacy: { ownerId: ownerUid } };
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertSucceeds(setDoc(doc(db, 'associations', 'a2'), legacyAssoc));
+        await assertSucceeds(getDoc(doc(db, 'associations', 'a2')));
+
+        const nonOwnerDb = testEnv.authenticatedContext(nonOwnerUid).firestore();
+        await assertFails(getDoc(doc(nonOwnerDb, 'associations', 'a2')));
+      });
+    });
+
+    describe('observations (Fact)', () => {
+      const validObservation = {
+        observationId: 'o1',
+        observationType: 'scan',
+        participants: [{role: 'user', ref: {id: ownerUid, entityType: 'user'}}],
+        participantKeys: [`user:${ownerUid}`],
+        userIds: [ownerUid],
+        time: { observedAt: serverTimestamp() }
+      };
+
+      it('rejects unknown fields', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, unknown: true }));
+      });
+
+      it('rejects invalid time type', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, time: { observedAt: 'not-a-timestamp' } }));
+      });
+    });
+
+    describe('measurements (Fact)', () => {
+      const validMeasurement = {
+        measurementId: 'm1',
+        measurementType: 'location',
+        participants: [{role: 'user', ref: {id: ownerUid, entityType: 'user'}}],
+        participantKeys: [`user:${ownerUid}`],
+        userIds: [ownerUid],
+        time: { measuredAt: serverTimestamp() }
+      };
+
+      it('rejects unknown fields', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'measurements', 'm1'), { ...validMeasurement, unknown: true }));
+      });
+
+      it('rejects invalid time type', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'measurements', 'm1'), { ...validMeasurement, time: { measuredAt: 'not-a-timestamp' } }));
+      });
+
+      it('allows access via legacy.ownerId', async () => {
+        const legacyMeas = { ...validMeasurement, measurementId: 'm2', userIds: [], legacy: { ownerId: ownerUid } };
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertSucceeds(setDoc(doc(db, 'measurements', 'm2'), legacyMeas));
+      });
+    });
+
+    describe('events (Fact)', () => {
+      const validEvent = {
+        eventId: 'e1',
+        eventType: 'object_created',
+        participants: [{role: 'user', ref: {id: ownerUid, entityType: 'user'}}],
+        participantKeys: [`user:${ownerUid}`],
+        userIds: [ownerUid],
+        time: { occurredAt: serverTimestamp() }
+      };
+
+      it('rejects unknown fields', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'events', 'e1'), { ...validEvent, unknown: true }));
+      });
+
+      it('rejects invalid time type', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'events', 'e1'), { ...validEvent, time: { occurredAt: 'not-a-timestamp' } }));
+      });
+
+      it('allows access via legacy.ownerId', async () => {
+        const legacyEvent = { ...validEvent, eventId: 'e2', userIds: [], legacy: { ownerId: ownerUid } };
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertSucceeds(setDoc(doc(db, 'events', 'e2'), legacyEvent));
+      });
+    });
+
+    describe('summaries (Projection)', () => {
+      const validSummary = { asOf: serverTimestamp() };
+
+      it('markerSummaries: normal user cannot create/update, admin can', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'markerSummaries', 'ms1'), validSummary));
+      });
+
+      it('placeSummaries: normal user cannot create/update, admin can', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'placeSummaries', 'ps1'), validSummary));
+      });
+    });
+  });
+
   describe('objectEvents', () => {
     const validEvent = {
         eventId: 'evt1',
