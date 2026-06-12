@@ -1,4 +1,4 @@
-import { EntityRef, Participant, FactIndexFields } from './entityFactProjection';
+import { EntityRef, Participant, FactIndexFields } from './entityFactProjection.js';
 
 /**
  * Returns a stable string representation of an EntityRef for indexing.
