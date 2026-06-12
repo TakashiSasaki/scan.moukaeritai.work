@@ -466,10 +466,9 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, objectId, idKey);
         const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindId);
 
-        const canonicalBindingDoc = canonicalBindings.find((doc) => doc.id === bindId);
-        const isReattachTransition =
-          !!canonicalBindingDoc &&
-          canonicalBindingDoc.data().status === 'detached';
+        // Find any existing detached binding for this object/marker pair to determine if this is a reattach.
+        const detachedBindingDoc = canonicalBindings.find((doc) => doc.data().status === 'detached');
+        const isReattachTransition = !!detachedBindingDoc;
 
         if (hasCanonicalBinding) {
            batch.update(bindRef, {
@@ -567,7 +566,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
             transition: 'active',
             legacy: {
               sourceCollection: 'objectIdentifierBindings',
-              bindingId: bindId,
+              bindingId: detachedBindingDoc?.id || bindId,
               ownerId: auth.currentUser.uid,
               attachedBy: auth.currentUser.uid,
               runtimePath: 'CaptureForm.handleAddIdentifier'
@@ -599,7 +598,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
                     transition: 'active',
                     legacy: {
                       sourceCollection: 'objectIdentifierBindings',
-                      bindingId: bindId,
+                      bindingId: detachedBindingDoc?.id || bindId,
                       ownerId: auth.currentUser!.uid,
                       attachedBy: auth.currentUser!.uid,
                       runtimePath: 'CaptureForm.handleAddIdentifier'
