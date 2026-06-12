@@ -137,6 +137,9 @@ Using existing mapping helpers in `src/lib/entityFactProjectionMapping.ts` as re
 - `objectSummaries.currentPosition` is deferred to a separate backend/admin-generated projection PR.
 
 **Phase 5: Read switching**
+- Projection reconstruction semantics are defined in `docs/migrations/projection-reconstruction-semantics.md`.
+- `objectSummaries`, `markerSummaries`, and `placeSummaries` are backend/admin-written derived read models.
+- Projection generation and reconciliation are prerequisites for read switching.
 - UI reads from summaries and facts.
 - Legacy collections remain available as fallbacks.
 
