@@ -467,8 +467,10 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindId);
 
         // Find any existing detached binding for this object/marker pair to determine if this is a reattach.
+        // Important: Only treat this as a reattach if we are not performing an idempotent attach
+        // (i.e. the canonical active state wasn't already established).
         const detachedBindingDoc = canonicalBindings.find((doc) => doc.data().status === 'detached');
-        const isReattachTransition = !!detachedBindingDoc;
+        const isReattachTransition = !isIdempotentAttach && !!detachedBindingDoc;
 
         if (hasCanonicalBinding) {
            batch.update(bindRef, {
@@ -632,7 +634,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
           .catch((error) => {
             console.warn('[capture-association-transition-dual-write] failed', error);
           });
-        } else {
+        } else if (!isIdempotentAttach) {
           writeCaptureMarkerAssociationShadow({
             objectId: objectId,
             actorUid: auth.currentUser.uid,
