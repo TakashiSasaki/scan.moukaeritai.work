@@ -355,6 +355,11 @@ The application has transitioned from a simple `items` collection to a normalize
 
 ### Entity / Fact / Projection Model Polish (2026-06-11)
 
+- Before adding runtime dual-write, agents must verify builder-generated target documents against Firestore rules tests.
+- Scanner observation dual-write must pass actorUid so userIds-based rules can authorize the write.
+- Under current rules, target Facts that include objectIds/markerKeys/placeIds require the corresponding target Entity documents to exist and be owned by the current user.
+- Runtime reads must remain on legacy/current collections until the explicit read-switching phase.
+
 - Any target collection rules change must run `npm run test:rules`.
 - Target Fact rules should be append-only for normal users.
 - Target Fact access should be owner/participant scoped through userIds and/or legacy.ownerId compatibility fields.
