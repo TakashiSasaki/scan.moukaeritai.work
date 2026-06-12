@@ -117,11 +117,11 @@ describe('captureMarkerAssociationDualWrite', () => {
     expect(firestore.setDoc).not.toHaveBeenCalled();
   });
 
-  it('returns failed if a firestore operation throws', async () => {
+  it('returns skipped_object_missing if getDoc for object throws', async () => {
     vi.mocked(firestore.getDoc).mockRejectedValueOnce(new Error('Network error'));
 
     const result = await writeCaptureMarkerAssociationShadow(mockInput);
-    expect(result.status).toBe('failed');
-    expect(result.reason).toBe('Network error');
+    expect(result.status).toBe('skipped_object_missing');
+    expect(result.reason).toBe('Target object document not found or unreadable');
   });
 });
