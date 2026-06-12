@@ -197,4 +197,14 @@ Data validation ideas:
 
 ## 13. Recommended Next PR
 
-After rules/index/blueprint preparation is merged and validated, the next runtime PR may add controlled Scanner observation dual-write behind an explicit migration phase gate. Scanner reads must remain on legacy identifiers until the read-switching phase.
+After rules/index/blueprint preparation is merged and validated, rules hardening is a prerequisite before controlled Scanner observation dual-write.
+
+Rules hardening conditions must be met:
+- `npm run test:rules` passes.
+- target rules reject unknown fields.
+- userIds-only and legacy.ownerId-only access paths are both tested where applicable.
+- normal users cannot update Facts.
+- normal users cannot create/update Projections.
+
+Once rules are hardened and tested, the next recommended runtime PR is:
+Controlled Scanner observation dual-write, gated and without read switching. Scanner reads must remain on legacy identifiers until the read-switching phase.

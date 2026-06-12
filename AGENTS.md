@@ -355,6 +355,12 @@ The application has transitioned from a simple `items` collection to a normalize
 
 ### Entity / Fact / Projection Model Polish (2026-06-11)
 
+- Any target collection rules change must run `npm run test:rules`.
+- Target Fact rules should be append-only for normal users.
+- Target Fact access should be owner/participant scoped through userIds and/or legacy.ownerId compatibility fields.
+- Target Projection summaries are admin-written derived read models, not client-owned source-of-truth documents.
+- Runtime dual-write must not be introduced until rules hardening and tests are complete.
+
 - Target collection rules/indexes/blueprint entries may be prepared before runtime dual-write.
 - Rules must remain conservative and owner/participant scoped.
 - Projection summaries are derived read models; do not treat them as client-owned source-of-truth documents.
