@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Timestamp } from 'firebase/firestore';
+import { stripUndefinedDeep } from '../../packages/efp-model/src/serialization';
 import {
-  stripUndefinedDeep,
   safeIdPart,
   buildObjectHasMarkerAssociationId,
   buildObjectHasMarkerDetachedAssociationId,
