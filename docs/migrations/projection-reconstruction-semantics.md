@@ -4,6 +4,8 @@ This document defines the rules for reconstructing Projection summaries (`object
 
 *Implementation Note: Canonical pure projection reducers live in packages/efp-model and are emitted as part of the package build. The legacy src/lib/projectionReconstruction.ts path remains a compatibility re-export.*
 
+Backend/admin single-target projection recompute is implemented by the callable function `recomputeProjectionSummary`. It uses `src/lib/projectionReconstruction.ts` reducers and defaults to dry-run. It does not switch runtime reads.
+
 ## Principles
 
 The design of projection summaries strictly adheres to the following principles:

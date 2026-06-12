@@ -444,6 +444,7 @@ The application has transitioned from a simple `items` collection to a normalize
 ## Entity/Fact/Projection Guardrails
 - Projection recompute must remain backend/admin-only.
 - Single-target recompute is a foundation; do not add broad backfill or read switching without a separate plan.
+- Do not duplicate projection reconstruction semantics outside `src/lib/projectionReconstruction.ts`.
 - `packages/efp-model` is the canonical pure EFP model package.
 - The package must remain free of Firebase client SDK, Firebase Admin SDK, Firebase Functions, React, and Vite imports.
 - Root EFP files under `src/lib` and `src/types` are compatibility re-export shims unless explicitly migrated.
