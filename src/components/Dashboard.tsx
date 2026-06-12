@@ -33,6 +33,7 @@ export default function Dashboard({ onSelectItem }: DashboardProps) {
       })) as ObjectRecord[];
 
       if (filterTag !== 'all') {
+        // TODO(entity-fact-projection): migrate from identifierSummary to objectSummaries projection
         if (filterTag === 'none') {
           newObjects = newObjects.filter(obj => !obj.identifierSummary || obj.identifierSummary.activeKinds.length === 0);
         } else {

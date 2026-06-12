@@ -38,6 +38,7 @@ export default function Overview() {
       const snap = await getDocs(q);
       const objects = snap.docs.map(doc => doc.data() as ObjectRecord);
 
+      // TODO(entity-fact-projection): migrate from identifierSummary to objectSummaries projection
       const qr = objects.filter(i => i.identifierSummary?.activeKinds.includes('qr')).length;
       const nfc = objects.filter(i => i.identifierSummary?.activeKinds.includes('nfc')).length;
       const none = objects.filter(i => !i.identifierSummary || i.identifierSummary.activeKinds.length === 0).length;
