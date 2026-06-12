@@ -1,7 +1,7 @@
 import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { buildMarkerObservedWrite } from './entityFactProjectionWrites';
-import { v4 as uuidv4 } from 'uuid';
+import { v7 as uuidv7 } from 'uuid';
 
 export function isScannerObservationDualWriteEnabled(): boolean {
   return import.meta.env.VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE === 'true';
@@ -75,7 +75,7 @@ export async function writeScannerObservationShadow(input: {
     }
 
     // 3. Build target observation write
-    const observationId = uuidv4();
+    const observationId = uuidv7();
     const now = Timestamp.now();
     const payload = input.scannedValue ? { rawValue: input.scannedValue } : undefined;
 
