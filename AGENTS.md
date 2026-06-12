@@ -395,6 +395,11 @@ The application has transitioned from a simple `items` collection to a normalize
     - CaptureForm reads must remain on legacy `identifiers`/`objectIdentifierBindings` until read-switching phase.
     - Target marker/association failures must not break legacy save or attach flows.
     - Do not implement target detach semantics without a separate design.
+  - **Phase 4 CaptureForm currentLocation Measurement Dual-Write Guardrails:**
+    - CaptureForm currentLocation measurement dual-write must remain feature-gated.
+    - Do not stop writing `objects.currentLocation` until read switching and summary migration are explicitly planned.
+    - Do not write `objectSummaries` from ordinary clients.
+    - Target measurement failures must not break legacy save/update flows.
 - Added `FactProvenanceSource` union to restrict `FactProvenance.source` values (`user_confirmed`, `user_report`, `marker_observation`, `location_measurement`, `trusted_reader`, `system_inference`, `admin_import`, `migration`, `import`, `legacy_observation`, `legacy_event`, `legacy_mapping`).
 - Added new `FactProvenance` metadata fields (`actorUid`, `sourceFactIds`).
 - `ownerId` policy in Entity docs (Object, Marker, Place): In the conceptual model, `ownerId` is not part of entity identity. However, in the current implementation, it remains required by Firestore rules and owner-scoped runtime paths. Migration direction is to keep `ownerId` for compatibility now and not include it in semantic identity.
