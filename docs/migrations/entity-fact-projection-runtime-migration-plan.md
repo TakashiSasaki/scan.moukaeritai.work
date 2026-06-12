@@ -115,6 +115,14 @@ Using existing mapping helpers in `src/lib/entityFactProjectionMapping.ts` as re
 - CaptureForm continues writing `identifiers` / `objectIdentifierBindings`.
 - CaptureForm additionally writes `markers` / `associations`.
 - `identifierSummary` remains until `objectSummaries` path is validated.
+- *Implementation Notes*:
+  - CaptureForm marker/association shadow dual-write is feature-gated by `VITE_ENABLE_CAPTURE_MARKER_ASSOCIATION_DUAL_WRITE`.
+  - Legacy identifiers and objectIdentifierBindings remain authoritative.
+  - Target marker is created only if missing.
+  - Existing target marker is not overwritten.
+  - Target association is created only if missing.
+  - Existing target association is not updated because normal-user Facts are append-only.
+  - Detach target semantics are deferred to a separate PR/design.
 
 **Phase 4: currentLocation migration**
 - CaptureForm stops treating `ObjectRecord.currentLocation` as canonical.

@@ -15,6 +15,7 @@ import { getImageFormatFromUrl } from '../lib/utils';
 import { ImageWithLongPress } from './ImageWithLongPress';
 import { useUserSettings } from '../hooks/useUserSettings';
 import { buildIdentifierKey, normalizeIdentifierInput, buildStage1IdentifierMetadata } from '../lib/identifiers';
+import { writeCaptureMarkerAssociationShadow } from '../lib/captureMarkerAssociationDualWrite';
 import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner, findCanonicalBindingsForOwner, buildDetachedBindingPatch, validateIdentifierCanAttach, loadObjectIdentifiersForSummary, mergeIdentifierForSummary } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 import { formatDistanceToNow } from 'date-fns';
@@ -501,6 +502,29 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
 
         await batch.commit();
 
+        // --- Shadow dual-write for marker/association (Attach) ---
+        writeCaptureMarkerAssociationShadow({
+          objectId: objectId,
+          actorUid: auth.currentUser.uid,
+          identifier: {
+            identifierKey: idKey,
+            kind,
+            scheme,
+            canonicalValue,
+          }
+        }).then(res => {
+          if (res.status === 'written' || res.status === 'skipped_disabled' || res.status === 'skipped_association_exists') {
+            // Do nothing, silent expected states
+          } else if (res.status === 'skipped_object_missing' || res.status === 'skipped_object_not_owned' || res.status === 'skipped_marker_not_owned') {
+            console.info('[capture-marker-association-dual-write]', res);
+          } else {
+            console.warn('[capture-marker-association-dual-write] failed', res);
+          }
+        }).catch(err => {
+          console.warn('[capture-marker-association-dual-write] failed', err);
+        });
+        // ---------------------------------------------------------
+
         // Local React state should be updated from the same identifier set used to compute summary after commit succeeds
         setIdentifiers(newIdentifiers);
 
@@ -777,6 +801,32 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         }
 
         await commitBatch();
+
+        // --- Shadow dual-write for marker/association (New Object) ---
+        for (const idr of activeIdentifiers) {
+          writeCaptureMarkerAssociationShadow({
+            objectId: data.objectId!,
+            actorUid: auth.currentUser.uid,
+            identifier: {
+              identifierKey: idr.identifierKey,
+              kind: idr.kind,
+              scheme: idr.scheme,
+              canonicalValue: idr.canonicalValue,
+            }
+          }).then(res => {
+            if (res.status === 'written' || res.status === 'skipped_disabled' || res.status === 'skipped_association_exists') {
+              // Do nothing, silent expected states
+            } else if (res.status === 'skipped_object_missing' || res.status === 'skipped_object_not_owned' || res.status === 'skipped_marker_not_owned') {
+              console.info('[capture-marker-association-dual-write]', res);
+            } else {
+              console.warn('[capture-marker-association-dual-write] failed', res);
+            }
+          }).catch(err => {
+            console.warn('[capture-marker-association-dual-write] failed', err);
+          });
+        }
+        // -------------------------------------------------------------
+
       } else {
         // Update
         await updateDoc(docRef, payload);
