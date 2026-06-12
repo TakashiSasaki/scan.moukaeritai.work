@@ -397,7 +397,9 @@ The application has transitioned from a simple `items` collection to a normalize
     - Target association detach must be represented append-only.
     - Do not update existing active Association Facts from client runtime code.
     - Do not implement target detach runtime writes without following `docs/migrations/target-association-detach-semantics.md`.
-    - Existing legacy detach behavior remains authoritative until target detach shadow-write is separately implemented and validated.
+    - Use explicit `object_has_marker` transition builders (`buildObjectHasMarkerDetachedAssociationWrite` and `buildObjectHasMarkerActiveTransitionAssociationWrite`) for detached and reattached Association Facts.
+    - Do not reuse the initial active association ID for detach or reattach transitions.
+    - Existing legacy detach behavior remains authoritative until target detach/reattach shadow-write is separately implemented and validated in a future PR.
   - **Phase 4 CaptureForm currentLocation Measurement Dual-Write Guardrails:**
     - CaptureForm currentLocation measurement dual-write must remain feature-gated.
     - Do not stop writing `objects.currentLocation` until read switching and summary migration are explicitly planned.

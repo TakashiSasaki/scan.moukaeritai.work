@@ -14,7 +14,10 @@ import {
   buildMarkerObservedWrite,
   buildObjectHasMarkerAssociationWrite,
   buildObjectLocationMeasurementWrite,
-  buildEventWrite
+  buildEventWrite,
+  buildObjectHasMarkerAssociationId,
+  buildObjectHasMarkerDetachedAssociationWrite,
+  buildObjectHasMarkerActiveTransitionAssociationWrite
 } from '../../src/lib/entityFactProjectionWrites';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -293,6 +296,116 @@ describe('Write Builder Contracts', () => {
         ownerId: ownerUid,
         actorUid: ownerUid,
         validFrom: now,
+      });
+
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+      await assertFails(setDoc(doc(db, 'associations', builderOutput.id), builderOutput.data));
+    });
+
+    it('owner can create detached object_has_marker Association Fact', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const adminDb = context.firestore();
+        await setDoc(doc(adminDb, 'objects', assocObjectId), { ownerId: ownerUid });
+        await setDoc(doc(adminDb, 'markers', assocMarkerKey), { ownerId: ownerUid });
+      });
+
+      const now = serverTimestamp() as Timestamp;
+      const builderOutput = buildObjectHasMarkerDetachedAssociationWrite({
+        associationId: 'assoc-det-1',
+        objectId: assocObjectId,
+        markerKey: assocMarkerKey,
+        ownerId: ownerUid,
+        actorUid: ownerUid,
+        detachedAt: now,
+      });
+
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+      await assertSucceeds(setDoc(doc(db, 'associations', builderOutput.id), builderOutput.data));
+    });
+
+    it('owner can create reattach active transition Association Fact', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const adminDb = context.firestore();
+        await setDoc(doc(adminDb, 'objects', assocObjectId), { ownerId: ownerUid });
+        await setDoc(doc(adminDb, 'markers', assocMarkerKey), { ownerId: ownerUid });
+      });
+
+      const now = serverTimestamp() as Timestamp;
+      const builderOutput = buildObjectHasMarkerActiveTransitionAssociationWrite({
+        associationId: 'assoc-act-1',
+        objectId: assocObjectId,
+        markerKey: assocMarkerKey,
+        ownerId: ownerUid,
+        actorUid: ownerUid,
+        attachedAt: now,
+      });
+
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+      await assertSucceeds(setDoc(doc(db, 'associations', builderOutput.id), builderOutput.data));
+    });
+
+    it('normal user cannot update an existing active Association Fact to detached', async () => {
+      const activeAssocId = buildObjectHasMarkerAssociationId(assocObjectId, assocMarkerKey);
+
+      // Seed target documents and initial active association fact using testEnv as admin
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const adminDb = context.firestore();
+        await setDoc(doc(adminDb, 'objects', assocObjectId), { ownerId: ownerUid });
+        await setDoc(doc(adminDb, 'markers', assocMarkerKey), { ownerId: ownerUid });
+
+        const now = serverTimestamp() as Timestamp;
+        const builderOutput = buildObjectHasMarkerAssociationWrite({
+          associationId: activeAssocId,
+          objectId: assocObjectId,
+          markerKey: assocMarkerKey,
+          ownerId: ownerUid,
+          actorUid: ownerUid,
+          validFrom: now,
+        });
+        await setDoc(doc(adminDb, 'associations', builderOutput.id), builderOutput.data);
+      });
+
+      // Attempt to update the existing document status to detached as a normal user
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+      await assertFails(setDoc(doc(db, 'associations', activeAssocId), { status: 'detached' }, { merge: true }));
+    });
+
+    it('detached Association Fact creation is rejected if the target marker is missing', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const adminDb = context.firestore();
+        await setDoc(doc(adminDb, 'objects', assocObjectId), { ownerId: ownerUid });
+        // Intentional: missing marker
+      });
+
+      const now = serverTimestamp() as Timestamp;
+      const builderOutput = buildObjectHasMarkerDetachedAssociationWrite({
+        associationId: 'assoc-det-no-marker',
+        objectId: assocObjectId,
+        markerKey: 'missing-marker',
+        ownerId: ownerUid,
+        actorUid: ownerUid,
+        detachedAt: now,
+      });
+
+      const db = testEnv.authenticatedContext(ownerUid).firestore();
+      await assertFails(setDoc(doc(db, 'associations', builderOutput.id), builderOutput.data));
+    });
+
+    it('detached Association Fact creation is rejected if the target object is not owned by the actor', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const adminDb = context.firestore();
+        await setDoc(doc(adminDb, 'objects', assocObjectId), { ownerId: nonOwnerUid });
+        await setDoc(doc(adminDb, 'markers', assocMarkerKey), { ownerId: ownerUid });
+      });
+
+      const now = serverTimestamp() as Timestamp;
+      const builderOutput = buildObjectHasMarkerDetachedAssociationWrite({
+        associationId: 'assoc-det-not-owner',
+        objectId: assocObjectId,
+        markerKey: assocMarkerKey,
+        ownerId: ownerUid, // Even if requested with ownerId, object lookup fails
+        actorUid: ownerUid,
+        detachedAt: now,
       });
 
       const db = testEnv.authenticatedContext(ownerUid).firestore();

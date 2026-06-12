@@ -48,8 +48,8 @@ The IDs for transition Facts must be strictly collision-free against the initial
 
 **Runtime ID Strategy (Future Shadow-Write):**
 Use standard hyphenated UUIDv7 to encode transition uniqueness and order.
-- Detach Transition: `object_has_marker_detached__{safeObjectId}__{safeMarkerKey}__{uuidv7}`
-- Reattach Transition: `object_has_marker_active__{safeObjectId}__{safeMarkerKey}__{uuidv7}`
+- Detach Transition: `object_has_marker_detached__{safeObjectId}__{safeMarkerKey}__{uuidv7}` (via `buildObjectHasMarkerDetachedAssociationId`)
+- Reattach Transition: `object_has_marker_active__{safeObjectId}__{safeMarkerKey}__{uuidv7}` (via `buildObjectHasMarkerActiveTransitionAssociationId`)
 
 **Backfill ID Strategy:**
 For backfilling from legacy database states, prefer deterministic IDs derived from the legacy records.
@@ -94,6 +94,8 @@ When migrating or dual-writing from legacy `objectIdentifierBindings`, preserve 
 ## Future Runtime Shadow-Write Plan
 The current `CaptureForm` marker/association attach shadow-write helper is only for the initial attach shadow path. A future PR must implement explicit transition handling for both detach and reattach.
 
+*Note: The pure builder functions for these transition facts live in `src/lib/entityFactProjectionWrites.ts`. Future runtime code must call the explicit transition builders (`buildObjectHasMarkerDetachedAssociationWrite` and `buildObjectHasMarkerActiveTransitionAssociationWrite`) rather than reusing the initial active association builder with the deterministic initial association ID.*
+
 That future implementation should:
 - Maintain the legacy attach/detach batch as authoritative.
 - After the legacy detach/reattach `batch.commit()` succeeds, schedule a non-blocking target transition shadow-write.
@@ -106,11 +108,10 @@ That future implementation should:
 
 ## Future Tests
 A future PR implementing the shadow-write must include:
-- Builder/rules contract tests for the detached Association Fact.
 - Helper unit tests for the future detach shadow-write logic.
 - Tests verifying skip behavior if the target Object or Marker is missing or not owned by the actor.
-- Tests confirming the existing active association is not updated.
-- Tests confirming the new detached Fact creates successfully with `status: 'detached'` and the correct `validUntil`.
+
+*Note: Builder/rules contract tests for both detached and reattach transition facts have already been implemented.*
 
 ## Non-goals
 This PR is explicitly design-only. It **does not include**:

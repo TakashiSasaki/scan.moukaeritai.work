@@ -89,6 +89,22 @@ export function buildObjectHasMarkerAssociationId(objectId: string, markerKey: s
   return `object_has_marker__${safeIdPart(objectId)}__${safeIdPart(markerKey)}`;
 }
 
+export function buildObjectHasMarkerDetachedAssociationId(
+  objectId: string,
+  markerKey: string,
+  transitionId: string
+): string {
+  return `object_has_marker_detached__${safeIdPart(objectId)}__${safeIdPart(markerKey)}__${safeIdPart(transitionId)}`;
+}
+
+export function buildObjectHasMarkerActiveTransitionAssociationId(
+  objectId: string,
+  markerKey: string,
+  transitionId: string
+): string {
+  return `object_has_marker_active__${safeIdPart(objectId)}__${safeIdPart(markerKey)}__${safeIdPart(transitionId)}`;
+}
+
 // -----------------------------------------------------------------------------
 // Builders
 // -----------------------------------------------------------------------------
@@ -262,6 +278,50 @@ export function buildObjectHasMarkerAssociationWrite(input: {
     status: associationStatus,
     provenance,
     legacy: Object.keys(legacyData).length > 0 ? legacyData : undefined
+  });
+}
+
+export function buildObjectHasMarkerDetachedAssociationWrite(input: {
+  associationId: string;
+  objectId: string;
+  markerKey: string;
+  ownerId?: string;
+  detachedAt: Timestamp;
+  attachedAt?: Timestamp;
+  actorUid?: string;
+  legacy?: Record<string, unknown>;
+}): EntityFactProjectionWrite<AssociationDoc> {
+  return buildObjectHasMarkerAssociationWrite({
+    associationId: input.associationId,
+    objectId: input.objectId,
+    markerKey: input.markerKey,
+    ownerId: input.ownerId,
+    validFrom: input.attachedAt,
+    validUntil: input.detachedAt,
+    status: 'detached',
+    actorUid: input.actorUid,
+    legacy: input.legacy,
+  });
+}
+
+export function buildObjectHasMarkerActiveTransitionAssociationWrite(input: {
+  associationId: string;
+  objectId: string;
+  markerKey: string;
+  ownerId?: string;
+  attachedAt: Timestamp;
+  actorUid?: string;
+  legacy?: Record<string, unknown>;
+}): EntityFactProjectionWrite<AssociationDoc> {
+  return buildObjectHasMarkerAssociationWrite({
+    associationId: input.associationId,
+    objectId: input.objectId,
+    markerKey: input.markerKey,
+    ownerId: input.ownerId,
+    validFrom: input.attachedAt,
+    status: 'active',
+    actorUid: input.actorUid,
+    legacy: input.legacy,
   });
 }
 
