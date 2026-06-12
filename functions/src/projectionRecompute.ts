@@ -6,15 +6,15 @@ import {
   reconstructObjectSummary,
   reconstructMarkerSummary,
   reconstructPlaceSummary,
-} from "../../src/lib/projectionReconstruction";
-import { stripUndefinedDeep } from "../../src/lib/entityFactProjectionWrites";
+} from "../../packages/efp-model/src/projectionReconstruction";
+import { stripUndefinedDeep } from "../../packages/efp-model/src/serialization";
 import type {
   AssociationDoc,
   MeasurementDoc,
   ObservationDoc,
   EventDoc,
   Timestamp as ClientTimestamp,
-} from "../../src/types/entityFactProjection";
+} from "../../packages/efp-model/src/entityFactProjection";
 
 const appletConfig = {
   firestoreDatabaseId: "photo-moukaeritai-work"

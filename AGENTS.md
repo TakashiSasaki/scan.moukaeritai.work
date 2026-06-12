@@ -445,3 +445,10 @@ The application has transitioned from a simple `items` collection to a normalize
 - Projection recompute must remain backend/admin-only.
 - Single-target recompute is a foundation; do not add broad backfill or read switching without a separate plan.
 - Do not duplicate projection reconstruction semantics outside `src/lib/projectionReconstruction.ts`.
+- `packages/efp-model` is the canonical pure EFP model package.
+- The package must remain free of Firebase client SDK, Firebase Admin SDK, Firebase Functions, React, and Vite imports.
+- Root EFP files under `src/lib` and `src/types` are compatibility re-export shims unless explicitly migrated.
+- Do not duplicate shared EFP logic in functions/src.
+- Do not import root frontend src/** modules from functions/src.
+- Do not make frontend code import from functions/src.
+- Do not claim Functions projection recompute is unblocked until `@scan/efp-model` consumption is validated in the functions deployment artifact.

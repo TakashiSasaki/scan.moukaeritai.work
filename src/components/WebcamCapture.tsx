@@ -66,7 +66,7 @@ export default function WebcamCapture({ onCapture, onCancel }: WebcamCaptureProp
       className="fixed inset-0 z-[200] bg-black flex flex-col"
     >
       <div className="flex justify-between items-center p-4 text-white z-10 absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent">
-        <button onClick={onCancel} className="p-2 backdrop-blur-md rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+        <button onClick={onCancel} aria-label="Cancel capture" className="p-2 backdrop-blur-md rounded-full bg-white/10 hover:bg-white/20 transition-colors">
           <X size={24} />
         </button>
         <span className="font-bold tracking-widest text-sm uppercase">Take Photo</span>

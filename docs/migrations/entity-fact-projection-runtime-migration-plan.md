@@ -139,7 +139,8 @@ Using existing mapping helpers in `src/lib/entityFactProjectionMapping.ts` as re
 **Phase 5: Read switching**
 - Projection reconstruction semantics are defined in `docs/migrations/projection-reconstruction-semantics.md`.
 - Pure projection reconstruction reducers have been added in `src/lib/projectionReconstruction.ts`.
-- A backend/admin single-target projection recompute foundation exists. Full backfill, automated reconciliation reports, and read switching remain future work.
+- A backend/admin single-target projection recompute foundation exists. The first-class shared EFP package has been introduced and now emits build artifacts. Backend/admin projection recompute remains blocked until Functions consumption of the package is explicitly validated inside the Firebase Functions deployment boundary.
+- Full backfill, automated reconciliation reports, and read switching remain future work.
 - `objectSummaries`, `markerSummaries`, and `placeSummaries` are backend/admin-written derived read models.
 - Projection generation and reconciliation are prerequisites for read switching.
 - UI reads from summaries and facts.
