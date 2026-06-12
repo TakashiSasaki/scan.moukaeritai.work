@@ -2,7 +2,7 @@
 
 This document defines the rules for reconstructing Projection summaries (`objectSummaries`, `markerSummaries`, `placeSummaries`) from target Entity and Fact collections in the Entity/Fact/Projection data model.
 
-*Implementation Note: Canonical pure projection reducers live in packages/efp-model. The legacy src/lib/projectionReconstruction.ts path is a compatibility re-export.*
+*Implementation Note: Canonical pure projection reducers live in packages/efp-model and are emitted as part of the package build. The legacy src/lib/projectionReconstruction.ts path remains a compatibility re-export.*
 
 ## Principles
 

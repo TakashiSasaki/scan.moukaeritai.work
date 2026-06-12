@@ -66,7 +66,7 @@ Rationale:
 
 *Note: This document only defines the strategy. The implementation of `packages/efp-model` is not part of this PR.*
 
-**Implementation Status:** `packages/efp-model` now contains the canonical pure EFP types/reducers/utilities. Frontend/root code consumes it directly or through compatibility re-export shims. Functions consumption and admin projection recompute remain future work until Functions deployment packaging is validated.
+**Implementation Status:** `packages/efp-model` now contains the canonical pure EFP types/reducers/utilities. Frontend/root code consumes it directly or through compatibility re-export shims. `packages/efp-model` now emits a dist package artifact with JS and declaration files. This makes the shared EFP code packageable, but Functions consumption and deployment-boundary validation remain future work.
 
 ## Required Constraints for Shared EFP Code
 
