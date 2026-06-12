@@ -52,6 +52,7 @@ export default function SearchScreen({ onSelectItem }: SearchScreenProps) {
       let filtered = allObjects;
       
       if (searchTerm.length >= 2) {
+        // TODO(entity-fact-projection): migrate from identifierSummary to objectSummaries projection
         filtered = allObjects.filter(obj =>
           obj.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           obj.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
