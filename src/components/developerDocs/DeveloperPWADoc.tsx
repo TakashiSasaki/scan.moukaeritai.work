@@ -43,6 +43,7 @@ export default function DeveloperPWADoc() {
             <li>Automatic update registration (<code>registerType: 'autoUpdate'</code>).</li>
             <li>Standalone display mode for a native feel.</li>
             <li>Runtime caching strategies for fonts and static assets.</li>
+            <li>Increased cache size limit (<code>maximumFileSizeToCacheInBytes: 6000000</code>) to accommodate the React/Vite build payload.</li>
             <li>Pre-build script execution to dynamically generate requisite PWA icons (manifests, maskable icons) from a source SVG.</li>
           </ul>
         </section>
