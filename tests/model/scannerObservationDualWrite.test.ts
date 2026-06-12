@@ -155,6 +155,36 @@ describe('scannerObservationDualWrite', () => {
       expect(data.participants.some((p: any) => p.role === 'object')).toBe(false);
     });
 
+    it('writes successfully and omits objectId if object read fails with permission denied', async () => {
+      vi.stubEnv('VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE', 'true');
+
+      // First getDoc for marker
+      vi.mocked(firestoreModule.getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ ownerId: mockActorUid }),
+      } as any);
+
+      // Second getDoc for object throws error
+      vi.mocked(firestoreModule.getDoc).mockRejectedValueOnce(new Error('Permission denied'));
+
+      vi.mocked(firestoreModule.setDoc).mockResolvedValueOnce(undefined);
+
+      const result = await writeScannerObservationShadow({
+        markerKey: mockMarkerKey,
+        objectId: mockObjectId,
+        actorUid: mockActorUid,
+        source: 'qr',
+      });
+
+      expect(result.status).toBe('written');
+      expect(result.omittedObjectId).toBe(true);
+
+      const setDocCall = vi.mocked(firestoreModule.setDoc).mock.calls[0];
+      const data = setDocCall[1] as any;
+      // verify objectId is absent from the participants
+      expect(data.participants.some((p: any) => p.role === 'object')).toBe(false);
+    });
+
     it('writes successfully and omits objectId if object is not owned', async () => {
       vi.stubEnv('VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE', 'true');
 

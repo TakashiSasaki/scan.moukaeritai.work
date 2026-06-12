@@ -47,18 +47,24 @@ export async function writeScannerObservationShadow(input: {
     let omittedObjectId = false;
 
     if (input.objectId) {
-      const objectRef = doc(db, 'objects', input.objectId);
-      const objectSnap = await getDoc(objectRef);
+      try {
+        const objectRef = doc(db, 'objects', input.objectId);
+        const objectSnap = await getDoc(objectRef);
 
-      if (objectSnap.exists()) {
-        const objectData = objectSnap.data();
-        if (objectData.ownerId === input.actorUid) {
-          safeObjectId = input.objectId;
+        if (objectSnap.exists()) {
+          const objectData = objectSnap.data();
+          if (objectData.ownerId === input.actorUid) {
+            safeObjectId = input.objectId;
+          } else {
+            omittedObjectId = true; // Object not owned by actorUid
+          }
         } else {
-          omittedObjectId = true; // Object not owned by actorUid
+          omittedObjectId = true; // Object does not exist
         }
-      } else {
-        omittedObjectId = true; // Object does not exist
+      } catch (error) {
+        // If getting the object fails (e.g., permission denied), safely omit it
+        // and proceed with writing a marker-only observation.
+        omittedObjectId = true;
       }
     }
 
