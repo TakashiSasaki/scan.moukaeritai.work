@@ -4,6 +4,10 @@
 
 The Firebase project (`moukaeritaid`) is shared with other applications. As a result, this repository must strictly control which Firebase Functions it deploys, modifies, or deletes to avoid interfering with functions owned by other applications.
 
+## Packaging Boundaries
+
+Cloud Functions runtime code must not import root frontend source files unless they are packaged into the functions deployment artifact through an explicit shared package or build pipeline.
+
 ## Allowed Deployments
 
 This repository owns only a specific list of explicitly allowlisted Functions.
