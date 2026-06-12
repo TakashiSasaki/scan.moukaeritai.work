@@ -91,33 +91,5 @@ When migrating or dual-writing from legacy `objectIdentifierBindings`, preserve 
 | `ownerId`                                 | `legacy.ownerId` |
 | `id` (bindingId)                          | `legacy.bindingId` |
 
-## Future Runtime Shadow-Write Plan
-The current `CaptureForm` marker/association attach shadow-write helper is only for the initial attach shadow path. A future PR must implement explicit transition handling for both detach and reattach.
-
-*Note: The pure builder functions for these transition facts live in `src/lib/entityFactProjectionWrites.ts`. Future runtime code must call the explicit transition builders (`buildObjectHasMarkerDetachedAssociationWrite` and `buildObjectHasMarkerActiveTransitionAssociationWrite`) rather than reusing the initial active association builder with the deterministic initial association ID.*
-
-That future implementation should:
-- Maintain the legacy attach/detach batch as authoritative.
-- After the legacy detach/reattach `batch.commit()` succeeds, schedule a non-blocking target transition shadow-write.
-- Verify target Object exists and is owned by `actorUid`.
-- Verify target Marker exists and is owned by `actorUid`.
-- Create a new transition Association Fact (`status: 'detached'` or `status: 'active'`) using the appropriate runtime UUIDv7 collision-free ID strategy.
-- **Do not update** the existing active Association Fact.
-- **Do not update** detached Association Facts.
-- Log failures but ensure they do not break the legacy attach/detach flow.
-
-## Future Tests
-A future PR implementing the shadow-write must include:
-- Helper unit tests for the future detach shadow-write logic.
-- Tests verifying skip behavior if the target Object or Marker is missing or not owned by the actor.
-
-*Note: Builder/rules contract tests for both detached and reattach transition facts have already been implemented.*
-
-## Non-goals
-This PR is explicitly design-only. It **does not include**:
-- Runtime code implementations for detach.
-- Write builder changes for detach.
-- Read switching logic.
-- Firestore rules changes.
-- Backfill scripts or execution.
-- Creation of Event Facts (reserved for future audit streams).
+## Runtime Shadow-Write Implementation
+CaptureForm runtime transition shadow-write is implemented by `src/lib/captureAssociationTransitionDualWrite.ts` and gated by `VITE_ENABLE_CAPTURE_ASSOCIATION_TRANSITION_DUAL_WRITE`. It creates new append-only transition Association Facts for detach and reattach after legacy commits succeed. It never updates existing Association Facts.
