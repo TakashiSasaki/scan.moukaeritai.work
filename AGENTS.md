@@ -440,3 +440,8 @@ The application has transitioned from a simple `items` collection to a normalize
 - The data model graph MUST NOT connect to Firestore or inspect live data.
 - Do not bypass these constraints to make developer documentation routes dynamic or read from the database.
 - Route catalog must stay synchronized with developer routes in `src/lib/routeCatalog.ts`.
+
+## Entity/Fact/Projection Guardrails
+- Projection recompute must remain backend/admin-only.
+- Single-target recompute is a foundation; do not add broad backfill or read switching without a separate plan.
+- Do not duplicate projection reconstruction semantics outside `src/lib/projectionReconstruction.ts`.
