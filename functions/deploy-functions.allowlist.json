@@ -6,7 +6,6 @@
     "describeImage",
     "getClientIp",
     "migrateInventoryModel",
-    "scanExecuteImportedObservationBatch",
-    "recomputeProjectionSummary"
+    "scanExecuteImportedObservationBatch"
   ]
 }
