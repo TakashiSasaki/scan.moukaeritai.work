@@ -103,6 +103,14 @@ export const routeGroups: RouteGroup[] = [
         purpose: 'admin metrics/control panel'
       },
       {
+        path: '/admin/migration',
+        component: 'Migration Tool Retired',
+        access: 'admin only',
+        navigation: 'none',
+        purpose: 'Retired legacy items-to-objects migration tool',
+        notes: 'Now displays a deprecation warning indicating the tool has been retired.'
+      },
+      {
         path: '/admin/sitemap',
         component: 'SitemapPage',
         access: 'admin only',
