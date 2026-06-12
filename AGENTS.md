@@ -386,6 +386,10 @@ The application has transitioned from a simple `items` collection to a normalize
 - Legacy runtime names such as identifiers and objectIdentifierBindings should be described as current implementation compatibility layers, not as the long-term conceptual model.
 - Do not remove legacy terms from docs while the runtime still uses them; instead, map them to Marker and Association.
 - The Entity / Fact / Projection Runtime Migration Plan is documented at `docs/migrations/entity-fact-projection-runtime-migration-plan.md`. This plan outlines the phased approach to transition from the legacy Identifier/Binding model to the Entity/Fact/Projection model.
+  - **Phase 2 Scanner Observation Dual-Write Guardrails:**
+    - Scanner observation dual-write must remain feature-gated via `VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE`.
+    - Scanner read switching is strictly prohibited during the observation dual-write phase.
+    - Target observation failures must be non-blocking and must not break legacy scan resolution or `objectEvents` writes.
 - Added `FactProvenanceSource` union to restrict `FactProvenance.source` values (`user_confirmed`, `user_report`, `marker_observation`, `location_measurement`, `trusted_reader`, `system_inference`, `admin_import`, `migration`, `import`, `legacy_observation`, `legacy_event`, `legacy_mapping`).
 - Added new `FactProvenance` metadata fields (`actorUid`, `sourceFactIds`).
 - `ownerId` policy in Entity docs (Object, Marker, Place): In the conceptual model, `ownerId` is not part of entity identity. However, in the current implementation, it remains required by Firestore rules and owner-scoped runtime paths. Migration direction is to keep `ownerId` for compatibility now and not include it in semantic identity.
