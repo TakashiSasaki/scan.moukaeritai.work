@@ -974,6 +974,8 @@ Application or business occurrence:
 
 ## 16. Summary documents
 
+Summary reconstruction semantics are formally defined in [Projection Reconstruction Semantics](../migrations/projection-reconstruction-semantics.md).
+
 ### 16.1 objectSummaries/{objectId}
 
 ```ts
