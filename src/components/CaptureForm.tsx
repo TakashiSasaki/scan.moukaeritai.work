@@ -17,6 +17,7 @@ import { useUserSettings } from '../hooks/useUserSettings';
 import { buildIdentifierKey, normalizeIdentifierInput, buildStage1IdentifierMetadata } from '../lib/identifiers';
 import { writeCaptureMarkerAssociationShadow } from '../lib/captureMarkerAssociationDualWrite';
 import { writeCaptureLocationMeasurementShadow } from '../lib/captureLocationMeasurementDualWrite';
+import { writeCaptureAssociationTransitionShadow } from '../lib/captureAssociationTransitionDualWrite';
 import { buildActiveBindingId, buildActiveBindingRecord, findActiveBindingsForOwner, findCanonicalBindingsForOwner, buildDetachedBindingPatch, validateIdentifierCanAttach, loadObjectIdentifiersForSummary, mergeIdentifierForSummary } from '../lib/identifierBindings';
 import { computeIdentifierSummary } from '../lib/objectSummaries';
 import { formatDistanceToNow } from 'date-fns';
@@ -465,6 +466,12 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         const canonicalBindings = await findCanonicalBindingsForOwner(db, auth.currentUser.uid, objectId, idKey);
         const hasCanonicalBinding = canonicalBindings.some(doc => doc.id === bindId);
 
+        // Find any existing detached binding for this object/marker pair to determine if this is a reattach.
+        // Important: Only treat this as a reattach if we are not performing an idempotent attach
+        // (i.e. the canonical active state wasn't already established).
+        const detachedBindingDoc = canonicalBindings.find((doc) => doc.data().status === 'detached');
+        const isReattachTransition = !isIdempotentAttach && !!detachedBindingDoc;
+
         if (hasCanonicalBinding) {
            batch.update(bindRef, {
              status: 'active',
@@ -553,26 +560,102 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         }
 
         // --- Shadow dual-write for marker/association (Attach) ---
-        writeCaptureMarkerAssociationShadow({
-          objectId: objectId,
-          actorUid: auth.currentUser.uid,
-          identifier: {
-            identifierKey: idKey,
-            kind,
-            scheme,
-            canonicalValue,
-          }
-        }).then(res => {
-          if (res.status === 'written' || res.status === 'skipped_disabled' || res.status === 'skipped_association_exists') {
-            // Do nothing, silent expected states
-          } else if (res.status === 'skipped_object_missing' || res.status === 'skipped_object_not_owned' || res.status === 'skipped_marker_not_owned') {
-            console.info('[capture-marker-association-dual-write]', res);
-          } else {
-            console.warn('[capture-marker-association-dual-write] failed', res);
-          }
-        }).catch(err => {
-          console.warn('[capture-marker-association-dual-write] failed', err);
-        });
+        if (isReattachTransition) {
+          void writeCaptureAssociationTransitionShadow(db, {
+            objectId: objectId,
+            markerKey: idKey,
+            actorUid: auth.currentUser.uid,
+            transition: 'active',
+            legacy: {
+              sourceCollection: 'objectIdentifierBindings',
+              bindingId: detachedBindingDoc?.id || bindId,
+              ownerId: auth.currentUser.uid,
+              attachedBy: auth.currentUser.uid,
+              runtimePath: 'CaptureForm.handleAddIdentifier'
+            }
+          })
+          .then((result) => {
+            if (result.status === 'written' || result.status === 'skipped_disabled') {
+              return;
+            }
+            if (result.status === 'skipped_marker_missing') {
+              console.info('[capture-association-transition-dual-write]', result);
+              // Fall back to initial marker/association shadow write since marker is missing
+              writeCaptureMarkerAssociationShadow({
+                objectId: objectId,
+                actorUid: auth.currentUser!.uid,
+                identifier: {
+                  identifierKey: idKey,
+                  kind,
+                  scheme,
+                  canonicalValue,
+                }
+              }).then(res => {
+                if (res.status === 'written' || res.status === 'skipped_disabled' || res.status === 'skipped_association_exists') {
+                  // If marker is successfully created or already existed somehow, write the active transition fact
+                  void writeCaptureAssociationTransitionShadow(db, {
+                    objectId: objectId,
+                    markerKey: idKey,
+                    actorUid: auth.currentUser!.uid,
+                    transition: 'active',
+                    legacy: {
+                      sourceCollection: 'objectIdentifierBindings',
+                      bindingId: detachedBindingDoc?.id || bindId,
+                      ownerId: auth.currentUser!.uid,
+                      attachedBy: auth.currentUser!.uid,
+                      runtimePath: 'CaptureForm.handleAddIdentifier'
+                    }
+                  }).then(transRes => {
+                    if (transRes.status === 'written' || transRes.status === 'skipped_disabled') return;
+                    console.info('[capture-association-transition-dual-write]', transRes);
+                  }).catch(transErr => {
+                    console.warn('[capture-association-transition-dual-write] failed', transErr);
+                  });
+                } else if (res.status === 'skipped_object_missing' || res.status === 'skipped_object_not_owned' || res.status === 'skipped_marker_not_owned') {
+                  console.info('[capture-marker-association-dual-write]', res);
+                } else {
+                  console.warn('[capture-marker-association-dual-write] failed', res);
+                }
+              }).catch(err => {
+                console.warn('[capture-marker-association-dual-write] failed', err);
+              });
+              return;
+            }
+            if (
+              result.status === 'skipped_object_missing' ||
+              result.status === 'skipped_object_not_owned' ||
+              result.status === 'skipped_marker_not_owned'
+            ) {
+              console.info('[capture-association-transition-dual-write]', result);
+              return;
+            }
+            console.warn('[capture-association-transition-dual-write] failed', result);
+          })
+          .catch((error) => {
+            console.warn('[capture-association-transition-dual-write] failed', error);
+          });
+        } else if (!isIdempotentAttach) {
+          writeCaptureMarkerAssociationShadow({
+            objectId: objectId,
+            actorUid: auth.currentUser.uid,
+            identifier: {
+              identifierKey: idKey,
+              kind,
+              scheme,
+              canonicalValue,
+            }
+          }).then(res => {
+            if (res.status === 'written' || res.status === 'skipped_disabled' || res.status === 'skipped_association_exists') {
+              // Do nothing, silent expected states
+            } else if (res.status === 'skipped_object_missing' || res.status === 'skipped_object_not_owned' || res.status === 'skipped_marker_not_owned') {
+              console.info('[capture-marker-association-dual-write]', res);
+            } else {
+              console.warn('[capture-marker-association-dual-write] failed', res);
+            }
+          }).catch(err => {
+            console.warn('[capture-marker-association-dual-write] failed', err);
+          });
+        }
         // ---------------------------------------------------------
 
         // Local React state should be updated from the same identifier set used to compute summary after commit succeeds
@@ -660,6 +743,41 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       });
 
       await batch.commit();
+
+      // --- Shadow dual-write for marker/association (Detach) ---
+      void writeCaptureAssociationTransitionShadow(db, {
+        objectId: objectId,
+        markerKey: idr.identifierKey,
+        actorUid: auth.currentUser.uid,
+        transition: 'detached',
+        legacy: {
+          sourceCollection: 'objectIdentifierBindings',
+          bindingId: activeBindings[0]?.id,
+          bindingIds: activeBindings.map((d) => d.id),
+          ownerId: auth.currentUser.uid,
+          detachedBy: auth.currentUser.uid,
+          runtimePath: 'CaptureForm.handleDetachIdentifier'
+        }
+      })
+      .then((result) => {
+        if (result.status === 'written' || result.status === 'skipped_disabled') {
+          return;
+        }
+        if (
+          result.status === 'skipped_object_missing' ||
+          result.status === 'skipped_object_not_owned' ||
+          result.status === 'skipped_marker_missing' ||
+          result.status === 'skipped_marker_not_owned'
+        ) {
+          console.info('[capture-association-transition-dual-write]', result);
+          return;
+        }
+        console.warn('[capture-association-transition-dual-write] failed', result);
+      })
+      .catch((error) => {
+        console.warn('[capture-association-transition-dual-write] failed', error);
+      });
+      // ---------------------------------------------------------
 
       // Local React state should be updated from the same identifier set used to compute summary after commit succeeds
       setIdentifiers(newIdentifiers);

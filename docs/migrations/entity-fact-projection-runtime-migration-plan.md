@@ -122,7 +122,11 @@ Using existing mapping helpers in `src/lib/entityFactProjectionMapping.ts` as re
   - Existing target marker is not overwritten.
   - Target association is created only if missing.
   - Existing target association is not updated because normal-user Facts are append-only.
-  - Target detach semantics are defined in `docs/migrations/target-association-detach-semantics.md`. Detach is represented by a new append-only detached Association Fact, not by updating the active Association Fact. Note: pure transition builders and rules contract tests for detach/reattach are now completed, serving as the prerequisite immediately before implementing runtime target detach shadow-write in a future PR.
+  - Target detach semantics are defined in `docs/migrations/target-association-detach-semantics.md`. Detach is represented by a new append-only detached Association Fact, not by updating the active Association Fact.
+  - CaptureForm detach / reattach transition shadow dual-write is gated by `VITE_ENABLE_CAPTURE_ASSOCIATION_TRANSITION_DUAL_WRITE`.
+  - Legacy detach / reattach remains authoritative.
+  - Target transition writes happen only after the legacy batch commit succeeds.
+  - Existing Association Facts are never updated by client runtime.
 
 **Phase 4: currentLocation migration**
 - CaptureForm currentLocation measurement shadow dual-write is feature-gated by `VITE_ENABLE_CAPTURE_LOCATION_MEASUREMENT_DUAL_WRITE`.
