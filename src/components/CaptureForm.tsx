@@ -577,10 +577,34 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
             if (result.status === 'written' || result.status === 'skipped_disabled') {
               return;
             }
+            if (result.status === 'skipped_marker_missing') {
+              console.info('[capture-association-transition-dual-write]', result);
+              // Fall back to initial marker/association shadow write since marker is missing
+              writeCaptureMarkerAssociationShadow({
+                objectId: objectId,
+                actorUid: auth.currentUser!.uid,
+                identifier: {
+                  identifierKey: idKey,
+                  kind,
+                  scheme,
+                  canonicalValue,
+                }
+              }).then(res => {
+                if (res.status === 'written' || res.status === 'skipped_disabled' || res.status === 'skipped_association_exists') {
+                  // Do nothing, silent expected states
+                } else if (res.status === 'skipped_object_missing' || res.status === 'skipped_object_not_owned' || res.status === 'skipped_marker_not_owned') {
+                  console.info('[capture-marker-association-dual-write]', res);
+                } else {
+                  console.warn('[capture-marker-association-dual-write] failed', res);
+                }
+              }).catch(err => {
+                console.warn('[capture-marker-association-dual-write] failed', err);
+              });
+              return;
+            }
             if (
               result.status === 'skipped_object_missing' ||
               result.status === 'skipped_object_not_owned' ||
-              result.status === 'skipped_marker_missing' ||
               result.status === 'skipped_marker_not_owned'
             ) {
               console.info('[capture-association-transition-dual-write]', result);
