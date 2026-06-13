@@ -24,12 +24,27 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install root dependencies
+        run: npm ci
+
       - name: Validate Functions import boundary
         run: npm run test:functions-boundary
 
+      - name: Build shared EFP model package
+        run: npm --prefix packages/efp-model run build
+
+      - name: Validate shared EFP model package artifact
+        run: npm --prefix packages/efp-model run test:artifact
+
+      - name: Prepare shared EFP model for Functions
+        run: npm run prepare:functions-efp-model
+
       - name: Install Dependencies
-        run: npm install --loglevel=error --no-fund --no-audit
+        run: npm ci
         working-directory: ./functions
+
+      - name: Validate Functions shared EFP model dependency
+        run: npm run test:functions-efp-model
 
       - name: Build Functions
         run: npm run build

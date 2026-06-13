@@ -12,6 +12,7 @@ Functions source files under `functions/src` must not import files outside the `
 **Automation Guard:** The Functions import-boundary validation must run before Functions build/deploy. It prevents `functions/src` from importing root `src/**` or `packages/**` source files directly.
 
 Before Functions code imports `@scan/efp-model`, the package must be present as a dependency inside the functions deployment artifact. Format compatibility alone is not sufficient.
+`@scan/efp-model` is prepared into `functions/vendor/efp-model` before Functions dependency installation. Functions code may consume the package only through the declared `@scan/efp-model` dependency, never through `../../packages/**` or `../../src/**` source imports.
 
 ## Allowed Deployments
 

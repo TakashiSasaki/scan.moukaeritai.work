@@ -12,7 +12,9 @@
     "test": "vitest run",
     "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/firestore-rules/ --config vitest.rules.config.ts\"",
     "test:coverage": "vitest run --coverage",
-    "test:functions-boundary": "node scripts/validate-functions-import-boundary.mjs"
+    "test:functions-boundary": "node scripts/validate-functions-import-boundary.mjs",
+    "prepare:functions-efp-model": "node scripts/prepare-functions-efp-model-dependency.mjs",
+    "test:functions-efp-model": "node scripts/validate-functions-efp-model-dependency.mjs"
   },
   "dependencies": {
     "@google-cloud/monitoring": "^5.3.2",

@@ -69,6 +69,7 @@ Rationale:
 **Implementation Status:** `packages/efp-model` now contains the canonical pure EFP types/reducers/utilities. Frontend/root code consumes it directly or through compatibility re-export shims. `packages/efp-model` now emits a dist package artifact with JS and declaration files. This makes the shared EFP code packageable, but Functions consumption and deployment-boundary validation remain future work.
 
 **Current Status Note:** `@scan/efp-model` now emits dual ESM/CommonJS artifacts and has artifact smoke tests. Functions consumption is still disabled until the package is included in the Firebase Functions deployment artifact as a proper dependency. A disabled `recomputeProjectionSummary` stub is used until a proper Functions package-consumption mechanism is implemented. CI/deploy automation runs the Functions import-boundary validation so unsafe `functions/src` imports are caught before deploy.
+`@scan/efp-model` is now prepared into the functions deployment artifact as a generated local dependency under `functions/vendor/efp-model`. The callable remains disabled until a later PR imports the dependency and validates recompute behavior.
 
 ## Required Constraints for Shared EFP Code
 
