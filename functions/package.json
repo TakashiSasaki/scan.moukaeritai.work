@@ -17,6 +17,7 @@
   "dependencies": {
     "@google-cloud/monitoring": "^4.1.0",
     "@google/genai": "^2.0.1",
+    "@scan/efp-model": "file:vendor/efp-model",
     "firebase-admin": "^13.10.0",
     "firebase-functions": "^7.2.5",
     "uuid": "^14.0.0"

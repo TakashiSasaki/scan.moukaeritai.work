@@ -456,3 +456,8 @@ The application has transitioned from a simple `items` collection to a normalize
 - @scan/efp-model must remain consumable by both ESM import and CommonJS require unless Functions are explicitly migrated away from CommonJS.
 - Package artifact smoke tests must pass before any Functions code consumes @scan/efp-model.
 - Do not make Functions import @scan/efp-model until it is included in the functions deployment artifact as a proper dependency.
+- @scan/efp-model must be prepared into functions/vendor/efp-model before installing or building Functions dependencies.
+- Functions code must consume shared EFP logic only through the declared @scan/efp-model dependency.
+- Functions code must never import ../../packages/** or ../../src/**.
+- The generated functions/vendor directory must not be committed.
+- Recompute activation must be a separate PR after dependency packaging validation.

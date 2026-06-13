@@ -142,6 +142,7 @@ Using existing mapping helpers in `src/lib/entityFactProjectionMapping.ts` as re
 - A temporary disabled `recomputeProjectionSummary` stub exists to prevent unsafe deployment. Real backend/admin projection recompute remains blocked until `@scan/efp-model` is packaged into the Firebase Functions deployment artifact and validated.
 - Automation now validates the Functions import boundary. Real backend/admin projection recompute remains disabled until `@scan/efp-model` is consumed through a deployment-safe dependency path.
 - The shared EFP package now supports both ESM import and CommonJS require. Real backend/admin projection recompute remains disabled until Functions dependency packaging is validated.
+- Functions dependency packaging for `@scan/efp-model` has been prepared and validated. Real backend/admin projection recompute remains disabled until `recomputeProjectionSummary` is explicitly re-enabled using the packaged dependency.
 - Full backfill, automated reconciliation reports, and read switching remain future work.
 - `objectSummaries`, `markerSummaries`, and `placeSummaries` are backend/admin-written derived read models.
 - Projection generation and reconciliation are prerequisites for read switching.
