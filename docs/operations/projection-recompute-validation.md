@@ -129,6 +129,17 @@ npm run ops:validate-projection-canary-writes -- \
 - Passing canary validation does not authorize broad backfill.
 - Passing canary validation does not authorize UI read switching.
 
-## 12. Next Steps after Validation
+## 12. Backfill Readiness Assessment
+
+Use `npm run ops:assess-projection-backfill-readiness -- --manifest <path>` to assess saved local evidence for readiness to design backfill.
+* It consumes saved reconciliation reports and canary validation bundles.
+* It produces a conservative `ready-for-backfill-design`, `blocked`, or `fail` assessment.
+* It does not call Firebase.
+* It does not perform writes.
+* It does not perform backfill execution.
+* `ready-for-backfill-design` does not authorize backfill execution.
+* `ready-for-backfill-design` does not authorize UI read switching.
+
+## 13. Next Steps after Validation
 
 If operational validations of `object`, `marker`, and `place` targets all succeed and match expected shapes, the next phase in the migration plan (automated reconciliation or broader backfill) can begin planning. Successful dry-run does not imply read switching readiness.
