@@ -464,6 +464,7 @@ The application has transitioned from a simple `items` collection to a normalize
 - Do not expand recomputeProjectionSummary into broad backfill or read switching without a separate plan.
 - Functions recompute code must import shared reducers from @scan/efp-model only.
 - Do not import ../../packages/** or ../../src/** from functions/src.
+- Projection recompute input parsing must remain dependency-free and covered by ordinary unit tests.
 - Projection recompute operational validation must start with dryRun=true on selected targets.
 - Do not add broad backfill, scheduled recompute, or read switching in the operational validation stride.
 - dryRun=false validation must be single-target and explicitly requested.

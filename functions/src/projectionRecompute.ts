@@ -8,6 +8,11 @@ import {
   stripUndefinedDeep,
 } from "@scan/efp-model";
 import type { Timestamp } from "@scan/efp-model";
+import {
+  parseRecomputeProjectionSummaryInput,
+  ProjectionRecomputeInputError,
+  type RecomputeProjectionSummaryInput,
+} from "./projectionRecomputeInput";
 
 const appletConfig = {
   firestoreDatabaseId: "photo-moukaeritai-work"
@@ -16,18 +21,6 @@ const appletConfig = {
 function getDb() {
   return getFirestore(admin.app(), appletConfig.firestoreDatabaseId);
 }
-
-const entityCollectionByTargetType = {
-  object: "objects",
-  marker: "markers",
-  place: "places"
-} as const;
-
-const summaryCollectionByTargetType = {
-  object: "objectSummaries",
-  marker: "markerSummaries",
-  place: "placeSummaries"
-} as const;
 
 function withDocumentId<T extends Record<string, unknown>>(
   doc: admin.firestore.QueryDocumentSnapshot,
@@ -38,12 +31,6 @@ function withDocumentId<T extends Record<string, unknown>>(
     ...data,
     [idField]: data[idField] ?? doc.id
   } as T;
-}
-
-interface RecomputeProjectionSummaryInput {
-  targetType?: unknown;
-  targetId?: unknown;
-  dryRun?: unknown;
 }
 
 export const recomputeProjectionSummary = onCall(
@@ -59,31 +46,24 @@ export const recomputeProjectionSummary = onCall(
     throw new HttpsError("permission-denied", "Admin privileges are required.");
   }
 
-    const data = request.data || {};
-    const rawTargetType = data.targetType;
-    const rawTargetId = data.targetId;
-
-    if (data.dryRun !== undefined && typeof data.dryRun !== "boolean") {
-      throw new HttpsError("invalid-argument", "dryRun must be a boolean when provided.");
-    }
-    const dryRun = data.dryRun ?? true;
-
-    if (!rawTargetType || typeof rawTargetType !== "string" || !["object", "marker", "place"].includes(rawTargetType)) {
-      throw new HttpsError("invalid-argument", 'targetType must be "object", "marker", or "place".');
-    }
-    const targetType = rawTargetType as keyof typeof entityCollectionByTargetType;
-
-    if (!rawTargetId || typeof rawTargetId !== "string" || rawTargetId.trim() === "") {
-      throw new HttpsError("invalid-argument", "targetId must be a non-empty string.");
+    let parsedInput;
+    try {
+      parsedInput = parseRecomputeProjectionSummaryInput(request.data);
+    } catch (error) {
+      if (error instanceof ProjectionRecomputeInputError) {
+        throw new HttpsError("invalid-argument", error.message);
+      }
+      throw error;
     }
 
-    const targetId = rawTargetId.trim();
-    if (targetId.includes("/")) {
-      throw new HttpsError("invalid-argument", "targetId must not contain '/'.");
-    }
-
-    const entityCollection = entityCollectionByTargetType[targetType];
-    const summaryCollection = summaryCollectionByTargetType[targetType];
+    const {
+      targetType,
+      targetId,
+      dryRun,
+      entityCollection,
+      summaryCollection,
+      summaryPath,
+    } = parsedInput;
 
     try {
       const entitySnap = await db.collection(entityCollection).doc(targetId).get();
@@ -159,7 +139,6 @@ export const recomputeProjectionSummary = onCall(
       }
 
       let written = false;
-      const summaryPath = `${summaryCollection}/${targetId}`;
       const cleanSummary = stripUndefinedDeep(summary);
 
       if (!dryRun) {
