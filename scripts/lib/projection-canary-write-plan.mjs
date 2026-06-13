@@ -73,6 +73,16 @@ export function buildProjectionCanaryWritePlan(input, options = {}) {
     return plan;
   }
 
+  if (report.countMismatch === true) {
+    plan.success = false;
+    plan.valid = false;
+    plan.errors.push({
+      code: 'invalid-report',
+      message: 'Input report has countMismatch=true. The reconciliation results are internally inconsistent.'
+    });
+    return plan;
+  }
+
   if (report.computedCounts && report.computedCounts.different > 0) {
     plan.warnings.push('Input contains targets with "different" status. These are not safe for canary writes and will be skipped.');
   }

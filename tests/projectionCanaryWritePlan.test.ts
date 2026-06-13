@@ -8,10 +8,19 @@ describe('buildProjectionCanaryWritePlan', () => {
     summaryPath: 'objectSummaries/obj-1'
   };
 
+  const baseReportCounts = {
+    totalTargets: 1,
+    equalCount: 1,
+    differentCount: 0,
+    missingSummaryCount: 0,
+    errorCount: 0
+  };
+
   it('1. accepts raw callable `{ result: ... }` envelope', () => {
     const input = {
       result: {
         success: true,
+        ...baseReportCounts,
         results: [
           { ...baseTarget, success: true, reconciliation: { equal: true } }
         ]
@@ -26,6 +35,7 @@ describe('buildProjectionCanaryWritePlan', () => {
   it('2. accepts direct reconciliation result object', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
       results: [
         { ...baseTarget, success: true, reconciliation: { equal: true } }
       ]
@@ -58,6 +68,7 @@ describe('buildProjectionCanaryWritePlan', () => {
   it('4. selects equal targets by default', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
       results: [
         { ...baseTarget, success: true, reconciliation: { equal: true } }
       ]
@@ -69,6 +80,9 @@ describe('buildProjectionCanaryWritePlan', () => {
   it('5. does not select missing-summary by default', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
+      equalCount: 0,
+      missingSummaryCount: 1,
       results: [
         { ...baseTarget, success: true, existingSummaryExists: false }
       ]
@@ -82,6 +96,9 @@ describe('buildProjectionCanaryWritePlan', () => {
   it('6. selects missing-summary when allowMissingSummary=true', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
+      equalCount: 0,
+      missingSummaryCount: 1,
       results: [
         { ...baseTarget, success: true, existingSummaryExists: false }
       ]
@@ -94,6 +111,9 @@ describe('buildProjectionCanaryWritePlan', () => {
   it('7. never selects different targets', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
+      equalCount: 0,
+      differentCount: 1,
       results: [
         { ...baseTarget, success: true, reconciliation: { equal: false } }
       ]
@@ -108,6 +128,9 @@ describe('buildProjectionCanaryWritePlan', () => {
   it('8. never selects error targets', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
+      equalCount: 0,
+      errorCount: 1,
       results: [
         { ...baseTarget, success: false, error: { message: 'boom' } }
       ]
@@ -122,6 +145,9 @@ describe('buildProjectionCanaryWritePlan', () => {
   it('9. respects maxTargets', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
+      totalTargets: 3,
+      equalCount: 3,
       results: [
         { targetType: 'object', targetId: '1', summaryPath: 'p/1', success: true, reconciliation: { equal: true } },
         { targetType: 'object', targetId: '2', summaryPath: 'p/2', success: true, reconciliation: { equal: true } },
@@ -150,6 +176,9 @@ describe('buildProjectionCanaryWritePlan', () => {
   it('12. detects duplicate `{ targetType, targetId }`', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
+      totalTargets: 2,
+      equalCount: 2,
       results: [
         { targetType: 'object', targetId: '1', summaryPath: 'p/1', success: true, reconciliation: { equal: true } },
         { targetType: 'object', targetId: '1', summaryPath: 'p/1', success: true, reconciliation: { equal: true } }
@@ -165,6 +194,7 @@ describe('buildProjectionCanaryWritePlan', () => {
   it('13. generates `recomputeProjectionSummary` payloads with `dryRun:false`', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
       results: [
         { ...baseTarget, success: true, reconciliation: { equal: true } }
       ]
@@ -182,6 +212,9 @@ describe('buildProjectionCanaryWritePlan', () => {
   it('14. generates post-write `reconcileProjectionSummaries` payload for selected targets', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
+      totalTargets: 2,
+      equalCount: 2,
       results: [
         { targetType: 'object', targetId: '1', summaryPath: 'p/1', success: true, reconciliation: { equal: true } },
         { targetType: 'object', targetId: '2', summaryPath: 'p/2', success: true, reconciliation: { equal: true } }
@@ -202,6 +235,9 @@ describe('buildProjectionCanaryWritePlan', () => {
   it('15. returns empty plan when no targets are selectable', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
+      equalCount: 0,
+      differentCount: 1,
       results: [
         { targetType: 'object', targetId: '1', summaryPath: 'p/1', success: true, reconciliation: { equal: false } }
       ]
@@ -217,6 +253,7 @@ describe('buildProjectionCanaryWritePlan', () => {
   it('16. formats readable output containing selected target ids and safety note', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
       results: [
         { ...baseTarget, success: true, reconciliation: { equal: true } }
       ]
@@ -227,12 +264,13 @@ describe('buildProjectionCanaryWritePlan', () => {
     expect(output).toMatch(/Selected count: 1 \/ 5 max/);
     expect(output).toMatch(/obj-1/);
     expect(output).toMatch(/\*\*\* SAFETY NOTE \*\*\*/);
-    expect(output).toMatch(/dryRun:false/);
+    expect(output).toMatch(/"dryRun": false/);
   });
 
   it('17. JSON formatter returns parseable JSON', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
       results: [
         { ...baseTarget, success: true, reconciliation: { equal: true } }
       ]
@@ -251,9 +289,30 @@ describe('buildProjectionCanaryWritePlan', () => {
     expect(plan.errors[0].code).toBe('invalid-input');
   });
 
+  it('fails cleanly when countMismatch is true', () => {
+    const input = {
+      success: true,
+      countMismatch: true,
+      computedCounts: {
+        equal: 1,
+        different: 0,
+        missingSummary: 0,
+        errors: 0
+      },
+      targets: [
+        { ...baseTarget, status: 'equal' }
+      ]
+    };
+    const plan = buildProjectionCanaryWritePlan(input);
+    expect(plan.valid).toBe(false);
+    expect(plan.errors[0].code).toBe('invalid-report');
+    expect(plan.errors[0].message).toMatch(/internally inconsistent/);
+  });
+
   it('returns correctly zeroed skipped items when equal is false and no matching', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
       results: [
         { ...baseTarget, success: true, reconciliation: { equal: true } }
       ]
@@ -267,6 +326,7 @@ describe('buildProjectionCanaryWritePlan', () => {
   it('skips items without full keys but maintains validity', () => {
     const input = {
       success: true,
+      ...baseReportCounts,
       results: [
         { targetType: 'object', success: true, reconciliation: { equal: true } } // missing targetId and path
       ]
