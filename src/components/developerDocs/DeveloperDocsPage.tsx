@@ -31,6 +31,7 @@ export default function DeveloperDocsPage() {
             onClick={() => navigate('/')}
             className="p-2 -ml-2 rounded-full hover:bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] transition-colors flex items-center"
             title="Back to Landing"
+            aria-label="Back to Landing"
           >
             <ArrowLeft size={24} />
           </button>

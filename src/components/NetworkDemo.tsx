@@ -192,6 +192,7 @@ export default function NetworkDemo() {
             disabled={isFetchingIp}
             className="p-2 rounded-full hover:bg-[var(--surface-container-highest)] transition-colors disabled:opacity-50"
             title="Refresh IP Info"
+            aria-label="Refresh IP Info"
           >
             <RefreshCw size={16} className={isFetchingIp ? "animate-spin text-emerald-500" : "text-[var(--on-surface-variant)]"} />
           </button>
