@@ -89,4 +89,22 @@ describe("diffProjectionSummaries", () => {
     expect(diff.equal).toBe(false);
     expect(diff.changedPaths).toEqual(["$"]);
   });
+
+  it("ignores specified paths and considers objects equal", () => {
+    const expected = { a: 1, b: { asOf: 100 } };
+    const actual = { a: 1, b: { asOf: 200 } };
+    const diff = diffProjectionSummaries(expected, actual, { ignoredPaths: ["$.b.asOf"] });
+    expect(diff.equal).toBe(true);
+    expect(diff.differenceCount).toBe(0);
+    expect(diff.ignoredPaths).toEqual(["$.b.asOf"]);
+  });
+
+  it("reports changes in non-ignored paths even when some paths are ignored", () => {
+    const expected = { a: 1, b: { asOf: 100, x: 10 } };
+    const actual = { a: 2, b: { asOf: 200, x: 10 } };
+    const diff = diffProjectionSummaries(expected, actual, { ignoredPaths: ["$.b.asOf"] });
+    expect(diff.equal).toBe(false);
+    expect(diff.changedPaths).toEqual(["$.a"]);
+    expect(diff.ignoredPaths).toEqual(["$.b.asOf"]);
+  });
 });

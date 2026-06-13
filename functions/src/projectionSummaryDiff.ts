@@ -4,17 +4,28 @@ export interface ProjectionSummaryDiff {
   missingPaths: string[];
   extraPaths: string[];
   changedPaths: string[];
+  ignoredPaths?: string[];
+}
+
+export interface DiffProjectionSummariesOptions {
+  ignoredPaths?: string[];
 }
 
 export function diffProjectionSummaries(
   expected: unknown,
-  actual: unknown
+  actual: unknown,
+  options?: DiffProjectionSummariesOptions
 ): ProjectionSummaryDiff {
   const missingPaths: string[] = [];
   const extraPaths: string[] = [];
   const changedPaths: string[] = [];
+  const ignoredPathsSet = new Set(options?.ignoredPaths || []);
 
   function compare(path: string, exp: unknown, act: unknown) {
+    if (ignoredPathsSet.has(path)) {
+      return;
+    }
+
     if (exp === act) {
       return;
     }
@@ -77,5 +88,6 @@ export function diffProjectionSummaries(
     missingPaths,
     extraPaths,
     changedPaths,
+    ...(options?.ignoredPaths ? { ignoredPaths: options.ignoredPaths } : {}),
   };
 }

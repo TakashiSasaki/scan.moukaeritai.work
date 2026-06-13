@@ -66,12 +66,17 @@ export const reconcileProjectionSummary = onCall(
       const existingSummarySnap = await db.collection(summaryCollection).doc(targetId).get();
       const existingSummaryExists = existingSummarySnap.exists;
 
-      const existingSummaryRaw = existingSummaryExists ? existingSummarySnap.data() : null;
+      const existingSummaryRaw = existingSummaryExists ? existingSummarySnap.data() : undefined;
 
       const recomputedSummary = stripUndefinedDeep(recomputedSummaryRaw);
-      const existingSummary = existingSummaryExists ? stripUndefinedDeep(existingSummaryRaw) : null;
+      const existingSummaryPayload = existingSummaryExists ? stripUndefinedDeep(existingSummaryRaw) : null;
 
-      const reconciliation = diffProjectionSummaries(recomputedSummary, existingSummary);
+      // If undefined is passed, the entire root object will be reported as "missing"
+      const existingSummaryDiffInput = existingSummaryExists ? existingSummaryPayload : undefined;
+
+      const reconciliation = diffProjectionSummaries(recomputedSummary, existingSummaryDiffInput, {
+        ignoredPaths: ["$.asOf"]
+      });
 
       return {
         success: true,
@@ -82,7 +87,7 @@ export const reconcileProjectionSummary = onCall(
         factsRead,
         reconciliation,
         recomputedSummary,
-        existingSummary,
+        existingSummary: existingSummaryPayload,
         written: false,
       };
     } catch (error) {
