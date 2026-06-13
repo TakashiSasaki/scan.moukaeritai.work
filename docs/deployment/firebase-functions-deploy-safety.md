@@ -9,6 +9,8 @@ The Firebase project (`moukaeritaid`) is shared with other applications. As a re
 Cloud Functions runtime code must not import root frontend source files unless they are packaged into the functions deployment artifact through an explicit shared package or build pipeline.
 Functions source files under `functions/src` must not import files outside the `functions/` directory. This includes `../../src/**` and `../../packages/**` source imports. Shared code must be consumed only through a dependency that is included in the functions deployment artifact.
 
+**Automation Guard:** The Functions import-boundary validation must run before Functions build/deploy. It prevents `functions/src` from importing root `src/**` or `packages/**` source files directly.
+
 ## Allowed Deployments
 
 This repository owns only a specific list of explicitly allowlisted Functions.

@@ -140,6 +140,7 @@ Using existing mapping helpers in `src/lib/entityFactProjectionMapping.ts` as re
 - Projection reconstruction semantics are defined in `docs/migrations/projection-reconstruction-semantics.md`.
 - Pure projection reconstruction reducers have been added in `packages/efp-model`.
 - A temporary disabled `recomputeProjectionSummary` stub exists to prevent unsafe deployment. Real backend/admin projection recompute remains blocked until `@scan/efp-model` is packaged into the Firebase Functions deployment artifact and validated.
+- Automation now validates the Functions import boundary. Real backend/admin projection recompute remains disabled until `@scan/efp-model` is consumed through a deployment-safe dependency path.
 - Full backfill, automated reconciliation reports, and read switching remain future work.
 - `objectSummaries`, `markerSummaries`, and `placeSummaries` are backend/admin-written derived read models.
 - Projection generation and reconciliation are prerequisites for read switching.

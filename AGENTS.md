@@ -450,3 +450,6 @@ The application has transitioned from a simple `items` collection to a normalize
 - functions/src/** must not import ../../src/** or ../../packages/**.
 - @scan/efp-model source imports from functions/src are prohibited until the package is included as a proper functions deployment dependency.
 - recomputeProjectionSummary may exist only as a disabled stub until Functions package-consumption validation is complete.
+- CI and Functions deploy workflows must run the Functions import-boundary validation before build/deploy.
+- Do not bypass `test:functions-boundary` to ship Functions code.
+- If the boundary check fails, fix the import boundary rather than adding ad hoc exceptions.

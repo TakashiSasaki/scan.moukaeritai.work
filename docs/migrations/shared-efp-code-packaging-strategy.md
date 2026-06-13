@@ -68,7 +68,7 @@ Rationale:
 
 **Implementation Status:** `packages/efp-model` now contains the canonical pure EFP types/reducers/utilities. Frontend/root code consumes it directly or through compatibility re-export shims. `packages/efp-model` now emits a dist package artifact with JS and declaration files. This makes the shared EFP code packageable, but Functions consumption and deployment-boundary validation remain future work.
 
-**Current Status Note:** `@scan/efp-model` emits build artifacts, but Functions must not import `packages/efp-model/src` directly. A disabled `recomputeProjectionSummary` stub is used until a proper Functions package-consumption mechanism is implemented.
+**Current Status Note:** `@scan/efp-model` emits build artifacts, but Functions must not import `packages/efp-model/src` directly. A disabled `recomputeProjectionSummary` stub is used until a proper Functions package-consumption mechanism is implemented. CI/deploy automation runs the Functions import-boundary validation so unsafe `functions/src` imports are caught before deploy.
 
 ## Required Constraints for Shared EFP Code
 

@@ -24,6 +24,9 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Validate Functions import boundary
+        run: npm run test:functions-boundary
+
       - name: Install Dependencies
         run: npm install --loglevel=error --no-fund --no-audit
         working-directory: ./functions
