@@ -1,12 +1,21 @@
 export function buildProjectionBackfillPlan(input, options = {}) {
+  if (!input || typeof input !== 'object') {
+    return {
+      success: false,
+      valid: false,
+      blockers: [{ code: 'invalid-input', message: 'Input must be an object.' }],
+      written: false
+    };
+  }
+
   const { readinessAssessment, targets, notes = [] } = input;
   const batchSize = options.batchSize !== undefined ? options.batchSize : 20;
   const mode = options.mode || "dryRun";
 
   const blockers = [];
 
-  if (typeof batchSize !== 'number' || batchSize < 1 || batchSize > 20) {
-    blockers.push({ code: "invalid-batch-size", message: "batchSize must be between 1 and 20." });
+  if (typeof batchSize !== 'number' || !Number.isInteger(batchSize) || batchSize < 1 || batchSize > 20) {
+    blockers.push({ code: "invalid-batch-size", message: "batchSize must be an integer between 1 and 20." });
   }
 
   if (mode !== "dryRun" && mode !== "manual-write-plan") {
@@ -38,6 +47,10 @@ export function buildProjectionBackfillPlan(input, options = {}) {
       }
       if (!target.targetId || typeof target.targetId !== "string" || target.targetId.trim() === "") {
         targetBlockers.push({ code: "invalid-target-id", message: "Target ID must be a non-empty string." });
+        continue;
+      }
+      if (target.targetId.trim() !== target.targetId) {
+        targetBlockers.push({ code: "invalid-target-id", message: "Target ID cannot have leading or trailing whitespace." });
         continue;
       }
       if (target.targetId.includes("/")) {
