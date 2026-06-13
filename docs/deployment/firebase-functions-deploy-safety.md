@@ -10,6 +10,7 @@ Cloud Functions runtime code must not import root frontend source files unless t
 Functions source files under `functions/src` must not import files outside the `functions/` directory. This includes `../../src/**` and `../../packages/**` source imports. Shared code must be consumed only through a dependency that is included in the functions deployment artifact.
 
 **Automation Guard:** The Functions import-boundary validation must run before Functions build/deploy. It prevents `functions/src` from importing root `src/**` or `packages/**` source files directly.
+Projection recompute deployment must use the allowlisted Functions deploy workflow. Operational validation should begin with dryRun=true and selected targets only.
 
 Before Functions code imports `@scan/efp-model`, the package must be present as a dependency inside the functions deployment artifact. Format compatibility alone is not sufficient.
 `@scan/efp-model` is prepared into `functions/vendor/efp-model` before Functions dependency installation. Functions code may consume the package only through the declared `@scan/efp-model` dependency, never through `../../packages/**` or `../../src/**` source imports.
