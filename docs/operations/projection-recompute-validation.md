@@ -101,6 +101,16 @@ npm run ops:report-projection-reconciliation -- --input path/to/reconcile-respon
 - Passing selected-target reports still does not authorize UI read switching.
 - Passing selected-target reports still does not replace broad backfill.
 
-## 10. Next Steps after Validation
+## 10. Canary Write Planning
+
+Use `npm run ops:plan-projection-canary-writes -- --input <path>` to generate local canary write plans from saved reconciliation responses/reports.
+* It does not call Firebase.
+* It does not perform writes.
+* It generates `dryRun:false` payloads for manual canary use only.
+* Canary write planning does not authorize broad backfill.
+* Canary write planning does not authorize UI read switching.
+* Keep canary target count small, with hard max 5.
+
+## 11. Next Steps after Validation
 
 If operational validations of `object`, `marker`, and `place` targets all succeed and match expected shapes, the next phase in the migration plan (automated reconciliation or broader backfill) can begin planning. Successful dry-run does not imply read switching readiness.
