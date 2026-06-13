@@ -34,6 +34,10 @@ export function buildProjectionReconciliationReport(rawInput) {
     throw new Error('Invalid result object: missing or invalid "success" field');
   }
 
+  if (!Array.isArray(result.results)) {
+    throw new Error('Invalid result object: missing or invalid "results" array');
+  }
+
   const report = {
     success: result.success,
     written: Boolean(result.written),
@@ -54,7 +58,7 @@ export function buildProjectionReconciliationReport(rawInput) {
     targets: []
   };
 
-  const results = Array.isArray(result.results) ? result.results : [];
+  const results = result.results;
 
   for (const target of results) {
     let status = 'error';
@@ -72,8 +76,14 @@ export function buildProjectionReconciliationReport(rawInput) {
       report.computedCounts.different++;
     }
 
-    const diff = target.reconciliation?.diff || {};
-    const differenceCount = target.reconciliation?.differenceCount || 0;
+    const rec = target.reconciliation || {};
+    const diff = rec.diff || {}; // Fallback for old shapes
+    const differenceCount = rec.differenceCount || 0;
+
+    const missingPaths = Array.isArray(rec.missingPaths) ? rec.missingPaths : (Array.isArray(diff.missingPaths) ? diff.missingPaths : []);
+    const extraPaths = Array.isArray(rec.extraPaths) ? rec.extraPaths : (Array.isArray(diff.extraPaths) ? diff.extraPaths : []);
+    const changedPaths = Array.isArray(rec.changedPaths) ? rec.changedPaths : (Array.isArray(diff.changedPaths) ? diff.changedPaths : []);
+    const ignoredPaths = Array.isArray(rec.ignoredPaths) ? rec.ignoredPaths : (Array.isArray(diff.ignoredPaths) ? diff.ignoredPaths : []);
 
     report.targets.push({
       targetType: target.targetType || 'unknown',
@@ -81,10 +91,10 @@ export function buildProjectionReconciliationReport(rawInput) {
       summaryPath: target.summaryPath || 'unknown',
       status,
       differenceCount,
-      missingPaths: Array.isArray(diff.missingPaths) ? diff.missingPaths : [],
-      extraPaths: Array.isArray(diff.extraPaths) ? diff.extraPaths : [],
-      changedPaths: Array.isArray(diff.changedPaths) ? diff.changedPaths : [],
-      ignoredPaths: Array.isArray(diff.ignoredPaths) ? diff.ignoredPaths : [],
+      missingPaths,
+      extraPaths,
+      changedPaths,
+      ignoredPaths,
       error: target.error || null
     });
   }

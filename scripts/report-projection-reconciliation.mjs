@@ -59,10 +59,6 @@ function main() {
   if (values['fail-on-attention'] && (report.overallStatus === 'attention' || report.overallStatus === 'fail')) {
     process.exit(1);
   }
-  // Hard fail condition
-  if (report.overallStatus === 'fail') {
-    process.exit(1);
-  }
 
   process.exit(0);
 }

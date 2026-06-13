@@ -66,10 +66,8 @@ describe('projection-reconciliation-report helper', () => {
             reconciliation: {
               equal: false,
               differenceCount: 2,
-              diff: {
-                changedPaths: ['a'],
-                missingPaths: ['b'],
-              }
+              changedPaths: ['a'],
+              missingPaths: ['b'],
             }
           }
         ]
@@ -77,7 +75,43 @@ describe('projection-reconciliation-report helper', () => {
       const report = buildProjectionReconciliationReport(input);
       expect(report.targets[0].status).toBe('different');
       expect(report.targets[0].differenceCount).toBe(2);
+      expect(report.targets[0].changedPaths).toEqual(['a']);
+      expect(report.targets[0].missingPaths).toEqual(['b']);
       expect(report.computedCounts.different).toBe(1);
+    });
+
+    it('classifies different target (fallback to diff field)', () => {
+      const input = {
+        success: true,
+        totalTargets: 1,
+        equalCount: 0,
+        differentCount: 1,
+        missingSummaryCount: 0,
+        errorCount: 0,
+        results: [
+          {
+            success: true,
+            targetType: 'object',
+            targetId: 'obj-1',
+            summaryPath: 'objectSummaries/obj-1',
+            existingSummaryExists: true,
+            reconciliation: {
+              equal: false,
+              differenceCount: 3,
+              diff: {
+                changedPaths: ['x'],
+                extraPaths: ['y'],
+                ignoredPaths: ['z'],
+              }
+            }
+          }
+        ]
+      };
+      const report = buildProjectionReconciliationReport(input);
+      expect(report.targets[0].status).toBe('different');
+      expect(report.targets[0].changedPaths).toEqual(['x']);
+      expect(report.targets[0].extraPaths).toEqual(['y']);
+      expect(report.targets[0].ignoredPaths).toEqual(['z']);
     });
 
     it('5. classifies missing summary target', () => {
@@ -246,6 +280,8 @@ describe('projection-reconciliation-report helper', () => {
 
     it('rejects invalid inputs to buildProjectionReconciliationReport', () => {
       expect(() => buildProjectionReconciliationReport({ noSuccessField: true })).toThrow('Invalid result object');
+      expect(() => buildProjectionReconciliationReport({ success: true, results: null })).toThrow('Invalid result object: missing or invalid "results" array');
+      expect(() => buildProjectionReconciliationReport({ success: true })).toThrow('Invalid result object: missing or invalid "results" array');
     });
   });
 
@@ -276,11 +312,9 @@ describe('projection-reconciliation-report helper', () => {
             reconciliation: {
               equal: false,
               differenceCount: 2,
-              diff: {
-                changedPaths: ['some.path'],
-                missingPaths: ['other.path'],
-                extraPaths: []
-              }
+              changedPaths: ['some.path'],
+              missingPaths: ['other.path'],
+              extraPaths: []
             }
           }
         ]
