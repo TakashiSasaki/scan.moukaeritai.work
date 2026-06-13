@@ -140,6 +140,17 @@ Use `npm run ops:assess-projection-backfill-readiness -- --manifest <path>` to a
 * `ready-for-backfill-design` does not authorize backfill execution.
 * `ready-for-backfill-design` does not authorize UI read switching.
 
-## 13. Next Steps after Validation
+## 13. Backfill Planning
+
+Use `npm run ops:plan-projection-backfill -- --readiness <path> --targets <path>` to generate batched projection backfill payloads based on assessed readiness and explicit target lists.
+* It is a local-only tool.
+* It does not call Firebase.
+* It does not perform writes.
+* It does not execute backfill.
+* `dryRun` mode is the default.
+* `manual-write-plan` mode only emits payloads and does not execute them.
+* No UI read switching is authorized.
+
+## 14. Next Steps after Validation
 
 If operational validations of `object`, `marker`, and `place` targets all succeed and match expected shapes, the next phase in the migration plan (automated reconciliation or broader backfill) can begin planning. Successful dry-run does not imply read switching readiness.
