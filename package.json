@@ -21,7 +21,8 @@
     "ops:plan-projection-canary-writes": "node scripts/plan-projection-canary-writes.mjs",
     "ops:validate-projection-canary-writes": "node scripts/validate-projection-canary-writes.mjs",
     "ops:assess-projection-backfill-readiness": "node scripts/assess-projection-backfill-readiness.mjs",
-    "ops:plan-projection-backfill": "node scripts/plan-projection-backfill.mjs"
+    "ops:plan-projection-backfill": "node scripts/plan-projection-backfill.mjs",
+    "ops:prepare-projection-backfill-operation": "node scripts/prepare-projection-backfill-operation.mjs"
   },
   "dependencies": {
     "@google-cloud/monitoring": "^5.3.2",

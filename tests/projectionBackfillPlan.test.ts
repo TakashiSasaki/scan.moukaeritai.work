@@ -148,4 +148,58 @@ describe('projectionBackfillPlan', () => {
     expect(str).toContain('[INVALID BACKFILL PLAN]');
     expect(str).toContain('readinessAssessment is missing');
   });
+
+  it('21. returns invalid plan when input is null', () => {
+    const plan = buildProjectionBackfillPlan(null);
+    expect(plan.valid).toBe(false);
+    expect(plan.blockers[0].code).toBe('invalid-input');
+  });
+
+  it('22. returns invalid plan when input is undefined', () => {
+    const plan = buildProjectionBackfillPlan();
+    expect(plan.valid).toBe(false);
+    expect(plan.blockers[0].code).toBe('invalid-input');
+  });
+
+  it('23. returns invalid plan when input is not an object', () => {
+    const plan = buildProjectionBackfillPlan('invalid string');
+    expect(plan.valid).toBe(false);
+    expect(plan.blockers[0].code).toBe('invalid-input');
+  });
+
+  it('24. rejects non-integer batchSize', () => {
+    const plan = buildProjectionBackfillPlan(
+      {
+        readinessAssessment: readyAssessment,
+        targets: [{ targetType: 'object', targetId: 'o1' }]
+      },
+      { batchSize: 5.5 }
+    );
+    expect(plan.valid).toBe(false);
+    expect(plan.blockers.some(b => b.code === 'invalid-batch-size')).toBe(true);
+  });
+
+  it('25. rejects targetId with leading whitespace', () => {
+    const plan = buildProjectionBackfillPlan(
+      {
+        readinessAssessment: readyAssessment,
+        targets: [{ targetType: 'object', targetId: ' o1' }]
+      }
+    );
+    expect(plan.valid).toBe(false);
+    expect(plan.blockers.some(b => b.code === 'invalid-target-id')).toBe(true);
+    expect(plan.blockers.some(b => b.message.includes('whitespace'))).toBe(true);
+  });
+
+  it('26. rejects targetId with trailing whitespace', () => {
+    const plan = buildProjectionBackfillPlan(
+      {
+        readinessAssessment: readyAssessment,
+        targets: [{ targetType: 'object', targetId: 'o1 ' }]
+      }
+    );
+    expect(plan.valid).toBe(false);
+    expect(plan.blockers.some(b => b.code === 'invalid-target-id')).toBe(true);
+    expect(plan.blockers.some(b => b.message.includes('whitespace'))).toBe(true);
+  });
 });
