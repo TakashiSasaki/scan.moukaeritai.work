@@ -11,13 +11,13 @@ describe('buildProjectionCanaryValidationBundle', () => {
         targetType: 'object',
         targetId: 'obj1',
         summaryPath: 'objectSummaries/obj1',
-        recomputePayload: { data: { dryRun: false } }
+        recomputePayload: { data: { targetType: 'object', targetId: 'obj1', dryRun: false } }
       },
       {
         targetType: 'marker',
         targetId: 'mk1',
         summaryPath: 'markerSummaries/mk1',
-        recomputePayload: { data: { dryRun: false } }
+        recomputePayload: { data: { targetType: 'marker', targetId: 'mk1', dryRun: false } }
       }
     ]
   };
@@ -181,8 +181,8 @@ describe('buildProjectionCanaryValidationBundle', () => {
       written: false,
       selectedCount: 2,
       selectedTargets: [
-        { targetType: 'object', targetId: 'obj1', summaryPath: 'objectSummaries/obj1', recomputePayload: { data: { dryRun: false } } },
-        { targetType: 'object', targetId: 'obj1', summaryPath: 'objectSummaries/obj1', recomputePayload: { data: { dryRun: false } } }
+        { targetType: 'object', targetId: 'obj1', summaryPath: 'objectSummaries/obj1', recomputePayload: { data: { targetType: 'object', targetId: 'obj1', dryRun: false } } },
+        { targetType: 'object', targetId: 'obj1', summaryPath: 'objectSummaries/obj1', recomputePayload: { data: { targetType: 'object', targetId: 'obj1', dryRun: false } } }
       ]
     };
     const bundle = buildProjectionCanaryValidationBundle({ plan: badPlan, postWrite: validPostWriteNormalizedReport });
@@ -199,13 +199,50 @@ describe('buildProjectionCanaryValidationBundle', () => {
       written: false,
       selectedCount: 1,
       selectedTargets: [
-        { targetType: 'object', targetId: 'obj1', summaryPath: 'objectSummaries/obj1', recomputePayload: { data: { dryRun: true } } }
+        { targetType: 'object', targetId: 'obj1', summaryPath: 'objectSummaries/obj1', recomputePayload: { data: { targetType: 'object', targetId: 'obj1', dryRun: true } } }
       ]
     };
     const bundle = buildProjectionCanaryValidationBundle({ plan: badPlan, postWrite: validPostWriteNormalizedReport });
     expect(bundle.success).toBe(false);
     expect(bundle.valid).toBe(false);
     expect(bundle.errors[0].message).toContain('dryRun === false');
+  });
+
+  it('fails when recomputePayload.data.targetType differs from selected target targetType', () => {
+    const badPlan = {
+      valid: true,
+      written: false,
+      selectedCount: 1,
+      selectedTargets: [
+        { targetType: 'object', targetId: 'obj1', summaryPath: 'objectSummaries/obj1', recomputePayload: { data: { targetType: 'marker', targetId: 'obj1', dryRun: false } } }
+      ]
+    };
+    const bundle = buildProjectionCanaryValidationBundle({ plan: badPlan, postWrite: validPostWriteNormalizedReport });
+    expect(bundle.success).toBe(false);
+    expect(bundle.valid).toBe(false);
+    expect(bundle.errors[0].message).toContain('Target identity mismatch');
+  });
+
+  it('fails when recomputePayload.data.targetId differs from selected target targetId', () => {
+    const badPlan = {
+      valid: true,
+      written: false,
+      selectedCount: 1,
+      selectedTargets: [
+        { targetType: 'object', targetId: 'obj1', summaryPath: 'objectSummaries/obj1', recomputePayload: { data: { targetType: 'object', targetId: 'obj2', dryRun: false } } }
+      ]
+    };
+    const bundle = buildProjectionCanaryValidationBundle({ plan: badPlan, postWrite: validPostWriteNormalizedReport });
+    expect(bundle.success).toBe(false);
+    expect(bundle.valid).toBe(false);
+    expect(bundle.errors[0].message).toContain('Target identity mismatch');
+  });
+
+  it('passes when recomputePayload.data.targetType, targetId, and dryRun:false all match', () => {
+    // This is tested extensively by validPlan, but let's confirm explicitly.
+    const bundle = buildProjectionCanaryValidationBundle({ plan: validPlan, postWrite: validPostWriteNormalizedReport });
+    expect(bundle.success).toBe(true);
+    expect(bundle.valid).toBe(true);
   });
 
   it('12. fails when plan.valid !== true', () => {

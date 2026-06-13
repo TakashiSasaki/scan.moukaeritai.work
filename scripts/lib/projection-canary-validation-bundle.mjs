@@ -97,6 +97,13 @@ export function buildProjectionCanaryValidationBundle(input, options = {}) {
       bundle.errors.push({ code: 'invalid-plan-target', message: 'Every selected target must have recomputePayload.data.dryRun === false.' });
       return bundle;
     }
+    if (target.recomputePayload.data.targetType !== target.targetType || target.recomputePayload.data.targetId !== target.targetId) {
+      bundle.success = false;
+      bundle.valid = false;
+      bundle.overallStatus = 'fail';
+      bundle.errors.push({ code: 'invalid-plan-target', message: `Target identity mismatch in recomputePayload for ${target.targetType} ${target.targetId}.` });
+      return bundle;
+    }
     const key = `${target.targetType}:${target.targetId}`;
     if (planTargetsMap.has(key)) {
       bundle.success = false;
