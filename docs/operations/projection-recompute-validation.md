@@ -111,6 +111,24 @@ Use `npm run ops:plan-projection-canary-writes -- --input <path>` to generate lo
 * Canary write planning does not authorize UI read switching.
 * Keep canary target count small, with hard max 5.
 
-## 11. Next Steps after Validation
+## 11. Canary Write Validation
+
+After generating a canary plan and explicitly running the selected manual canary writes, you must validate the outcome using:
+
+```bash
+npm run ops:validate-projection-canary-writes -- \
+  --plan path/to/canary-plan.json \
+  --post-write path/to/post-write-reconcile-response.json
+```
+
+**Constraints:**
+- `ops:validate-projection-canary-writes` validates saved canary evidence locally.
+- It consumes a saved canary plan and saved post-write reconciliation response/report.
+- It does not call Firebase.
+- It does not perform writes.
+- Passing canary validation does not authorize broad backfill.
+- Passing canary validation does not authorize UI read switching.
+
+## 12. Next Steps after Validation
 
 If operational validations of `object`, `marker`, and `place` targets all succeed and match expected shapes, the next phase in the migration plan (automated reconciliation or broader backfill) can begin planning. Successful dry-run does not imply read switching readiness.
