@@ -8,6 +8,11 @@ on:
     paths:
       - 'functions/**'
       - '.github/workflows/deploy-functions.yml'
+      - 'packages/efp-model/**'
+      - 'scripts/prepare-functions-efp-model-dependency.mjs'
+      - 'scripts/validate-functions-efp-model-dependency.mjs'
+      - 'package.json'
+      - 'package-lock.json'
 
 jobs:
   deploy:
