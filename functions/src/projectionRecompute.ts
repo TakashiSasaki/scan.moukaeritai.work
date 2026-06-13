@@ -13,6 +13,7 @@ import {
   ProjectionRecomputeInputError,
   type RecomputeProjectionSummaryInput,
 } from "./projectionRecomputeInput";
+import { getProjectionRecomputeFactQueryPlan } from "./projectionRecomputeFactPlan";
 
 const appletConfig = {
   firestoreDatabaseId: "photo-moukaeritai-work"
@@ -80,17 +81,25 @@ export const recomputeProjectionSummary = onCall(
 
     let summary: any;
 
+      const factQueryPlan = getProjectionRecomputeFactQueryPlan(targetType);
+
+      await Promise.all(
+        factQueryPlan.map(async (entry) => {
+          const snap = await db
+            .collection(entry.collection)
+            .where(entry.indexField, "array-contains", targetId)
+            .get();
+
+          const facts = snap.docs.map((doc) => withDocumentId(doc, entry.idField));
+
+          if (entry.resultKey === "associations") associations = facts;
+          else if (entry.resultKey === "observations") observations = facts;
+          else if (entry.resultKey === "measurements") measurements = facts;
+          else if (entry.resultKey === "events") events = facts;
+        })
+      );
+
       if (targetType === "object") {
-        const [assocSnap, obsSnap, measSnap] = await Promise.all([
-          db.collection("associations").where("objectIds", "array-contains", targetId).get(),
-          db.collection("observations").where("objectIds", "array-contains", targetId).get(),
-          db.collection("measurements").where("objectIds", "array-contains", targetId).get(),
-        ]);
-
-        associations = assocSnap.docs.map(d => withDocumentId(d, "associationId"));
-        observations = obsSnap.docs.map(d => withDocumentId(d, "observationId"));
-        measurements = measSnap.docs.map(d => withDocumentId(d, "measurementId"));
-
         summary = reconstructObjectSummary({
           objectId: targetId,
           associations,
@@ -100,14 +109,6 @@ export const recomputeProjectionSummary = onCall(
         });
 
       } else if (targetType === "marker") {
-        const [assocSnap, obsSnap] = await Promise.all([
-          db.collection("associations").where("markerKeys", "array-contains", targetId).get(),
-          db.collection("observations").where("markerKeys", "array-contains", targetId).get(),
-        ]);
-
-        associations = assocSnap.docs.map(d => withDocumentId(d, "associationId"));
-        observations = obsSnap.docs.map(d => withDocumentId(d, "observationId"));
-
         summary = reconstructMarkerSummary({
           markerKey: targetId,
           associations,
@@ -116,18 +117,6 @@ export const recomputeProjectionSummary = onCall(
         });
 
       } else if (targetType === "place") {
-        const [assocSnap, obsSnap, measSnap, evSnap] = await Promise.all([
-          db.collection("associations").where("placeIds", "array-contains", targetId).get(),
-          db.collection("observations").where("placeIds", "array-contains", targetId).get(),
-          db.collection("measurements").where("placeIds", "array-contains", targetId).get(),
-          db.collection("events").where("placeIds", "array-contains", targetId).get(),
-        ]);
-
-        associations = assocSnap.docs.map(d => withDocumentId(d, "associationId"));
-        observations = obsSnap.docs.map(d => withDocumentId(d, "observationId"));
-        measurements = measSnap.docs.map(d => withDocumentId(d, "measurementId"));
-        events = evSnap.docs.map(d => withDocumentId(d, "eventId"));
-
         summary = reconstructPlaceSummary({
           placeId: targetId,
           associations,

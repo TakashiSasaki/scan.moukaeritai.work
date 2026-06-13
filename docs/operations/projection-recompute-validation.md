@@ -16,6 +16,7 @@ Before performing any broad data backfills or switching client UI reads to rely 
 ## 3. Safety Constraints
 
 - **Input Contract**: The callable input contract is strictly validated by a pure, dependency-free helper covered by ordinary unit tests (`tests/projectionRecomputeInput.test.ts`).
+- **Fact Query Plan**: The recompute Fact query plan logic is covered by ordinary unit tests (`tests/projectionRecomputeFactPlan.test.ts`).
 - **Start with `dryRun=true`**: This is the default. Do not proceed to `dryRun=false` until you have verified the dry-run output against expected values.
 - **Use only known test targets first**: Use a staging or development object where possible, or a non-critical production object if explicitly testing real-world shape.
 - **Do not run broad backfill**: This operational validation is single-target only.
