@@ -85,6 +85,22 @@ If the target entity does not exist, the callable throws an `HttpsError` (`not-f
 - Do not write scripts that loop over thousands of records calling this function. A proper backfill will require a dedicated strategy (e.g., batched queue or migration task).
 - Do not store or commit access tokens in scripts. The helper script generates the payload, keeping credential management manual and external.
 
-## 9. Next Steps after Validation
+## 9. Reconciliation Reporting
+
+Operators can run selected-target batch reconciliation and save the response to a JSON file. To summarize the results locally without calling Firebase, use the local reporting tool:
+
+```bash
+npm run ops:report-projection-reconciliation -- --input path/to/reconcile-response.json
+```
+
+**Constraints:**
+- Selected-target reconciliation responses can be saved to JSON.
+- `ops:report-projection-reconciliation` summarizes saved responses locally.
+- The report tool is local-only and does not call Firebase.
+- Report `pass`/`attention`/`fail` status is an operational validation aid.
+- Passing selected-target reports still does not authorize UI read switching.
+- Passing selected-target reports still does not replace broad backfill.
+
+## 10. Next Steps after Validation
 
 If operational validations of `object`, `marker`, and `place` targets all succeed and match expected shapes, the next phase in the migration plan (automated reconciliation or broader backfill) can begin planning. Successful dry-run does not imply read switching readiness.
