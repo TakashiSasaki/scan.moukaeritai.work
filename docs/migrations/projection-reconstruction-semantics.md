@@ -4,8 +4,7 @@ This document defines the rules for reconstructing Projection summaries (`object
 
 *Implementation Note: Canonical pure projection reducers live in packages/efp-model and are emitted as part of the package build. The canonical pure reducers are emitted through @scan/efp-model dual artifacts. The legacy src/lib/projectionReconstruction.ts path remains a compatibility re-export.*
 
-Backend/admin projection recompute is not currently active. The deployed callable name may exist as a disabled stub until @scan/efp-model consumption is validated inside the Firebase Functions deployment artifact. The callable recomputeProjectionSummary remains disabled until Functions packaging is validated.
-Functions packaging for `@scan/efp-model` is validated separately from recompute activation. The callable remains disabled until a follow-up PR wires it to the packaged dependency.
+Backend/admin single-target projection recompute is implemented by the callable function recomputeProjectionSummary. It consumes @scan/efp-model through the Functions package dependency, defaults to dry-run, and does not switch runtime reads.
 
 ## Principles
 

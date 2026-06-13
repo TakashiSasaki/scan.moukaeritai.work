@@ -460,4 +460,7 @@ The application has transitioned from a simple `items` collection to a normalize
 - Functions code must consume shared EFP logic only through the declared @scan/efp-model dependency.
 - Functions code must never import ../../packages/** or ../../src/**.
 - The generated functions/vendor directory must not be committed.
-- Recompute activation must be a separate PR after dependency packaging validation.
+- recomputeProjectionSummary is single-target only and dry-run by default.
+- Do not expand recomputeProjectionSummary into broad backfill or read switching without a separate plan.
+- Functions recompute code must import shared reducers from @scan/efp-model only.
+- Do not import ../../packages/** or ../../src/** from functions/src.

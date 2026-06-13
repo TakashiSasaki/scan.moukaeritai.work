@@ -13,6 +13,7 @@ Functions source files under `functions/src` must not import files outside the `
 
 Before Functions code imports `@scan/efp-model`, the package must be present as a dependency inside the functions deployment artifact. Format compatibility alone is not sufficient.
 `@scan/efp-model` is prepared into `functions/vendor/efp-model` before Functions dependency installation. Functions code may consume the package only through the declared `@scan/efp-model` dependency, never through `../../packages/**` or `../../src/**` source imports.
+recomputeProjectionSummary must continue to consume shared EFP logic only through the declared @scan/efp-model dependency prepared under functions/vendor/efp-model.
 
 ## Allowed Deployments
 
