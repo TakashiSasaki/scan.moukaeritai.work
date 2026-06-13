@@ -39,6 +39,9 @@ jobs:
       - name: Typecheck shared EFP model package
         run: npm --prefix packages/efp-model run typecheck
 
+      - name: Validate shared EFP model package artifact
+        run: npm --prefix packages/efp-model run test:artifact
+
       - name: Run lint
         run: npm run lint
 
