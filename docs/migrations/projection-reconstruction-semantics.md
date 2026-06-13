@@ -2,9 +2,9 @@
 
 This document defines the rules for reconstructing Projection summaries (`objectSummaries`, `markerSummaries`, `placeSummaries`) from target Entity and Fact collections in the Entity/Fact/Projection data model.
 
-*Implementation Note: Canonical pure projection reducers live in packages/efp-model and are emitted as part of the package build. The legacy src/lib/projectionReconstruction.ts path remains a compatibility re-export.*
+*Implementation Note: Canonical pure projection reducers live in packages/efp-model and are emitted as part of the package build. The canonical pure reducers are emitted through @scan/efp-model dual artifacts. The legacy src/lib/projectionReconstruction.ts path remains a compatibility re-export.*
 
-Backend/admin projection recompute is not currently active. The deployed callable name may exist as a disabled stub until @scan/efp-model consumption is validated inside the Firebase Functions deployment artifact.
+Backend/admin projection recompute is not currently active. The deployed callable name may exist as a disabled stub until @scan/efp-model consumption is validated inside the Firebase Functions deployment artifact. The callable recomputeProjectionSummary remains disabled until Functions packaging is validated.
 
 ## Principles
 

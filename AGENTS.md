@@ -453,3 +453,6 @@ The application has transitioned from a simple `items` collection to a normalize
 - CI and Functions deploy workflows must run the Functions import-boundary validation before build/deploy.
 - Do not bypass `test:functions-boundary` to ship Functions code.
 - If the boundary check fails, fix the import boundary rather than adding ad hoc exceptions.
+- @scan/efp-model must remain consumable by both ESM import and CommonJS require unless Functions are explicitly migrated away from CommonJS.
+- Package artifact smoke tests must pass before any Functions code consumes @scan/efp-model.
+- Do not make Functions import @scan/efp-model until it is included in the functions deployment artifact as a proper dependency.
