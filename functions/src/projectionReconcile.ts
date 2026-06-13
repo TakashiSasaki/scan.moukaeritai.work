@@ -1,14 +1,12 @@
 import { onCall, HttpsError, type CallableRequest } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
-import { stripUndefinedDeep } from "@scan/efp-model";
 import {
   parseRecomputeProjectionSummaryInput,
   ProjectionRecomputeInputError,
   type RecomputeProjectionSummaryInput,
 } from "./projectionRecomputeInput";
-import { recomputeProjectionSummaryForTarget } from "./projectionSummaryRecompute";
-import { diffProjectionSummaries } from "./projectionSummaryDiff";
+import { reconcileTargetProjectionSummary, ProjectionSummaryReconciliationError } from "./projectionSummaryReconciliation";
 
 const appletConfig = {
   firestoreDatabaseId: "photo-moukaeritai-work"
@@ -33,8 +31,6 @@ export const reconcileProjectionSummary = onCall(
 
     let parsedInput;
     try {
-      // Re-use the existing input parser, but ignore its returned dryRun flag
-      // as reconciliation is always read-only. We only need the payload to specify type and id.
       parsedInput = parseRecomputeProjectionSummaryInput(request.data);
     } catch (error) {
       if (error instanceof ProjectionRecomputeInputError) {
@@ -52,45 +48,21 @@ export const reconcileProjectionSummary = onCall(
     } = parsedInput;
 
     try {
-      const entitySnap = await db.collection(entityCollection).doc(targetId).get();
-      if (!entitySnap.exists) {
-        throw new HttpsError("not-found", "Target entity not found.");
-      }
-
-      const { summary: recomputedSummaryRaw, factsRead } = await recomputeProjectionSummaryForTarget({
+      const result = await reconcileTargetProjectionSummary({
         db,
         targetType,
         targetId,
-      });
-
-      const existingSummarySnap = await db.collection(summaryCollection).doc(targetId).get();
-      const existingSummaryExists = existingSummarySnap.exists;
-
-      const existingSummaryRaw = existingSummaryExists ? existingSummarySnap.data() : undefined;
-
-      const recomputedSummary = stripUndefinedDeep(recomputedSummaryRaw);
-      const existingSummaryPayload = existingSummaryExists ? stripUndefinedDeep(existingSummaryRaw) : null;
-
-      // If undefined is passed, the entire root object will be reported as "missing"
-      const existingSummaryDiffInput = existingSummaryExists ? existingSummaryPayload : undefined;
-
-      const reconciliation = diffProjectionSummaries(recomputedSummary, existingSummaryDiffInput, {
-        ignoredPaths: ["$.asOf"]
-      });
-
-      return {
-        success: true,
-        targetType,
-        targetId,
+        entityCollection,
+        summaryCollection,
         summaryPath,
-        existingSummaryExists,
-        factsRead,
-        reconciliation,
-        recomputedSummary,
-        existingSummary: existingSummaryPayload,
-        written: false,
-      };
+        includeSummaries: true // single target callable always includes summaries for backward compatibility
+      });
+
+      return result;
     } catch (error) {
+      if (error instanceof ProjectionSummaryReconciliationError) {
+        throw new HttpsError(error.code, error.message);
+      }
       if (error instanceof HttpsError) {
         throw error;
       }

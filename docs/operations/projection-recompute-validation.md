@@ -20,8 +20,9 @@ Before performing any broad data backfills or switching client UI reads to rely 
 - **Start with `dryRun=true`**: This is the default. Do not proceed to `dryRun=false` until you have verified the dry-run output against expected values.
 - **Use only known test targets first**: Use a staging or development object where possible, or a non-critical production object if explicitly testing real-world shape.
 - **Single-Target Reconciliation Available**: Use the read-only `reconcileProjectionSummary` callable to compare recomputed EFP projection summaries with the currently stored summaries and return a structural difference report.
-- **Admin-only and Read-only**: The reconciliation callable is admin-only and does not write projection summaries to Firestore under any circumstance.
-- **No Broad Backfill**: This operational validation remains single-target only; this tooling does not replace broad backfill.
+- **Selected-Target Batch Reconciliation Available**: Use the read-only `reconcileProjectionSummaries` callable for explicit selected-target reconciliation. It processes up to 20 targets, does not scan collections, and has hard target-count limits.
+- **Admin-only and Read-only**: The reconciliation callables are admin-only and do not write projection summaries to Firestore under any circumstance.
+- **No Broad Backfill**: This operational validation remains focused on selected targets only; this tooling does not replace broad backfill.
 - **No UI Read Switching Authorization**: Successful reconciliation validations do not authorize UI read switching by themselves. Broad backfill and UI read switching remain future work.
 - **`dryRun=false` writes exactly one summary document**: It creates or overwrites one record in `objectSummaries`, `markerSummaries`, or `placeSummaries` when using `recomputeProjectionSummary`.
 - **Use the existing deploy-functions workflow**: Do not manually run broad `firebase deploy --only functions`. Rely on the CI/CD pipeline or use the allowlisted deploy script.
