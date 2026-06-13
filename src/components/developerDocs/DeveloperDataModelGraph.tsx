@@ -263,6 +263,7 @@ export default function DeveloperDataModelGraph() {
               onClick={handleReset}
               className="flex items-center gap-2 px-4 py-2 bg-[var(--surface-container-high)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface)] rounded-full text-sm font-medium transition-colors border border-[var(--outline)]"
               title="Reset View"
+              aria-label="Reset View"
             >
               <RotateCcw size={16} />
               <span className="hidden sm:inline">Reset View</span>
