@@ -17,7 +17,8 @@
     "test:functions-efp-model": "node scripts/validate-functions-efp-model-dependency.mjs",
     "ops:recompute-projection": "node scripts/recompute-projection-summary.mjs",
     "ops:reconcile-projection": "node scripts/reconcile-projection-summaries.mjs",
-    "ops:report-projection-reconciliation": "node scripts/report-projection-reconciliation.mjs"
+    "ops:report-projection-reconciliation": "node scripts/report-projection-reconciliation.mjs",
+    "ops:plan-projection-canary-writes": "node scripts/plan-projection-canary-writes.mjs"
   },
   "dependencies": {
     "@google-cloud/monitoring": "^5.3.2",
