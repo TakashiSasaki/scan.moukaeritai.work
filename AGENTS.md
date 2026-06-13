@@ -9,6 +9,19 @@ This document outlines the core architectural decisions, design patterns, and co
 ## 1. Project Overview
 A cloud-based item tracking and inventory management application with QR/NFC scanning capabilities and image-based item identification.
 
+### Project Harness / Final Product Goal
+The final objective of this project is to complete and deploy a Firebase-hosted inventory management application. The Entity/Fact/Projection (EFP) migration is the foundational data model for that application.
+
+The purpose of the EFP migration is to support reliable item / marker / place / fact / projection workflows in the eventual user-facing app. Operational validation, canary work, and backfill planning are migration safety mechanisms, not the final product itself. Backfill execution and UI read switching must remain gated by explicit evidence and planning.
+
+All data-model, reconciliation, projection, validation, and backfill work should be evaluated against this final product goal:
+* a deployable Firebase application
+* a robust inventory / item management data model
+* safe migration from legacy data structures
+* reliable derived projections for application reads
+* controlled operational validation before any broad backfill or UI read switching
+* eventual user-facing functionality on top of the EFP model
+
 ### Naming & Identification
 To prevent confusion across systems, note the following distinct identifiers used in this project:
 - **User-Facing Brand**: `scan.moukaeritai.work`
@@ -473,5 +486,6 @@ The application has transitioned from a simple `items` collection to a normalize
 - Local canary write plans can be generated from saved responses/reports using `ops:plan-projection-canary-writes`. It does not call Firebase, does not perform writes, and generates `dryRun:false` payloads for explicit manual canary use only. It does not authorize broad backfill or UI read switching, and the maximum canary target count is strictly 5.
 - Saved canary evidence can be validated locally using `ops:validate-projection-canary-writes`. It consumes a saved canary plan and saved post-write reconciliation response/report. It does not call Firebase and does not perform writes. Passing canary validation does not authorize broad backfill or UI read switching.
 - Saved local evidence can be assessed for readiness to design backfill using `ops:assess-projection-backfill-readiness`. It produces a conservative `ready-for-backfill-design` or `blocked`/`fail` assessment without calling Firebase, performing writes, or performing backfill. `ready-for-backfill-design` does not authorize backfill execution or UI read switching.
+- Projection backfill planning can be generated using `ops:plan-projection-backfill`. It is a local-only tool that consumes readiness assessment and explicit target lists. It does not call Firebase, perform writes, or execute backfill. Its default mode is `dryRun`, and even `manual-write-plan` mode only emits payloads and does not execute them. No UI read switching is authorized by generating a plan.
 - Do not add broad backfill, scheduled recompute, or read switching in the operational validation stride.
 - dryRun=false validation must be single-target and explicitly requested.

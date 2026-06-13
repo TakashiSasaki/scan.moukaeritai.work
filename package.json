@@ -20,7 +20,8 @@
     "ops:report-projection-reconciliation": "node scripts/report-projection-reconciliation.mjs",
     "ops:plan-projection-canary-writes": "node scripts/plan-projection-canary-writes.mjs",
     "ops:validate-projection-canary-writes": "node scripts/validate-projection-canary-writes.mjs",
-    "ops:assess-projection-backfill-readiness": "node scripts/assess-projection-backfill-readiness.mjs"
+    "ops:assess-projection-backfill-readiness": "node scripts/assess-projection-backfill-readiness.mjs",
+    "ops:plan-projection-backfill": "node scripts/plan-projection-backfill.mjs"
   },
   "dependencies": {
     "@google-cloud/monitoring": "^5.3.2",
