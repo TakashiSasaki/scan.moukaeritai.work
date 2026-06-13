@@ -19,9 +19,11 @@ Before performing any broad data backfills or switching client UI reads to rely 
 - **Fact Query Plan**: The recompute Fact query plan logic is covered by ordinary unit tests (`tests/projectionRecomputeFactPlan.test.ts`).
 - **Start with `dryRun=true`**: This is the default. Do not proceed to `dryRun=false` until you have verified the dry-run output against expected values.
 - **Use only known test targets first**: Use a staging or development object where possible, or a non-critical production object if explicitly testing real-world shape.
-- **Do not run broad backfill**: This operational validation is single-target only.
-- **Do not switch UI reads based on one successful dry-run**: Client read switching requires a comprehensive migration and reconciliation phase.
-- **`dryRun=false` writes exactly one summary document**: It creates or overwrites one record in `objectSummaries`, `markerSummaries`, or `placeSummaries`.
+- **Single-Target Reconciliation Available**: Use the read-only `reconcileProjectionSummary` callable to compare recomputed EFP projection summaries with the currently stored summaries and return a structural difference report.
+- **Admin-only and Read-only**: The reconciliation callable is admin-only and does not write projection summaries to Firestore under any circumstance.
+- **No Broad Backfill**: This operational validation remains single-target only; this tooling does not replace broad backfill.
+- **No UI Read Switching Authorization**: Successful reconciliation validations do not authorize UI read switching by themselves. Broad backfill and UI read switching remain future work.
+- **`dryRun=false` writes exactly one summary document**: It creates or overwrites one record in `objectSummaries`, `markerSummaries`, or `placeSummaries` when using `recomputeProjectionSummary`.
 - **Use the existing deploy-functions workflow**: Do not manually run broad `firebase deploy --only functions`. Rely on the CI/CD pipeline or use the allowlisted deploy script.
 
 ## 4. Deploy Prerequisite

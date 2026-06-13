@@ -1,5 +1,6 @@
 export { scanExecuteImportedObservationBatch } from "./scanExecuteImportedObservationBatch";
 export { recomputeProjectionSummary } from "./projectionRecompute";
+export { reconcileProjectionSummary } from "./projectionReconcile";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";

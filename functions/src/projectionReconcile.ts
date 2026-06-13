@@ -8,6 +8,7 @@ import {
   type RecomputeProjectionSummaryInput,
 } from "./projectionRecomputeInput";
 import { recomputeProjectionSummaryForTarget } from "./projectionSummaryRecompute";
+import { diffProjectionSummaries } from "./projectionSummaryDiff";
 
 const appletConfig = {
   firestoreDatabaseId: "photo-moukaeritai-work"
@@ -17,7 +18,7 @@ function getDb() {
   return getFirestore(admin.app(), appletConfig.firestoreDatabaseId);
 }
 
-export const recomputeProjectionSummary = onCall(
+export const reconcileProjectionSummary = onCall(
   async (request: CallableRequest<RecomputeProjectionSummaryInput>) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Authentication is required.");
@@ -32,6 +33,8 @@ export const recomputeProjectionSummary = onCall(
 
     let parsedInput;
     try {
+      // Re-use the existing input parser, but ignore its returned dryRun flag
+      // as reconciliation is always read-only. We only need the payload to specify type and id.
       parsedInput = parseRecomputeProjectionSummaryInput(request.data);
     } catch (error) {
       if (error instanceof ProjectionRecomputeInputError) {
@@ -43,7 +46,6 @@ export const recomputeProjectionSummary = onCall(
     const {
       targetType,
       targetId,
-      dryRun,
       entityCollection,
       summaryCollection,
       summaryPath,
@@ -55,36 +57,40 @@ export const recomputeProjectionSummary = onCall(
         throw new HttpsError("not-found", "Target entity not found.");
       }
 
-      const { summary, factsRead } = await recomputeProjectionSummaryForTarget({
+      const { summary: recomputedSummaryRaw, factsRead } = await recomputeProjectionSummaryForTarget({
         db,
         targetType,
         targetId,
       });
 
-      let written = false;
-      const cleanSummary = stripUndefinedDeep(summary);
+      const existingSummarySnap = await db.collection(summaryCollection).doc(targetId).get();
+      const existingSummaryExists = existingSummarySnap.exists;
 
-      if (!dryRun) {
-        await db.collection(summaryCollection).doc(targetId).set(cleanSummary as admin.firestore.WithFieldValue<admin.firestore.DocumentData>);
-        written = true;
-      }
+      const existingSummaryRaw = existingSummaryExists ? existingSummarySnap.data() : null;
+
+      const recomputedSummary = stripUndefinedDeep(recomputedSummaryRaw);
+      const existingSummary = existingSummaryExists ? stripUndefinedDeep(existingSummaryRaw) : null;
+
+      const reconciliation = diffProjectionSummaries(recomputedSummary, existingSummary);
 
       return {
         success: true,
-        dryRun,
         targetType,
         targetId,
         summaryPath,
-        summary: cleanSummary,
+        existingSummaryExists,
         factsRead,
-        written,
+        reconciliation,
+        recomputedSummary,
+        existingSummary,
+        written: false,
       };
     } catch (error) {
       if (error instanceof HttpsError) {
         throw error;
       }
-      console.error("Projection Recompute Error:", error);
-      throw new HttpsError("internal", "An unexpected error occurred during projection recomputation.");
+      console.error("Projection Reconcile Error:", error);
+      throw new HttpsError("internal", "An unexpected error occurred during projection reconciliation.");
     }
   }
 );
