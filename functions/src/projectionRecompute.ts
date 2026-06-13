@@ -1,4 +1,4 @@
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onCall, HttpsError, type CallableRequest } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import {
@@ -29,10 +29,28 @@ const summaryCollectionByTargetType = {
   place: "placeSummaries"
 } as const;
 
-export const recomputeProjectionSummary = onCall(async (request: any) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Authentication is required.");
-  }
+function withDocumentId<T extends Record<string, unknown>>(
+  doc: admin.firestore.QueryDocumentSnapshot,
+  idField: string
+): T {
+  const data = doc.data() as T;
+  return {
+    ...data,
+    [idField]: data[idField] ?? doc.id
+  } as T;
+}
+
+interface RecomputeProjectionSummaryInput {
+  targetType?: unknown;
+  targetId?: unknown;
+  dryRun?: unknown;
+}
+
+export const recomputeProjectionSummary = onCall(
+  async (request: CallableRequest<RecomputeProjectionSummaryInput>) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentication is required.");
+    }
 
   const db = getDb();
   const adminDoc = await db.collection("admins").doc(request.auth.uid).get();
@@ -41,23 +59,34 @@ export const recomputeProjectionSummary = onCall(async (request: any) => {
     throw new HttpsError("permission-denied", "Admin privileges are required.");
   }
 
-  const data = request.data || {};
-  const { targetType, targetId } = data;
-  const dryRun = data.dryRun !== false; // Default to true
+    const data = request.data || {};
+    const rawTargetType = data.targetType;
+    const rawTargetId = data.targetId;
 
-  if (!targetType || !["object", "marker", "place"].includes(targetType)) {
-    throw new HttpsError("invalid-argument", 'targetType must be "object", "marker", or "place".');
-  }
+    if (data.dryRun !== undefined && typeof data.dryRun !== "boolean") {
+      throw new HttpsError("invalid-argument", "dryRun must be a boolean when provided.");
+    }
+    const dryRun = data.dryRun ?? true;
 
-  if (!targetId || typeof targetId !== "string" || targetId.trim() === "") {
-    throw new HttpsError("invalid-argument", "targetId must be a non-empty string.");
-  }
+    if (!rawTargetType || typeof rawTargetType !== "string" || !["object", "marker", "place"].includes(rawTargetType)) {
+      throw new HttpsError("invalid-argument", 'targetType must be "object", "marker", or "place".');
+    }
+    const targetType = rawTargetType as keyof typeof entityCollectionByTargetType;
 
-  const entityCollection = entityCollectionByTargetType[targetType as keyof typeof entityCollectionByTargetType];
-  const summaryCollection = summaryCollectionByTargetType[targetType as keyof typeof summaryCollectionByTargetType];
+    if (!rawTargetId || typeof rawTargetId !== "string" || rawTargetId.trim() === "") {
+      throw new HttpsError("invalid-argument", "targetId must be a non-empty string.");
+    }
 
-  try {
-    const entitySnap = await db.collection(entityCollection).doc(targetId).get();
+    const targetId = rawTargetId.trim();
+    if (targetId.includes("/")) {
+      throw new HttpsError("invalid-argument", "targetId must not contain '/'.");
+    }
+
+    const entityCollection = entityCollectionByTargetType[targetType];
+    const summaryCollection = summaryCollectionByTargetType[targetType];
+
+    try {
+      const entitySnap = await db.collection(entityCollection).doc(targetId).get();
     if (!entitySnap.exists) {
       throw new HttpsError("not-found", "Target entity not found.");
     }
@@ -71,92 +100,94 @@ export const recomputeProjectionSummary = onCall(async (request: any) => {
 
     let summary: any;
 
-    if (targetType === "object") {
-      const [assocSnap, obsSnap, measSnap] = await Promise.all([
-        db.collection("associations").where("objectIds", "array-contains", targetId).get(),
-        db.collection("observations").where("objectIds", "array-contains", targetId).get(),
-        db.collection("measurements").where("objectIds", "array-contains", targetId).get(),
-      ]);
+      if (targetType === "object") {
+        const [assocSnap, obsSnap, measSnap] = await Promise.all([
+          db.collection("associations").where("objectIds", "array-contains", targetId).get(),
+          db.collection("observations").where("objectIds", "array-contains", targetId).get(),
+          db.collection("measurements").where("objectIds", "array-contains", targetId).get(),
+        ]);
 
-      associations = assocSnap.docs.map(d => ({ ...d.data(), associationId: d.data().associationId ?? d.id }));
-      observations = obsSnap.docs.map(d => ({ ...d.data(), observationId: d.data().observationId ?? d.id }));
-      measurements = measSnap.docs.map(d => ({ ...d.data(), measurementId: d.data().measurementId ?? d.id }));
+        associations = assocSnap.docs.map(d => withDocumentId(d, "associationId"));
+        observations = obsSnap.docs.map(d => withDocumentId(d, "observationId"));
+        measurements = measSnap.docs.map(d => withDocumentId(d, "measurementId"));
 
-      summary = reconstructObjectSummary({
-        objectId: targetId,
-        associations,
-        measurements,
-        observations,
-        asOf,
-      });
+        summary = reconstructObjectSummary({
+          objectId: targetId,
+          associations,
+          measurements,
+          observations,
+          asOf,
+        });
 
-    } else if (targetType === "marker") {
-      const [assocSnap, obsSnap] = await Promise.all([
-        db.collection("associations").where("markerKeys", "array-contains", targetId).get(),
-        db.collection("observations").where("markerKeys", "array-contains", targetId).get(),
-      ]);
+      } else if (targetType === "marker") {
+        const [assocSnap, obsSnap] = await Promise.all([
+          db.collection("associations").where("markerKeys", "array-contains", targetId).get(),
+          db.collection("observations").where("markerKeys", "array-contains", targetId).get(),
+        ]);
 
-      associations = assocSnap.docs.map(d => ({ ...d.data(), associationId: d.data().associationId ?? d.id }));
-      observations = obsSnap.docs.map(d => ({ ...d.data(), observationId: d.data().observationId ?? d.id }));
+        associations = assocSnap.docs.map(d => withDocumentId(d, "associationId"));
+        observations = obsSnap.docs.map(d => withDocumentId(d, "observationId"));
 
-      summary = reconstructMarkerSummary({
-        markerKey: targetId,
-        associations,
-        observations,
-        asOf,
-      });
+        summary = reconstructMarkerSummary({
+          markerKey: targetId,
+          associations,
+          observations,
+          asOf,
+        });
 
-    } else if (targetType === "place") {
-      const [assocSnap, obsSnap, measSnap, evSnap] = await Promise.all([
-        db.collection("associations").where("placeIds", "array-contains", targetId).get(),
-        db.collection("observations").where("placeIds", "array-contains", targetId).get(),
-        db.collection("measurements").where("placeIds", "array-contains", targetId).get(),
-        db.collection("events").where("placeIds", "array-contains", targetId).get(),
-      ]);
+      } else if (targetType === "place") {
+        const [assocSnap, obsSnap, measSnap, evSnap] = await Promise.all([
+          db.collection("associations").where("placeIds", "array-contains", targetId).get(),
+          db.collection("observations").where("placeIds", "array-contains", targetId).get(),
+          db.collection("measurements").where("placeIds", "array-contains", targetId).get(),
+          db.collection("events").where("placeIds", "array-contains", targetId).get(),
+        ]);
 
-      associations = assocSnap.docs.map(d => ({ ...d.data(), associationId: d.data().associationId ?? d.id }));
-      observations = obsSnap.docs.map(d => ({ ...d.data(), observationId: d.data().observationId ?? d.id }));
-      measurements = measSnap.docs.map(d => ({ ...d.data(), measurementId: d.data().measurementId ?? d.id }));
-      events = evSnap.docs.map(d => ({ ...d.data(), eventId: d.data().eventId ?? d.id }));
+        associations = assocSnap.docs.map(d => withDocumentId(d, "associationId"));
+        observations = obsSnap.docs.map(d => withDocumentId(d, "observationId"));
+        measurements = measSnap.docs.map(d => withDocumentId(d, "measurementId"));
+        events = evSnap.docs.map(d => withDocumentId(d, "eventId"));
 
-      summary = reconstructPlaceSummary({
-        placeId: targetId,
-        associations,
-        observations,
-        measurements,
-        events,
-        asOf,
-      });
+        summary = reconstructPlaceSummary({
+          placeId: targetId,
+          associations,
+          observations,
+          measurements,
+          events,
+          asOf,
+        });
+      }
+
+      let written = false;
+      const summaryPath = `${summaryCollection}/${targetId}`;
+      const cleanSummary = stripUndefinedDeep(summary);
+
+      if (!dryRun) {
+        await db.collection(summaryCollection).doc(targetId).set(cleanSummary);
+        written = true;
+      }
+
+      return {
+        success: true,
+        dryRun,
+        targetType,
+        targetId,
+        summaryPath,
+        summary: cleanSummary,
+        factsRead: {
+          associations: associations.length,
+          observations: observations.length,
+          measurements: measurements.length,
+          events: events.length,
+        },
+        written,
+      };
+    } catch (error) {
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      console.error("Projection Recompute Error:", error);
+      throw new HttpsError("internal", "An unexpected error occurred during projection recomputation.");
     }
-
-    let written = false;
-    const summaryPath = `${summaryCollection}/${targetId}`;
-
-    if (!dryRun) {
-      await db.collection(summaryCollection).doc(targetId).set(stripUndefinedDeep(summary));
-      written = true;
-    }
-
-    return {
-      success: true,
-      dryRun,
-      targetType,
-      targetId,
-      summaryPath,
-      summary,
-      factsRead: {
-        associations: associations.length,
-        observations: observations.length,
-        measurements: measurements.length,
-        events: events.length,
-      },
-      written,
-    };
-  } catch (error) {
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    console.error("Projection Recompute Error:", error);
-    throw new HttpsError("internal", "An unexpected error occurred during projection recomputation.");
   }
-});
+);
