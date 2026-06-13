@@ -21,8 +21,8 @@ import { buildProjectionBackfillPlan } from './projection-backfill-plan.mjs';
  */
 export function buildProjectionBackfillOperationPacket(input, options = {}) {
   const { readinessAssessment, backfillPlan, targets, notes = [] } = input || {};
-  const operator = options.operator;
-  const environment = options.environment || 'staging';
+  const operator = options.operator !== undefined ? options.operator : (input && input.operator);
+  const environment = options.environment !== undefined ? options.environment : (input && input.environment) || 'staging';
 
   const packet = {
     success: true,
@@ -104,6 +104,14 @@ export function buildProjectionBackfillOperationPacket(input, options = {}) {
     packet.success = false;
     packet.valid = false;
     packet.blockers.push({ code: 'missing-plan-and-targets', message: 'Either backfillPlan or targets must be provided.' });
+  }
+
+  if (backfillPlan) {
+    if (backfillPlan.written !== false) {
+      packet.success = false;
+      packet.valid = false;
+      packet.blockers.push({ code: 'invalid-backfill-plan', message: 'Backfill plan indicates it has been written (written !== false).' });
+    }
   }
 
   let effectivePlan = backfillPlan;

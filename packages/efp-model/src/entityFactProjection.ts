@@ -19,6 +19,11 @@ export type JsonValue =
   | { [key: string]: JsonValue }
   | JsonValue[];
 
+/**
+ * PersistenceMeta represents underlying datastore implementation metadata, not domain time.
+ * Properties like createdAt and updatedAt should not be confused with domain time fields
+ * (like observedAt or validFrom) which belong to Fact records instead.
+ */
 export type PersistenceMeta = {
   createdAt?: Timestamp;
   updatedAt?: Timestamp;

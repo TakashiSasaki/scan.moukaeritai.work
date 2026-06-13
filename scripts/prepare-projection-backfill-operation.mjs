@@ -94,6 +94,9 @@ async function main() {
   }
 
   if (values['batch-size']) {
+    if (!/^\d+$/.test(values['batch-size'])) {
+      fail(`Invalid batch-size: ${values['batch-size']}. Must be a positive integer.`);
+    }
     const bs = parseInt(values['batch-size'], 10);
     if (isNaN(bs)) {
       fail(`Invalid batch-size: ${values['batch-size']}`);
