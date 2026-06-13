@@ -7,6 +7,8 @@
     "getClientIp",
     "migrateInventoryModel",
     "scanExecuteImportedObservationBatch",
-    "recomputeProjectionSummary"
+    "recomputeProjectionSummary",
+    "reconcileProjectionSummary",
+    "reconcileProjectionSummaries"
   ]
 }

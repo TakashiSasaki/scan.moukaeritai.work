@@ -468,5 +468,6 @@ The application has transitioned from a simple `items` collection to a normalize
 - Projection recompute Fact query planning must remain dependency-free and covered by ordinary unit tests.
 - Projection recompute operational validation must start with dryRun=true on selected targets.
 - Single-target reconciliation is available (`reconcileProjectionSummary`). It is admin-only, read-only, and does not replace broad backfill or authorize UI read switching by itself. Broad backfill and UI read switching remain future work.
+- Selected-target batch reconciliation is available (`reconcileProjectionSummaries`). It is admin-only and read-only. It does not scan collections and has hard target-count limits. It does not replace broad backfill and does not authorize UI read switching. `includeSummaries` should be used sparingly because callable responses can become large.
 - Do not add broad backfill, scheduled recompute, or read switching in the operational validation stride.
 - dryRun=false validation must be single-target and explicitly requested.

@@ -15,7 +15,8 @@
     "test:functions-boundary": "node scripts/validate-functions-import-boundary.mjs",
     "prepare:functions-efp-model": "node scripts/prepare-functions-efp-model-dependency.mjs",
     "test:functions-efp-model": "node scripts/validate-functions-efp-model-dependency.mjs",
-    "ops:recompute-projection": "node scripts/recompute-projection-summary.mjs"
+    "ops:recompute-projection": "node scripts/recompute-projection-summary.mjs",
+    "ops:reconcile-projection": "node scripts/reconcile-projection-summaries.mjs"
   },
   "dependencies": {
     "@google-cloud/monitoring": "^5.3.2",
