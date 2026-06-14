@@ -15,9 +15,15 @@ export default function DeveloperDocsOverview() {
           It provides a high-level overview of the application's architecture, routing, and data model.
           The application is a React/Vite/Firebase/Firestore application, designed to be an installable PWA.
         </p>
-        <div className="bg-[var(--surface-container-high)] p-4 rounded-2xl border border-[var(--outline)]">
+        <div className="bg-[var(--surface-container-high)] p-4 rounded-2xl border border-[var(--outline)] mb-4">
           <p className="text-sm font-medium text-[var(--on-surface)]">
             <strong>Note:</strong> These pages and graphs are static reference views. They do not inspect live production data, connect to the Firestore database, or expose sensitive environment details. For deeper canonical documents, please refer to the repository's <code>docs/</code> directory.
+          </p>
+        </div>
+        <div className="bg-[var(--surface-container-high)] p-4 rounded-2xl border border-[var(--outline)]">
+          <p className="text-sm font-medium text-[var(--on-surface)]">
+            <strong>Development Workflow:</strong> The project strictly uses <code>pnpm</code> for package management and executing scripts.
+            Do not use <code>npm</code> or <code>yarn</code>. Common validation commands include <code>pnpm run lint</code>, <code>pnpm run build</code>, and <code>pnpm run test</code>.
           </p>
         </div>
       </section>
