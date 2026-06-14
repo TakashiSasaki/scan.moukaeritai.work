@@ -134,6 +134,77 @@ jobs:
             --manifest "$MANIFEST_PATH" --json $ALLOW_DRY_RUN_ARG \
             > artifacts/projection-backfill-design-gate/execution-design-gate.json
 
+
+      - name: Generate Controlled Execution Design Packet
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+          USE_PROVIDED_EXECUTION_DESIGN_MANIFEST: ${{ github.event.inputs.use_provided_execution_design_manifest }}
+          EXECUTION_DESIGN_MANIFEST_PATH: ${{ github.event.inputs.execution_design_manifest_path }}
+        run: |
+          MANIFEST_PATH="artifacts/projection-backfill-design-gate/generated-execution-design-manifest.json"
+          if [ "$USE_PROVIDED_EXECUTION_DESIGN_MANIFEST" = "true" ]; then
+            MANIFEST_PATH="$EXECUTION_DESIGN_MANIFEST_PATH"
+          fi
+
+          MANIFEST_DIR=$(dirname "$MANIFEST_PATH")
+
+          # Pass paths via environment variables to avoid shell interpolation in node -e
+          export MANIFEST_PATH="$MANIFEST_PATH"
+          export MANIFEST_DIR="$MANIFEST_DIR"
+
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const { spawnSync } = require('child_process');
+
+            const manifestPath = process.env.MANIFEST_PATH;
+            const manifestDir = process.env.MANIFEST_DIR;
+            const envLabel = process.env.ENVIRONMENT || 'unknown';
+
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            const bundles = manifest.validationBundles || [];
+
+            if (bundles.length === 0) {
+               console.log('Warning: No validation bundles found in manifest. Skipping packet generation.');
+               process.exit(0);
+            }
+
+            let bundleArgs = [];
+            for (const bundleRel of bundles) {
+               let bundlePath = path.join(manifestDir, bundleRel);
+               if (!fs.existsSync(bundlePath)) {
+                 if (fs.existsSync(bundleRel)) {
+                    bundlePath = bundleRel;
+                 } else {
+                    console.error('Warning: Validation bundle not found: ' + bundleRel);
+                    process.exit(0); // Gracefully skip
+                 }
+               }
+               bundleArgs.push('--operation-validation-bundle', bundlePath);
+            }
+
+            const baseArgs = [
+               'scripts/prepare-projection-backfill-controlled-execution-design.mjs',
+               '--gate', 'artifacts/projection-backfill-design-gate/execution-design-gate.json',
+               ...bundleArgs,
+               '--environment', envLabel,
+               '--operator', 'github-actions'
+            ];
+
+            const jsonResult = spawnSync(process.execPath, [...baseArgs, '--json'], { encoding: 'utf8' });
+            if (jsonResult.status === 0) {
+               fs.writeFileSync('artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json', jsonResult.stdout);
+            } else {
+               console.error(jsonResult.stderr || jsonResult.stdout);
+               process.exit(0);
+            }
+
+            const mdResult = spawnSync(process.execPath, baseArgs, { encoding: 'utf8' });
+            if (mdResult.status === 0) {
+               fs.writeFileSync('artifacts/projection-backfill-design-gate/controlled-execution-design-summary.md', mdResult.stdout);
+            }
+          "
+
       - name: Generate Markdown Summary
         env:
           OPERATION_VALIDATION_MANIFEST_PATH: ${{ github.event.inputs.operation_validation_manifest_path }}
@@ -143,8 +214,8 @@ jobs:
         run: |
           SUMMARY_FILE="artifacts/projection-backfill-design-gate/summary.md"
 
-          OP_STATUS=$(cat artifacts/projection-backfill-design-gate/operation-validation-bundle.json | grep -oP '(?<="overallStatus": ")[^"]*') || OP_STATUS="unknown"
-          GATE_STATUS=$(cat artifacts/projection-backfill-design-gate/execution-design-gate.json | grep -oP '(?<="overallStatus": ")[^"]*') || GATE_STATUS="unknown"
+          OP_STATUS=$(node -e "console.log(JSON.parse(require('fs').readFileSync('artifacts/projection-backfill-design-gate/operation-validation-bundle.json')).overallStatus || 'unknown')")
+          GATE_STATUS=$(node -e "console.log(JSON.parse(require('fs').readFileSync('artifacts/projection-backfill-design-gate/execution-design-gate.json')).overallStatus || 'unknown')")
 
           MANIFEST_PATH="artifacts/projection-backfill-design-gate/generated-execution-design-manifest.json"
           if [ "$USE_PROVIDED_EXECUTION_DESIGN_MANIFEST" = "true" ]; then
@@ -160,6 +231,10 @@ jobs:
             echo "- **Execution Design Manifest Path:** \`$MANIFEST_PATH\`"
             echo "- **Operation Validation Bundle Overall Status:** \`$OP_STATUS\`"
             echo "- **Execution Design Gate Overall Status:** \`$GATE_STATUS\`"
+            if [ -f artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json ]; then
+              PACKET_STATUS=$(node -e "console.log(JSON.parse(require('fs').readFileSync('artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json')).overallStatus || 'unknown')")
+              echo "- **Controlled Execution Design Packet Status:** \`$PACKET_STATUS\`"
+            fi
             echo ""
             echo "**Safety Boundaries & Constraints:**"
             echo "- **Local-Only:** This workflow executed entirely within GitHub Actions using checked-in repository artifacts."

@@ -64,7 +64,10 @@ After successfully assembling the validation bundle for the operation packet, fu
 * UI read switching gate.
 
 Use `npm run ops:assess-projection-backfill-execution-design` to evaluate saved validation bundles for readiness to begin execution design.
-* It is local-only.
+
+Once assessed, use `npm run ops:prepare-projection-backfill-controlled-execution-design` to assemble the Controlled Projection Backfill Execution Design Packet from the design gate and the operation validation bundle.
+
+* The design packet is local-only.
 * It does not call Firebase.
 * It does not write.
 * It does not execute backfill.
