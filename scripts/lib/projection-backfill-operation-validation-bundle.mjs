@@ -280,14 +280,14 @@ export function buildProjectionBackfillOperationValidationBundle(input, options 
       validationBlocked = true;
     }
 
-    let effectivePostReport = null;
+    let parsedPost = null;
+    let parsedReport = null;
 
     if (hasPost) {
        try {
-         const postReport = buildProjectionReconciliationReport(evidenceBatch.postReconciliationResponse);
-         validatedBatch.postReconciliationStatus = postReport.overallStatus;
-         checkReportMatchesPacket(postReport, packetTargetMap, validatedBatch, 'post');
-         effectivePostReport = postReport;
+         parsedPost = buildProjectionReconciliationReport(evidenceBatch.postReconciliationResponse);
+         validatedBatch.postReconciliationStatus = parsedPost.overallStatus;
+         checkReportMatchesPacket(parsedPost, packetTargetMap, validatedBatch, 'post');
        } catch(e) {
           addBlocker(validatedBatch, 'invalid-post-report', `Could not process postReconciliationResponse: ${e.message}`);
           validationBlocked = true;
@@ -296,38 +296,57 @@ export function buildProjectionBackfillOperationValidationBundle(input, options 
 
     if (hasReport) {
       try {
-         const reconReport = buildProjectionReconciliationReport(evidenceBatch.reconciliationReport);
-         validatedBatch.reportStatus = reconReport.overallStatus;
-         checkReportMatchesPacket(reconReport, packetTargetMap, validatedBatch, 'report');
-
-         if (!effectivePostReport) {
-            effectivePostReport = reconReport;
-         }
+         parsedReport = buildProjectionReconciliationReport(evidenceBatch.reconciliationReport);
+         validatedBatch.reportStatus = parsedReport.overallStatus;
+         checkReportMatchesPacket(parsedReport, packetTargetMap, validatedBatch, 'report');
       } catch(e) {
          addBlocker(validatedBatch, 'invalid-reconciliation-report', `Could not process reconciliationReport: ${e.message}`);
          validationBlocked = true;
       }
     }
 
-    if (effectivePostReport) {
-       const reportTargetMap = new Map();
-       for (const t of effectivePostReport.targets) {
+    const postTargetMap = new Map();
+    if (parsedPost) {
+       for (const t of parsedPost.targets) {
+          postTargetMap.set(`${t.targetType}:${t.targetId}`, t);
+       }
+    }
+
+    const reportTargetMap = new Map();
+    if (parsedReport) {
+       for (const t of parsedReport.targets) {
           reportTargetMap.set(`${t.targetType}:${t.targetId}`, t);
        }
+    }
 
-       for (const vt of validatedBatch.targets) {
-          const key = `${vt.targetType}:${vt.targetId}`;
-          const rt = reportTargetMap.get(key);
-          if (rt) {
-             vt.postStatus = rt.status;
-             if (rt.status !== 'equal') {
-                allEqual = false;
-                if (bundle.mode === 'manual-write-plan') {
-                   addBlocker(validatedBatch, 'post-target-not-equal', `Target ${key} is not equal in post evidence (${rt.status}).`);
-                   validationBlocked = true;
-                } else {
-                   validatedBatch.warnings.push({ code: 'post-target-not-equal', message: `Target ${key} is not equal in dryRun post evidence (${rt.status}).` });
-                }
+    for (const vt of validatedBatch.targets) {
+       const key = `${vt.targetType}:${vt.targetId}`;
+       const pt = postTargetMap.get(key);
+       const rt = reportTargetMap.get(key);
+
+       let effectiveStatus = null;
+
+       if (pt && rt) {
+          if (pt.status !== rt.status) {
+             addBlocker(validatedBatch, 'post-report-status-mismatch', `Post reconciliation response and reconciliation report disagree for target ${key}.`);
+             validationBlocked = true;
+          }
+          effectiveStatus = pt.status;
+       } else if (pt) {
+          effectiveStatus = pt.status;
+       } else if (rt) {
+          effectiveStatus = rt.status;
+       }
+
+       if (effectiveStatus) {
+          vt.postStatus = effectiveStatus;
+          if (effectiveStatus !== 'equal') {
+             allEqual = false;
+             if (bundle.mode === 'manual-write-plan') {
+                addBlocker(validatedBatch, 'post-target-not-equal', `Target ${key} is not equal in post evidence (${effectiveStatus}).`);
+                validationBlocked = true;
+             } else {
+                validatedBatch.warnings.push({ code: 'post-target-not-equal', message: `Target ${key} is not equal in dryRun post evidence (${effectiveStatus}).` });
              }
           }
        }

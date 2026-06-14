@@ -387,6 +387,168 @@ describe('projection-backfill-operation-validation-bundle', () => {
     expect(bundle.batches[0].blockers.some(b => b.code === 'post-target-not-equal')).toBe(true);
   });
 
+  it('manual-write mode passes when both post and report are present and equal', () => {
+    const writePacket = { ...baseOperationPacket, mode: 'manual-write-plan' };
+    const writeRecomputeResponses = [
+      { targetType: 'object', targetId: 'o1', success: true, dryRun: false, written: true },
+      { targetType: 'marker', targetId: 'm1', success: true, dryRun: false, written: true }
+    ];
+    const evidence = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
+    const bundle = buildProjectionBackfillOperationValidationBundle({
+      operationPacket: writePacket,
+      batches: [
+        {
+          batchIndex: 0,
+          recomputeResponses: writeRecomputeResponses,
+          postReconciliationResponse: evidence,
+          reconciliationReport: evidence
+        }
+      ]
+    });
+    expect(bundle.valid).toBe(true);
+    expect(bundle.overallStatus).toBe('manual-write-evidence-pass');
+  });
+
+  it('blocks if both artifacts are present but disagree on target status', () => {
+    const writePacket = { ...baseOperationPacket, mode: 'manual-write-plan' };
+    const writeRecomputeResponses = [
+      { targetType: 'object', targetId: 'o1', success: true, dryRun: false, written: true },
+      { targetType: 'marker', targetId: 'm1', success: true, dryRun: false, written: true }
+    ];
+    const postReconciliationResponse = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
+    const reconciliationReport = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 1,
+       differentCount: 1,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: false, differenceCount: 1 } }
+       ]
+    };
+
+    const bundle = buildProjectionBackfillOperationValidationBundle({
+      operationPacket: writePacket,
+      batches: [
+        {
+          batchIndex: 0,
+          recomputeResponses: writeRecomputeResponses,
+          postReconciliationResponse,
+          reconciliationReport
+        }
+      ]
+    });
+    expect(bundle.valid).toBe(false);
+    expect(bundle.overallStatus).toBe('blocked');
+    expect(bundle.batches[0].blockers.some(b => b.code === 'post-report-status-mismatch')).toBe(true);
+  });
+
+  it('blocks if both artifacts are present and report has extra target', () => {
+    const postReconciliationResponse = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
+    const reconciliationReport = {
+       success: true,
+       totalTargets: 3,
+       equalCount: 3,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } },
+         { targetType: 'place', targetId: 'p1', success: true, reconciliation: { equal: true } }
+       ]
+    };
+
+    const bundle = buildProjectionBackfillOperationValidationBundle({
+      operationPacket: baseOperationPacket,
+      batches: [
+        {
+          batchIndex: 0,
+          recomputeResponses: baseRecomputeResponses,
+          postReconciliationResponse,
+          reconciliationReport
+        }
+      ]
+    });
+    expect(bundle.valid).toBe(false);
+    expect(bundle.overallStatus).toBe('fail'); // count mismatch / extra target is a fail
+    expect(bundle.batches[0].blockers.some(b => b.code === 'report-extra-target')).toBe(true);
+  });
+
+  it('dryRun mode warns when both agree on different, but blocks if they disagree', () => {
+    const diffEvidence = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 1,
+       differentCount: 1,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: false, differenceCount: 1 } }
+       ]
+    };
+
+    // Agree
+    const bundleAgree = buildProjectionBackfillOperationValidationBundle({
+      operationPacket: baseOperationPacket,
+      batches: [
+        {
+          batchIndex: 0,
+          recomputeResponses: baseRecomputeResponses,
+          postReconciliationResponse: diffEvidence,
+          reconciliationReport: diffEvidence
+        }
+      ]
+    });
+    expect(bundleAgree.valid).toBe(true);
+    expect(bundleAgree.overallStatus).toBe('dry-run-evidence-pass');
+
+    // Disagree
+    const equalEvidence = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
+    const bundleDisagree = buildProjectionBackfillOperationValidationBundle({
+      operationPacket: baseOperationPacket,
+      batches: [
+        {
+          batchIndex: 0,
+          recomputeResponses: baseRecomputeResponses,
+          postReconciliationResponse: equalEvidence,
+          reconciliationReport: diffEvidence
+        }
+      ]
+    });
+    expect(bundleDisagree.valid).toBe(false);
+    expect(bundleDisagree.overallStatus).toBe('blocked');
+    expect(bundleDisagree.batches[0].blockers.some(b => b.code === 'post-report-status-mismatch')).toBe(true);
+  });
+
   it('manual-write mode blocks on post/report target error', () => {
     const writePacket = { ...baseOperationPacket, mode: 'manual-write-plan' };
     const writeRecomputeResponses = [
