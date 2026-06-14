@@ -169,9 +169,12 @@ export function buildProjectionBackfillControlledExecutionDesignPacket(input, op
                 packet.totalTargets++;
 
                 if (!packet.targetTypeCoverage[target.targetType]) {
-                  packet.targetTypeCoverage[target.targetType] = { targetCount: 0 };
-                }
-                packet.targetTypeCoverage[target.targetType].targetCount++;
+                packet.targetTypeCoverage[target.targetType] = { targetCount: 0, hasManualWriteEvidence: false };
+              }
+              packet.targetTypeCoverage[target.targetType].targetCount++;
+              if (bundle.overallStatus === "manual-write-evidence-pass") {
+                packet.targetTypeCoverage[target.targetType].hasManualWriteEvidence = true;
+              }
               } else {
                 packet.blockers.push({ code: "duplicate-target-evidence", message: `Duplicate evidence for target ${key}` });
                 hasBlocked = true;
@@ -211,6 +214,11 @@ export function buildProjectionBackfillControlledExecutionDesignPacket(input, op
            const packetTypeCount = packet.targetTypeCoverage[type] ? packet.targetTypeCoverage[type].targetCount : 0;
            if (info.targetCount !== packetTypeCount) {
               packet.blockers.push({ code: "gate-target-coverage-mismatch", message: `Gate approved ${info.targetCount} ${type} targets, but received ${packetTypeCount}.` });
+              hasFail = true;
+           }
+           const packetHasManual = packet.targetTypeCoverage[type] ? (packet.targetTypeCoverage[type].hasManualWriteEvidence === true) : false;
+           if (info.hasManualWriteEvidence !== packetHasManual) {
+              packet.blockers.push({ code: "gate-manual-write-coverage-mismatch", message: `Gate required hasManualWriteEvidence=${info.hasManualWriteEvidence} for ${type}, but received ${packetHasManual}.` });
               hasFail = true;
            }
         }

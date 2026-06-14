@@ -11,7 +11,7 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
     bundleCount: 1,
     totalTargets: 2,
     evidenceModes: ['dry-run-evidence-pass'],
-    targetTypeCoverage: { object: { targetCount: 1 }, marker: { targetCount: 1 } }
+    targetTypeCoverage: { object: { targetCount: 1, hasManualWriteEvidence: false }, marker: { targetCount: 1, hasManualWriteEvidence: false } }
   };
 
   const mockValidBundle = {
@@ -71,7 +71,7 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
         bundleCount: 2,
         totalTargets: 3,
         evidenceModes: ['dry-run-evidence-pass', 'manual-write-evidence-pass'],
-        targetTypeCoverage: { object: { targetCount: 1 }, marker: { targetCount: 1 }, place: { targetCount: 1 } }
+        targetTypeCoverage: { object: { targetCount: 1, hasManualWriteEvidence: false }, marker: { targetCount: 1, hasManualWriteEvidence: false }, place: { targetCount: 1, hasManualWriteEvidence: true } }
       },
       operationValidationBundles: [mockValidBundle, mockValidBundle2]
     });
@@ -205,7 +205,7 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
         bundleCount: 2,
         totalTargets: 2, // gate knows there are 2, but bundle returns 3 total array items with dupes
         evidenceModes: ['dry-run-evidence-pass'],
-        targetTypeCoverage: { object: { targetCount: 1 }, marker: { targetCount: 1 } }
+        targetTypeCoverage: { object: { targetCount: 1, hasManualWriteEvidence: false }, marker: { targetCount: 1, hasManualWriteEvidence: false } }
       },
       operationValidationBundles: [
         mockValidBundle,
@@ -261,6 +261,19 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
     expect(packet.overallStatus).toBe('fail');
     expect(packet.success).toBe(false);
     expect(packet.blockers.some(b => b.code === 'gate-target-coverage-mismatch')).toBe(true);
+  });
+
+  it('fails if gate manual write coverage does not match bundle manual write coverage', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: {
+         ...mockValidGate,
+         targetTypeCoverage: { object: { targetCount: 1, hasManualWriteEvidence: true }, marker: { targetCount: 1, hasManualWriteEvidence: false } }
+      },
+      operationValidationBundles: [mockValidBundle] // mockValidBundle is dry-run, so it doesn't set hasManualWriteEvidence
+    });
+    expect(packet.overallStatus).toBe('fail');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'gate-manual-write-coverage-mismatch')).toBe(true);
   });
 
   it('enforces safety boundaries and rollback policies', () => {
