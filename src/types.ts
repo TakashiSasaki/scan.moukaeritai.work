@@ -129,7 +129,9 @@ export interface ObjectRecord {
   lastReportedBy?: string;
   lastReportedLocation?: ObservationLocation;
   lastReportedPlaceLabel?: string;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   createdAt: Timestamp;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   updatedAt: Timestamp;
 }
 
@@ -162,7 +164,9 @@ export interface IdentifierRecord {
   lastObservedSource?: ObservationSource;
   discoveryState?: IdentifierDiscoveryState;
   schemaVersion?: number;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   createdAt: Timestamp;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   updatedAt: Timestamp;
   /** Legacy/current implementation. Maps conceptually to newest ObservationDoc or MarkerSummaryDoc. */
   lastSeenAt?: Timestamp;
@@ -188,7 +192,9 @@ export interface ObjectIdentifierBindingRecord {
   attachedBy: string;
   detachedBy?: string;
   note?: string;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   createdAt: Timestamp;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   updatedAt: Timestamp;
 }
 

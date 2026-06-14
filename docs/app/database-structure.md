@@ -31,7 +31,7 @@ The current runtime still relies on several legacy and transitional collections.
   - `currentLocation.latitude`
   - `currentLocation.longitude`
   - `currentLocation.address`
-  - `currentLocation.updatedAt`
+  - `currentLocation.updatedAt` (Domain time conceptually belongs to Facts/Projections, not the Entity directly)
   - `primaryImageId`
   - `primaryImageUrl`
   - `identifierSummary`
@@ -47,8 +47,8 @@ The current runtime still relies on several legacy and transitional collections.
   - `lastReportedBy`
   - `lastReportedLocation`
   - `lastReportedPlaceLabel`
-  - `createdAt`
-  - `updatedAt`
+  - `createdAt` (Domain time conceptually belongs to Facts/Projections, not the Entity directly)
+  - `updatedAt` (Domain time conceptually belongs to Facts/Projections, not the Entity directly)
 
 ### `identifiers`
 - **Purpose:** Represents scannable tags (e.g., QR codes, NFC tags) used to look up objects.
@@ -70,18 +70,18 @@ The current runtime still relies on several legacy and transitional collections.
   - `canonicalValue`: Carries important type-specific semantics.
   - `status`
   - `label`
-  - `firstObservedAt`
+  - `firstObservedAt` (Domain time conceptually belongs to Facts/Projections, not the Entity directly)
   - `firstObservedBy`
   - `firstObservationId`
-  - `lastObservedAt`
+  - `lastObservedAt` (Domain time conceptually belongs to Facts/Projections, not the Entity directly)
   - `lastObservedBy`
   - `lastObservationId`
   - `lastObservedSource`
   - `discoveryState`
   - `schemaVersion`
-  - `createdAt`
-  - `updatedAt`
-  - `lastSeenAt`
+  - `createdAt` (Domain time conceptually belongs to Facts/Projections, not the Entity directly)
+  - `updatedAt` (Domain time conceptually belongs to Facts/Projections, not the Entity directly)
+  - `lastSeenAt` (Domain time conceptually belongs to Facts/Projections, not the Entity directly)
 
 ### `objectIdentifierBindings`
 - **Purpose:** Represents the canonical, active relationship between an object and an identifier. This collection is canonical relationship state, not history. It is currently object-only. Future generic target relationships are not implemented yet.
@@ -92,13 +92,13 @@ The current runtime still relies on several legacy and transitional collections.
   - `objectId`
   - `identifierKey`
   - `status`
-  - `attachedAt`
-  - `detachedAt`
+  - `attachedAt` (Domain time conceptually belongs to Facts/Projections, not the Entity directly)
+  - `detachedAt` (Domain time conceptually belongs to Facts/Projections, not the Entity directly)
   - `attachedBy`
   - `detachedBy`
   - `note`
-  - `createdAt`
-  - `updatedAt`
+  - `createdAt` (Domain time conceptually belongs to Facts/Projections, not the Entity directly)
+  - `updatedAt` (Domain time conceptually belongs to Facts/Projections, not the Entity directly)
 
 ### `identifierObservations`
 - **Purpose:** Records explicit observations/scans of an identifier by a user. Observations are evidence/log records, not canonical object state. Client-created observations must remain limited by rules and should not imply backend/system ingestion is already available.
