@@ -159,6 +159,18 @@ Use `npm run ops:prepare-projection-backfill-operation` to prepare a purely loca
 * It does not execute backfill.
 * It does not authorize UI read switching.
 
-## 15. Next Steps after Validation
+## 15. Backfill Operation Validation
+
+Use `npm run ops:validate-projection-backfill-operation` to locally validate saved operation packet evidence against expected targets and states.
+* It is a local-only tool.
+* It does not call Firebase.
+* It does not perform writes.
+* It does not execute backfill.
+* It does not authorize UI read switching.
+* `dry-run-evidence-pass` validates dry-run evidence only.
+* `manual-write-evidence-pass` validates saved manual-write evidence only.
+* Actual backfill execution design, rollback policy, and UI read switching gate remain future work.
+
+## 16. Next Steps after Validation
 
 If operational validations of `object`, `marker`, and `place` targets all succeed and match expected shapes, the next phase in the migration plan (automated reconciliation or broader backfill) can begin planning. Successful dry-run does not imply read switching readiness.

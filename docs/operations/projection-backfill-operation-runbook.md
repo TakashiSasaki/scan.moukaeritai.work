@@ -25,7 +25,18 @@ A successful pilot operation flows through these specific artifacts:
 6. Recompute responses (`batch-XXX-recompute-response.json`)
 7. Post-reconciliation response (`batch-XXX-post-reconciliation.json`)
 8. Reconciliation report (`batch-XXX-reconciliation-report.json`)
-9. Validation bundle (Aggregated proof of safe completion)
+9. Validation bundle (Aggregated proof of safe completion, built via `ops:validate-projection-backfill-operation`)
+
+### Validating Evidence
+
+You can validate the collected artifacts using the validation bundle tool.
+`ops:validate-projection-backfill-operation` validates saved local operation evidence against the generated operation packet.
+
+It consumes the operation packet and a saved artifact manifest. It does not call Firebase, does not write data, does not execute backfill, and does not authorize UI read switching.
+
+The validation outcome varies by mode:
+* `dry-run-evidence-pass`: Validates dry-run evidence only.
+* `manual-write-evidence-pass`: Validates saved manual-write evidence only and still does not authorize UI read switching.
 
 ## Safety Gates
 
