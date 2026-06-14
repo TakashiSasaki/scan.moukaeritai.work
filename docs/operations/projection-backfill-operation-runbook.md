@@ -73,4 +73,4 @@ Use `npm run ops:assess-projection-backfill-execution-design` to evaluate saved 
 
 ### Automated GitHub Actions Workflow
 
-A fully automated, local-only CI test environment has been implemented to standardize the design gate assessment. See [Projection Backfill Design Gate Workflow](projection-backfill-design-gate-workflow.md) for how to use the `.github/workflows/projection-backfill-design-gate.yml` workflow via GitHub Actions `workflow_dispatch`.
+A fully automated, local-only CI test environment has been implemented to standardize the design gate assessment. It is implemented as a self-contained chain workflow that automatically generates its own execution design manifest from the prior operation validation step outputs. See [Projection Backfill Design Gate Workflow](projection-backfill-design-gate-workflow.md) for how to use the `.github/workflows/projection-backfill-design-gate.yml` workflow via GitHub Actions `workflow_dispatch`.

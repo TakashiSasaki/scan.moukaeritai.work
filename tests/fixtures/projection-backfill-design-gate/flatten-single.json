@@ -1,9 +1,0 @@
-{
-  "operationPacket": "test-packet-2.json",
-  "batches": [
-    {
-      "batchIndex": 0,
-      "recomputeResponse": "array-resp.json"
-    }
-  ]
-}

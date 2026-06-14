@@ -21,21 +21,25 @@ This workflow is strictly governed by the following safety boundary constraints:
 The workflow must be manually triggered via `workflow_dispatch`. It accepts the following inputs:
 
 - `operation_validation_manifest_path` (Required): Repository-relative path to the operation validation manifest JSON.
-- `execution_design_manifest_path` (Required): Repository-relative path to the execution design manifest JSON.
+- `execution_design_manifest_path` (Optional): Repository-relative path to a custom execution design manifest JSON (Legacy/manual override).
+- `use_provided_execution_design_manifest` (Optional, defaults to `false`): If `"true"`, uses the custom execution design manifest path instead of the generated one.
 - `confirmation_phrase` (Required): Must be strictly provided as `LOCAL_ONLY_DESIGN_GATE`. The workflow exits immediately if this check fails. This acts as explicit operator acknowledgment of the boundary context.
 - `environment` (Optional): A label such as `local-design-gate` to be included in the artifact generation summary.
 - `allow_dry_run_only` (Optional, defaults to `true`): A toggle to dictate if the design gate allows purely dry-run evidence, or if manual write evidence is strictly required.
 
 ## Artifact Lifecycle & Repository Semantics
 
-This workflow currently relies on repository path semantics. The manifests passed to the inputs must be checked into the source control and accessible by the workflow run's local checkout.
+This workflow currently relies on repository path semantics. The operation validation manifest passed to the input must be checked into source control and accessible by the workflow run's local checkout.
 
-Since the workflow generates a local `operation-validation-bundle.json` during execution, it cannot trivially pipe that artifact into the `execution_design_manifest_path` check if cross-run boundaries are needed. Thus, users should provide an `execution_design_manifest_path` that references an already checked-in `operation-validation-bundle.json` fixture, or rely on documenting how to correctly construct a manifest that expects the output. For this design gate stride, keep artifacts localized and rely on checked-in fixtures. Cross-run artifact downloading is explicitly avoided.
+The workflow is designed as a **self-contained chain**. During execution, it evaluates the `operation_validation_manifest_path` to produce an `operation-validation-bundle.json`. It then dynamically generates a temporary execution design manifest that correctly references this just-created validation bundle. This generated manifest is subsequently passed into the `Assess Execution Design Gate` step, fully automating the evaluation of freshly validated artifacts.
+
+While users can optionally provide their own `execution_design_manifest_path` (by setting `use_provided_execution_design_manifest: "true"`), this is primarily supported as a legacy/manual override mechanism.
 
 ## Generated Artifacts
 
 Upon completion, an `actions/upload-artifact@v4` job outputs a `projection-backfill-design-gate` zip file containing:
 - `operation-validation-bundle.json`: The generated operation validation evidence.
+- `generated-execution-design-manifest.json`: The generated intermediate execution design manifest bridging the chain.
 - `execution-design-gate.json`: The generated design gate assessment report.
 - `summary.md`: A clear summary containing the gate's status, boundaries, and explicit limitations.
 
@@ -45,4 +49,4 @@ The assessment returning `ready-for-execution-design` signifies that all provide
 
 ## Next Phases
 
-The subsequent step in this phase is Controlled Execution Design, where roll-out plans, recovery plans, and monitoring schemas are finalized, rather than moving straight into broad backfill.
+The subsequent step in this phase is **Controlled Projection Backfill Execution Design**, where roll-out plans, recovery plans, and monitoring schemas are finalized. It does not mean actual backfill execution.
