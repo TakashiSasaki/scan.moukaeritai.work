@@ -82,6 +82,9 @@ describe('run-projection-backfill-controlled-execution-review-contract-workflow-
     fs.writeFileSync(gatePath, JSON.stringify(validGate));
 
     const validPacket = {
+      packetType: "projection-backfill-controlled-execution-design-packet",
+      valid: true,
+      success: true,
       overallStatus: "ready-for-controlled-execution-design-review",
       bundleCount: 1,
       totalTargets: 1,

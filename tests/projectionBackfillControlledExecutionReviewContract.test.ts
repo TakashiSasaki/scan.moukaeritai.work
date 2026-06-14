@@ -5,6 +5,9 @@ import {
 } from '../scripts/lib/projection-backfill-controlled-execution-review-contract.mjs';
 
 const mockValidPacket = {
+  packetType: "projection-backfill-controlled-execution-design-packet",
+  valid: true,
+  success: true,
   overallStatus: "ready-for-controlled-execution-design-review",
   bundleCount: 1,
   totalTargets: 3,
@@ -79,6 +82,39 @@ describe('buildProjectionBackfillControlledExecutionReviewContract', () => {
     expect(contract.overallStatus).toBe('fail');
     expect(contract.success).toBe(false);
     expect(contract.blockers.some(b => b.code === 'invalid-packet-status')).toBe(true);
+  });
+
+  it('fails if packet packetType is incorrect', () => {
+    const contract = buildProjectionBackfillControlledExecutionReviewContract({
+      controlledExecutionDesignPacket: { ...mockValidPacket, packetType: 'invalid-type' },
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [mockValidBundle]
+    });
+
+    expect(contract.overallStatus).toBe('fail');
+    expect(contract.blockers.some(b => b.code === 'invalid-packet-type')).toBe(true);
+  });
+
+  it('fails if packet is not valid', () => {
+    const contract = buildProjectionBackfillControlledExecutionReviewContract({
+      controlledExecutionDesignPacket: { ...mockValidPacket, valid: false },
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [mockValidBundle]
+    });
+
+    expect(contract.overallStatus).toBe('fail');
+    expect(contract.blockers.some(b => b.code === 'invalid-packet-state')).toBe(true);
+  });
+
+  it('fails if packet is not success', () => {
+    const contract = buildProjectionBackfillControlledExecutionReviewContract({
+      controlledExecutionDesignPacket: { ...mockValidPacket, success: false },
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [mockValidBundle]
+    });
+
+    expect(contract.overallStatus).toBe('fail');
+    expect(contract.blockers.some(b => b.code === 'invalid-packet-state')).toBe(true);
   });
 
   it('fails if packet executionAuthorization is true', () => {

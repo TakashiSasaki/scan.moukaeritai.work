@@ -71,6 +71,16 @@ export function buildProjectionBackfillControlledExecutionReviewContract(input, 
        hasFail = true;
     }
 
+    if (controlledExecutionDesignPacket.packetType !== "projection-backfill-controlled-execution-design-packet") {
+       contract.blockers.push({ code: "invalid-packet-type", message: `Packet packetType must be projection-backfill-controlled-execution-design-packet, got: ${controlledExecutionDesignPacket.packetType}`});
+       hasFail = true;
+    }
+
+    if (controlledExecutionDesignPacket.valid !== true || controlledExecutionDesignPacket.success !== true) {
+       contract.blockers.push({ code: "invalid-packet-state", message: "Packet must have valid:true and success:true." });
+       hasFail = true;
+    }
+
     if (controlledExecutionDesignPacket.overallStatus !== "ready-for-controlled-execution-design-review") {
       contract.blockers.push({ code: "invalid-packet-status", message: `Packet overallStatus must be ready-for-controlled-execution-design-review, got: ${controlledExecutionDesignPacket.overallStatus}` });
       hasFail = true;
