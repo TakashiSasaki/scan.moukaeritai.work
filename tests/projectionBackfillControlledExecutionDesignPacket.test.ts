@@ -3,6 +3,7 @@ import { buildProjectionBackfillControlledExecutionDesignPacket, formatProjectio
 
 describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
   const mockValidGate = {
+    gateType: 'projection-backfill-execution-design-gate',
     overallStatus: 'ready-for-execution-design',
     written: false,
     success: true,
@@ -74,6 +75,28 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
     expect(packet.evidenceModes).toContain('dry-run-evidence-pass');
     expect(packet.evidenceModes).toContain('manual-write-evidence-pass');
     expect(packet.bundleCount).toBe(2);
+  });
+
+  it('fails if gate type is incorrect', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: { ...mockValidGate, gateType: 'wrong-type' },
+      operationValidationBundles: [mockValidBundle]
+    });
+
+    expect(packet.overallStatus).toBe('fail');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'invalid-gate-type')).toBe(true);
+  });
+
+  it('fails if gate is invalid or unsuccessful', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: { ...mockValidGate, valid: false },
+      operationValidationBundles: [mockValidBundle]
+    });
+
+    expect(packet.overallStatus).toBe('fail');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'invalid-gate-state')).toBe(true);
   });
 
   it('fails if gate status is not ready-for-execution-design', () => {

@@ -80,6 +80,14 @@ export function buildProjectionBackfillControlledExecutionDesignPacket(input, op
     packet.blockers.push({ code: "missing-gate", message: "executionDesignGate is required and must be an object." });
     hasFail = true;
   } else {
+    if (executionDesignGate.gateType !== "projection-backfill-execution-design-gate") {
+      packet.blockers.push({ code: "invalid-gate-type", message: `executionDesignGate.gateType must be projection-backfill-execution-design-gate, got: ${executionDesignGate.gateType}` });
+      hasFail = true;
+    }
+    if (executionDesignGate.valid !== true || executionDesignGate.success !== true) {
+      packet.blockers.push({ code: "invalid-gate-state", message: "executionDesignGate must have valid:true and success:true." });
+      hasFail = true;
+    }
     if (executionDesignGate.overallStatus !== "ready-for-execution-design") {
       packet.blockers.push({ code: "invalid-gate-status", message: `executionDesignGate.overallStatus must be ready-for-execution-design, got: ${executionDesignGate.overallStatus}` });
       hasBlocked = true; // Overall fail but logically blocked by previous step
