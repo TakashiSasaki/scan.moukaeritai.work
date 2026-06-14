@@ -493,3 +493,5 @@ The application has transitioned from a simple `items` collection to a normalize
 - The `projection-backfill-design-gate` GitHub Actions workflow automates the local-only execution design gate assessment. It explicitly forbids Firebase credentials, OIDC, network writes, or runtime deployments, operating as a self-contained chain workflow to generate and validate evidence dynamically.
 - Do not add broad backfill, scheduled recompute, or read switching in the operational validation stride.
 - dryRun=false validation must be single-target and explicitly requested.
+
+* The Controlled Projection Backfill Execution Design Packet evaluates the execution design gate and strictly enforces safety invariants (`executionAuthorization: false`, `written: false`, `executed: false`). It produces the highest positive status `ready-for-controlled-execution-design-review`, which is not execution approval and must never authorize broad backfill or UI read switching.

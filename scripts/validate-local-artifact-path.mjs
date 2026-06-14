@@ -1,41 +1,49 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import url from 'node:url';
 
-function main() {
-  const inputPath = process.argv[2];
+export function validateLocalArtifactPath(inputPath, options = {}) {
+  const cwd = options.cwd || process.cwd();
 
   if (!inputPath || inputPath.trim() === '') {
-    console.error('Error: Path is required and cannot be empty.');
-    process.exit(1);
+    throw new Error('Path is required and cannot be empty.');
   }
 
-  // Prevent absolute paths
   if (path.isAbsolute(inputPath)) {
-    console.error('Error: Absolute paths are not allowed.');
-    process.exit(1);
+    throw new Error('Absolute paths are not allowed.');
   }
 
-  // Prevent path traversal
   if (inputPath.includes('..')) {
-    console.error('Error: Path traversal (..) is not allowed.');
-    process.exit(1);
+    throw new Error('Path traversal (..) is not allowed.');
   }
 
-  const resolvedPath = path.resolve(process.cwd(), inputPath);
+  const resolvedPath = path.resolve(cwd, inputPath);
 
   if (!fs.existsSync(resolvedPath)) {
-    console.error(`Error: File does not exist at ${inputPath}`);
-    process.exit(1);
+    throw new Error(`File does not exist at ${inputPath}`);
   }
 
   const stats = fs.statSync(resolvedPath);
   if (!stats.isFile()) {
-    console.error(`Error: Path must point to a file, not a directory or other type: ${inputPath}`);
-    process.exit(1);
+    throw new Error(`Path must point to a file, not a directory or other type: ${inputPath}`);
   }
 
-  // Print the normalized safe path so it can be captured by the caller if needed
-  console.log(inputPath);
+  return inputPath;
 }
 
-main();
+function main() {
+  const inputPath = process.argv[2];
+
+  try {
+    const validatedPath = validateLocalArtifactPath(inputPath);
+    console.log(validatedPath);
+  } catch (err) {
+    console.error(`Error: ${err.message}`);
+    process.exit(1);
+  }
+}
+
+// Only run main if this file is executed directly
+if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
+  main();
+}

@@ -134,6 +134,26 @@ jobs:
             --manifest "$MANIFEST_PATH" --json $ALLOW_DRY_RUN_ARG \
             > artifacts/projection-backfill-design-gate/execution-design-gate.json
 
+
+      - name: Generate Controlled Execution Design Packet
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+        run: |
+          node scripts/prepare-projection-backfill-controlled-execution-design.mjs \
+            --gate artifacts/projection-backfill-design-gate/execution-design-gate.json \
+            --operation-validation-bundle artifacts/projection-backfill-design-gate/operation-validation-bundle.json \
+            --environment "$ENVIRONMENT" \
+            --operator "github-actions" \
+            --json \
+            > artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json || true
+
+          node scripts/prepare-projection-backfill-controlled-execution-design.mjs \
+            --gate artifacts/projection-backfill-design-gate/execution-design-gate.json \
+            --operation-validation-bundle artifacts/projection-backfill-design-gate/operation-validation-bundle.json \
+            --environment "$ENVIRONMENT" \
+            --operator "github-actions" \
+            > artifacts/projection-backfill-design-gate/controlled-execution-design-summary.md || true
+
       - name: Generate Markdown Summary
         env:
           OPERATION_VALIDATION_MANIFEST_PATH: ${{ github.event.inputs.operation_validation_manifest_path }}
@@ -143,8 +163,8 @@ jobs:
         run: |
           SUMMARY_FILE="artifacts/projection-backfill-design-gate/summary.md"
 
-          OP_STATUS=$(cat artifacts/projection-backfill-design-gate/operation-validation-bundle.json | grep -oP '(?<="overallStatus": ")[^"]*') || OP_STATUS="unknown"
-          GATE_STATUS=$(cat artifacts/projection-backfill-design-gate/execution-design-gate.json | grep -oP '(?<="overallStatus": ")[^"]*') || GATE_STATUS="unknown"
+          OP_STATUS=$(node -e "console.log(JSON.parse(require('fs').readFileSync('artifacts/projection-backfill-design-gate/operation-validation-bundle.json')).overallStatus || 'unknown')")
+          GATE_STATUS=$(node -e "console.log(JSON.parse(require('fs').readFileSync('artifacts/projection-backfill-design-gate/execution-design-gate.json')).overallStatus || 'unknown')")
 
           MANIFEST_PATH="artifacts/projection-backfill-design-gate/generated-execution-design-manifest.json"
           if [ "$USE_PROVIDED_EXECUTION_DESIGN_MANIFEST" = "true" ]; then
@@ -160,6 +180,10 @@ jobs:
             echo "- **Execution Design Manifest Path:** \`$MANIFEST_PATH\`"
             echo "- **Operation Validation Bundle Overall Status:** \`$OP_STATUS\`"
             echo "- **Execution Design Gate Overall Status:** \`$GATE_STATUS\`"
+            if [ -f artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json ]; then
+              PACKET_STATUS=$(node -e "console.log(JSON.parse(require('fs').readFileSync('artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json')).overallStatus || 'unknown')")
+              echo "- **Controlled Execution Design Packet Status:** \`$PACKET_STATUS\`"
+            fi
             echo ""
             echo "**Safety Boundaries & Constraints:**"
             echo "- **Local-Only:** This workflow executed entirely within GitHub Actions using checked-in repository artifacts."
