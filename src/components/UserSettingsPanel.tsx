@@ -105,6 +105,8 @@ export default function UserSettingsPanel({ onClose }: UserSettingsPanelProps) {
                     <button
                       key={opt.color}
                       onClick={() => setThemeColor(opt.color)}
+                      aria-label={`Select ${opt.color} theme`}
+                      title={`Select ${opt.color} theme`}
                       className={`w-10 h-10 rounded-full ${opt.bg} flex items-center justify-center border-4 transition-all scale-100 hover:scale-110 active:scale-95 ${themeColor === opt.color ? 'border-[var(--on-surface)] shadow-lg' : 'border-[var(--surface)] shadow-sm'}`}
                     >
                       {themeColor === opt.color && <div className="w-3 h-3 bg-white rounded-full shadow-sm" />}
