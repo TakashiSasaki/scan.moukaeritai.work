@@ -138,21 +138,43 @@ jobs:
       - name: Generate Controlled Execution Design Packet
         env:
           ENVIRONMENT: ${{ github.event.inputs.environment }}
+          USE_PROVIDED_EXECUTION_DESIGN_MANIFEST: ${{ github.event.inputs.use_provided_execution_design_manifest }}
+          EXECUTION_DESIGN_MANIFEST_PATH: ${{ github.event.inputs.execution_design_manifest_path }}
         run: |
-          node scripts/prepare-projection-backfill-controlled-execution-design.mjs \
-            --gate artifacts/projection-backfill-design-gate/execution-design-gate.json \
-            --operation-validation-bundle artifacts/projection-backfill-design-gate/operation-validation-bundle.json \
-            --environment "$ENVIRONMENT" \
-            --operator "github-actions" \
-            --json \
-            > artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json || true
+          MANIFEST_PATH="artifacts/projection-backfill-design-gate/generated-execution-design-manifest.json"
+          if [ "$USE_PROVIDED_EXECUTION_DESIGN_MANIFEST" = "true" ]; then
+            MANIFEST_PATH="$EXECUTION_DESIGN_MANIFEST_PATH"
+          fi
 
-          node scripts/prepare-projection-backfill-controlled-execution-design.mjs \
-            --gate artifacts/projection-backfill-design-gate/execution-design-gate.json \
-            --operation-validation-bundle artifacts/projection-backfill-design-gate/operation-validation-bundle.json \
-            --environment "$ENVIRONMENT" \
-            --operator "github-actions" \
-            > artifacts/projection-backfill-design-gate/controlled-execution-design-summary.md || true
+          MANIFEST_DIR=$(dirname "$MANIFEST_PATH")
+          BUNDLE_REL_PATH=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$MANIFEST_PATH')).validationBundles[0] || '')")
+
+          if [ -z "$BUNDLE_REL_PATH" ]; then
+            echo "Warning: No validation bundle found in manifest. Skipping packet generation."
+          elif [ ! -f "$MANIFEST_DIR/$BUNDLE_REL_PATH" ] && [ ! -f "$BUNDLE_REL_PATH" ]; then
+            echo "Warning: Validation bundle not found. Skipping packet generation."
+          else
+            BUNDLE_PATH="$MANIFEST_DIR/$BUNDLE_REL_PATH"
+            if [ ! -f "$BUNDLE_PATH" ]; then
+               # fallback if the path is absolute or relative to root
+               BUNDLE_PATH="$BUNDLE_REL_PATH"
+            fi
+
+            node scripts/prepare-projection-backfill-controlled-execution-design.mjs \
+              --gate artifacts/projection-backfill-design-gate/execution-design-gate.json \
+              --operation-validation-bundle "$BUNDLE_PATH" \
+              --environment "$ENVIRONMENT" \
+              --operator "github-actions" \
+              --json \
+              > artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json || true
+
+            node scripts/prepare-projection-backfill-controlled-execution-design.mjs \
+              --gate artifacts/projection-backfill-design-gate/execution-design-gate.json \
+              --operation-validation-bundle "$BUNDLE_PATH" \
+              --environment "$ENVIRONMENT" \
+              --operator "github-actions" \
+              > artifacts/projection-backfill-design-gate/controlled-execution-design-summary.md || true
+          fi
 
       - name: Generate Markdown Summary
         env:
