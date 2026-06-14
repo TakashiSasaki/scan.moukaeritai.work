@@ -130,6 +130,28 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
     expect(packet.success).toBe(false);
   });
 
+  it('fails if gate executed flag is true', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: { ...mockValidGate, executed: true },
+      operationValidationBundles: [mockValidBundle]
+    });
+
+    expect(packet.overallStatus).toBe('fail');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'gate-executed')).toBe(true);
+  });
+
+  it('fails if gate executionAuthorization flag is true', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: { ...mockValidGate, executionAuthorization: true },
+      operationValidationBundles: [mockValidBundle]
+    });
+
+    expect(packet.overallStatus).toBe('fail');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'gate-execution-authorization')).toBe(true);
+  });
+
   it('fails if bundle written flag is true', () => {
     const packet = buildProjectionBackfillControlledExecutionDesignPacket({
       executionDesignGate: mockValidGate,
@@ -139,6 +161,28 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
     expect(packet.overallStatus).toBe('fail');
     expect(packet.success).toBe(false);
     expect(packet.blockers.some(b => b.code === 'bundle-written')).toBe(true);
+  });
+
+  it('fails if bundle executed flag is true', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [{ ...mockValidBundle, executed: true }]
+    });
+
+    expect(packet.overallStatus).toBe('fail');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'bundle-executed')).toBe(true);
+  });
+
+  it('fails if bundle executionAuthorization flag is true', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [{ ...mockValidBundle, executionAuthorization: true }]
+    });
+
+    expect(packet.overallStatus).toBe('fail');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'bundle-execution-authorization')).toBe(true);
   });
 
   it('blocks if target coverage is empty', () => {

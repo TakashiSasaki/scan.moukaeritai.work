@@ -67,12 +67,15 @@ Use `npm run ops:assess-projection-backfill-execution-design` to evaluate saved 
 
 Once assessed, use `npm run ops:prepare-projection-backfill-controlled-execution-design` to assemble the Controlled Projection Backfill Execution Design Packet from the design gate and the operation validation bundle.
 
-* The design packet is local-only.
-* It does not call Firebase.
-* It does not write.
-* It does not execute backfill.
-* It does not authorize UI read switching.
-* `ready-for-execution-design` is not execution approval.
+Next, use `npm run ops:prepare-projection-backfill-controlled-execution-review-contract` to generate a Controlled Execution Review Contract.
+
+* The design packet and review contract are local-only.
+* They do not call Firebase.
+* They do not write.
+* They do not execute backfill.
+* They do not authorize UI read switching.
+* `ready-for-execution-design` and `ready-for-controlled-execution-design-review` are not execution approval.
+* The review contract solidifies the operator checklist, risk register, and approval boundaries.
 
 ### Automated GitHub Actions Workflow
 
