@@ -1,27 +1,33 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
 const SCRIPT_PATH = path.resolve(__dirname, '../scripts/validate-projection-backfill-operation.mjs');
-const FIXTURES_DIR = path.resolve(__dirname, 'fixtures/projection-backfill-design-gate');
 
 describe('validate-projection-backfill-operation CLI integration', () => {
+  let tmpDir: string;
+
   const writeManifest = (name, content) => {
-    const fullPath = path.join(FIXTURES_DIR, name);
+    const fullPath = path.join(tmpDir, name);
     fs.writeFileSync(fullPath, JSON.stringify(content, null, 2));
     return fullPath;
   };
 
   const writeArtifact = (name, content) => {
-    const fullPath = path.join(FIXTURES_DIR, name);
+    const fullPath = path.join(tmpDir, name);
     fs.writeFileSync(fullPath, JSON.stringify(content, null, 2));
     return fullPath;
   };
 
   beforeAll(() => {
-    if (!fs.existsSync(FIXTURES_DIR)) {
-      fs.mkdirSync(FIXTURES_DIR, { recursive: true });
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'projection-backfill-cli-test-'));
+  });
+
+  afterAll(() => {
+    if (tmpDir && fs.existsSync(tmpDir)) {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
 
