@@ -130,6 +130,40 @@ export function buildProjectionBackfillControlledExecutionReviewContract(input, 
        contract.blockers.push({ code: "gate-bundle-count-mismatch", message: `Gate bundleCount (${executionDesignGate.bundleCount}) mismatch with packet (${contract.reviewScope.bundleCount}).` });
        hasFail = true;
     }
+
+    // Cross-reference derived packet data with what the gate explicitly approved
+    if (executionDesignGate.totalTargets !== contract.reviewScope.totalTargets) {
+       contract.blockers.push({ code: "gate-target-count-mismatch", message: `Gate totalTargets (${executionDesignGate.totalTargets}) mismatch with packet (${contract.reviewScope.totalTargets}).` });
+       hasFail = true;
+    }
+
+    const gateModes = [...(executionDesignGate.evidenceModes || [])].sort().join(',');
+    const packetModes = [...contract.reviewScope.evidenceModes].sort().join(',');
+    if (gateModes !== packetModes) {
+       contract.blockers.push({ code: "gate-evidence-modes-mismatch", message: `Gate evidenceModes [${gateModes}] mismatch with packet modes [${packetModes}].` });
+       hasFail = true;
+    }
+
+    if (executionDesignGate.targetTypeCoverage && controlledExecutionDesignPacket && controlledExecutionDesignPacket.targetTypeCoverage) {
+      for (const [type, info] of Object.entries(executionDesignGate.targetTypeCoverage)) {
+         const packetTypeCount = controlledExecutionDesignPacket.targetTypeCoverage[type] ? controlledExecutionDesignPacket.targetTypeCoverage[type].targetCount : 0;
+         if (info.targetCount !== packetTypeCount) {
+            contract.blockers.push({ code: "gate-target-coverage-mismatch", message: `Gate targetCount for ${type} (${info.targetCount}) mismatch with packet (${packetTypeCount}).` });
+            hasFail = true;
+         }
+         const packetHasManual = controlledExecutionDesignPacket.targetTypeCoverage[type] ? (controlledExecutionDesignPacket.targetTypeCoverage[type].hasManualWriteEvidence === true) : false;
+         if (info.hasManualWriteEvidence !== packetHasManual) {
+            contract.blockers.push({ code: "gate-manual-write-coverage-mismatch", message: `Gate hasManualWriteEvidence for ${type} (${info.hasManualWriteEvidence}) mismatch with packet (${packetHasManual}).` });
+            hasFail = true;
+         }
+      }
+      for (const type of Object.keys(controlledExecutionDesignPacket.targetTypeCoverage)) {
+         if (!executionDesignGate.targetTypeCoverage[type]) {
+            contract.blockers.push({ code: "gate-target-coverage-mismatch", message: `Gate is missing coverage for ${type} present in packet.` });
+            hasFail = true;
+         }
+      }
+    }
   }
 
   if (bundlesToProcess && Array.isArray(bundlesToProcess)) {

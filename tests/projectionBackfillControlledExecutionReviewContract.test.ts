@@ -9,6 +9,9 @@ const mockValidPacket = {
   bundleCount: 1,
   totalTargets: 3,
   evidenceModes: ["dry-run-evidence-pass"],
+  targetTypeCoverage: {
+     object: { targetCount: 3, hasManualWriteEvidence: false }
+  },
   executionAuthorization: false,
   written: false,
   executed: false,
@@ -19,7 +22,12 @@ const mockValidGate = {
   valid: true,
   success: true,
   overallStatus: "ready-for-execution-design",
-  bundleCount: 1
+  bundleCount: 1,
+  totalTargets: 3,
+  evidenceModes: ["dry-run-evidence-pass"],
+  targetTypeCoverage: {
+     object: { targetCount: 3, hasManualWriteEvidence: false }
+  }
   // executionAuthorization, written, and executed are intentionally omitted
   // to test that the builder correctly handles dynamically generated gates
   // that do not explicitly set these flags to false.
@@ -126,6 +134,56 @@ describe('buildProjectionBackfillControlledExecutionReviewContract', () => {
 
     expect(contract.overallStatus).toBe('fail');
     expect(contract.blockers.some(b => b.code === 'gate-bundle-count-mismatch')).toBe(true);
+  });
+
+  it('fails if gate totalTargets mismatches packet totalTargets', () => {
+    const contract = buildProjectionBackfillControlledExecutionReviewContract({
+      controlledExecutionDesignPacket: mockValidPacket,
+      executionDesignGate: { ...mockValidGate, totalTargets: 99 },
+      operationValidationBundles: [mockValidBundle]
+    });
+
+    expect(contract.overallStatus).toBe('fail');
+    expect(contract.blockers.some(b => b.code === 'gate-target-count-mismatch')).toBe(true);
+  });
+
+  it('fails if gate evidenceModes mismatches packet evidenceModes', () => {
+    const contract = buildProjectionBackfillControlledExecutionReviewContract({
+      controlledExecutionDesignPacket: mockValidPacket,
+      executionDesignGate: { ...mockValidGate, evidenceModes: ["manual-write-evidence-pass"] },
+      operationValidationBundles: [mockValidBundle]
+    });
+
+    expect(contract.overallStatus).toBe('fail');
+    expect(contract.blockers.some(b => b.code === 'gate-evidence-modes-mismatch')).toBe(true);
+  });
+
+  it('fails if gate targetTypeCoverage mismatches packet targetTypeCoverage', () => {
+    const contract = buildProjectionBackfillControlledExecutionReviewContract({
+      controlledExecutionDesignPacket: mockValidPacket,
+      executionDesignGate: {
+         ...mockValidGate,
+         targetTypeCoverage: { object: { targetCount: 99, hasManualWriteEvidence: false } }
+      },
+      operationValidationBundles: [mockValidBundle]
+    });
+
+    expect(contract.overallStatus).toBe('fail');
+    expect(contract.blockers.some(b => b.code === 'gate-target-coverage-mismatch')).toBe(true);
+  });
+
+  it('fails if gate manual write coverage mismatches packet manual write coverage', () => {
+    const contract = buildProjectionBackfillControlledExecutionReviewContract({
+      controlledExecutionDesignPacket: mockValidPacket,
+      executionDesignGate: {
+         ...mockValidGate,
+         targetTypeCoverage: { object: { targetCount: 3, hasManualWriteEvidence: true } }
+      },
+      operationValidationBundles: [mockValidBundle]
+    });
+
+    expect(contract.overallStatus).toBe('fail');
+    expect(contract.blockers.some(b => b.code === 'gate-manual-write-coverage-mismatch')).toBe(true);
   });
 
   it('fails if bundles array length mismatches packet bundle count', () => {
