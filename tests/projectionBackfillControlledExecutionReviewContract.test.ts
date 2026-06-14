@@ -16,7 +16,12 @@ const mockValidPacket = {
 };
 
 const mockValidGate = {
+  valid: true,
+  success: true,
   overallStatus: "ready-for-execution-design",
+  executionAuthorization: false,
+  written: false,
+  executed: false,
   bundleCount: 1
 };
 
@@ -74,6 +79,28 @@ describe('buildProjectionBackfillControlledExecutionReviewContract', () => {
 
     expect(contract.overallStatus).toBe('fail');
     expect(contract.blockers.some(b => b.code === 'packet-executed')).toBe(true);
+  });
+
+  it('fails if gate status is not ready-for-execution-design', () => {
+    const contract = buildProjectionBackfillControlledExecutionReviewContract({
+      controlledExecutionDesignPacket: mockValidPacket,
+      executionDesignGate: { ...mockValidGate, overallStatus: 'fail' },
+      operationValidationBundles: [mockValidBundle]
+    });
+
+    expect(contract.overallStatus).toBe('fail');
+    expect(contract.blockers.some(b => b.code === 'invalid-gate-status')).toBe(true);
+  });
+
+  it('fails if gate executionAuthorization is true', () => {
+    const contract = buildProjectionBackfillControlledExecutionReviewContract({
+      controlledExecutionDesignPacket: mockValidPacket,
+      executionDesignGate: { ...mockValidGate, executionAuthorization: true },
+      operationValidationBundles: [mockValidBundle]
+    });
+
+    expect(contract.overallStatus).toBe('fail');
+    expect(contract.blockers.some(b => b.code === 'gate-execution-authorization')).toBe(true);
   });
 
   it('fails if gate bundle count mismatches packet bundle count', () => {

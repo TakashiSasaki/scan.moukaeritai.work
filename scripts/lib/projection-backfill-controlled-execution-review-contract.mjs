@@ -102,11 +102,34 @@ export function buildProjectionBackfillControlledExecutionReviewContract(input, 
     bundlesToProcess = [input.operationValidationBundle];
   }
 
-  if (executionDesignGate) {
-     if (executionDesignGate.bundleCount !== contract.reviewScope.bundleCount) {
-         contract.blockers.push({ code: "gate-bundle-count-mismatch", message: `Gate bundleCount (${executionDesignGate.bundleCount}) mismatch with packet (${contract.reviewScope.bundleCount}).` });
-         hasFail = true;
-     }
+  if (!executionDesignGate || typeof executionDesignGate !== "object") {
+    contract.blockers.push({ code: "missing-gate", message: "executionDesignGate is required." });
+    hasFail = true;
+  } else {
+    if (executionDesignGate.overallStatus !== "ready-for-execution-design") {
+      contract.blockers.push({ code: "invalid-gate-status", message: `Gate overallStatus must be ready-for-execution-design, got: ${executionDesignGate.overallStatus}` });
+      hasFail = true;
+    }
+    if (executionDesignGate.valid !== true || executionDesignGate.success !== true) {
+      contract.blockers.push({ code: "invalid-gate-state", message: "executionDesignGate must have valid:true and success:true." });
+      hasFail = true;
+    }
+    if (executionDesignGate.executionAuthorization !== false) {
+      contract.blockers.push({ code: "gate-execution-authorization", message: "Gate executionAuthorization must be false." });
+      hasFail = true;
+    }
+    if (executionDesignGate.written !== false) {
+      contract.blockers.push({ code: "gate-written", message: "Gate written must be false." });
+      hasFail = true;
+    }
+    if (executionDesignGate.executed !== false) {
+      contract.blockers.push({ code: "gate-executed", message: "Gate executed must be false." });
+      hasFail = true;
+    }
+    if (executionDesignGate.bundleCount !== contract.reviewScope.bundleCount) {
+       contract.blockers.push({ code: "gate-bundle-count-mismatch", message: `Gate bundleCount (${executionDesignGate.bundleCount}) mismatch with packet (${contract.reviewScope.bundleCount}).` });
+       hasFail = true;
+    }
   }
 
   if (bundlesToProcess && Array.isArray(bundlesToProcess)) {

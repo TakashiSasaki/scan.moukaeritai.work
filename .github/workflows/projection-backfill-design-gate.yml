@@ -161,21 +161,26 @@ jobs:
       - name: Generate Controlled Execution Review Contract
         env:
           ENVIRONMENT: ${{ github.event.inputs.environment }}
+          USE_PROVIDED_EXECUTION_DESIGN_MANIFEST: ${{ github.event.inputs.use_provided_execution_design_manifest }}
+          EXECUTION_DESIGN_MANIFEST_PATH: ${{ github.event.inputs.execution_design_manifest_path }}
         run: |
-          node scripts/prepare-projection-backfill-controlled-execution-review-contract.mjs \
-            --packet "artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json" \
-            --gate "artifacts/projection-backfill-design-gate/execution-design-gate.json" \
-            --operation-validation-bundle "artifacts/projection-backfill-design-gate/operation-validation-bundle.json" \
-            --environment "$ENVIRONMENT" \
-            --operator "github-actions" \
-            --json > artifacts/projection-backfill-design-gate/controlled-execution-review-contract.json
+          MANIFEST_PATH="artifacts/projection-backfill-design-gate/generated-execution-design-manifest.json"
+          if [ "$USE_PROVIDED_EXECUTION_DESIGN_MANIFEST" = "true" ]; then
+            MANIFEST_PATH="$EXECUTION_DESIGN_MANIFEST_PATH"
+          fi
 
-          node scripts/prepare-projection-backfill-controlled-execution-review-contract.mjs \
+          if [ ! -f "artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json" ]; then
+             echo "Error: controlled-execution-design-packet.json does not exist."
+             exit 1
+          fi
+
+          node scripts/run-projection-backfill-controlled-execution-review-contract-workflow-step.mjs \
+            --execution-design-manifest "$MANIFEST_PATH" \
             --packet "artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json" \
             --gate "artifacts/projection-backfill-design-gate/execution-design-gate.json" \
-            --operation-validation-bundle "artifacts/projection-backfill-design-gate/operation-validation-bundle.json" \
+            --output-dir "artifacts/projection-backfill-design-gate" \
             --environment "$ENVIRONMENT" \
-            --operator "github-actions" > artifacts/projection-backfill-design-gate/controlled-execution-review-contract-summary.md
+            --operator "github-actions"
 
       - name: Generate Markdown Summary
         env:
