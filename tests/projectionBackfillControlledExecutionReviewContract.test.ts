@@ -19,14 +19,28 @@ const mockValidGate = {
   valid: true,
   success: true,
   overallStatus: "ready-for-execution-design",
-  executionAuthorization: false,
-  written: false,
-  executed: false,
   bundleCount: 1
+  // executionAuthorization, written, and executed are intentionally omitted
+  // to test that the builder correctly handles dynamically generated gates
+  // that do not explicitly set these flags to false.
 };
 
 const mockValidBundle = {
-  overallStatus: "dry-run-evidence-pass"
+  overallStatus: "dry-run-evidence-pass",
+  valid: true,
+  success: true,
+  written: false,
+  executed: false,
+  executionAuthorization: false,
+  batches: [
+    {
+       targets: [
+          { targetType: "object", targetId: "test-obj" },
+          { targetType: "object", targetId: "test-obj-2" },
+          { targetType: "object", targetId: "test-obj-3" }
+       ]
+    }
+  ]
 };
 
 describe('buildProjectionBackfillControlledExecutionReviewContract', () => {
@@ -123,6 +137,50 @@ describe('buildProjectionBackfillControlledExecutionReviewContract', () => {
 
     expect(contract.overallStatus).toBe('fail');
     expect(contract.blockers.some(b => b.code === 'bundle-count-mismatch')).toBe(true);
+  });
+
+  it('fails if a bundle has overallStatus fail', () => {
+    const contract = buildProjectionBackfillControlledExecutionReviewContract({
+      controlledExecutionDesignPacket: mockValidPacket,
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [{ ...mockValidBundle, overallStatus: 'fail' }]
+    });
+
+    expect(contract.overallStatus).toBe('fail');
+    expect(contract.blockers.some(b => b.code === 'failed-bundle')).toBe(true);
+  });
+
+  it('fails if a bundle has written true', () => {
+    const contract = buildProjectionBackfillControlledExecutionReviewContract({
+      controlledExecutionDesignPacket: mockValidPacket,
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [{ ...mockValidBundle, written: true }]
+    });
+
+    expect(contract.overallStatus).toBe('fail');
+    expect(contract.blockers.some(b => b.code === 'bundle-written')).toBe(true);
+  });
+
+  it('fails if a bundle results in derived target count mismatch', () => {
+    const contract = buildProjectionBackfillControlledExecutionReviewContract({
+      controlledExecutionDesignPacket: mockValidPacket, // expects 3 targets
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [{ ...mockValidBundle, batches: [] }] // 0 targets
+    });
+
+    expect(contract.overallStatus).toBe('fail');
+    expect(contract.blockers.some(b => b.code === 'bundle-target-count-mismatch')).toBe(true);
+  });
+
+  it('fails if derived bundle modes do not match expected modes', () => {
+    const contract = buildProjectionBackfillControlledExecutionReviewContract({
+      controlledExecutionDesignPacket: mockValidPacket, // expects dry-run
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [{ ...mockValidBundle, overallStatus: 'manual-write-evidence-pass' }]
+    });
+
+    expect(contract.overallStatus).toBe('fail');
+    expect(contract.blockers.some(b => b.code === 'bundle-mode-mismatch')).toBe(true);
   });
 
   it('fails if forbidden status string is found in input', () => {

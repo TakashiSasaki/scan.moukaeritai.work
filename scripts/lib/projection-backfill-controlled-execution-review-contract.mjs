@@ -114,16 +114,16 @@ export function buildProjectionBackfillControlledExecutionReviewContract(input, 
       contract.blockers.push({ code: "invalid-gate-state", message: "executionDesignGate must have valid:true and success:true." });
       hasFail = true;
     }
-    if (executionDesignGate.executionAuthorization !== false) {
-      contract.blockers.push({ code: "gate-execution-authorization", message: "Gate executionAuthorization must be false." });
+    if (executionDesignGate.executionAuthorization === true) {
+      contract.blockers.push({ code: "gate-execution-authorization", message: "Gate executionAuthorization must not be true." });
       hasFail = true;
     }
-    if (executionDesignGate.written !== false) {
-      contract.blockers.push({ code: "gate-written", message: "Gate written must be false." });
+    if (executionDesignGate.written === true) {
+      contract.blockers.push({ code: "gate-written", message: "Gate written must not be true." });
       hasFail = true;
     }
-    if (executionDesignGate.executed !== false) {
-      contract.blockers.push({ code: "gate-executed", message: "Gate executed must be false." });
+    if (executionDesignGate.executed === true) {
+      contract.blockers.push({ code: "gate-executed", message: "Gate executed must not be true." });
       hasFail = true;
     }
     if (executionDesignGate.bundleCount !== contract.reviewScope.bundleCount) {
@@ -136,6 +136,74 @@ export function buildProjectionBackfillControlledExecutionReviewContract(input, 
      if (bundlesToProcess.length !== contract.reviewScope.bundleCount) {
          contract.blockers.push({ code: "bundle-count-mismatch", message: `Provided bundles length (${bundlesToProcess.length}) mismatch with packet bundleCount (${contract.reviewScope.bundleCount}).` });
          hasFail = true;
+     }
+
+     let derivedTargetCount = 0;
+     const seenModes = new Set();
+     const seenTargets = new Set();
+
+     for (let i = 0; i < bundlesToProcess.length; i++) {
+        const bundle = bundlesToProcess[i];
+        if (!bundle || typeof bundle !== "object") {
+           contract.blockers.push({ code: "malformed-bundle", message: `Bundle at index ${i} is malformed.` });
+           hasFail = true;
+           continue;
+        }
+
+        if (bundle.valid !== true || bundle.success !== true) {
+           contract.blockers.push({ code: "invalid-bundle", message: `Bundle at index ${i} is invalid or unsuccessful.` });
+           hasFail = true;
+        }
+
+        if (bundle.overallStatus === "fail" || bundle.overallStatus === "blocked") {
+           contract.blockers.push({ code: "failed-bundle", message: `Bundle at index ${i} has status ${bundle.overallStatus}.` });
+           hasFail = true;
+        }
+
+        if (bundle.written === true) {
+           contract.blockers.push({ code: "bundle-written", message: `Bundle at index ${i} has written:true.` });
+           hasFail = true;
+        }
+
+        if (bundle.executed === true) {
+           contract.blockers.push({ code: "bundle-executed", message: `Bundle at index ${i} has executed:true.` });
+           hasFail = true;
+        }
+
+        if (bundle.executionAuthorization === true) {
+           contract.blockers.push({ code: "bundle-execution-authorization", message: `Bundle at index ${i} has executionAuthorization:true.` });
+           hasFail = true;
+        }
+
+        if (bundle.overallStatus === "dry-run-evidence-pass" || bundle.overallStatus === "manual-write-evidence-pass") {
+           seenModes.add(bundle.overallStatus);
+        }
+
+        if (Array.isArray(bundle.batches)) {
+          for (const batch of bundle.batches) {
+            if (Array.isArray(batch.targets)) {
+               for (const target of batch.targets) {
+                 const key = `${target.targetType}:${target.targetId}`;
+                 if (!seenTargets.has(key)) {
+                    seenTargets.add(key);
+                    derivedTargetCount++;
+                 }
+               }
+            }
+          }
+        }
+     }
+
+     if (!hasFail && contract.reviewScope.totalTargets > 0 && derivedTargetCount !== contract.reviewScope.totalTargets) {
+        contract.blockers.push({ code: "bundle-target-count-mismatch", message: `Derived target count (${derivedTargetCount}) from bundles does not match packet totalTargets (${contract.reviewScope.totalTargets}).` });
+        hasFail = true;
+     }
+
+     const derivedModes = Array.from(seenModes).sort().join(',');
+     const expectedModes = [...contract.reviewScope.evidenceModes].sort().join(',');
+     if (!hasFail && derivedModes !== expectedModes) {
+        contract.blockers.push({ code: "bundle-mode-mismatch", message: `Derived evidence modes [${derivedModes}] from bundles do not match packet modes [${expectedModes}].` });
+        hasFail = true;
      }
   }
 
