@@ -34,8 +34,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Confirm Intent
+        env:
+          CONFIRMATION_PHRASE: ${{ github.event.inputs.confirmation_phrase }}
         run: |
-          if [ "${{ github.event.inputs.confirmation_phrase }}" != "LOCAL_ONLY_DESIGN_GATE" ]; then
+          if [ "$CONFIRMATION_PHRASE" != "LOCAL_ONLY_DESIGN_GATE" ]; then
             echo "Error: confirmation_phrase must be exactly 'LOCAL_ONLY_DESIGN_GATE'."
             echo "This phrase explicitly confirms you understand this workflow is local-only and does not perform any execution."
             exit 1
@@ -64,20 +66,25 @@ jobs:
         run: mkdir -p artifacts/projection-backfill-design-gate
 
       - name: Validate Projection Backfill Operation
+        env:
+          OPERATION_VALIDATION_MANIFEST_PATH: ${{ github.event.inputs.operation_validation_manifest_path }}
         run: |
-          npm run ops:validate-projection-backfill-operation -- \
-            --manifest "${{ github.event.inputs.operation_validation_manifest_path }}" --json \
+          node scripts/validate-projection-backfill-operation.mjs \
+            --manifest "$OPERATION_VALIDATION_MANIFEST_PATH" --json \
             > artifacts/projection-backfill-design-gate/operation-validation-bundle.json
 
       - name: Assess Execution Design Gate
+        env:
+          EXECUTION_DESIGN_MANIFEST_PATH: ${{ github.event.inputs.execution_design_manifest_path }}
+          ALLOW_DRY_RUN_ONLY: ${{ github.event.inputs.allow_dry_run_only }}
         run: |
           ALLOW_DRY_RUN_ARG=""
-          if [ "${{ github.event.inputs.allow_dry_run_only }}" = "true" ]; then
+          if [ "$ALLOW_DRY_RUN_ONLY" = "true" ]; then
             ALLOW_DRY_RUN_ARG="--allow-dry-run-only"
           fi
 
-          npm run ops:assess-projection-backfill-execution-design -- \
-            --manifest "${{ github.event.inputs.execution_design_manifest_path }}" --json $ALLOW_DRY_RUN_ARG \
+          node scripts/assess-projection-backfill-execution-design.mjs \
+            --manifest "$EXECUTION_DESIGN_MANIFEST_PATH" --json $ALLOW_DRY_RUN_ARG \
             > artifacts/projection-backfill-design-gate/execution-design-gate.json
 
       - name: Generate Markdown Summary
