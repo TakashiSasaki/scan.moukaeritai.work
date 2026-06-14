@@ -1,0 +1,62 @@
+{
+  "success": true,
+  "valid": true,
+  "bundleType": "projection-backfill-operation-validation-bundle",
+  "mode": "dryRun",
+  "overallStatus": "dry-run-evidence-pass",
+  "packetType": "projection-backfill-operation-packet",
+  "totalTargets": 3,
+  "batchCount": 1,
+  "validatedBatchCount": 1,
+  "recomputeResponseCount": 3,
+  "batches": [
+    {
+      "batchIndex": 0,
+      "targetCount": 3,
+      "recomputeValidatedCount": 3,
+      "preReconciliationStatus": "context",
+      "postReconciliationStatus": "unknown",
+      "reportStatus": "unknown",
+      "targets": [
+        {
+          "targetType": "object",
+          "targetId": "test-object-1",
+          "summaryPath": "unknown",
+          "recomputeStatus": "validated",
+          "postStatus": "unknown"
+        },
+        {
+          "targetType": "marker",
+          "targetId": "test-marker-1",
+          "summaryPath": "unknown",
+          "recomputeStatus": "validated",
+          "postStatus": "unknown"
+        },
+        {
+          "targetType": "place",
+          "targetId": "test-place-1",
+          "summaryPath": "unknown",
+          "recomputeStatus": "validated",
+          "postStatus": "unknown"
+        }
+      ],
+      "blockers": [],
+      "warnings": []
+    }
+  ],
+  "blockers": [],
+  "warnings": [
+    {
+      "code": "not-execution",
+      "message": "This validation bundle does not execute backfill."
+    },
+    {
+      "code": "no-ui-switching",
+      "message": "This validation bundle does not authorize UI read switching."
+    }
+  ],
+  "notes": [
+    "Synthetic fixture for local-only design gate testing"
+  ],
+  "written": false
+}

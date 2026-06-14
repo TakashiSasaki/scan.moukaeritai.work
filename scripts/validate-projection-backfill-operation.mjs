@@ -5,6 +5,7 @@ import {
   buildProjectionBackfillOperationValidationBundle,
   formatProjectionBackfillOperationValidationBundle
 } from './lib/projection-backfill-operation-validation-bundle.mjs';
+import { normalizeRecomputeArtifact } from './lib/projection-recompute-artifact-loader.mjs';
 
 function main() {
   const { values, positionals } = util.parseArgs({
@@ -92,11 +93,13 @@ function main() {
       batchInput.recomputeResponses = [];
 
       if (batchManifest.recomputeResponse) {
-         batchInput.recomputeResponses.push(readJsonArtifact(batchManifest.recomputeResponse, true));
+         const parsed = readJsonArtifact(batchManifest.recomputeResponse, true);
+         batchInput.recomputeResponses.push(...normalizeRecomputeArtifact(parsed));
       } else {
          const recomputePaths = batchManifest.recomputeResponses || [];
          for (const rp of recomputePaths) {
-            batchInput.recomputeResponses.push(readJsonArtifact(rp, true));
+            const parsed = readJsonArtifact(rp, true);
+            batchInput.recomputeResponses.push(...normalizeRecomputeArtifact(parsed));
          }
       }
 
