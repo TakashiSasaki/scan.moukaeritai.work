@@ -63,12 +63,23 @@ describe('projection-backfill-operation-validation-bundle', () => {
        ]
     };
 
+    const preReconciliationResponse = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
+
     const bundle = buildProjectionBackfillOperationValidationBundle({
       operationPacket: writePacket,
       batches: [
         {
           batchIndex: 0,
           recomputeResponses: writeRecomputeResponses,
+          preReconciliationResponse,
           postReconciliationResponse
         }
       ]
@@ -234,6 +245,7 @@ describe('projection-backfill-operation-validation-bundle', () => {
       batches: [
         {
           batchIndex: 0,
+          preReconciliationResponse: { success: true, totalTargets: 2, equalCount: 2, results: [{targetType:'object',targetId:'o1',success:true,reconciliation:{equal:true}},{targetType:'marker',targetId:'m1',success:true,reconciliation:{equal:true}}] },
           postReconciliationResponse: { success: true, totalTargets: 2, equalCount: 2, results: [{targetType:'object',targetId:'o1',success:true,reconciliation:{equal:true}},{targetType:'marker',targetId:'m1',success:true,reconciliation:{equal:true}}] },
           recomputeResponses: [
             { targetType: 'object', targetId: 'o1', success: true, dryRun: false, written: true },
@@ -271,6 +283,15 @@ describe('projection-backfill-operation-validation-bundle', () => {
       { targetType: 'object', targetId: 'o1', success: true, dryRun: false, written: true },
       { targetType: 'marker', targetId: 'm1', success: true, dryRun: false, written: true }
     ];
+    const preReconciliationResponse = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
     const postReconciliationResponse = {
        success: true,
        totalTargets: 2,
@@ -302,6 +323,15 @@ describe('projection-backfill-operation-validation-bundle', () => {
       { targetType: 'object', targetId: 'o1', success: true, dryRun: false, written: true },
       { targetType: 'marker', targetId: 'm1', success: true, dryRun: false, written: true }
     ];
+    const preReconciliationResponse = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
     const postReconciliationResponse = {
        success: true,
        totalTargets: 5, // Count mismatch!
@@ -316,6 +346,7 @@ describe('projection-backfill-operation-validation-bundle', () => {
         {
           batchIndex: 0,
           recomputeResponses: writeRecomputeResponses,
+          preReconciliationResponse,
           postReconciliationResponse
         }
       ]
@@ -331,6 +362,15 @@ describe('projection-backfill-operation-validation-bundle', () => {
       { targetType: 'object', targetId: 'o1', success: true, dryRun: false, written: true },
       { targetType: 'marker', targetId: 'm1', success: true, dryRun: false, written: true }
     ];
+    const preReconciliationResponse = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
     const postReconciliationResponse = {
        success: true,
        totalTargets: 2,
@@ -347,6 +387,7 @@ describe('projection-backfill-operation-validation-bundle', () => {
         {
           batchIndex: 0,
           recomputeResponses: writeRecomputeResponses,
+          preReconciliationResponse,
           postReconciliationResponse
         }
       ]
@@ -362,6 +403,15 @@ describe('projection-backfill-operation-validation-bundle', () => {
       { targetType: 'object', targetId: 'o1', success: true, dryRun: false, written: true },
       { targetType: 'marker', targetId: 'm1', success: true, dryRun: false, written: true }
     ];
+    const preReconciliationResponse = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
     const postReconciliationResponse = {
        success: true,
        totalTargets: 2,
@@ -378,6 +428,7 @@ describe('projection-backfill-operation-validation-bundle', () => {
         {
           batchIndex: 0,
           recomputeResponses: writeRecomputeResponses,
+          preReconciliationResponse,
           postReconciliationResponse
         }
       ]
@@ -402,12 +453,22 @@ describe('projection-backfill-operation-validation-bundle', () => {
          { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
        ]
     };
+    const preEvidence = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
     const bundle = buildProjectionBackfillOperationValidationBundle({
       operationPacket: writePacket,
       batches: [
         {
           batchIndex: 0,
           recomputeResponses: writeRecomputeResponses,
+          preReconciliationResponse: preEvidence,
           postReconciliationResponse: evidence,
           reconciliationReport: evidence
         }
@@ -423,6 +484,15 @@ describe('projection-backfill-operation-validation-bundle', () => {
       { targetType: 'object', targetId: 'o1', success: true, dryRun: false, written: true },
       { targetType: 'marker', targetId: 'm1', success: true, dryRun: false, written: true }
     ];
+    const preReconciliationResponse = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
     const postReconciliationResponse = {
        success: true,
        totalTargets: 2,
@@ -579,12 +649,23 @@ describe('projection-backfill-operation-validation-bundle', () => {
       ]
     };
 
+    const preReconciliationResponse = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
+
     const bundle = buildProjectionBackfillOperationValidationBundle({
       operationPacket: writePacket,
       batches: [
         {
           batchIndex: 0,
           recomputeResponses: writeRecomputeResponses,
+          preReconciliationResponse,
           reconciliationReport: normalizedReport
         }
       ]
@@ -634,6 +715,135 @@ describe('projection-backfill-operation-validation-bundle', () => {
     expect(bundle.valid).toBe(false);
     expect(bundle.overallStatus).toBe('fail'); // count mismatch / extra target is a fail
     expect(bundle.batches[0].blockers.some(b => b.code === 'report-extra-target')).toBe(true);
+  });
+
+  it('manual-write mode blocks if preReconciliationResponse is missing', () => {
+    const writePacket = { ...baseOperationPacket, mode: 'manual-write-plan' };
+    const writeRecomputeResponses = [
+      { targetType: 'object', targetId: 'o1', success: true, dryRun: false, written: true },
+      { targetType: 'marker', targetId: 'm1', success: true, dryRun: false, written: true }
+    ];
+    const preReconciliationResponse = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
+    const postReconciliationResponse = {
+       success: true,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
+    const bundle = buildProjectionBackfillOperationValidationBundle({
+      operationPacket: writePacket,
+      batches: [
+        {
+          batchIndex: 0,
+          recomputeResponses: writeRecomputeResponses,
+          postReconciliationResponse
+        }
+      ]
+    });
+    expect(bundle.valid).toBe(false);
+    expect(bundle.overallStatus).toBe('blocked');
+    expect(bundle.batches[0].blockers.some(b => b.code === 'missing-pre-evidence')).toBe(true);
+  });
+
+  it('dryRun mode does not block if preReconciliationResponse is missing', () => {
+    const bundle = buildProjectionBackfillOperationValidationBundle({
+      operationPacket: baseOperationPacket,
+      batches: [
+        {
+          batchIndex: 0,
+          recomputeResponses: baseRecomputeResponses
+        }
+      ]
+    });
+    expect(bundle.valid).toBe(true);
+    expect(bundle.overallStatus).toBe('dry-run-evidence-pass');
+    expect(bundle.batches[0].blockers.length).toBe(0);
+  });
+
+  it('blocks if preReconciliationResponse has success: false or overallStatus: fail', () => {
+    const preReconciliationResponse = {
+       success: false,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
+    const bundle = buildProjectionBackfillOperationValidationBundle({
+      operationPacket: baseOperationPacket,
+      batches: [
+        {
+          batchIndex: 0,
+          recomputeResponses: baseRecomputeResponses,
+          preReconciliationResponse
+        }
+      ]
+    });
+    expect(bundle.valid).toBe(false);
+    expect(bundle.overallStatus).toBe('blocked');
+    expect(bundle.batches[0].blockers.some(b => b.code === 'failed-pre-report')).toBe(true);
+  });
+
+  it('blocks if postReconciliationResponse has success: false or overallStatus: fail', () => {
+    const postReconciliationResponse = {
+       success: false,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
+    const bundle = buildProjectionBackfillOperationValidationBundle({
+      operationPacket: baseOperationPacket,
+      batches: [
+        {
+          batchIndex: 0,
+          recomputeResponses: baseRecomputeResponses,
+          postReconciliationResponse
+        }
+      ]
+    });
+    expect(bundle.valid).toBe(false);
+    expect(bundle.overallStatus).toBe('blocked');
+    expect(bundle.batches[0].blockers.some(b => b.code === 'post-failed-report')).toBe(true);
+  });
+
+  it('blocks if reconciliationReport has success: false or overallStatus: fail', () => {
+    const reconciliationReport = {
+       success: false,
+       totalTargets: 2,
+       equalCount: 2,
+       results: [
+         { targetType: 'object', targetId: 'o1', success: true, reconciliation: { equal: true } },
+         { targetType: 'marker', targetId: 'm1', success: true, reconciliation: { equal: true } }
+       ]
+    };
+    const bundle = buildProjectionBackfillOperationValidationBundle({
+      operationPacket: baseOperationPacket,
+      batches: [
+        {
+          batchIndex: 0,
+          recomputeResponses: baseRecomputeResponses,
+          reconciliationReport
+        }
+      ]
+    });
+    expect(bundle.valid).toBe(false);
+    expect(bundle.overallStatus).toBe('blocked');
+    expect(bundle.batches[0].blockers.some(b => b.code === 'report-failed-report')).toBe(true);
   });
 
   it('manual-write mode blocks on post/report target error', () => {

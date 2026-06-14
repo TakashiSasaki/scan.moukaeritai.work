@@ -225,10 +225,21 @@ export function buildProjectionBackfillOperationValidationBundle(input, options 
     }
 
     // B. Pre-Reconciliation Context Validation
+    if (bundle.mode === 'manual-write-plan' && !evidenceBatch.preReconciliationResponse) {
+       addBlocker(validatedBatch, 'missing-pre-evidence', 'manual-write-plan requires preReconciliationResponse evidence.');
+       validationBlocked = true;
+    }
+
     if (evidenceBatch.preReconciliationResponse) {
        try {
          const preReport = normalizeReport(evidenceBatch.preReconciliationResponse);
          validatedBatch.preReconciliationStatus = preReport.overallStatus;
+
+         if (preReport.success === false || preReport.overallStatus === 'fail') {
+            addBlocker(validatedBatch, 'failed-pre-report', 'Pre-reconciliation report has success=false or overallStatus=fail.');
+            validationBlocked = true;
+         }
+
          if (preReport.countMismatch) {
             addBlocker(validatedBatch, 'pre-count-mismatch', 'Pre-reconciliation report has a count mismatch.');
             validationBlocked = true;
@@ -420,6 +431,10 @@ function normalizeReport(evidence) {
 }
 
 function checkReportMatchesPacket(report, packetTargetMap, validatedBatch, prefix) {
+  if (report.success === false || report.overallStatus === 'fail') {
+     addBlocker(validatedBatch, `${prefix}-failed-report`, `${prefix} report has success=false or overallStatus=fail.`);
+  }
+
   if (report.countMismatch) {
      addBlocker(validatedBatch, `${prefix}-count-mismatch`, `${prefix} report has a count mismatch.`);
   }
