@@ -1,0 +1,16 @@
+[
+  {
+    "targetType": "marker",
+    "targetId": "2",
+    "success": true,
+    "dryRun": true,
+    "written": false
+  },
+  {
+    "targetType": "place",
+    "targetId": "3",
+    "success": true,
+    "dryRun": true,
+    "written": false
+  }
+]

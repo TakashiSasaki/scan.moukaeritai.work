@@ -1,0 +1,12 @@
+{
+  "operationPacket": "test-packet.json",
+  "batches": [
+    {
+      "batchIndex": 0,
+      "recomputeResponse": "resp1.json",
+      "recomputeResponses": [
+        "resp2.json"
+      ]
+    }
+  ]
+}

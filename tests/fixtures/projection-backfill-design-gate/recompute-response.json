@@ -1,0 +1,37 @@
+[
+  {
+    "result": {
+      "targetType": "object",
+      "targetId": "test-object-1",
+      "success": true,
+      "dryRun": true,
+      "written": false,
+      "existingSummaryExists": false,
+      "reconciliation": {
+        "equal": false
+      }
+    }
+  },
+  {
+    "targetType": "marker",
+    "targetId": "test-marker-1",
+    "success": true,
+    "dryRun": true,
+    "written": false,
+    "existingSummaryExists": false,
+    "reconciliation": {
+      "equal": false
+    }
+  },
+  {
+    "targetType": "place",
+    "targetId": "test-place-1",
+    "success": true,
+    "dryRun": true,
+    "written": false,
+    "existingSummaryExists": false,
+    "reconciliation": {
+      "equal": false
+    }
+  }
+]

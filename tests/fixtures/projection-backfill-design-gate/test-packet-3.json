@@ -1,0 +1,26 @@
+{
+  "packetType": "projection-backfill-operation-packet",
+  "valid": true,
+  "written": false,
+  "mode": "dryRun",
+  "totalTargets": 3,
+  "batches": [
+    {
+      "batchIndex": 0,
+      "targets": [
+        {
+          "targetType": "object",
+          "targetId": "1"
+        },
+        {
+          "targetType": "marker",
+          "targetId": "2"
+        },
+        {
+          "targetType": "place",
+          "targetId": "3"
+        }
+      ]
+    }
+  ]
+}

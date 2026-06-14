@@ -1,0 +1,112 @@
+name: Projection Backfill Design Gate Harness
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation_validation_manifest_path:
+        description: "Repository path to the projection backfill operation validation manifest JSON"
+        required: true
+        type: string
+      execution_design_manifest_path:
+        description: "Repository path to the execution design gate manifest JSON"
+        required: true
+        type: string
+      environment:
+        description: "Label only; copied into generated summary if useful"
+        required: false
+        default: "local-design-gate"
+        type: string
+      confirmation_phrase:
+        description: "Must be LOCAL_ONLY_DESIGN_GATE"
+        required: true
+        type: string
+      allow_dry_run_only:
+        description: "Allow dry-run-only evidence for design-gate workflow validation"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+jobs:
+  design-gate-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm Intent
+        env:
+          CONFIRMATION_PHRASE: ${{ github.event.inputs.confirmation_phrase }}
+        run: |
+          if [ "$CONFIRMATION_PHRASE" != "LOCAL_ONLY_DESIGN_GATE" ]; then
+            echo "Error: confirmation_phrase must be exactly 'LOCAL_ONLY_DESIGN_GATE'."
+            echo "This phrase explicitly confirms you understand this workflow is local-only and does not perform any execution."
+            exit 1
+          fi
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Focused Tests
+        run: |
+          npx vitest run tests/projectionRecomputeArtifactLoader.test.ts
+          npx vitest run tests/projectionRecomputeArtifactLoaderCliIntegration.test.ts
+          npx vitest run tests/projectionBackfillOperationValidationBundle.test.ts
+          npx vitest run tests/projectionBackfillExecutionDesignGate.test.ts
+
+      - name: Prepare Artifacts Directory
+        run: mkdir -p artifacts/projection-backfill-design-gate
+
+      - name: Validate Projection Backfill Operation
+        env:
+          OPERATION_VALIDATION_MANIFEST_PATH: ${{ github.event.inputs.operation_validation_manifest_path }}
+        run: |
+          node scripts/validate-projection-backfill-operation.mjs \
+            --manifest "$OPERATION_VALIDATION_MANIFEST_PATH" --json \
+            > artifacts/projection-backfill-design-gate/operation-validation-bundle.json
+
+      - name: Assess Execution Design Gate
+        env:
+          EXECUTION_DESIGN_MANIFEST_PATH: ${{ github.event.inputs.execution_design_manifest_path }}
+          ALLOW_DRY_RUN_ONLY: ${{ github.event.inputs.allow_dry_run_only }}
+        run: |
+          ALLOW_DRY_RUN_ARG=""
+          if [ "$ALLOW_DRY_RUN_ONLY" = "true" ]; then
+            ALLOW_DRY_RUN_ARG="--allow-dry-run-only"
+          fi
+
+          node scripts/assess-projection-backfill-execution-design.mjs \
+            --manifest "$EXECUTION_DESIGN_MANIFEST_PATH" --json $ALLOW_DRY_RUN_ARG \
+            > artifacts/projection-backfill-design-gate/execution-design-gate.json
+
+      - name: Generate Markdown Summary
+        run: |
+          SUMMARY_FILE="artifacts/projection-backfill-design-gate/summary.md"
+
+          echo "# Projection Backfill Design Gate Summary" > $SUMMARY_FILE
+          echo "" >> $SUMMARY_FILE
+          echo "**Safety Boundaries & Constraints:**" >> $SUMMARY_FILE
+          echo "- **Local-Only:** This workflow executed entirely within GitHub Actions using checked-in repository artifacts." >> $SUMMARY_FILE
+          echo "- **No Firebase Call:** The run did not authenticate with or call Firebase." >> $SUMMARY_FILE
+          echo "- **No Firestore Write:** No data was modified." >> $SUMMARY_FILE
+          echo "- **No Backfill Execution:** This workflow only validates evidence." >> $SUMMARY_FILE
+          echo "- **No UI Read Switching Authorization:** This artifact does not authorize turning on reads from projection summaries in UI." >> $SUMMARY_FILE
+          echo "" >> $SUMMARY_FILE
+          echo "The highest possible positive status for this gate is \`ready-for-execution-design\`." >> $SUMMARY_FILE
+          echo "This means the submitted validation evidence was internally consistent, but further operational planning is required before any writes take place." >> $SUMMARY_FILE
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: projection-backfill-design-gate
+          path: artifacts/projection-backfill-design-gate/

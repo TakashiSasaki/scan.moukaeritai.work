@@ -1,0 +1,10 @@
+{
+  "operationPacket": "dry-run-operation-packet.json",
+  "batches": [
+    {
+      "batchIndex": 0,
+      "recomputeResponse": "recompute-response.json"
+    }
+  ],
+  "notes": ["Synthetic fixture for local-only design gate testing"]
+}

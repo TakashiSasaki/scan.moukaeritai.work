@@ -1,0 +1,7 @@
+{
+  "validationBundles": [
+    "operation-validation-bundle.json"
+  ],
+  "environment": "local-design-gate-fixture",
+  "notes": ["Synthetic fixture for execution design assessment"]
+}

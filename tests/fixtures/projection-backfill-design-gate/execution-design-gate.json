@@ -1,0 +1,50 @@
+{
+  "success": true,
+  "valid": true,
+  "gateType": "projection-backfill-execution-design-gate",
+  "overallStatus": "ready-for-execution-design",
+  "environment": "local-design-gate-fixture",
+  "bundleCount": 1,
+  "totalTargets": 3,
+  "manualWriteBundleCount": 0,
+  "dryRunBundleCount": 1,
+  "targetTypeCoverage": {
+    "object": {
+      "hasEvidence": true,
+      "hasManualWriteEvidence": false,
+      "targetCount": 1
+    },
+    "marker": {
+      "hasEvidence": true,
+      "hasManualWriteEvidence": false,
+      "targetCount": 1
+    },
+    "place": {
+      "hasEvidence": true,
+      "hasManualWriteEvidence": false,
+      "targetCount": 1
+    }
+  },
+  "evidenceModes": [
+    "dry-run-evidence-pass"
+  ],
+  "blockers": [],
+  "warnings": [
+    {
+      "code": "not-execution",
+      "message": "This gate does not execute backfill."
+    },
+    {
+      "code": "no-ui-switching",
+      "message": "This gate does not authorize UI read switching."
+    },
+    {
+      "code": "design-only",
+      "message": "The highest positive status is ready-for-execution-design."
+    }
+  ],
+  "notes": [
+    "Synthetic fixture for execution design assessment"
+  ],
+  "written": false
+}
