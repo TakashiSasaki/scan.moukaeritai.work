@@ -167,23 +167,60 @@ export function buildProjectionBackfillControlledExecutionDesignPacket(input, op
               if (!seenTargets.has(key)) {
                 seenTargets.add(key);
                 packet.totalTargets++;
-              }
 
-              if (!packet.targetTypeCoverage[target.targetType]) {
-                packet.targetTypeCoverage[target.targetType] = { targetCount: 0 };
+                if (!packet.targetTypeCoverage[target.targetType]) {
+                  packet.targetTypeCoverage[target.targetType] = { targetCount: 0 };
+                }
+                packet.targetTypeCoverage[target.targetType].targetCount++;
+              } else {
+                packet.blockers.push({ code: "duplicate-target-evidence", message: `Duplicate evidence for target ${key}` });
+                hasBlocked = true;
               }
-              packet.targetTypeCoverage[target.targetType].targetCount++;
             }
           }
         }
       }
     }
 
+
     packet.evidenceModes = Array.from(seenModes).sort();
 
     if (Object.keys(packet.targetTypeCoverage).length === 0 && !hasFail) {
       packet.blockers.push({ code: "empty-target-coverage", message: "Target coverage is empty. No valid targets found in the operation validation bundles." });
       hasBlocked = true;
+    } else if (executionDesignGate) {
+      // Cross-reference derived packet data with what the gate explicitly approved
+      if (executionDesignGate.bundleCount !== packet.bundleCount) {
+         packet.blockers.push({ code: "gate-bundle-count-mismatch", message: `Gate approved ${executionDesignGate.bundleCount} bundles, but received ${packet.bundleCount}.` });
+         hasFail = true;
+      }
+      if (executionDesignGate.totalTargets !== packet.totalTargets) {
+         packet.blockers.push({ code: "gate-target-count-mismatch", message: `Gate approved ${executionDesignGate.totalTargets} targets, but received ${packet.totalTargets}.` });
+         hasFail = true;
+      }
+
+      const gateModes = [...(executionDesignGate.evidenceModes || [])].sort().join(',');
+      const packetModes = [...packet.evidenceModes].sort().join(',');
+      if (gateModes !== packetModes) {
+         packet.blockers.push({ code: "gate-evidence-modes-mismatch", message: `Gate approved modes [${gateModes}], but received [${packetModes}].` });
+         hasFail = true;
+      }
+
+      if (executionDesignGate.targetTypeCoverage) {
+        for (const [type, info] of Object.entries(executionDesignGate.targetTypeCoverage)) {
+           const packetTypeCount = packet.targetTypeCoverage[type] ? packet.targetTypeCoverage[type].targetCount : 0;
+           if (info.targetCount !== packetTypeCount) {
+              packet.blockers.push({ code: "gate-target-coverage-mismatch", message: `Gate approved ${info.targetCount} ${type} targets, but received ${packetTypeCount}.` });
+              hasFail = true;
+           }
+        }
+        for (const type of Object.keys(packet.targetTypeCoverage)) {
+           if (!executionDesignGate.targetTypeCoverage[type]) {
+              packet.blockers.push({ code: "gate-target-coverage-mismatch", message: `Gate did not approve ${type} targets, but bundle provided them.` });
+              hasFail = true;
+           }
+        }
+      }
     }
   }
 

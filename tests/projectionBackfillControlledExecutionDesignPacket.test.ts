@@ -7,7 +7,11 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
     overallStatus: 'ready-for-execution-design',
     written: false,
     success: true,
-    valid: true
+    valid: true,
+    bundleCount: 1,
+    totalTargets: 2,
+    evidenceModes: ['dry-run-evidence-pass'],
+    targetTypeCoverage: { object: { targetCount: 1 }, marker: { targetCount: 1 } }
   };
 
   const mockValidBundle = {
@@ -62,7 +66,13 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
 
   it('returns positive status for multiple valid bundles and aggregates coverage', () => {
     const packet = buildProjectionBackfillControlledExecutionDesignPacket({
-      executionDesignGate: mockValidGate,
+      executionDesignGate: {
+        ...mockValidGate,
+        bundleCount: 2,
+        totalTargets: 3,
+        evidenceModes: ['dry-run-evidence-pass', 'manual-write-evidence-pass'],
+        targetTypeCoverage: { object: { targetCount: 1 }, marker: { targetCount: 1 }, place: { targetCount: 1 } }
+      },
       operationValidationBundles: [mockValidBundle, mockValidBundle2]
     });
 
@@ -184,6 +194,73 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
     expect(packet.overallStatus).toBe('ready-for-controlled-execution-design-review');
     expect(packet.success).toBe(true);
     expect(packet.totalTargets).toBe(2);
+  });
+
+
+
+  it('blocks or fails if duplicate target evidence is encountered', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: {
+        ...mockValidGate,
+        bundleCount: 2,
+        totalTargets: 2, // gate knows there are 2, but bundle returns 3 total array items with dupes
+        evidenceModes: ['dry-run-evidence-pass'],
+        targetTypeCoverage: { object: { targetCount: 1 }, marker: { targetCount: 1 } }
+      },
+      operationValidationBundles: [
+        mockValidBundle,
+        {
+          ...mockValidBundle,
+          batches: [
+            {
+              targets: [
+                { targetType: 'object', targetId: 'obj1' } // Duplicate of obj1 in mockValidBundle
+              ]
+            }
+          ]
+        }
+      ]
+    });
+
+
+    // The gate check expects 2 targets, but because the duplicate doesn't increment packet.totalTargets, packet.totalTargets remains 2!
+    // Thus it does NOT trigger hasFail=true from mismatch, so it remains 'blocked' due to duplicate-target-evidence setting hasBlocked=true.
+    expect(packet.overallStatus).toBe('blocked');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'duplicate-target-evidence')).toBe(true);
+  });
+
+  it('fails if gate target count does not match bundle target count', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: { ...mockValidGate, totalTargets: 99 },
+      operationValidationBundles: [mockValidBundle]
+    });
+    expect(packet.overallStatus).toBe('fail');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'gate-target-count-mismatch')).toBe(true);
+  });
+
+  it('fails if gate evidence modes do not match bundle evidence modes', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: { ...mockValidGate, evidenceModes: ['manual-write-evidence-pass'] },
+      operationValidationBundles: [mockValidBundle]
+    });
+    expect(packet.overallStatus).toBe('fail');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'gate-evidence-modes-mismatch')).toBe(true);
+  });
+
+  it('fails if gate target type coverage does not match bundle target type coverage', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: {
+         ...mockValidGate,
+         targetTypeCoverage: { object: { targetCount: 99 }, marker: { targetCount: 1 } }
+      },
+      operationValidationBundles: [mockValidBundle]
+    });
+    expect(packet.overallStatus).toBe('fail');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'gate-target-coverage-mismatch')).toBe(true);
   });
 
   it('enforces safety boundaries and rollback policies', () => {

@@ -148,14 +148,17 @@ jobs:
 
           MANIFEST_DIR=$(dirname "$MANIFEST_PATH")
 
-          # Use node to spawn the CLI safely without shell eval
+          # Pass paths via environment variables to avoid shell interpolation in node -e
+          export MANIFEST_PATH="$MANIFEST_PATH"
+          export MANIFEST_DIR="$MANIFEST_DIR"
+
           node -e "
             const fs = require('fs');
             const path = require('path');
             const { spawnSync } = require('child_process');
 
-            const manifestPath = '$MANIFEST_PATH';
-            const manifestDir = '$MANIFEST_DIR';
+            const manifestPath = process.env.MANIFEST_PATH;
+            const manifestDir = process.env.MANIFEST_DIR;
             const envLabel = process.env.ENVIRONMENT || 'unknown';
 
             const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
@@ -188,16 +191,14 @@ jobs:
                '--operator', 'github-actions'
             ];
 
-            // Run JSON generator
             const jsonResult = spawnSync(process.execPath, [...baseArgs, '--json'], { encoding: 'utf8' });
             if (jsonResult.status === 0) {
                fs.writeFileSync('artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json', jsonResult.stdout);
             } else {
                console.error(jsonResult.stderr || jsonResult.stdout);
-               process.exit(0); // Optional packet generation, so we don't fail workflow
+               process.exit(0);
             }
 
-            // Run markdown generator
             const mdResult = spawnSync(process.execPath, baseArgs, { encoding: 'utf8' });
             if (mdResult.status === 0) {
                fs.writeFileSync('artifacts/projection-backfill-design-gate/controlled-execution-design-summary.md', mdResult.stdout);
