@@ -48,14 +48,14 @@ export const routeGroups: RouteGroup[] = [
       },
       {
         path: '/object/new',
-        component: 'CaptureForm',
+        component: 'ObjectCaptureRoute',
         access: 'signed-in user',
         navigation: 'bottom New',
         purpose: 'create object'
       },
       {
         path: '/object/:id',
-        component: 'CaptureForm',
+        component: 'ObjectCaptureRoute',
         access: 'signed-in user',
         navigation: 'dashboard/search/scanner/direct URL',
         purpose: 'view/edit object by ID',
@@ -63,7 +63,7 @@ export const routeGroups: RouteGroup[] = [
       },
       {
         path: '/item/:id',
-        component: 'Navigate',
+        component: 'LegacyItemRedirect',
         access: 'signed-in user',
         navigation: 'legacy URL',
         purpose: 'Redirect to /object/:id',

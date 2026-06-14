@@ -33,32 +33,32 @@ You can validate and run the project locally using the following canonical comma
 
 ```bash
 # Install dependencies
-pnpm install
+npm ci
 
 # Start the local development server
-pnpm run dev
+npm run dev
 
 # Run TypeScript linting
-pnpm run lint
+npm run lint
 
 # Run pure unit tests
-pnpm run test
+npm run test
 
 # Run Firestore rules emulator tests (requires Java)
-pnpm run test:rules
+npm run test:rules
 
 # Run unit tests and generate coverage report
-pnpm run test:coverage
+npm run test:coverage
 
 # Build the application
-pnpm run build
+npm run build
 ```
 
 ## Testing and Validation
 
-* **Ordinary Vitest unit tests** (`pnpm run test`) validate deterministic helpers, data structures, and standard logic offline.
-* **Firestore rules emulator tests** (`pnpm run test:rules`) run directly against the local Firebase emulator to lock in the behavior of current constraints.
-* **Coverage reports** (`pnpm run test:coverage`) are generated using Vitest (`@vitest/coverage-v8`).
+* **Ordinary Vitest unit tests** (`npm run test`) validate deterministic helpers, data structures, and standard logic offline.
+* **Firestore rules emulator tests** (`npm run test:rules`) run directly against the local Firebase emulator to lock in the behavior of current constraints.
+* **Coverage reports** (`npm run test:coverage`) are generated using Vitest (`@vitest/coverage-v8`).
 * The **CI workflow** runs on pull requests and pushes to `scan.moukaeritai.work`. It is a non-deploying workflow that purely validates lint, unit tests, rules tests, build, and coverage.
 
 ## Safety Notes
