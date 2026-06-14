@@ -10,6 +10,7 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
   };
 
   const mockValidBundle = {
+    bundleType: 'projection-backfill-operation-validation-bundle',
     overallStatus: 'dry-run-evidence-pass',
     written: false,
     success: true,
@@ -24,10 +25,25 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
     ]
   };
 
-  it('returns positive status for valid inputs', () => {
+  const mockValidBundle2 = {
+    bundleType: 'projection-backfill-operation-validation-bundle',
+    overallStatus: 'manual-write-evidence-pass',
+    written: false,
+    success: true,
+    valid: true,
+    batches: [
+      {
+        targets: [
+          { targetType: 'place', targetId: 'pl1' }
+        ]
+      }
+    ]
+  };
+
+  it('returns positive status for valid single bundle', () => {
     const packet = buildProjectionBackfillControlledExecutionDesignPacket({
       executionDesignGate: mockValidGate,
-      operationValidationBundle: mockValidBundle
+      operationValidationBundles: [mockValidBundle]
     });
 
     expect(packet.overallStatus).toBe('ready-for-controlled-execution-design-review');
@@ -40,12 +56,30 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
     expect(packet.targetTypeCoverage['object'].targetCount).toBe(1);
     expect(packet.targetTypeCoverage['marker'].targetCount).toBe(1);
     expect(packet.evidenceModes).toContain('dry-run-evidence-pass');
+    expect(packet.bundleCount).toBe(1);
+  });
+
+  it('returns positive status for multiple valid bundles and aggregates coverage', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [mockValidBundle, mockValidBundle2]
+    });
+
+    expect(packet.overallStatus).toBe('ready-for-controlled-execution-design-review');
+    expect(packet.success).toBe(true);
+    expect(packet.totalTargets).toBe(3);
+    expect(packet.targetTypeCoverage['object'].targetCount).toBe(1);
+    expect(packet.targetTypeCoverage['marker'].targetCount).toBe(1);
+    expect(packet.targetTypeCoverage['place'].targetCount).toBe(1);
+    expect(packet.evidenceModes).toContain('dry-run-evidence-pass');
+    expect(packet.evidenceModes).toContain('manual-write-evidence-pass');
+    expect(packet.bundleCount).toBe(2);
   });
 
   it('fails if gate status is not ready-for-execution-design', () => {
     const packet = buildProjectionBackfillControlledExecutionDesignPacket({
       executionDesignGate: { ...mockValidGate, overallStatus: 'blocked' },
-      operationValidationBundle: mockValidBundle
+      operationValidationBundles: [mockValidBundle]
     });
 
     expect(packet.overallStatus).toBe('fail');
@@ -56,17 +90,17 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
   it('fails if gate status is fail', () => {
     const packet = buildProjectionBackfillControlledExecutionDesignPacket({
       executionDesignGate: { ...mockValidGate, overallStatus: 'fail' },
-      operationValidationBundle: mockValidBundle
+      operationValidationBundles: [mockValidBundle]
     });
 
-    expect(packet.overallStatus).toBe('fail'); // blocked sets blocked, but fail sets fail, and it triggers fail block
+    expect(packet.overallStatus).toBe('fail');
     expect(packet.success).toBe(false);
   });
 
   it('fails if bundle written flag is true', () => {
     const packet = buildProjectionBackfillControlledExecutionDesignPacket({
       executionDesignGate: mockValidGate,
-      operationValidationBundle: { ...mockValidBundle, written: true }
+      operationValidationBundles: [{ ...mockValidBundle, written: true }]
     });
 
     expect(packet.overallStatus).toBe('fail');
@@ -77,7 +111,7 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
   it('blocks if target coverage is empty', () => {
     const packet = buildProjectionBackfillControlledExecutionDesignPacket({
       executionDesignGate: mockValidGate,
-      operationValidationBundle: { ...mockValidBundle, batches: [] }
+      operationValidationBundles: [{ ...mockValidBundle, batches: [] }]
     });
 
     expect(packet.overallStatus).toBe('blocked');
@@ -85,10 +119,54 @@ describe('buildProjectionBackfillControlledExecutionDesignPacket', () => {
     expect(packet.blockers.some(b => b.code === 'empty-target-coverage')).toBe(true);
   });
 
-  it('enforces safety boundaries and rollback policies', () => {
+  it('fails if bundle type is incorrect', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [{ ...mockValidBundle, bundleType: 'wrong-type' }]
+    });
+
+    expect(packet.overallStatus).toBe('fail');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'invalid-bundle-type')).toBe(true);
+  });
+
+  it('fails if bundle is invalid or unsuccessful', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [{ ...mockValidBundle, valid: false }]
+    });
+
+    expect(packet.overallStatus).toBe('fail');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'invalid-bundle')).toBe(true);
+  });
+
+  it('fails if overallStatus is an arbitrary string including pass', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [{ ...mockValidBundle, overallStatus: 'not-a-real-pass' }]
+    });
+
+    expect(packet.overallStatus).toBe('fail');
+    expect(packet.success).toBe(false);
+    expect(packet.blockers.some(b => b.code === 'invalid-bundle-status')).toBe(true);
+  });
+
+  it('supports legacy fallback for singular input', () => {
     const packet = buildProjectionBackfillControlledExecutionDesignPacket({
       executionDesignGate: mockValidGate,
       operationValidationBundle: mockValidBundle
+    });
+
+    expect(packet.overallStatus).toBe('ready-for-controlled-execution-design-review');
+    expect(packet.success).toBe(true);
+    expect(packet.totalTargets).toBe(2);
+  });
+
+  it('enforces safety boundaries and rollback policies', () => {
+    const packet = buildProjectionBackfillControlledExecutionDesignPacket({
+      executionDesignGate: mockValidGate,
+      operationValidationBundles: [mockValidBundle]
     });
 
     expect(packet.safetyBoundaries).toContain('local-only');

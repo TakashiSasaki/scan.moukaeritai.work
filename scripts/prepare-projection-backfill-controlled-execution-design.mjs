@@ -7,7 +7,7 @@ function parseArgs() {
   const { values } = util.parseArgs({
     options: {
       gate: { type: 'string' },
-      'operation-validation-bundle': { type: 'string' },
+      'operation-validation-bundle': { type: 'string', multiple: true },
       environment: { type: 'string' },
       operator: { type: 'string' },
       json: { type: 'boolean' }
@@ -37,11 +37,11 @@ async function main() {
     process.exit(1);
   }
 
-  if (!args['operation-validation-bundle']) {
+  if (!args['operation-validation-bundle'] || args['operation-validation-bundle'].length === 0) {
     if (isJson) {
-       console.error(JSON.stringify({ error: "--operation-validation-bundle is required." }));
+       console.error(JSON.stringify({ error: "--operation-validation-bundle is required (at least one)." }));
     } else {
-       console.error("Error: --operation-validation-bundle is required.");
+       console.error("Error: --operation-validation-bundle is required (at least one).");
     }
     process.exit(1);
   }
@@ -59,22 +59,24 @@ async function main() {
     process.exit(1);
   }
 
-  let bundleData;
-  try {
-    const raw = fs.readFileSync(args['operation-validation-bundle'], 'utf-8');
-    bundleData = JSON.parse(raw);
-  } catch (err) {
-    if (isJson) {
-       console.error(JSON.stringify({ error: `Could not read or parse operation validation bundle at ${args['operation-validation-bundle']}: ${err.message}` }));
-    } else {
-       console.error(`Error: Could not read or parse operation validation bundle at ${args['operation-validation-bundle']}: ${err.message}`);
+  const bundlesData = [];
+  for (const bundlePath of args['operation-validation-bundle']) {
+    try {
+      const raw = fs.readFileSync(bundlePath, 'utf-8');
+      bundlesData.push(JSON.parse(raw));
+    } catch (err) {
+      if (isJson) {
+         console.error(JSON.stringify({ error: `Could not read or parse operation validation bundle at ${bundlePath}: ${err.message}` }));
+      } else {
+         console.error(`Error: Could not read or parse operation validation bundle at ${bundlePath}: ${err.message}`);
+      }
+      process.exit(1);
     }
-    process.exit(1);
   }
 
   const input = {
     executionDesignGate: gateData,
-    operationValidationBundle: bundleData,
+    operationValidationBundles: bundlesData,
     environment: args.environment || "unknown",
     operator: args.operator || "unknown"
   };

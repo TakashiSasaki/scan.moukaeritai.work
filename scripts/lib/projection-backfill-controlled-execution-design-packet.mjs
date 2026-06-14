@@ -1,7 +1,7 @@
 export function buildProjectionBackfillControlledExecutionDesignPacket(input, options = {}) {
   const {
     executionDesignGate,
-    operationValidationBundle,
+    operationValidationBundles,
     environment = "unknown",
     operator = "unknown",
     notes = []
@@ -91,52 +91,90 @@ export function buildProjectionBackfillControlledExecutionDesignPacket(input, op
     }
   }
 
-  if (!operationValidationBundle || typeof operationValidationBundle !== "object") {
-    packet.blockers.push({ code: "missing-bundle", message: "operationValidationBundle is required and must be an object." });
-    hasFail = true;
-  } else {
-    if (operationValidationBundle.written !== false) {
-      packet.blockers.push({ code: "bundle-written", message: "operationValidationBundle.written must be false." });
-      hasFail = true;
-    }
-    if (operationValidationBundle.overallStatus === "fail") {
-      packet.blockers.push({ code: "bundle-fail", message: "operationValidationBundle overallStatus is fail." });
-      hasFail = true;
-    }
-    if (operationValidationBundle.overallStatus === "blocked") {
-      packet.blockers.push({ code: "bundle-blocked", message: "operationValidationBundle overallStatus is blocked." });
-      hasBlocked = true;
-    }
-
-    if (operationValidationBundle.overallStatus && operationValidationBundle.overallStatus.includes("pass")) {
-      packet.evidenceModes.push(operationValidationBundle.overallStatus);
-    }
+  // To support legacy input naming if someone missed it, we handle singular fallback just in case
+  let bundlesToProcess = operationValidationBundles;
+  if (!bundlesToProcess && input.operationValidationBundle) {
+    bundlesToProcess = [input.operationValidationBundle];
   }
 
-  // Determine targets and coverage from the bundle if it exists and is valid format
-  if (operationValidationBundle && Array.isArray(operationValidationBundle.batches)) {
-    packet.bundleCount = 1; // Explicitly 1 bundle per requirement
+  if (!bundlesToProcess || !Array.isArray(bundlesToProcess) || bundlesToProcess.length === 0) {
+    packet.blockers.push({ code: "missing-bundles", message: "operationValidationBundles is required and must be a non-empty array." });
+    hasFail = true;
+  } else {
+    packet.bundleCount = bundlesToProcess.length;
+    const seenModes = new Set();
     const seenTargets = new Set();
 
-    for (const batch of operationValidationBundle.batches) {
-      if (Array.isArray(batch.targets)) {
-        for (const target of batch.targets) {
-          const key = `${target.targetType}:${target.targetId}`;
-          if (!seenTargets.has(key)) {
-            seenTargets.add(key);
-            packet.totalTargets++;
-          }
+    for (let i = 0; i < bundlesToProcess.length; i++) {
+      const bundle = bundlesToProcess[i];
 
-          if (!packet.targetTypeCoverage[target.targetType]) {
-            packet.targetTypeCoverage[target.targetType] = { targetCount: 0 };
+      if (!bundle || typeof bundle !== "object") {
+        packet.blockers.push({ code: "malformed-bundle", message: `Bundle at index ${i} is malformed.` });
+        hasFail = true;
+        continue;
+      }
+
+      if (bundle.bundleType !== "projection-backfill-operation-validation-bundle") {
+        packet.blockers.push({ code: "invalid-bundle-type", message: `Bundle at index ${i} has invalid bundleType: ${bundle.bundleType}` });
+        hasFail = true;
+        continue;
+      }
+
+      if (bundle.valid !== true || bundle.success !== true) {
+        packet.blockers.push({ code: "invalid-bundle", message: `Bundle at index ${i} is marked invalid or unsuccessful.` });
+        hasFail = true;
+        continue;
+      }
+
+      if (bundle.written !== false) {
+        packet.blockers.push({ code: "bundle-written", message: `Bundle at index ${i} is unexpectedly marked written:true.` });
+        hasFail = true;
+        continue;
+      }
+
+      if (bundle.overallStatus === "fail") {
+        packet.blockers.push({ code: "bundle-fail", message: `Bundle at index ${i} overallStatus is fail.` });
+        hasFail = true;
+        continue;
+      }
+      if (bundle.overallStatus === "blocked") {
+        packet.blockers.push({ code: "bundle-blocked", message: `Bundle at index ${i} overallStatus is blocked.` });
+        hasBlocked = true;
+        continue;
+      }
+
+      if (bundle.overallStatus === "dry-run-evidence-pass" || bundle.overallStatus === "manual-write-evidence-pass") {
+        seenModes.add(bundle.overallStatus);
+      } else {
+        packet.blockers.push({ code: "invalid-bundle-status", message: `Bundle at index ${i} has unrecognized positive status: ${bundle.overallStatus}` });
+        hasFail = true;
+        continue;
+      }
+
+      if (Array.isArray(bundle.batches)) {
+        for (const batch of bundle.batches) {
+          if (Array.isArray(batch.targets)) {
+            for (const target of batch.targets) {
+              const key = `${target.targetType}:${target.targetId}`;
+              if (!seenTargets.has(key)) {
+                seenTargets.add(key);
+                packet.totalTargets++;
+              }
+
+              if (!packet.targetTypeCoverage[target.targetType]) {
+                packet.targetTypeCoverage[target.targetType] = { targetCount: 0 };
+              }
+              packet.targetTypeCoverage[target.targetType].targetCount++;
+            }
           }
-          packet.targetTypeCoverage[target.targetType].targetCount++;
         }
       }
     }
 
+    packet.evidenceModes = Array.from(seenModes).sort();
+
     if (Object.keys(packet.targetTypeCoverage).length === 0 && !hasFail) {
-      packet.blockers.push({ code: "empty-target-coverage", message: "Target coverage is empty. No valid targets found in the operation validation bundle." });
+      packet.blockers.push({ code: "empty-target-coverage", message: "Target coverage is empty. No valid targets found in the operation validation bundles." });
       hasBlocked = true;
     }
   }
