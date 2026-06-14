@@ -35,7 +35,11 @@ export function buildProjectionBackfillExecutionDesignGate(input, options = {}) 
 
   // Initialize target coverage tracking
   for (const t of requiredTargetTypes) {
-    gate.targetTypeCoverage[t] = { hasEvidence: false, targetCount: 0 };
+    gate.targetTypeCoverage[t] = {
+      hasEvidence: false,
+      hasManualWriteEvidence: false,
+      targetCount: 0
+    };
   }
 
   if (!validationBundles || !Array.isArray(validationBundles) || validationBundles.length === 0) {
@@ -119,10 +123,13 @@ export function buildProjectionBackfillExecutionDesignGate(input, options = {}) 
             }
 
             if (!gate.targetTypeCoverage[target.targetType]) {
-              gate.targetTypeCoverage[target.targetType] = { hasEvidence: false, targetCount: 0 };
+              gate.targetTypeCoverage[target.targetType] = { hasEvidence: false, hasManualWriteEvidence: false, targetCount: 0 };
             }
 
             gate.targetTypeCoverage[target.targetType].hasEvidence = true;
+            if (bundle.overallStatus === "manual-write-evidence-pass") {
+              gate.targetTypeCoverage[target.targetType].hasManualWriteEvidence = true;
+            }
             gate.targetTypeCoverage[target.targetType].targetCount++;
           }
         }
@@ -140,6 +147,9 @@ export function buildProjectionBackfillExecutionDesignGate(input, options = {}) 
   for (const t of requiredTargetTypes) {
     if (!gate.targetTypeCoverage[t] || !gate.targetTypeCoverage[t].hasEvidence) {
       gate.blockers.push({ code: "missing-target-coverage", message: `Missing evidence for required target type: ${t}` });
+      hasBlocked = true;
+    } else if (requireManualWriteEvidence && !gate.targetTypeCoverage[t].hasManualWriteEvidence) {
+      gate.blockers.push({ code: "missing-manual-write-target-coverage", message: `requireManualWriteEvidence is true but missing manual-write evidence for required target type: ${t}` });
       hasBlocked = true;
     }
   }
@@ -184,7 +194,7 @@ export function formatProjectionBackfillExecutionDesignGate(gate, options = {}) 
   lines.push('');
   lines.push('TARGET TYPE COVERAGE:');
   for (const [type, info] of Object.entries(gate.targetTypeCoverage)) {
-    lines.push(`  - ${type}: hasEvidence=${info.hasEvidence}, targetCount=${info.targetCount}`);
+    lines.push(`  - ${type}: hasEvidence=${info.hasEvidence}, hasManualWriteEvidence=${info.hasManualWriteEvidence}, targetCount=${info.targetCount}`);
   }
 
   if (gate.blockers.length > 0) {

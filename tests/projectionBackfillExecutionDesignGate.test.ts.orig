@@ -188,12 +188,4 @@ describe('ProjectionBackfillExecutionDesignGate', () => {
     const text = formatProjectionBackfillExecutionDesignGate(gate);
     expect(text).not.toContain('ready-for-ui-read-switching');
   });
-
-  it('24. blocks when manual evidence is required but missing for some required target types', () => {
-    const manualBundle = createValidBundle('manual-write-evidence-pass', [{ type: 'object', id: 'obj1' }]);
-    const dryRunBundle = createValidBundle('dry-run-evidence-pass', [{ type: 'marker', id: 'mrk1' }, { type: 'place', id: 'plc1' }]);
-    const gate = buildProjectionBackfillExecutionDesignGate({ validationBundles: [manualBundle, dryRunBundle] });
-    expect(gate.overallStatus).toBe('blocked');
-    expect(gate.blockers).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'missing-manual-write-target-coverage' })]));
-  });
 });
