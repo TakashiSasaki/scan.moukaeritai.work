@@ -549,6 +549,93 @@ describe('projection-backfill-operation-validation-bundle', () => {
     expect(bundleDisagree.batches[0].blockers.some(b => b.code === 'post-report-status-mismatch')).toBe(true);
   });
 
+  it('already-normalized reconciliationReport is accepted', () => {
+    const writePacket = { ...baseOperationPacket, mode: 'manual-write-plan' };
+    const writeRecomputeResponses = [
+      { targetType: 'object', targetId: 'o1', success: true, dryRun: false, written: true },
+      { targetType: 'marker', targetId: 'm1', success: true, dryRun: false, written: true }
+    ];
+    // This uses the shape that buildProjectionReconciliationReport outputs
+    const normalizedReport = {
+      success: true,
+      written: false,
+      includeSummaries: false,
+      totalTargets: 2,
+      equalCount: 2,
+      differentCount: 0,
+      missingSummaryCount: 0,
+      errorCount: 0,
+      computedCounts: {
+        equal: 2,
+        different: 0,
+        missingSummary: 0,
+        errors: 0
+      },
+      countMismatch: false,
+      overallStatus: 'pass',
+      targets: [
+        { targetType: 'object', targetId: 'o1', summaryPath: 'objectSummaries/o1', status: 'equal', differenceCount: 0 },
+        { targetType: 'marker', targetId: 'm1', summaryPath: 'markerSummaries/m1', status: 'equal', differenceCount: 0 }
+      ]
+    };
+
+    const bundle = buildProjectionBackfillOperationValidationBundle({
+      operationPacket: writePacket,
+      batches: [
+        {
+          batchIndex: 0,
+          recomputeResponses: writeRecomputeResponses,
+          reconciliationReport: normalizedReport
+        }
+      ]
+    });
+
+    expect(bundle.valid).toBe(true);
+    expect(bundle.overallStatus).toBe('manual-write-evidence-pass');
+    expect(bundle.batches[0].reportStatus).toBe('pass');
+  });
+
+  it('normalized report with extra target is still a blocker', () => {
+    const writePacket = { ...baseOperationPacket, mode: 'manual-write-plan' };
+    const writeRecomputeResponses = [
+      { targetType: 'object', targetId: 'o1', success: true, dryRun: false, written: true },
+      { targetType: 'marker', targetId: 'm1', success: true, dryRun: false, written: true }
+    ];
+    const normalizedReport = {
+      success: true,
+      written: false,
+      includeSummaries: false,
+      totalTargets: 3,
+      equalCount: 3,
+      differentCount: 0,
+      missingSummaryCount: 0,
+      errorCount: 0,
+      computedCounts: { equal: 3, different: 0, missingSummary: 0, errors: 0 },
+      countMismatch: false,
+      overallStatus: 'pass',
+      targets: [
+        { targetType: 'object', targetId: 'o1', summaryPath: 'objectSummaries/o1', status: 'equal', differenceCount: 0 },
+        { targetType: 'marker', targetId: 'm1', summaryPath: 'markerSummaries/m1', status: 'equal', differenceCount: 0 },
+        { targetType: 'place', targetId: 'p1', summaryPath: 'placeSummaries/p1', status: 'equal', differenceCount: 0 }
+      ]
+    };
+
+    const bundle = buildProjectionBackfillOperationValidationBundle({
+      operationPacket: writePacket,
+      batches: [
+        {
+          batchIndex: 0,
+          recomputeResponses: writeRecomputeResponses,
+          reconciliationReport: normalizedReport
+        }
+      ]
+    });
+
+    expect(bundle.valid).toBe(false);
+    expect(bundle.overallStatus).toBe('fail'); // count mismatch / extra target is a fail
+    expect(bundle.batches[0].blockers.some(b => b.code === 'report-extra-target')).toBe(true);
+  });
+
   it('manual-write mode blocks on post/report target error', () => {
     const writePacket = { ...baseOperationPacket, mode: 'manual-write-plan' };
     const writeRecomputeResponses = [

@@ -227,7 +227,7 @@ export function buildProjectionBackfillOperationValidationBundle(input, options 
     // B. Pre-Reconciliation Context Validation
     if (evidenceBatch.preReconciliationResponse) {
        try {
-         const preReport = buildProjectionReconciliationReport(evidenceBatch.preReconciliationResponse);
+         const preReport = normalizeReport(evidenceBatch.preReconciliationResponse);
          validatedBatch.preReconciliationStatus = preReport.overallStatus;
          if (preReport.countMismatch) {
             addBlocker(validatedBatch, 'pre-count-mismatch', 'Pre-reconciliation report has a count mismatch.');
@@ -285,7 +285,7 @@ export function buildProjectionBackfillOperationValidationBundle(input, options 
 
     if (hasPost) {
        try {
-         parsedPost = buildProjectionReconciliationReport(evidenceBatch.postReconciliationResponse);
+         parsedPost = normalizeReport(evidenceBatch.postReconciliationResponse);
          validatedBatch.postReconciliationStatus = parsedPost.overallStatus;
          checkReportMatchesPacket(parsedPost, packetTargetMap, validatedBatch, 'post');
        } catch(e) {
@@ -296,7 +296,7 @@ export function buildProjectionBackfillOperationValidationBundle(input, options 
 
     if (hasReport) {
       try {
-         parsedReport = buildProjectionReconciliationReport(evidenceBatch.reconciliationReport);
+         parsedReport = normalizeReport(evidenceBatch.reconciliationReport);
          validatedBatch.reportStatus = parsedReport.overallStatus;
          checkReportMatchesPacket(parsedReport, packetTargetMap, validatedBatch, 'report');
       } catch(e) {
@@ -405,6 +405,18 @@ function markFail(bundle, code, message) {
 
 function addBlocker(validatedBatch, code, message) {
   validatedBatch.blockers.push({ code, message });
+}
+
+function normalizeReport(evidence) {
+  if (!evidence || typeof evidence !== 'object') {
+     throw new Error('Evidence is missing or not an object');
+  }
+
+  if (Array.isArray(evidence.targets) && evidence.computedCounts && typeof evidence.computedCounts === 'object') {
+     return evidence;
+  }
+
+  return buildProjectionReconciliationReport(evidence);
 }
 
 function checkReportMatchesPacket(report, packetTargetMap, validatedBatch, prefix) {

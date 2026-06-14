@@ -85,10 +85,19 @@ function main() {
          batchInput.reconciliationReport = readJsonArtifact(batchManifest.reconciliationReport);
       }
 
-      const recomputePaths = batchManifest.recomputeResponses || [];
+      if (batchManifest.recomputeResponse && batchManifest.recomputeResponses) {
+         throw new Error(`Do not provide both recomputeResponse and recomputeResponses for batchIndex ${batchManifest.batchIndex}.`);
+      }
+
       batchInput.recomputeResponses = [];
-      for (const rp of recomputePaths) {
-         batchInput.recomputeResponses.push(readJsonArtifact(rp, true));
+
+      if (batchManifest.recomputeResponse) {
+         batchInput.recomputeResponses.push(readJsonArtifact(batchManifest.recomputeResponse, true));
+      } else {
+         const recomputePaths = batchManifest.recomputeResponses || [];
+         for (const rp of recomputePaths) {
+            batchInput.recomputeResponses.push(readJsonArtifact(rp, true));
+         }
       }
 
       inputBatches.push(batchInput);
