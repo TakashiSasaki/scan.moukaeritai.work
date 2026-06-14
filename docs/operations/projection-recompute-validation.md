@@ -24,6 +24,7 @@ Before performing any broad data backfills or switching client UI reads to rely 
 - **Admin-only and Read-only**: The reconciliation callables are admin-only and do not write projection summaries to Firestore under any circumstance.
 - **No Broad Backfill**: This operational validation remains focused on selected targets only; this tooling does not replace broad backfill.
 - **No UI Read Switching Authorization**: Successful reconciliation validations do not authorize UI read switching by themselves. Broad backfill and UI read switching remain future work.
+
 - **`dryRun=false` writes exactly one summary document**: It creates or overwrites one record in `objectSummaries`, `markerSummaries`, or `placeSummaries` when using `recomputeProjectionSummary`.
 - **Use the existing deploy-functions workflow**: Do not manually run broad `firebase deploy --only functions`. Rely on the CI/CD pipeline or use the allowlisted deploy script.
 
@@ -170,6 +171,16 @@ Use `npm run ops:validate-projection-backfill-operation` to locally validate sav
 * `dry-run-evidence-pass` validates dry-run evidence only.
 * `manual-write-evidence-pass` validates saved manual-write evidence only.
 * Actual backfill execution design, rollback policy, and UI read switching gate remain future work.
+
+## 17. Backfill Execution Design Gate
+
+Use `npm run ops:assess-projection-backfill-execution-design` to assess saved operation validation bundles for readiness to begin execution design.
+* It is local-only.
+* It does not call Firebase.
+* It does not write.
+* It does not execute backfill.
+* It does not authorize UI read switching.
+* `ready-for-execution-design` is not execution approval.
 
 ## 16. Next Steps after Validation
 

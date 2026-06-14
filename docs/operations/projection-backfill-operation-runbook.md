@@ -62,3 +62,11 @@ After successfully assembling the validation bundle for the operation packet, fu
 * Actual backfill execution design.
 * Rollback policy.
 * UI read switching gate.
+
+Use `npm run ops:assess-projection-backfill-execution-design` to evaluate saved validation bundles for readiness to begin execution design.
+* It is local-only.
+* It does not call Firebase.
+* It does not write.
+* It does not execute backfill.
+* It does not authorize UI read switching.
+* `ready-for-execution-design` is not execution approval.
