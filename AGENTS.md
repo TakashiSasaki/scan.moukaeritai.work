@@ -498,3 +498,6 @@ The application has transitioned from a simple `items` collection to a normalize
 - dryRun=false validation must be single-target and explicitly requested.
 - The Controlled Projection Backfill Execution Design Packet evaluates the execution design gate and strictly enforces safety invariants (`executionAuthorization: false`, `written: false`, `executed: false`). It produces the highest positive status `ready-for-controlled-execution-design-review`, which is not execution approval and must never authorize broad backfill or UI read switching.
 - The Controlled Execution Review Contract generates a formalized checklist, risk register, and approval boundary local-only artifact. It enforces identical invariants and is explicitly *not* execution approval.
+- Scanner observation dual-write readiness artifacts are planning/local-validation only.
+- Passing readiness validation does not enable the feature flag and does not authorize rollout, backfill, or UI read switching.
+- The scanner legacy identifier lookup and objectEvents write remain authoritative until a separate explicit migration/read-switching PR.
