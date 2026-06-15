@@ -97,6 +97,14 @@ export function buildProjectionBackfillControlledExecutionDesignPacket(input, op
       packet.blockers.push({ code: "gate-written", message: "executionDesignGate.written must be false." });
       hasFail = true;
     }
+    if (executionDesignGate.executed === true) {
+      packet.blockers.push({ code: "gate-executed", message: "executionDesignGate.executed must not be true." });
+      hasFail = true;
+    }
+    if (executionDesignGate.executionAuthorization === true) {
+      packet.blockers.push({ code: "gate-execution-authorization", message: "executionDesignGate.executionAuthorization must not be true." });
+      hasFail = true;
+    }
   }
 
   // To support legacy input naming if someone missed it, we handle singular fallback just in case
@@ -136,6 +144,18 @@ export function buildProjectionBackfillControlledExecutionDesignPacket(input, op
 
       if (bundle.written !== false) {
         packet.blockers.push({ code: "bundle-written", message: `Bundle at index ${i} is unexpectedly marked written:true.` });
+        hasFail = true;
+        continue;
+      }
+
+      if (bundle.executed === true) {
+        packet.blockers.push({ code: "bundle-executed", message: `Bundle at index ${i} is unexpectedly marked executed:true.` });
+        hasFail = true;
+        continue;
+      }
+
+      if (bundle.executionAuthorization === true) {
+        packet.blockers.push({ code: "bundle-execution-authorization", message: `Bundle at index ${i} is unexpectedly marked executionAuthorization:true.` });
         hasFail = true;
         continue;
       }

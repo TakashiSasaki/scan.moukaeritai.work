@@ -146,64 +146,41 @@ jobs:
             MANIFEST_PATH="$EXECUTION_DESIGN_MANIFEST_PATH"
           fi
 
-          MANIFEST_DIR=$(dirname "$MANIFEST_PATH")
+          if [ ! -f "artifacts/projection-backfill-design-gate/operation-validation-bundle.json" ]; then
+             echo "Error: operation-validation-bundle.json does not exist."
+             exit 1
+          fi
 
-          # Pass paths via environment variables to avoid shell interpolation in node -e
-          export MANIFEST_PATH="$MANIFEST_PATH"
-          export MANIFEST_DIR="$MANIFEST_DIR"
+          node scripts/run-projection-backfill-controlled-execution-design-workflow-step.mjs \
+            --execution-design-manifest "$MANIFEST_PATH" \
+            --gate "artifacts/projection-backfill-design-gate/execution-design-gate.json" \
+            --output-dir "artifacts/projection-backfill-design-gate" \
+            --environment "$ENVIRONMENT" \
+            --operator "github-actions"
 
-          node -e "
-            const fs = require('fs');
-            const path = require('path');
-            const { spawnSync } = require('child_process');
+      - name: Generate Controlled Execution Review Contract
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+          USE_PROVIDED_EXECUTION_DESIGN_MANIFEST: ${{ github.event.inputs.use_provided_execution_design_manifest }}
+          EXECUTION_DESIGN_MANIFEST_PATH: ${{ github.event.inputs.execution_design_manifest_path }}
+        run: |
+          MANIFEST_PATH="artifacts/projection-backfill-design-gate/generated-execution-design-manifest.json"
+          if [ "$USE_PROVIDED_EXECUTION_DESIGN_MANIFEST" = "true" ]; then
+            MANIFEST_PATH="$EXECUTION_DESIGN_MANIFEST_PATH"
+          fi
 
-            const manifestPath = process.env.MANIFEST_PATH;
-            const manifestDir = process.env.MANIFEST_DIR;
-            const envLabel = process.env.ENVIRONMENT || 'unknown';
+          if [ ! -f "artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json" ]; then
+             echo "Error: controlled-execution-design-packet.json does not exist."
+             exit 1
+          fi
 
-            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-            const bundles = manifest.validationBundles || [];
-
-            if (bundles.length === 0) {
-               console.log('Warning: No validation bundles found in manifest. Skipping packet generation.');
-               process.exit(0);
-            }
-
-            let bundleArgs = [];
-            for (const bundleRel of bundles) {
-               let bundlePath = path.join(manifestDir, bundleRel);
-               if (!fs.existsSync(bundlePath)) {
-                 if (fs.existsSync(bundleRel)) {
-                    bundlePath = bundleRel;
-                 } else {
-                    console.error('Warning: Validation bundle not found: ' + bundleRel);
-                    process.exit(0); // Gracefully skip
-                 }
-               }
-               bundleArgs.push('--operation-validation-bundle', bundlePath);
-            }
-
-            const baseArgs = [
-               'scripts/prepare-projection-backfill-controlled-execution-design.mjs',
-               '--gate', 'artifacts/projection-backfill-design-gate/execution-design-gate.json',
-               ...bundleArgs,
-               '--environment', envLabel,
-               '--operator', 'github-actions'
-            ];
-
-            const jsonResult = spawnSync(process.execPath, [...baseArgs, '--json'], { encoding: 'utf8' });
-            if (jsonResult.status === 0) {
-               fs.writeFileSync('artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json', jsonResult.stdout);
-            } else {
-               console.error(jsonResult.stderr || jsonResult.stdout);
-               process.exit(0);
-            }
-
-            const mdResult = spawnSync(process.execPath, baseArgs, { encoding: 'utf8' });
-            if (mdResult.status === 0) {
-               fs.writeFileSync('artifacts/projection-backfill-design-gate/controlled-execution-design-summary.md', mdResult.stdout);
-            }
-          "
+          node scripts/run-projection-backfill-controlled-execution-review-contract-workflow-step.mjs \
+            --execution-design-manifest "$MANIFEST_PATH" \
+            --packet "artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json" \
+            --gate "artifacts/projection-backfill-design-gate/execution-design-gate.json" \
+            --output-dir "artifacts/projection-backfill-design-gate" \
+            --environment "$ENVIRONMENT" \
+            --operator "github-actions"
 
       - name: Generate Markdown Summary
         env:
@@ -235,8 +212,14 @@ jobs:
               PACKET_STATUS=$(node -e "console.log(JSON.parse(require('fs').readFileSync('artifacts/projection-backfill-design-gate/controlled-execution-design-packet.json')).overallStatus || 'unknown')")
               echo "- **Controlled Execution Design Packet Status:** \`$PACKET_STATUS\`"
             fi
+            if [ -f artifacts/projection-backfill-design-gate/controlled-execution-review-contract.json ]; then
+              CONTRACT_STATUS=$(node -e "console.log(JSON.parse(require('fs').readFileSync('artifacts/projection-backfill-design-gate/controlled-execution-review-contract.json')).overallStatus || 'unknown')")
+              echo "- **Controlled Execution Review Contract Status:** \`$CONTRACT_STATUS\`"
+            fi
             echo ""
             echo "**Safety Boundaries & Constraints:**"
+            echo "- **Review contract is not execution approval.**"
+            echo "- **Future execution requires separate explicit approval.**"
             echo "- **Local-Only:** This workflow executed entirely within GitHub Actions using checked-in repository artifacts."
             echo "- **No Firebase Call:** The run did not authenticate with or call Firebase."
             echo "- **No Firestore Write:** No data was modified."

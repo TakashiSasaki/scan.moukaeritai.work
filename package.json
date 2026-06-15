@@ -25,7 +25,8 @@
     "ops:prepare-projection-backfill-operation": "node scripts/prepare-projection-backfill-operation.mjs",
     "ops:validate-projection-backfill-operation": "node scripts/validate-projection-backfill-operation.mjs",
     "ops:assess-projection-backfill-execution-design": "node scripts/assess-projection-backfill-execution-design.mjs",
-    "ops:prepare-projection-backfill-controlled-execution-design": "node scripts/prepare-projection-backfill-controlled-execution-design.mjs"
+    "ops:prepare-projection-backfill-controlled-execution-design": "node scripts/prepare-projection-backfill-controlled-execution-design.mjs",
+    "ops:prepare-projection-backfill-controlled-execution-review-contract": "node scripts/prepare-projection-backfill-controlled-execution-review-contract.mjs"
   },
   "dependencies": {
     "@google-cloud/monitoring": "^5.3.2",
