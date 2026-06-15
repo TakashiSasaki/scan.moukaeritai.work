@@ -23,7 +23,7 @@ All data-model, reconciliation, projection, validation, and backfill work should
 * eventual user-facing functionality on top of the EFP model
 
 ### Naming & Identification
-To prevent confusion across systems, note the following distinct identifiers used in this project:
+To prevent confusion across systems, note the following distinct markers/identifiers used in this project:
 - **User-Facing Brand**: `scan.moukaeritai.work`
 - **Firebase Hosting Target**: `scan-moukaeritai-work`
 - **Backend Firebase Resources (Firestore/Storage)**: `photo-moukaeritai-work` (Legacy identifier retained for the datastore)
@@ -289,7 +289,7 @@ Every source field must be classified as one of:
 
 Agents must not proceed to execution if any source field is unclassified, `needs-decision`, or `unmigrated-gap`. Fields not migrated must be documented with explicit rationale. Silent data loss is not acceptable. Reference `docs/migrations/migration-design-checklist.md`.
 
-## 18. Data Model Redesign (Objects & Identifiers)
+## 18. Data Model Redesign (Objects & Markers)
 
 The application has transitioned from a simple `items` collection to a normalized data model separating physical objects from their identifiers.
 
@@ -298,7 +298,7 @@ The application has transitioned from a simple `items` collection to a normalize
     - `objects.identifierSummary` is denormalized and should be recomputed from active identifiers when needed.
     - When adding, repairing, or detaching identifiers (e.g., in `CaptureForm`), the summary should be recomputed from the current Firestore identifier state where practical, not only from potentially stale local component state. Use `loadObjectIdentifiersForSummary()` to fetch the source data, and keep local component state updated after a successful write.
     - `objects.primaryImageUrl` is denormalized and should be kept in sync with the primary `objectImages` record.
-  - **`identifiers`**: Represents a physical tag (QR, NFC) or a logical code (barcode, manual). Conceptually maps to `markers`. One object can have zero or more identifiers. One identifier can have at most one active object.
+  - **`identifiers`**: Legacy/current implementation collection. Represents a physical tag (QR, NFC) or a logical code (barcode, manual). Conceptually maps to the target Marker entity. One object can have zero or more identifiers. One identifier can have at most one active object.
   - **`objectIdentifierBindings`**: Stores canonical relationship state between objects and identifiers. Conceptually maps to `associations` (do not create a new `bindings` collection). Active binding records use deterministic IDs formatted as `${objectId}__${identifierKey}__active`. There must be at most one active binding for a given `(objectId, identifierKey)` pair. Repeated attach of the same identifier to the same object should be idempotent. Reassignment to another object must be explicit and must record events. *Note: Client code should not rely on direct missing-document reads (`getDoc()`) for `objectIdentifierBindings` without checking rules, instead use owner-scoped queries.* **Important:** `objectIdentifierBindings` is NOT a historical log table. The existence of an identifier document does not imply the existence of a binding document.
   - **Document ID Conventions**:
     - `objects/{objectId}`: Field `objectId` must equal the document ID.

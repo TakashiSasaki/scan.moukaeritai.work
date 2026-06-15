@@ -38,7 +38,7 @@ export default function DeveloperFirestoreModelDoc() {
               <h4 className="font-bold text-[var(--primary)] text-md">identifiers</h4>
               <p className="text-xs text-[var(--on-surface-variant)] mb-2"><strong>ID:</strong> Deterministic UUIDv5 (matches <code>identifierKey</code> field).</p>
               <p className="text-sm text-[var(--on-surface)]">
-                Lookup records for scanning. Currently, <code>ownerId</code> remains required for writes due to legacy rules. <code>objectId</code> is preserved as a legacy reference.
+                Legacy/current implementation collection. Conceptually maps to markers. Lookup records for scanning. Currently, <code>ownerId</code> remains required for writes due to legacy rules. <code>objectId</code> is preserved as a legacy reference.
               </p>
             </div>
 
@@ -46,7 +46,7 @@ export default function DeveloperFirestoreModelDoc() {
               <h4 className="font-bold text-[var(--primary)] text-md">objectIdentifierBindings</h4>
               <p className="text-xs text-[var(--on-surface-variant)] mb-2"><strong>ID:</strong> Deterministic composite (e.g. <code>ObjectId__IdentifierKey__active</code>).</p>
               <p className="text-sm text-[var(--on-surface)]">
-                The canonical relation tying an object to an identifier.
+                Legacy/current implementation collection. Conceptually maps to associations. The canonical relation tying an object to an identifier.
               </p>
             </div>
 

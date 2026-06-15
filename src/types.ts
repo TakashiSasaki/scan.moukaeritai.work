@@ -153,10 +153,12 @@ export interface IdentifierRecord {
   canonicalValue: string;
   status: 'active' | 'unassigned' | 'retired' | 'lost' | 'replaced';
   label?: string;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   /** Legacy/current implementation. Maps conceptually to oldest ObservationDoc. */
   firstObservedAt?: Timestamp;
   firstObservedBy?: string;
   firstObservationId?: string;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   /** Legacy/current implementation. Maps conceptually to newest ObservationDoc or MarkerSummaryDoc. */
   lastObservedAt?: Timestamp;
   lastObservedBy?: string;
@@ -168,6 +170,7 @@ export interface IdentifierRecord {
   createdAt: Timestamp;
   /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   updatedAt: Timestamp;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   /** Legacy/current implementation. Maps conceptually to newest ObservationDoc or MarkerSummaryDoc. */
   lastSeenAt?: Timestamp;
 }
@@ -185,8 +188,10 @@ export interface ObjectIdentifierBindingRecord {
   objectId: string;
   identifierKey: string;
   status: 'active' | 'detached' | 'replaced';
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   /** Legacy/current implementation. Conceptually domain time belonging to AssociationDoc. */
   attachedAt: Timestamp;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   /** Legacy/current implementation. Conceptually domain time belonging to AssociationDoc. */
   detachedAt?: Timestamp;
   attachedBy: string;
