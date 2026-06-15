@@ -21,6 +21,7 @@ This readiness gate is specifically constrained to validation and documentation.
 
 ## Source Artifacts
 
+- [Scanner Observation Target Rules Hardening Design](scanner-observation-target-rules-hardening-design.json)
 - [Drift Closure Plan](entity-fact-projection-drift-closure-plan.json)
 - [Drift Audit](entity-fact-projection-drift-audit.json)
 

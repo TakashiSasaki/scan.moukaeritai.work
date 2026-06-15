@@ -255,6 +255,7 @@ The system is undergoing a phased migration to the Entity / Fact / Projection mo
 - See `docs/migrations/entity-fact-projection-runtime-migration-plan.md` for active phase details.
 - See `docs/migrations/entity-fact-projection-drift-closure-plan.md` for planning and tracking closure of schema drift.
 - See `docs/migrations/scanner-observation-dual-write-readiness.md` for the controlled Scanner observation dual-write rollout conditions.
+- See `docs/migrations/scanner-observation-target-rules-hardening-design.md` for target rules hardening validation.
 
 ## 10. Relationship Diagram
 
