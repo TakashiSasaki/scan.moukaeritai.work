@@ -131,7 +131,7 @@ export function validateScannerObservationDualWriteReadiness(readiness, options 
     if (options.closurePlan.planType !== "entity-fact-projection-drift-closure-plan") {
       result.blockers.push(`Invalid closure plan planType: ${options.closurePlan.planType}`);
     } else {
-      const closurePlanResult = validateEntityFactProjectionDriftClosurePlan(options.closurePlan, options.driftAudit);
+      const closurePlanResult = validateEntityFactProjectionDriftClosurePlan(options.closurePlan, { audit: options.driftAudit });
       if (!closurePlanResult.valid || !closurePlanResult.success) {
         result.blockers.push("Provided drift closure plan artifact failed its own validation");
       }
