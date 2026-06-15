@@ -72,13 +72,14 @@ Before runtime closure begins, future Rules Hardening PRs must enforce the follo
 
 ## Future PR Sequencing
 The proposed phase sequence based on this blueprint is:
-1. Rules/index readiness blueprint validation (This Stride)
-2. Firestore rules hardening PR
-3. Scanner Observation Dual-Write Readiness Gate validation
-4. Controlled Scanner observation dual-write validation
-5. Marker/association dual-write validation
-5. Measurement shadow-write validation
-6. Projection recompute/backfill/read-switching work, each separately gated
+1. Rules/index readiness blueprint validation
+2. Target rules hardening design validation (This Stride)
+3. Firestore rules hardening PR
+4. Scanner Observation Dual-Write Readiness Gate validation
+5. Controlled Scanner observation dual-write validation
+6. Marker/association dual-write validation
+7. Measurement shadow-write validation
+8. Projection recompute/backfill/read-switching work, each separately gated
 
 ## Validation
 Validation checks can be run via:
