@@ -249,3 +249,4 @@ Before implementing controlled Scanner observation dual-write (Phase 2), the fol
 - **Owned target object requirement:** If `objectId` is included in the target observation, the corresponding target object must exist and be owned by the current user.
 - **Reads remain untouched:** Scanner reads must remain on legacy `identifiers` during this phase.
 - **Non-blocking failures:** The first runtime PR may use non-blocking/shadow target writes. Failures (e.g. from missing target entities) must be observable and diagnosable but shouldn't break the legacy event stream.
+- **Readiness validation:** The [Scanner Observation Dual-Write Readiness Gate](scanner-observation-dual-write-readiness.md) artifact and local validator must pass before rollout.

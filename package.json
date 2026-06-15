@@ -28,7 +28,8 @@
     "ops:prepare-projection-backfill-controlled-execution-design": "node scripts/prepare-projection-backfill-controlled-execution-design.mjs",
     "ops:prepare-projection-backfill-controlled-execution-review-contract": "node scripts/prepare-projection-backfill-controlled-execution-review-contract.mjs",
     "ops:validate-efp-drift-audit": "node scripts/validate-entity-fact-projection-drift-audit.mjs",
-    "ops:validate-efp-drift-closure-plan": "node scripts/validate-entity-fact-projection-drift-closure-plan.mjs"
+    "ops:validate-efp-drift-closure-plan": "node scripts/validate-entity-fact-projection-drift-closure-plan.mjs",
+    "ops:validate-scanner-observation-dual-write-readiness": "node scripts/validate-scanner-observation-dual-write-readiness.mjs"
   },
   "dependencies": {
     "@google-cloud/monitoring": "^5.3.2",
