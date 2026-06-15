@@ -202,6 +202,7 @@ Validation commands:
 - `npm run lint`
 - `npm run test`
 - `npm run build`
+- `npm run ops:validate-efp-drift-closure-plan -- --plan docs/migrations/entity-fact-projection-drift-closure-plan.json --audit docs/migrations/entity-fact-projection-drift-audit.json`
 - `cd functions && npm run build` (optional validation)
 
 Data validation ideas:
@@ -225,7 +226,7 @@ For the latest detailed structural drift tracking, see the [Entity-Fact-Projecti
 
 ## 13. Recommended Next PR
 
-After rules/index/blueprint preparation is merged and validated, rules hardening is a prerequisite before controlled Scanner observation dual-write.
+After rules/index/blueprint preparation via the closure plan validator is merged and validated, rules hardening is a prerequisite before controlled Scanner observation dual-write.
 
 Rules hardening conditions must be met:
 - `npm run test:rules` passes.

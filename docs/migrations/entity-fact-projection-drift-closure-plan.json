@@ -1,0 +1,394 @@
+{
+  "planType": "entity-fact-projection-drift-closure-plan",
+  "schemaVersion": 1,
+  "status": "planning-only",
+  "runtimeBehaviorChanged": false,
+  "firestoreRulesChanged": false,
+  "indexesChanged": false,
+  "readSwitchingAuthorized": false,
+  "migrationExecutionAuthorized": false,
+  "sourceAudit": "docs/migrations/entity-fact-projection-drift-audit.json",
+  "closureItems": [
+    {
+      "id": "measurements-and-object-summary-closure",
+      "sourceDriftItemId": "objects-current-location",
+      "closureTrack": "measurements-and-object-summary",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "firestore rules hardening for measurements and objectSummaries",
+        "projection recompute readiness validation"
+      ],
+      "rulesRequirements": [
+        "measurements allow create for authenticated users",
+        "measurements disallow update/delete for normal users",
+        "objectSummaries restrict create/update to backend/admin only"
+      ],
+      "indexRequirements": [
+        "measurements by objectId"
+      ],
+      "testRequirements": [
+        "rules reject unknown fields on measurements",
+        "backend-only projection write path is separately validated"
+      ],
+      "riskNotes": [
+        "currentLocation legacy read must remain active until projection summarizes all measurements reliably."
+      ],
+      "plannedFuturePr": "measurement-shadow-write-validation",
+      "followUp": "execute controlled dual-write for location captures."
+    },
+    {
+      "id": "identifier-summary-to-projections-closure",
+      "sourceDriftItemId": "objects-identifier-summary",
+      "closureTrack": "identifier-summary-to-projections",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "projection recompute semantics and read models validated"
+      ],
+      "rulesRequirements": [
+        "objectSummaries / markerSummaries restrict create/update to backend/admin only"
+      ],
+      "indexRequirements": [],
+      "testRequirements": [
+        "backend-only projection write path is separately validated"
+      ],
+      "riskNotes": [
+        "UI must fall back to legacy if projections are not fully populated."
+      ],
+      "plannedFuturePr": "projection-read-switching",
+      "followUp": "switch UI component reads to objectSummaries/markerSummaries."
+    },
+    {
+      "id": "entity-metadata-time-separation-closure",
+      "sourceDriftItemId": "object-record-created-at-updated-at",
+      "closureTrack": "entity-metadata-time-separation",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "all domain time logic migrated to facts"
+      ],
+      "rulesRequirements": [],
+      "indexRequirements": [],
+      "testRequirements": [
+        "verify UI components do not display entity createdAt/updatedAt as domain times"
+      ],
+      "riskNotes": [
+        "legacy compatibility must be maintained for existing apps parsing root dates."
+      ],
+      "plannedFuturePr": "legacy-items-deprecation",
+      "followUp": "potentially move to _meta sub-object in a future major schema revision."
+    },
+    {
+      "id": "marker-observation-times-closure",
+      "sourceDriftItemId": "identifier-record-observed-at",
+      "closureTrack": "marker-observation-times",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "observations and markerSummaries models deployed"
+      ],
+      "rulesRequirements": [
+        "observations allow create for authenticated users",
+        "observations disallow update/delete for normal users",
+        "markerSummaries restrict create/update to backend/admin only"
+      ],
+      "indexRequirements": [
+        "observations by markerKey"
+      ],
+      "testRequirements": [
+        "rules reject unknown fields on observations"
+      ],
+      "riskNotes": [
+        "Ensure fast reads on markerSummaries for large observation volumes."
+      ],
+      "plannedFuturePr": "controlled-scanner-observation-dual-write",
+      "followUp": "validate observation shadow writes from scanner."
+    },
+    {
+      "id": "marker-metadata-time-separation-closure",
+      "sourceDriftItemId": "identifier-record-created-at-updated-at",
+      "closureTrack": "entity-metadata-time-separation",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "domain time separated from marker metadata"
+      ],
+      "rulesRequirements": [],
+      "indexRequirements": [],
+      "testRequirements": [],
+      "riskNotes": [
+        "legacy compatibility required"
+      ],
+      "plannedFuturePr": "legacy-items-deprecation",
+      "followUp": "move to _meta eventually."
+    },
+    {
+      "id": "association-fact-time-closure",
+      "sourceDriftItemId": "object-identifier-binding-attached-detached-at",
+      "closureTrack": "association-fact-time",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "associations dual-write validated"
+      ],
+      "rulesRequirements": [
+        "associations allow create for authenticated users",
+        "associations disallow update/delete for normal users"
+      ],
+      "indexRequirements": [
+        "associations by objectId",
+        "associations by markerKey"
+      ],
+      "testRequirements": [
+        "rules reject unknown fields on associations"
+      ],
+      "riskNotes": [
+        "append-only nature of associations requires careful detachment logic mapping."
+      ],
+      "plannedFuturePr": "marker-association-dual-write-validation",
+      "followUp": "ensure attachment/detachment creates new facts."
+    },
+    {
+      "id": "association-metadata-time-separation-closure",
+      "sourceDriftItemId": "object-identifier-binding-created-at-updated-at",
+      "closureTrack": "entity-metadata-time-separation",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "association domain time mapped"
+      ],
+      "rulesRequirements": [],
+      "indexRequirements": [],
+      "testRequirements": [],
+      "riskNotes": [
+        "legacy compatibility required"
+      ],
+      "plannedFuturePr": "legacy-items-deprecation",
+      "followUp": "move to _meta eventually."
+    },
+    {
+      "id": "marker-identity-ownership-closure",
+      "sourceDriftItemId": "identifiers-owner-id",
+      "closureTrack": "marker-identity-ownership",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "ownerless marker concept approved"
+      ],
+      "rulesRequirements": [
+        "markers rules adjusted to handle ownerless global identities or non-identifying ownerIds"
+      ],
+      "indexRequirements": [],
+      "testRequirements": [
+        "userIds-only access paths are tested where applicable",
+        "legacy.ownerId-only access paths are tested where applicable"
+      ],
+      "riskNotes": [
+        "must not break current owner-scoped reads until migration."
+      ],
+      "plannedFuturePr": "ownerless-global-marker-migration",
+      "followUp": "execute migration to global markers."
+    },
+    {
+      "id": "association-relation-model-closure",
+      "sourceDriftItemId": "identifiers-object-id",
+      "closureTrack": "association-relation-model",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "associations model finalized"
+      ],
+      "rulesRequirements": [],
+      "indexRequirements": [],
+      "testRequirements": [],
+      "riskNotes": [
+        "relies heavily on associations mapping correctly to objectIdentifierBindings."
+      ],
+      "plannedFuturePr": "marker-association-dual-write-validation",
+      "followUp": "ignore legacy objectId when constructing associations."
+    },
+    {
+      "id": "legacy-relation-collection-closure",
+      "sourceDriftItemId": "object-identifier-bindings-collection",
+      "closureTrack": "association-relation-model",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "associations read switching authorized"
+      ],
+      "rulesRequirements": [],
+      "indexRequirements": [],
+      "testRequirements": [],
+      "riskNotes": [
+        "Do not remove collection until all features are completely decoupled."
+      ],
+      "plannedFuturePr": "legacy-items-deprecation",
+      "followUp": "finalize and remove objectIdentifierBindings reads."
+    },
+    {
+      "id": "observation-fact-model-closure",
+      "sourceDriftItemId": "identifier-observations-collection",
+      "closureTrack": "observation-fact-model",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "observations shadow write validated"
+      ],
+      "rulesRequirements": [],
+      "indexRequirements": [],
+      "testRequirements": [],
+      "riskNotes": [],
+      "plannedFuturePr": "controlled-scanner-observation-dual-write",
+      "followUp": "replace legacy observation collection usage."
+    },
+    {
+      "id": "event-fact-model-closure",
+      "sourceDriftItemId": "object-events-collection",
+      "closureTrack": "event-fact-model",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "events shadow write validated"
+      ],
+      "rulesRequirements": [
+        "events allow create for authenticated users",
+        "events disallow update/delete for normal users"
+      ],
+      "indexRequirements": [
+        "events by objectId"
+      ],
+      "testRequirements": [
+        "rules reject unknown fields on events"
+      ],
+      "riskNotes": [],
+      "plannedFuturePr": "event-shadow-write-validation",
+      "followUp": "align events architecture."
+    },
+    {
+      "id": "image-model-decision-closure",
+      "sourceDriftItemId": "object-images-collection",
+      "closureTrack": "image-model-decision",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "image model architecture decision finalized"
+      ],
+      "rulesRequirements": [],
+      "indexRequirements": [],
+      "testRequirements": [],
+      "riskNotes": [
+        "storage implications if image models become full associations."
+      ],
+      "plannedFuturePr": "image-model-architecture-decision",
+      "followUp": "make decision on image representation."
+    },
+    {
+      "id": "legacy-items-collection-closure",
+      "sourceDriftItemId": "items-collection",
+      "closureTrack": "legacy-items-deprecation",
+      "closureStatus": "planned-not-started",
+      "runtimeChangeInThisStride": false,
+      "firestoreRulesChangeInThisStride": false,
+      "indexesChangeInThisStride": false,
+      "readSwitchingAuthorized": false,
+      "migrationExecutionAuthorized": false,
+      "requiredBeforeClosure": [
+        "legacy imports fully disabled"
+      ],
+      "rulesRequirements": [],
+      "indexRequirements": [],
+      "testRequirements": [],
+      "riskNotes": [],
+      "plannedFuturePr": "legacy-items-deprecation",
+      "followUp": "remove items collection usage."
+    }
+  ],
+  "rulesIndexReadiness": {
+    "status": "planning-only",
+    "rulesChangedInThisStride": false,
+    "indexesChangedInThisStride": false,
+    "requiredChecksBeforeRulesHardening": [
+      "npm run test:rules passes",
+      "target rules reject unknown fields",
+      "userIds-only access paths are tested where applicable",
+      "legacy.ownerId-only access paths are tested where applicable",
+      "normal users cannot update Facts",
+      "normal users cannot create or update Projections",
+      "admin/backend-only projection write path is separately validated"
+    ],
+    "targetCollections": [
+      "markers",
+      "associations",
+      "observations",
+      "measurements",
+      "events",
+      "objectSummaries",
+      "markerSummaries",
+      "placeSummaries"
+    ],
+    "rulesTestRequirements": [],
+    "indexPlanningNotes": []
+  },
+  "nonGoals": [
+    "no runtime behavior changes",
+    "no Firestore rules changes",
+    "no index changes",
+    "no data migration",
+    "no projection recompute/backfill behavior changes",
+    "no UI read switching",
+    "no field removal or renaming"
+  ]
+}
