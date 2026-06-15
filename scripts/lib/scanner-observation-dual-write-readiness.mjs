@@ -114,6 +114,18 @@ export function validateScannerObservationDualWriteReadiness(readiness, options 
     result.blockers.push("sourceDriftAudit mismatch");
   }
 
+  if (options.closurePlan) {
+    if (options.closurePlan.planType !== "entity-fact-projection-drift-closure-plan") {
+      result.blockers.push(`Invalid closure plan planType: ${options.closurePlan.planType}`);
+    }
+  }
+
+  if (options.driftAudit) {
+    if (options.driftAudit.auditType !== "entity-fact-projection-drift-audit") {
+      result.blockers.push(`Invalid drift audit auditType: ${options.driftAudit.auditType}`);
+    }
+  }
+
   // Evidence Requirements
   const evidenceStr = JSON.stringify(readiness.evidenceRequirements || []);
   for (const req of REQUIRED_EVIDENCE) {

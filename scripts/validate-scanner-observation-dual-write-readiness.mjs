@@ -25,7 +25,32 @@ try {
   process.exit(1);
 }
 
-const result = validateScannerObservationDualWriteReadiness(readiness);
+let closurePlan;
+if (values['closure-plan']) {
+  try {
+    closurePlan = JSON.parse(fs.readFileSync(values['closure-plan'], 'utf8'));
+  } catch (e) {
+    console.error(`Error reading closure-plan file: ${e.message}`);
+    process.exit(1);
+  }
+}
+
+let driftAudit;
+if (values['drift-audit']) {
+  try {
+    driftAudit = JSON.parse(fs.readFileSync(values['drift-audit'], 'utf8'));
+  } catch (e) {
+    console.error(`Error reading drift-audit file: ${e.message}`);
+    process.exit(1);
+  }
+}
+
+const options = {
+  closurePlan,
+  driftAudit
+};
+
+const result = validateScannerObservationDualWriteReadiness(readiness, options);
 
 if (values.json) {
   console.log(JSON.stringify(result, null, 2));

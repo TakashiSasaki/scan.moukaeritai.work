@@ -178,4 +178,22 @@ describe('scannerObservationDualWriteReadiness', () => {
     expect(formatted).toContain('no UI read switching');
     expect(formatted).toContain('not rollout approval');
   });
+
+  it('rejects invalid closure plan planType', () => {
+    const payload = getValidPayload();
+    const result = validateScannerObservationDualWriteReadiness(payload, {
+      closurePlan: { planType: 'invalid' }
+    });
+    expect(result.valid).toBe(false);
+    expect(result.blockers.some(b => b.includes('Invalid closure plan planType'))).toBe(true);
+  });
+
+  it('rejects invalid drift audit auditType', () => {
+    const payload = getValidPayload();
+    const result = validateScannerObservationDualWriteReadiness(payload, {
+      driftAudit: { auditType: 'invalid' }
+    });
+    expect(result.valid).toBe(false);
+    expect(result.blockers.some(b => b.includes('Invalid drift audit auditType'))).toBe(true);
+  });
 });
