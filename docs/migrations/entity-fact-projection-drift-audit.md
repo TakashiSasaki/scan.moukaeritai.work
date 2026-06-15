@@ -50,4 +50,4 @@ The main drift categories identified between the current runtime and the target 
 | `items-collection` | `items` | none / replaced | `legacy-source-only` | `true` | `documented-not-migrated` | Finalize import runbook and safely deprecate collection. |
 
 ## Future Milestone
-- **EFP Drift Closure Planning:** The actual closure PR is a separate future stride that will detail runtime migration, backfilling, and safe deployment.
+- **EFP Drift Closure Planning:** See the [Entity-Fact-Projection Drift Closure Plan JSON](./entity-fact-projection-drift-closure-plan.json) and [Drift Closure Plan Document](./entity-fact-projection-drift-closure-plan.md) for the tracking of future closure steps. The actual closure PRs are separate future strides that will detail runtime migration, backfilling, and safe deployment.

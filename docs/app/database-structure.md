@@ -253,6 +253,7 @@ Projections are derived, easily queryable read models built from Facts and Entit
 The system is undergoing a phased migration to the Entity / Fact / Projection model.
 - Read/write paths in `Scanner` and `CaptureForm` still rely on the current runtime schema (`identifiers`, `objectIdentifierBindings`, etc.).
 - See `docs/migrations/entity-fact-projection-runtime-migration-plan.md` for active phase details.
+- See `docs/migrations/entity-fact-projection-drift-closure-plan.md` for planning and tracking closure of schema drift.
 
 ## 10. Relationship Diagram
 
