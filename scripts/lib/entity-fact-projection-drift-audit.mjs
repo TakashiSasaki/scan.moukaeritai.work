@@ -53,11 +53,11 @@ export function validateEntityFactProjectionDriftAudit(audit, options = {}) {
     result.runtimeBehaviorChanged = false;
   }
 
-  if (audit.written === true) {
+  if (audit.written !== undefined && audit.written !== false) {
     addBlocker("written must be strictly false or omitted.");
   }
 
-  if (audit.readSwitchingAuthorized === true) {
+  if (audit.readSwitchingAuthorized !== undefined && audit.readSwitchingAuthorized !== false) {
     addBlocker("readSwitchingAuthorized must be strictly false or omitted.");
   }
 

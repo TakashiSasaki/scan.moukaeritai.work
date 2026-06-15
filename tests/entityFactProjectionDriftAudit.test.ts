@@ -68,9 +68,25 @@ describe('validateEntityFactProjectionDriftAudit', () => {
     expect(result.blockers.some(b => b.includes("written must be strictly false or omitted"))).toBe(true);
   });
 
+  it('should fail if top-level written is a non-boolean truthy value', () => {
+    const audit = getValidAudit();
+    audit.written = "true";
+    const result = validateEntityFactProjectionDriftAudit(audit);
+    expect(result.valid).toBe(false);
+    expect(result.blockers.some(b => b.includes("written must be strictly false or omitted"))).toBe(true);
+  });
+
   it('should fail if top-level readSwitchingAuthorized is true', () => {
     const audit = getValidAudit();
     audit.readSwitchingAuthorized = true;
+    const result = validateEntityFactProjectionDriftAudit(audit);
+    expect(result.valid).toBe(false);
+    expect(result.blockers.some(b => b.includes("readSwitchingAuthorized must be strictly false or omitted"))).toBe(true);
+  });
+
+  it('should fail if top-level readSwitchingAuthorized is a non-boolean truthy value', () => {
+    const audit = getValidAudit();
+    audit.readSwitchingAuthorized = 1;
     const result = validateEntityFactProjectionDriftAudit(audit);
     expect(result.valid).toBe(false);
     expect(result.blockers.some(b => b.includes("readSwitchingAuthorized must be strictly false or omitted"))).toBe(true);
