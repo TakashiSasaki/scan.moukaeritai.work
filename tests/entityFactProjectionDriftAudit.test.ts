@@ -23,7 +23,7 @@ describe('validateEntityFactProjectionDriftAudit', () => {
       { id: "object-identifier-binding-attached-detached-at", currentPath: "x", targetModel: "y", classification: "z", migrationStatus: "w", followUp: "a", runtimeChangeInThisStride: false, readSwitchingAuthorized: false },
       { id: "object-identifier-binding-created-at-updated-at", currentPath: "x", targetModel: "y", classification: "z", migrationStatus: "w", followUp: "a", runtimeChangeInThisStride: false, readSwitchingAuthorized: false },
       { id: "identifiers-owner-id", currentPath: "x", targetModel: "y", classification: "z", migrationStatus: "w", followUp: "a", runtimeChangeInThisStride: false, readSwitchingAuthorized: false },
-      { id: "identifiers-object-id", currentPath: "x", targetModel: "y", classification: "z", migrationStatus: "w", followUp: "a", runtimeChangeInThisStride: false, readSwitchingAuthorized: false },
+      { id: "identifiers-object-id", currentPath: "x", targetModel: "y", classification: "z", migrationStatus: "w", followUp: "a", runtimeChangeInThisStride: false, readSwitchingAuthorized: false, currentRuntimeAuthoritative: false },
       { id: "object-identifier-bindings-collection", currentPath: "x", targetModel: "y", classification: "z", migrationStatus: "w", followUp: "a", runtimeChangeInThisStride: false, readSwitchingAuthorized: false },
       { id: "identifier-observations-collection", currentPath: "x", targetModel: "y", classification: "z", migrationStatus: "w", followUp: "a", runtimeChangeInThisStride: false, readSwitchingAuthorized: false },
       { id: "object-events-collection", currentPath: "x", targetModel: "y", classification: "z", migrationStatus: "w", followUp: "a", runtimeChangeInThisStride: false, readSwitchingAuthorized: false },
@@ -106,6 +106,17 @@ describe('validateEntityFactProjectionDriftAudit', () => {
     const result = validateEntityFactProjectionDriftAudit(audit);
     expect(result.valid).toBe(false);
     expect(result.blockers.some(b => b.includes("invalid readSwitchingAuthorized"))).toBe(true);
+  });
+
+  it('should fail if identifiers-object-id is marked authoritative', () => {
+    const audit = getValidAudit();
+    const objectIdItem = audit.driftItems.find((i: any) => i.id === "identifiers-object-id");
+    if (objectIdItem) {
+      objectIdItem.currentRuntimeAuthoritative = true;
+    }
+    const result = validateEntityFactProjectionDriftAudit(audit);
+    expect(result.valid).toBe(false);
+    expect(result.blockers.some(b => b.includes("must be non-authoritative"))).toBe(true);
   });
 
   it('should fail if a forbidden positive status phrase is present', () => {

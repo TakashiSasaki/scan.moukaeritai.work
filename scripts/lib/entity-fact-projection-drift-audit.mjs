@@ -123,6 +123,10 @@ export function validateEntityFactProjectionDriftAudit(audit, options = {}) {
       if (item.readSwitchingAuthorized !== false) {
         addBlocker(`Item '${item.id}' has invalid readSwitchingAuthorized (must be false).`);
       }
+
+      if (item.id === "identifiers-object-id" && item.currentRuntimeAuthoritative !== false) {
+        addBlocker(`Item '${item.id}' must be non-authoritative (currentRuntimeAuthoritative must be false).`);
+      }
     });
 
     requiredIds.forEach((id) => {
