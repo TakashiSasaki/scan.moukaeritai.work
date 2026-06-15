@@ -127,6 +127,10 @@ export function validateEntityFactProjectionDriftAudit(audit, options = {}) {
       if (item.id === "identifiers-object-id" && item.currentRuntimeAuthoritative !== false) {
         addBlocker(`Item '${item.id}' must be non-authoritative (currentRuntimeAuthoritative must be false).`);
       }
+
+      if (item.id === "items-collection" && item.currentRuntimeAuthoritative !== false) {
+        addBlocker(`Item '${item.id}' must be non-authoritative (currentRuntimeAuthoritative must be false).`);
+      }
     });
 
     requiredIds.forEach((id) => {

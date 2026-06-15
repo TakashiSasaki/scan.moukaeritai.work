@@ -28,7 +28,7 @@ describe('validateEntityFactProjectionDriftAudit', () => {
       { id: "identifier-observations-collection", currentPath: "x", targetModel: "y", classification: "z", migrationStatus: "w", followUp: "a", runtimeChangeInThisStride: false, readSwitchingAuthorized: false },
       { id: "object-events-collection", currentPath: "x", targetModel: "y", classification: "z", migrationStatus: "w", followUp: "a", runtimeChangeInThisStride: false, readSwitchingAuthorized: false },
       { id: "object-images-collection", currentPath: "x", targetModel: "y", classification: "z", migrationStatus: "w", followUp: "a", runtimeChangeInThisStride: false, readSwitchingAuthorized: false },
-      { id: "items-collection", currentPath: "x", targetModel: "y", classification: "z", migrationStatus: "w", followUp: "a", runtimeChangeInThisStride: false, readSwitchingAuthorized: false }
+      { id: "items-collection", currentPath: "x", targetModel: "y", classification: "z", migrationStatus: "w", followUp: "a", runtimeChangeInThisStride: false, readSwitchingAuthorized: false, currentRuntimeAuthoritative: false }
     ],
     nonGoals: [],
     validation: {}
@@ -113,6 +113,17 @@ describe('validateEntityFactProjectionDriftAudit', () => {
     const objectIdItem = audit.driftItems.find((i: any) => i.id === "identifiers-object-id");
     if (objectIdItem) {
       objectIdItem.currentRuntimeAuthoritative = true;
+    }
+    const result = validateEntityFactProjectionDriftAudit(audit);
+    expect(result.valid).toBe(false);
+    expect(result.blockers.some(b => b.includes("must be non-authoritative"))).toBe(true);
+  });
+
+  it('should fail if items-collection is marked authoritative', () => {
+    const audit = getValidAudit();
+    const itemsItem = audit.driftItems.find((i: any) => i.id === "items-collection");
+    if (itemsItem) {
+      itemsItem.currentRuntimeAuthoritative = true;
     }
     const result = validateEntityFactProjectionDriftAudit(audit);
     expect(result.valid).toBe(false);

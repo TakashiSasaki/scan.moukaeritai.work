@@ -185,7 +185,7 @@
       "currentMeaning": "legacy import source only.",
       "targetModel": "none / replaced",
       "classification": "legacy-source-only",
-      "currentRuntimeAuthoritative": true,
+      "currentRuntimeAuthoritative": false,
       "allowedCurrentRuntimeCompatibility": true,
       "migrationStatus": "documented-not-migrated",
       "runtimeChangeInThisStride": false,
