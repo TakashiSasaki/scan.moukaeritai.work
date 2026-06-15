@@ -186,7 +186,7 @@ export function validateScannerObservationTargetRulesHardeningDesign(design, opt
   if (options.closurePlan) {
     // Note: closure plan validation might optionally take drift audit if we wanted deep validation,
     // but its basic structural validation doesn't strictly require it.
-    const planResult = validateEntityFactProjectionDriftClosurePlan(options.closurePlan, { driftAudit: options.driftAudit });
+    const planResult = validateEntityFactProjectionDriftClosurePlan(options.closurePlan, { audit: options.driftAudit });
     if (!planResult.valid) {
       addBlocker("Provided closure plan artifact failed its own validation.");
     }
@@ -195,7 +195,7 @@ export function validateScannerObservationTargetRulesHardeningDesign(design, opt
   if (options.readiness) {
     const readinessResult = validateScannerObservationDualWriteReadiness(options.readiness, {
       closurePlan: options.closurePlan,
-      driftAudit: options.driftAudit
+      audit: options.driftAudit
     });
     if (!readinessResult.valid) {
       addBlocker("Provided readiness artifact failed its own validation.");
