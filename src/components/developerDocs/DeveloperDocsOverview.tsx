@@ -54,25 +54,25 @@ export default function DeveloperDocsOverview() {
       <section className="bg-[var(--surface-container)] rounded-3xl p-6 border border-[var(--outline)]">
         <h3 className="text-lg font-bold mb-4 text-[var(--on-surface)]">Development Workflow</h3>
         <p className="text-[var(--on-surface-variant)] text-sm leading-relaxed mb-4">
-          The project strictly uses <code>pnpm</code> for package management and script execution. Do not use <code>npm</code> or <code>yarn</code>.
+          The project uses <code>npm</code> for package management and script execution. Do not use <code>pnpm</code> or <code>yarn</code>, as the CI workflows and lockfiles depend on <code>npm</code>.
         </p>
         <div className="space-y-4">
           <div>
             <h4 className="font-bold text-sm text-[var(--on-surface)]">Standard Validation Commands</h4>
             <ul className="list-disc list-inside text-xs text-[var(--on-surface-variant)] space-y-1 mt-2">
-              <li><code>pnpm install</code> - Install root dependencies.</li>
-              <li><code>pnpm run lint</code> - Run TypeScript type checking and linting.</li>
-              <li><code>pnpm run test</code> - Run unit tests via Vitest.</li>
-              <li><code>pnpm run build</code> - Build the Vite application for production (includes PWA icon generation).</li>
+              <li><code>npm install</code> - Install root dependencies.</li>
+              <li><code>npm run lint</code> - Run TypeScript type checking and linting.</li>
+              <li><code>npm run test</code> - Run unit tests via Vitest.</li>
+              <li><code>npm run build</code> - Build the Vite application for production (includes PWA icon generation).</li>
             </ul>
           </div>
           <div>
             <h4 className="font-bold text-sm text-[var(--on-surface)]">Functions Validation Commands</h4>
             <ul className="list-disc list-inside text-xs text-[var(--on-surface-variant)] space-y-1 mt-2">
-              <li><code>pnpm run test:functions-boundary</code> - Validate that functions do not illegally import from the root or packages.</li>
-              <li><code>pnpm run prepare:functions-efp-model</code> - Prepare the local <code>@scan/efp-model</code> dependency inside functions.</li>
-              <li><code>cd functions && pnpm install</code> - Install functions dependencies.</li>
-              <li><code>cd functions && pnpm run build</code> - Build Firebase Functions.</li>
+              <li><code>npm run test:functions-boundary</code> - Validate that functions do not illegally import from the root or packages.</li>
+              <li><code>npm run prepare:functions-efp-model</code> - Prepare the local <code>@scan/efp-model</code> dependency inside functions.</li>
+              <li><code>cd functions && npm install</code> - Install functions dependencies.</li>
+              <li><code>cd functions && npm run build</code> - Build Firebase Functions.</li>
             </ul>
           </div>
         </div>
