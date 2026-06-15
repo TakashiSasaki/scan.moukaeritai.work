@@ -75,7 +75,7 @@ export default function DeveloperAbstractModelDoc() {
       <section className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-2xl p-6">
         <h3 className="text-lg font-bold text-[var(--on-surface)] mb-4">Legacy Concepts</h3>
         <p className="text-[var(--on-surface-variant)] text-sm mb-4">
-          The current implementation is migrating away from older concepts. The following are kept for backward compatibility during the transition:
+          The current implementation is migrating away from older concepts. The following are kept for backward compatibility during the transition. See the <strong>EFP Drift Audit</strong> for detailed structural tracking.
         </p>
         <ul className="space-y-4 text-sm mb-6">
           <li><strong>Domain Time:</strong> Time fields (like <code>createdAt</code>, <code>firstObservedAt</code>, <code>attachedAt</code>) currently on legacy Entities conceptually belong to <strong>Facts</strong>, not to the core Entities themselves.</li>
