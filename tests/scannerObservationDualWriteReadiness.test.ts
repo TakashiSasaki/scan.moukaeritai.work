@@ -196,4 +196,24 @@ describe('scannerObservationDualWriteReadiness', () => {
     expect(result.valid).toBe(false);
     expect(result.blockers.some(b => b.includes('Invalid drift audit auditType'))).toBe(true);
   });
+
+  it('rejects validly typed but content-invalid drift audit', () => {
+    const payload = getValidPayload();
+    // Simulate an audit failing its own validation (e.g. missing items array)
+    const result = validateScannerObservationDualWriteReadiness(payload, {
+      driftAudit: { auditType: 'entity-fact-projection-drift-audit', items: null }
+    });
+    expect(result.valid).toBe(false);
+    expect(result.blockers.some(b => b.includes('Provided drift audit artifact failed its own validation'))).toBe(true);
+  });
+
+  it('rejects validly typed but content-invalid closure plan', () => {
+    const payload = getValidPayload();
+    // Simulate a closure plan failing its own validation (e.g. runtimeBehaviorChanged: true)
+    const result = validateScannerObservationDualWriteReadiness(payload, {
+      closurePlan: { planType: 'entity-fact-projection-drift-closure-plan', runtimeBehaviorChanged: true, items: [] }
+    });
+    expect(result.valid).toBe(false);
+    expect(result.blockers.some(b => b.includes('Provided drift closure plan artifact failed its own validation'))).toBe(true);
+  });
 });

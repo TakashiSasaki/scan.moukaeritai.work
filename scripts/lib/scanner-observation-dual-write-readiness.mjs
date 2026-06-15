@@ -1,4 +1,6 @@
 import fs from 'node:fs';
+import { validateEntityFactProjectionDriftClosurePlan } from './entity-fact-projection-drift-closure-plan.mjs';
+import { validateEntityFactProjectionDriftAudit } from './entity-fact-projection-drift-audit.mjs';
 
 const REQUIRED_EVIDENCE = [
   "npm run lint passes",
@@ -114,15 +116,25 @@ export function validateScannerObservationDualWriteReadiness(readiness, options 
     result.blockers.push("sourceDriftAudit mismatch");
   }
 
-  if (options.closurePlan) {
-    if (options.closurePlan.planType !== "entity-fact-projection-drift-closure-plan") {
-      result.blockers.push(`Invalid closure plan planType: ${options.closurePlan.planType}`);
-    }
-  }
-
   if (options.driftAudit) {
     if (options.driftAudit.auditType !== "entity-fact-projection-drift-audit") {
       result.blockers.push(`Invalid drift audit auditType: ${options.driftAudit.auditType}`);
+    } else {
+      const auditResult = validateEntityFactProjectionDriftAudit(options.driftAudit);
+      if (!auditResult.valid || !auditResult.success) {
+        result.blockers.push("Provided drift audit artifact failed its own validation");
+      }
+    }
+  }
+
+  if (options.closurePlan) {
+    if (options.closurePlan.planType !== "entity-fact-projection-drift-closure-plan") {
+      result.blockers.push(`Invalid closure plan planType: ${options.closurePlan.planType}`);
+    } else {
+      const closurePlanResult = validateEntityFactProjectionDriftClosurePlan(options.closurePlan, options.driftAudit);
+      if (!closurePlanResult.valid || !closurePlanResult.success) {
+        result.blockers.push("Provided drift closure plan artifact failed its own validation");
+      }
     }
   }
 
