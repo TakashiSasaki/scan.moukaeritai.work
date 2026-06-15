@@ -53,6 +53,14 @@ export function validateEntityFactProjectionDriftAudit(audit, options = {}) {
     result.runtimeBehaviorChanged = false;
   }
 
+  if (audit.written === true) {
+    addBlocker("written must be strictly false or omitted.");
+  }
+
+  if (audit.readSwitchingAuthorized === true) {
+    addBlocker("readSwitchingAuthorized must be strictly false or omitted.");
+  }
+
   // Check for forbidden positive status phrases
   const forbiddenPhrases = [
     "production-ready",

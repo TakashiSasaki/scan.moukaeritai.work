@@ -5,7 +5,7 @@ import {
 } from '../scripts/lib/entity-fact-projection-drift-audit.mjs';
 
 describe('validateEntityFactProjectionDriftAudit', () => {
-  const getValidAudit = () => ({
+  const getValidAudit = () => (({
     auditType: "entity-fact-projection-drift-audit",
     schemaVersion: 1,
     status: "documentation-only",
@@ -32,7 +32,7 @@ describe('validateEntityFactProjectionDriftAudit', () => {
     ],
     nonGoals: [],
     validation: {}
-  });
+  } as any));
 
   it('should return drift-audit-valid for a fully valid audit', () => {
     const audit = getValidAudit();
@@ -58,6 +58,22 @@ describe('validateEntityFactProjectionDriftAudit', () => {
     const result = validateEntityFactProjectionDriftAudit(audit);
     expect(result.valid).toBe(false);
     expect(result.blockers.some(b => b.includes("runtimeBehaviorChanged must be false"))).toBe(true);
+  });
+
+  it('should fail if top-level written is true', () => {
+    const audit = getValidAudit();
+    audit.written = true;
+    const result = validateEntityFactProjectionDriftAudit(audit);
+    expect(result.valid).toBe(false);
+    expect(result.blockers.some(b => b.includes("written must be strictly false or omitted"))).toBe(true);
+  });
+
+  it('should fail if top-level readSwitchingAuthorized is true', () => {
+    const audit = getValidAudit();
+    audit.readSwitchingAuthorized = true;
+    const result = validateEntityFactProjectionDriftAudit(audit);
+    expect(result.valid).toBe(false);
+    expect(result.blockers.some(b => b.includes("readSwitchingAuthorized must be strictly false or omitted"))).toBe(true);
   });
 
   it('should fail if a drift item has runtimeChangeInThisStride as true', () => {

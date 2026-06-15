@@ -120,7 +120,7 @@
       "currentMeaning": "legacy/non-authoritative compatibility field.",
       "targetModel": "target relationship should be Association",
       "classification": "embedded-relation-compatibility-field",
-      "currentRuntimeAuthoritative": true,
+      "currentRuntimeAuthoritative": false,
       "allowedCurrentRuntimeCompatibility": true,
       "migrationStatus": "documented-not-migrated",
       "runtimeChangeInThisStride": false,
