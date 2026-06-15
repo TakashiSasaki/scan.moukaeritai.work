@@ -212,6 +212,8 @@ Data validation ideas:
 - Sample QR/NFC scans through Scanner.
 - Sample object edit/attach/detach flows through CaptureForm.
 
+For the latest detailed structural drift tracking, see the [Entity-Fact-Projection Drift Audit JSON](./entity-fact-projection-drift-audit.json) and [Drift Audit Document](./entity-fact-projection-drift-audit.md).
+
 ## 12. Open Questions
 
 - Should markers be globally ownerless or owner-scoped during the first runtime phase?

@@ -6,6 +6,8 @@ Current runtime collections remain authoritative until migration phases explicit
 
 **Note:** This is documentation only. It does not provide a live database browser and contains no live data.
 
+For an explicit accounting of the structural drift between the target model and current runtime, see the [Entity-Fact-Projection Drift Audit](../migrations/entity-fact-projection-drift-audit.md).
+
 ## 1. Target Conceptual Model
 
 The long-term database architecture follows an Entity / Fact / Projection model:
