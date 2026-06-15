@@ -497,24 +497,113 @@ describe('Firestore Rules Baseline', () => {
       });
     });
 
-    describe('observations (Fact)', () => {
+    describe('observations target collection', () => {
       const validObservation = {
         observationId: 'o1',
+        identifierKey: 'ident1',
+        ownerId: ownerUid,
+        observerKind: 'user',
+        observerUid: ownerUid,
+        observedAt: serverTimestamp(),
+        receivedAt: serverTimestamp(),
+        source: 'qr',
         observationType: 'scan',
-        participants: [{role: 'user', ref: {id: ownerUid, entityType: 'user'}}],
-        participantKeys: [`user:${ownerUid}`],
-        userIds: [ownerUid],
-        time: { observedAt: serverTimestamp() }
+        createdAt: serverTimestamp()
       };
 
-      it('rejects unknown fields', async () => {
+      it('owner-can-create-valid-observation', async () => {
         const db = testEnv.authenticatedContext(ownerUid).firestore();
-        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, unknown: true }));
+        await assertSucceeds(setDoc(doc(db, 'observations', 'o1'), validObservation));
       });
 
-      it('rejects invalid time type', async () => {
+      it('signed-out-cannot-create-observation', async () => {
+        const db = testEnv.unauthenticatedContext().firestore();
+        await assertFails(setDoc(doc(db, 'observations', 'o1'), validObservation));
+      });
+
+      it('owner-mismatch-denied', async () => {
         const db = testEnv.authenticatedContext(ownerUid).firestore();
-        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, time: { observedAt: 'not-a-timestamp' } }));
+        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, ownerId: 'other-user' }));
+      });
+
+      it('observer-uid-mismatch-denied', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, observerUid: 'other-user' }));
+      });
+
+      it('observer-kind-device-denied-for-client', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, observerKind: 'device' }));
+      });
+
+      it('unknown-field-denied', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, unknownField: 'test' }));
+      });
+
+      it('invalid-source-denied', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, source: 'satellite' }));
+      });
+
+      it('invalid-observation-type-denied', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, observationType: 'telepathy' }));
+      });
+
+      it('invalid-location-denied', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, location: { latitude: 999, longitude: 0 } }));
+      });
+
+      it('received-at-must-be-request-time', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        const fakeTime = new Date('2020-01-01T00:00:00Z');
+        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, receivedAt: fakeTime }));
+      });
+
+      it('created-at-must-be-request-time', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        const fakeTime = new Date('2020-01-01T00:00:00Z');
+        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, createdAt: fakeTime }));
+      });
+
+      it('normal-user-update-denied', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'observations', 'o1'), validObservation);
+        });
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(updateDoc(doc(db, 'observations', 'o1'), { note: 'update' }));
+      });
+
+      it('normal-user-delete-denied', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'observations', 'o1'), validObservation);
+        });
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(deleteDoc(doc(db, 'observations', 'o1')));
+      });
+
+      it('admin-delete-allowed', async () => {
+        await setupAdmin();
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'observations', 'o1'), validObservation);
+        });
+        const adminDb = testEnv.authenticatedContext(adminUid).firestore();
+        await assertSucceeds(deleteDoc(doc(adminDb, 'observations', 'o1')));
+      });
+
+      it('read-switching-not-authorized', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          await setDoc(doc(context.firestore(), 'observations', 'o1'), validObservation);
+        });
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(getDoc(doc(db, 'observations', 'o1')));
+      });
+
+      it('projection-write-not-authorized', async () => {
+        const db = testEnv.authenticatedContext(ownerUid).firestore();
+        await assertFails(setDoc(doc(db, 'observations', 'o1'), { ...validObservation, asOf: serverTimestamp(), computedCounts: {} }));
       });
     });
 

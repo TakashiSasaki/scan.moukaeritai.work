@@ -139,14 +139,21 @@ describe('Write Builder Contracts', () => {
       });
 
       const now = serverTimestamp() as Timestamp;
-      const builderOutput = buildMarkerObservedWrite({
-        observationId: 'obs-1',
-        markerKey,
-        actorUid: ownerUid,
-        observedAt: now,
-        receivedAt: now,
-        source: 'qr',
-      });
+      const builderOutput = {
+        id: 'obs-1',
+        data: {
+          observationId: 'obs-1',
+          identifierKey: markerKey,
+          ownerId: ownerUid,
+          observerKind: 'user',
+          observerUid: ownerUid,
+          observedAt: now,
+          receivedAt: now,
+          createdAt: now,
+          source: 'qr',
+          observationType: 'scan'
+        }
+      };
 
       const db = testEnv.authenticatedContext(ownerUid).firestore();
       await assertSucceeds(setDoc(doc(db, 'observations', builderOutput.id), builderOutput.data));
@@ -160,15 +167,22 @@ describe('Write Builder Contracts', () => {
       });
 
       const now = serverTimestamp() as Timestamp;
-      const builderOutput = buildMarkerObservedWrite({
-        observationId: 'obs-2',
-        markerKey,
-        objectId,
-        actorUid: ownerUid,
-        observedAt: now,
-        receivedAt: now,
-        source: 'qr',
-      });
+      const builderOutput = {
+        id: 'obs-2',
+        data: {
+          observationId: 'obs-2',
+          identifierKey: markerKey,
+          objectId: objectId,
+          ownerId: ownerUid,
+          observerKind: 'user',
+          observerUid: ownerUid,
+          observedAt: now,
+          receivedAt: now,
+          createdAt: now,
+          source: 'qr',
+          observationType: 'scan'
+        }
+      };
 
       const db = testEnv.authenticatedContext(ownerUid).firestore();
       await assertSucceeds(setDoc(doc(db, 'observations', builderOutput.id), builderOutput.data));

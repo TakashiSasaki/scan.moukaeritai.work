@@ -23,6 +23,13 @@ service cloud.firestore {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
+function isValidObservationLocation(location) {
+      return location is map
+        && 'latitude' in location && location.latitude is number && location.latitude >= -90 && location.latitude <= 90
+        && 'longitude' in location && location.longitude is number && location.longitude >= -180 && location.longitude <= 180
+        && (!('address' in location) || (location.address is string && location.address.size() <= 1000));
+    }
+
     function incoming() {
       return request.resource.data;
     }
@@ -470,26 +477,33 @@ service cloud.firestore {
 
     // --- OBSERVATIONS (Target Fact) ---
     match /observations/{observationId} {
-      allow read: if isAdmin() || (isSignedIn() && hasCurrentUser(existing()));
+      // Normal user/client reads are explicitly denied to prevent UI read switching.
+      // Admin read is allowed for operational inspection.
+      allow read: if isAdmin();
+
       allow create: if isSignedIn()
+        && isValidId(observationId)
         && incoming().observationId == observationId
-        && hasCurrentUser(incoming())
-        && incoming().observationType is string
-        && isValidFactParticipants(incoming())
-        && isValidFactIndexArrays(incoming())
-        && isFactEntitiesOwnedByUser(incoming())
-        && incoming().time is map
-        && incoming().time.keys().hasOnly(['observedAt', 'receivedAt'])
-        && incoming().time.observedAt is timestamp
-        && (!('receivedAt' in incoming().time) || incoming().time.receivedAt is timestamp)
-        && (!('source' in incoming()) || incoming().source is string)
-        && (!('provenance' in incoming()) || incoming().provenance is map)
-        && (!('note' in incoming()) || incoming().note is string)
-        && (!('payload' in incoming()) || incoming().payload is map)
-        && (!('_meta' in incoming()) || incoming()._meta is map)
-        && (!('legacy' in incoming()) || incoming().legacy is map)
-        && incoming().keys().hasOnly(['observationId', 'observationType', 'participants', 'participantKeys', 'objectIds', 'markerKeys', 'placeIds', 'readerIds', 'deviceIds', 'userIds', 'time', 'provenance', 'source', 'note', 'payload', '_meta', 'legacy']);
-      allow update: if isAdmin(); // Append-only fact, client update denied
+        && isValidId(incoming().identifierKey)
+        && incoming().ownerId == request.auth.uid
+        && incoming().observerKind == 'user'
+        && incoming().observerUid == request.auth.uid
+        && incoming().observedAt is timestamp
+        && incoming().receivedAt == request.time
+        && incoming().createdAt == request.time
+        && incoming().source in ['nfc', 'qr', 'manual', 'barcode', 'camera']
+        && incoming().observationType in ['sighting', 'scan']
+        && (!('objectId' in incoming()) || (incoming().objectId is string && incoming().objectId.size() <= 128))
+        && (!('observerIsAnonymous' in incoming()) || incoming().observerIsAnonymous is bool)
+        && (!('placeLabel' in incoming()) || (incoming().placeLabel is string && incoming().placeLabel.size() <= 1000))
+        && (!('location' in incoming()) || isValidObservationLocation(incoming().location))
+        && (!('note' in incoming()) || (incoming().note is string && incoming().note.size() <= 2000))
+        && (!('metadata' in incoming()) || incoming().metadata is map)
+        && (!('visibility' in incoming()) || incoming().visibility in ['private', 'linked_object', 'community', 'public'])
+        && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
+        && (!('receivedAt' in incoming()) || incoming().receivedAt is timestamp) && incoming().keys().hasOnly(['observationId', 'identifierKey', 'ownerId', 'observerKind', 'observerUid', 'observedAt', 'receivedAt', 'source', 'observationType', 'createdAt', 'objectId', 'observerIsAnonymous', 'placeLabel', 'location', 'note', 'metadata', 'visibility', 'schemaVersion']);
+
+      allow update: if false; // Append-only fact, client update denied
       allow delete: if isAdmin();
     }
 

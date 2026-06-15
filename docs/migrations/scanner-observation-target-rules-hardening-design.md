@@ -2,7 +2,7 @@
 
 ## Status
 
-**planning-only**
+**planning-only** (Implementation PR is ready)
 
 ## Purpose
 
@@ -122,6 +122,13 @@ Conceptual definitions for the test payloads:
 5. Controlled Scanner observation dual-write validation
 
 ## Validation
+
+- Implementation is complete and emulator tests are written in the associated PR.
+- This still does not enable `VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE`.
+- This still does not change Scanner runtime behavior.
+- This still does not authorize UI read switching.
+- Rollout remains a separate explicit PR/operator action.
+
 
 - The JSON design file is structurally validated by the `ops:validate-scanner-observation-target-rules-hardening-design` script.
 - Cross-validation against the `readiness`, `closure-plan`, and `drift-audit` artifacts guarantees constraints align with the broader migration plan.
