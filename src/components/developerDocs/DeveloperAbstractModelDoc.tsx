@@ -80,8 +80,8 @@ export default function DeveloperAbstractModelDoc() {
         <ul className="space-y-4 text-sm mb-6">
           <li><strong>Domain Time:</strong> Time fields (like <code>createdAt</code>, <code>firstObservedAt</code>, <code>attachedAt</code>) currently on legacy Entities conceptually belong to <strong>Facts</strong>, not to the core Entities themselves.</li>
           <li>
-            <strong className="text-orange-500 block mb-1">Identifier & Binding</strong>
-            <p className="text-[var(--on-surface-variant)]">Conceptually map to <strong>Marker</strong> and <strong>Association</strong>. The older logic treats bindings as the primary relation.</p>
+            <strong className="text-orange-500 block mb-1">Identifier, Binding, & locations</strong>
+            <p className="text-[var(--on-surface-variant)]">Conceptually map to <strong>Marker</strong>, <strong>Association</strong>, and <strong>Place</strong>. The older logic treats bindings as the primary relation.</p>
           </li>
           <li>
             <strong className="text-orange-500 block mb-1">Legacy Item</strong>

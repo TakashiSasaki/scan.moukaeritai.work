@@ -400,8 +400,13 @@ The application has transitioned from a simple `items` collection to a normalize
 - Runtime components must not call the write-builder helpers for dual-write behavior until the migration plan phase explicitly allows it.
 
 - Documentation and explanation pages should present Entity / Fact / Projection as the primary model.
-- Legacy runtime names such as identifiers and objectIdentifierBindings should be described as current implementation compatibility layers, not as the long-term conceptual model.
-- Do not remove legacy terms from docs while the runtime still uses them; instead, map them to Marker and Association.
+- Legacy runtime names such as identifiers, objectIdentifierBindings, and locations should be described as current implementation compatibility layers, not as the long-term conceptual model.
+- Legacy terminology maps as follows:
+  - `Identifier` conceptually maps to `Marker`.
+  - `Binding` conceptually maps to `Association`.
+  - `locations` conceptually maps to `Place`.
+- Domain time conceptually belongs to Facts, and should not be placed on Entity types directly.
+- Do not remove legacy terms from docs while the runtime still uses them; instead, map them to Marker, Association, and Place.
 - The Entity / Fact / Projection Runtime Migration Plan is documented at `docs/migrations/entity-fact-projection-runtime-migration-plan.md`. This plan outlines the phased approach to transition from the legacy Identifier/Binding model to the Entity/Fact/Projection model.
   - **Phase 2 Scanner Observation Dual-Write Guardrails:**
     - Scanner observation dual-write must remain feature-gated via `VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE`.
