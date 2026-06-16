@@ -1131,6 +1131,7 @@ objectEvents
 IdentifierRecord
 IdentifierObservationRecord
 ObjectIdentifierBindingRecord
+locations
 ```
 
 In the new conceptual model, these should be mapped as follows:
@@ -1153,6 +1154,9 @@ IdentifierObservationRecord
 
 objectEvents
   -> events
+
+locations
+  -> places
 ```
 
 This document does not require immediate destructive migration. Existing collections may continue to exist during a transition period. A later migration plan should define how current records are mapped into the new collections and how compatibility reads are handled.
@@ -1162,7 +1166,7 @@ This document does not require immediate destructive migration. Existing collect
 The proposed model has the following invariants.
 
 ```text
-1. Entity records do not contain domain time.
+1. Entity records do not contain domain time (e.g., createdAt, firstObservedAt). Domain time conceptually belongs to Fact or Projection records, not Entity directly.
 
 2. Fact records contain domain time.
 

@@ -120,10 +120,15 @@ export type IdentifierRecordWrite = Omit<
   IdentifierRecord,
   'createdAt' | 'updatedAt' | 'firstObservedAt' | 'lastObservedAt' | 'lastSeenAt'
 > & {
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   createdAt: FieldValue | Timestamp;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   updatedAt: FieldValue | Timestamp;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   firstObservedAt?: FieldValue | Timestamp;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   lastObservedAt?: FieldValue | Timestamp;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   lastSeenAt?: FieldValue | Timestamp;
 };
 
