@@ -26,6 +26,12 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/markers/$(markerKey)).data.ownerId == request.auth.uid;
     }
 
+    function isValidObservationLocation(loc) {
+      return loc is map
+        && 'latitude' in loc && loc.latitude is number && loc.latitude >= -90 && loc.latitude <= 90
+        && 'longitude' in loc && loc.longitude is number && loc.longitude >= -180 && loc.longitude <= 180;
+    }
+
     function isOptionalOwnedObjectId(objectId) {
       return objectId is string
         && objectId.size() <= 128
