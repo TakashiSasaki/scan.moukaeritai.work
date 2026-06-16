@@ -324,39 +324,37 @@ export function buildMarkerObservedWrite(input: {
   observationId: string;
   markerKey: string;
   objectId?: string;
-  actorUid?: string;
-  deviceId?: string;
+  actorUid: string;
   observedAt: Timestamp;
-  receivedAt?: Timestamp;
-  source: 'qr' | 'nfc' | 'manual' | 'barcode' | 'ble' | 'camera' | 'gateway' | 'import' | string;
+  receivedAt: Timestamp;
+  source: 'qr' | 'nfc' | 'manual' | 'barcode' | 'camera';
+  note?: string;
+  location?: { latitude: number; longitude: number; altitude?: number | null; accuracy?: number | null; altitudeAccuracy?: number | null; heading?: number | null; speed?: number | null };
   payload?: Record<string, unknown>;
-  legacy?: Record<string, unknown>;
-}): EntityFactProjectionWrite<ObservationDoc> {
-  const participants: Participant[] = [
-    { role: 'marker', ref: { entityType: 'marker', id: input.markerKey } }
-  ];
-
-  if (input.objectId) {
-    participants.push({ role: 'object', ref: { entityType: 'object', id: input.objectId } });
-  }
-  if (input.actorUid) {
-    participants.push({ role: 'user', ref: { entityType: 'user', id: input.actorUid } });
-  }
-  if (input.deviceId) {
-    participants.push({ role: 'device', ref: { entityType: 'device', id: input.deviceId } });
-  }
-
-  return buildObservationWrite({
+}) {
+  const data = {
     observationId: input.observationId,
-    observationType: 'marker_observed',
-    participants,
+    identifierKey: input.markerKey,
+    ownerId: input.actorUid,
+    observerKind: 'user',
+    observerUid: input.actorUid,
     observedAt: input.observedAt,
     receivedAt: input.receivedAt,
     source: input.source,
-    provenance: { source: 'marker_observation', confidence: 'high' },
-    payload: input.payload,
-    legacy: input.legacy,
-  });
+    observationType: 'scan',
+    objectId: input.objectId,
+    note: input.note,
+    location: input.location,
+    metadata: input.payload,
+    schemaVersion: 1,
+    createdAt: input.receivedAt,
+  };
+
+  return {
+    id: input.observationId,
+    collection: 'observations' as const,
+    data: stripUndefinedDeep(data)
+  };
 }
 
 export function buildMeasurementWrite(input: {

@@ -238,14 +238,14 @@ describe('entityFactProjectionWrites', () => {
         markerKey: 'mk-1',
         objectId: 'obj-1',
         actorUid: 'user-1',
-        deviceId: 'dev-1',
+        receivedAt: ts,
         observedAt: ts,
         source: 'qr'
       });
-      expect(result.data.observationType).toBe('marker_observed');
-      expect(result.data.participants).toHaveLength(4);
-      expect(result.data.participantKeys).toEqual(['device:dev-1', 'marker:mk-1', 'object:obj-1', 'user:user-1']);
-      expect(result.data.provenance).toEqual({ source: 'marker_observation', confidence: 'high' });
+      expect(result.data.observationType).toBe('scan');
+
+
+
     });
   });
 

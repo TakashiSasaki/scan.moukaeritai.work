@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { buildMarkerObservedWrite } from './entityFactProjectionWrites';
 import { v7 as uuidv7 } from 'uuid';
@@ -77,6 +77,7 @@ export async function writeScannerObservationShadow(input: {
     // 3. Build target observation write
     const observationId = uuidv7();
     const now = Timestamp.now();
+    const serverTime = serverTimestamp() as Timestamp;
     const payload = input.scannedValue ? { rawValue: input.scannedValue } : undefined;
 
     const builderOutput = buildMarkerObservedWrite({
@@ -85,8 +86,8 @@ export async function writeScannerObservationShadow(input: {
       objectId: safeObjectId,
       actorUid: input.actorUid,
       observedAt: now,
-      receivedAt: now,
-      source: input.source,
+      receivedAt: serverTime,
+      source: input.source as any,
       payload,
     });
 
