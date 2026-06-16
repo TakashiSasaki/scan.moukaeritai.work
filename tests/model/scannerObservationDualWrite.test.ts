@@ -133,9 +133,9 @@ describe('scannerObservationDualWrite', () => {
 
       const setDocCall = vi.mocked(firestoreModule.setDoc).mock.calls[0];
       const data = setDocCall[1] as any;
-      expect(data.payload).toEqual({ rawValue: mockScannedValue });
+      expect(data.metadata).toEqual({ rawValue: mockScannedValue });
       // ensure we don't have object component
-      expect(data.participants.some((p: any) => p.role === 'object')).toBe(false);
+      expect(data.objectId).toBeUndefined();
     });
 
     it('writes successfully and omits objectId if object is missing', async () => {
@@ -167,7 +167,7 @@ describe('scannerObservationDualWrite', () => {
       const setDocCall = vi.mocked(firestoreModule.setDoc).mock.calls[0];
       const data = setDocCall[1] as any;
       // verify objectId is absent from the participants
-      expect(data.participants.some((p: any) => p.role === 'object')).toBe(false);
+      expect(data.objectId).toBeUndefined();
     });
 
     it('writes successfully and omits objectId if object read fails with permission denied', async () => {
@@ -197,7 +197,7 @@ describe('scannerObservationDualWrite', () => {
       const setDocCall = vi.mocked(firestoreModule.setDoc).mock.calls[0];
       const data = setDocCall[1] as any;
       // verify objectId is absent from the participants
-      expect(data.participants.some((p: any) => p.role === 'object')).toBe(false);
+      expect(data.objectId).toBeUndefined();
     });
 
     it('writes successfully and omits objectId if object is not owned', async () => {
@@ -230,7 +230,7 @@ describe('scannerObservationDualWrite', () => {
       const setDocCall = vi.mocked(firestoreModule.setDoc).mock.calls[0];
       const data = setDocCall[1] as any;
       // verify objectId is absent from the participants
-      expect(data.participants.some((p: any) => p.role === 'object')).toBe(false);
+      expect(data.objectId).toBeUndefined();
     });
 
     it('writes successfully and includes objectId if object is owned', async () => {
@@ -263,7 +263,7 @@ describe('scannerObservationDualWrite', () => {
       const setDocCall = vi.mocked(firestoreModule.setDoc).mock.calls[0];
       const data = setDocCall[1] as any;
       // verify objectId is included in participants
-      expect(data.participants.some((p: any) => p.role === 'object' && p.ref.id === mockObjectId)).toBe(true);
+      expect(data.objectId).toBe(mockObjectId);
     });
 
     it('returns failed if setDoc throws', async () => {

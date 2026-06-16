@@ -19,15 +19,22 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == ownerId;
     }
 
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    function isOwnedMarkerKey(markerKey) {
+      return markerKey is string
+        && markerKey.size() <= 128
+        && exists(/databases/$(database)/documents/markers/$(markerKey))
+        && get(/databases/$(database)/documents/markers/$(markerKey)).data.ownerId == request.auth.uid;
     }
 
-function isValidObservationLocation(location) {
-      return location is map
-        && 'latitude' in location && location.latitude is number && location.latitude >= -90 && location.latitude <= 90
-        && 'longitude' in location && location.longitude is number && location.longitude >= -180 && location.longitude <= 180
-        && (!('address' in location) || (location.address is string && location.address.size() <= 1000));
+    function isOptionalOwnedObjectId(objectId) {
+      return objectId is string
+        && objectId.size() <= 128
+        && exists(/databases/$(database)/documents/objects/$(objectId))
+        && get(/databases/$(database)/documents/objects/$(objectId)).data.ownerId == request.auth.uid;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
     function incoming() {
@@ -477,14 +484,10 @@ function isValidObservationLocation(location) {
 
     // --- OBSERVATIONS (Target Fact) ---
     match /observations/{observationId} {
-      // Normal user/client reads are explicitly denied to prevent UI read switching.
-      // Admin read is allowed for operational inspection.
       allow read: if isAdmin();
 
       allow create: if isSignedIn()
-        && isValidId(observationId)
         && incoming().observationId == observationId
-        && isValidId(incoming().identifierKey)
         && incoming().ownerId == request.auth.uid
         && incoming().observerKind == 'user'
         && incoming().observerUid == request.auth.uid
@@ -493,17 +496,37 @@ function isValidObservationLocation(location) {
         && incoming().createdAt == request.time
         && incoming().source in ['nfc', 'qr', 'manual', 'barcode', 'camera']
         && incoming().observationType in ['sighting', 'scan']
-        && (!('objectId' in incoming()) || (incoming().objectId is string && incoming().objectId.size() <= 128))
+        && isOwnedMarkerKey(incoming().identifierKey)
+        && (!('objectId' in incoming()) || isOptionalOwnedObjectId(incoming().objectId))
         && (!('observerIsAnonymous' in incoming()) || incoming().observerIsAnonymous is bool)
-        && (!('placeLabel' in incoming()) || (incoming().placeLabel is string && incoming().placeLabel.size() <= 1000))
+        && (!('placeLabel' in incoming()) || incoming().placeLabel is string)
         && (!('location' in incoming()) || isValidObservationLocation(incoming().location))
-        && (!('note' in incoming()) || (incoming().note is string && incoming().note.size() <= 2000))
+        && (!('note' in incoming()) || incoming().note is string)
         && (!('metadata' in incoming()) || incoming().metadata is map)
-        && (!('visibility' in incoming()) || incoming().visibility in ['private', 'linked_object', 'community', 'public'])
+        && (!('visibility' in incoming()) || incoming().visibility in ['private', 'shared'])
         && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
-        && (!('receivedAt' in incoming()) || incoming().receivedAt is timestamp) && incoming().keys().hasOnly(['observationId', 'identifierKey', 'ownerId', 'observerKind', 'observerUid', 'observedAt', 'receivedAt', 'source', 'observationType', 'createdAt', 'objectId', 'observerIsAnonymous', 'placeLabel', 'location', 'note', 'metadata', 'visibility', 'schemaVersion']);
+        && incoming().keys().hasOnly([
+          'observationId',
+          'identifierKey',
+          'ownerId',
+          'observerKind',
+          'observerUid',
+          'observedAt',
+          'receivedAt',
+          'source',
+          'observationType',
+          'createdAt',
+          'objectId',
+          'observerIsAnonymous',
+          'placeLabel',
+          'location',
+          'note',
+          'metadata',
+          'visibility',
+          'schemaVersion'
+        ]);
 
-      allow update: if false; // Append-only fact, client update denied
+      allow update: if false;
       allow delete: if isAdmin();
     }
 

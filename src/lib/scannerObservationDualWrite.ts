@@ -86,7 +86,7 @@ export async function writeScannerObservationShadow(input: {
       actorUid: input.actorUid,
       observedAt: now,
       receivedAt: now,
-      source: input.source,
+      source: input.source as any,
       payload,
     });
 

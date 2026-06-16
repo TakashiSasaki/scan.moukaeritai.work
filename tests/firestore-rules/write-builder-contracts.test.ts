@@ -139,50 +139,49 @@ describe('Write Builder Contracts', () => {
       });
 
       const now = serverTimestamp() as Timestamp;
-      const builderOutput = {
-        id: 'obs-1',
-        data: {
-          observationId: 'obs-1',
-          identifierKey: markerKey,
-          ownerId: ownerUid,
-          observerKind: 'user',
-          observerUid: ownerUid,
-          observedAt: now,
-          receivedAt: now,
-          createdAt: now,
-          source: 'qr',
-          observationType: 'scan'
-        }
-      };
+      const builderOutput = buildMarkerObservedWrite({
+        observationId: 'obs-1',
+        markerKey,
+        actorUid: ownerUid,
+        observedAt: now,
+        receivedAt: now,
+        source: 'qr',
+      });
 
       const db = testEnv.authenticatedContext(ownerUid).firestore();
+      console.log("builderOutput.data for success:", JSON.stringify(builderOutput.data));
       await assertSucceeds(setDoc(doc(db, 'observations', builderOutput.id), builderOutput.data));
     });
 
     it('Succeeds with objectId when object is also owned by user', async () => {
+      const uniqueObjectId1 = 'obs-object-unique-success';
       await testEnv.withSecurityRulesDisabled(async (context) => {
         const adminDb = context.firestore();
         await setDoc(doc(adminDb, 'markers', markerKey), { ownerId: ownerUid });
-        await setDoc(doc(adminDb, 'objects', objectId), { ownerId: ownerUid });
+        await setDoc(doc(adminDb, 'objects', uniqueObjectId1), { ownerId: ownerUid });
       });
 
       const now = serverTimestamp() as Timestamp;
-      const builderOutput = {
-        id: 'obs-2',
-        data: {
-          observationId: 'obs-2',
-          identifierKey: markerKey,
-          objectId: objectId,
-          ownerId: ownerUid,
-          observerKind: 'user',
-          observerUid: ownerUid,
-          observedAt: now,
-          receivedAt: now,
-          createdAt: now,
-          source: 'qr',
-          observationType: 'scan'
-        }
-      };
+      const builderOutput = buildMarkerObservedWrite({
+        observationId: 'obs-2',
+        markerKey,
+        objectId: uniqueObjectId1,
+        actorUid: ownerUid,
+        observedAt: now,
+        receivedAt: now,
+        source: 'qr',
+      });
+
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const adminDb = context.firestore();
+        const objectSnap = await getDoc(doc(adminDb, 'objects', uniqueObjectId1));
+        if (!objectSnap.exists()) throw new Error("Object does not exist");
+        if (objectSnap.data()?.ownerId !== ownerUid) throw new Error("Object ownerId mismatch");
+
+        const markerSnap = await getDoc(doc(adminDb, 'markers', markerKey));
+        if (!markerSnap.exists()) throw new Error("Marker does not exist");
+        if (markerSnap.data()?.ownerId !== ownerUid) throw new Error("Marker ownerId mismatch");
+      });
 
       const db = testEnv.authenticatedContext(ownerUid).firestore();
       await assertSucceeds(setDoc(doc(db, 'observations', builderOutput.id), builderOutput.data));
@@ -198,7 +197,7 @@ describe('Write Builder Contracts', () => {
       const builderOutput = buildMarkerObservedWrite({
         observationId: 'obs-3',
         markerKey,
-        // actorUid intentionally omitted
+        actorUid: undefined as any,
         observedAt: now,
         receivedAt: now,
         source: 'qr',
@@ -246,19 +245,20 @@ describe('Write Builder Contracts', () => {
     });
 
     it('Fails when objectId is included but object is owned by another user', async () => {
+      const uniqueObjectId2 = 'obs-object-unique-fail';
       await testEnv.withSecurityRulesDisabled(async (context) => {
         const adminDb = context.firestore();
         // Marker owned by user
         await setDoc(doc(adminDb, 'markers', markerKey), { ownerId: ownerUid });
         // Object owned by someone else
-        await setDoc(doc(adminDb, 'objects', objectId), { ownerId: nonOwnerUid });
+        await setDoc(doc(adminDb, 'objects', uniqueObjectId2), { ownerId: nonOwnerUid });
       });
 
       const now = serverTimestamp() as Timestamp;
       const builderOutput = buildMarkerObservedWrite({
         observationId: 'obs-6',
         markerKey,
-        objectId,
+        objectId: uniqueObjectId2,
         actorUid: ownerUid,
         observedAt: now,
         receivedAt: now,
@@ -524,12 +524,12 @@ describe('Write Builder Contracts', () => {
       const builderOutput = buildObjectLocationMeasurementWrite({
         measurementId: 'meas-2',
         objectId: measObjectId,
-        // actorUid intentionally omitted
+        actorUid: undefined as any,
         measuredAt: now,
         receivedAt: now,
         latitude: 37.7749,
         longitude: -122.4194,
-      });
+      } as any);
 
       const db = testEnv.authenticatedContext(ownerUid).firestore();
       // Without actorUid, userIds is empty, and legacy.ownerId is not populated by the builder.
