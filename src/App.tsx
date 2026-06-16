@@ -700,6 +700,7 @@ function MainLayout({ onDetected, onCancelScanner }: any) {
         <div className="relative -top-6">
           <button
             onClick={() => navigate('/scanner')}
+            aria-label="Scan item"
             className="bg-[var(--primary)] text-[var(--primary-foreground)] p-4 rounded-[22px] shadow-xl shadow-[var(--primary)]/20 hover:scale-105 transition-all active:scale-95"
           >
             <Scan size={28} />
