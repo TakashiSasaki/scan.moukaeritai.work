@@ -231,21 +231,100 @@ describe('entityFactProjectionWrites', () => {
   });
 
   describe('buildMarkerObservedWrite', () => {
-    it('creates marker/object/user/device participants when provided', () => {
-      const ts = Timestamp.now();
+    it('generates a marker-only observation write', () => {
+      const now = Timestamp.now();
       const result = buildMarkerObservedWrite({
         observationId: 'obs-1',
-        markerKey: 'mk-1',
-        objectId: 'obj-1',
+        markerKey: 'm-1',
         actorUid: 'user-1',
-        receivedAt: ts,
-        observedAt: ts,
+        observedAt: now,
+        receivedAt: now,
         source: 'qr'
       });
-      expect(result.data.observationType).toBe('scan');
 
+      expect(result.collection).toBe('observations');
+      expect(result.id).toBe('obs-1');
+      expect(result.path).toBe('observations/obs-1');
 
+      const data = result.data as any;
+      expect(data.observationId).toBe('obs-1');
+      expect(data.identifierKey).toBe('m-1');
+      expect(data.ownerId).toBe('user-1');
+      expect(data.observerKind).toBe('user');
+      expect(data.observerUid).toBe('user-1');
+      expect(data.observedAt).toBe(now);
+      expect(data.receivedAt).toBe(now);
+      expect(data.createdAt).toBe(now);
+      expect(data.source).toBe('qr');
+      expect(data.observationType).toBe('scan');
 
+      expect(data).not.toHaveProperty('objectId');
+      expect(data).not.toHaveProperty('participants');
+      expect(data).not.toHaveProperty('time');
+      expect(data).not.toHaveProperty('provenance');
+    });
+
+    it('generates a marker + object observation builder write', () => {
+      const now = Timestamp.now();
+      const result = buildMarkerObservedWrite({
+        observationId: 'obs-2',
+        markerKey: 'm-1',
+        objectId: 'obj-1',
+        actorUid: 'user-1',
+        observedAt: now,
+        receivedAt: now,
+        source: 'nfc',
+        note: 'Scanned',
+        location: { latitude: 35.0, longitude: 135.0 }
+      });
+
+      expect(result.collection).toBe('observations');
+      expect(result.id).toBe('obs-2');
+      expect(result.path).toBe('observations/obs-2');
+      expect(result.data.objectId).toBe('obj-1');
+      expect(result.data.source).toBe('nfc');
+      expect(result.data.note).toBe('Scanned');
+      expect(result.data.location).toEqual({ latitude: 35.0, longitude: 135.0 });
+    });
+
+    it('maps payload to metadata', () => {
+      const now = Timestamp.now();
+      const payload = { rawValue: 'test-value' };
+      const result = buildMarkerObservedWrite({
+        observationId: 'obs-3',
+        markerKey: 'm-1',
+        actorUid: 'user-1',
+        observedAt: now,
+        receivedAt: now,
+        source: 'qr',
+        payload
+      });
+
+      expect(result.data.metadata).toEqual(payload);
+      expect((result.data as any).payload).toBeUndefined();
+    });
+
+    it('strips undefined optional fields', () => {
+      const now = Timestamp.now();
+      const result = buildMarkerObservedWrite({
+        observationId: 'obs-4',
+        markerKey: 'm-1',
+        objectId: undefined,
+        actorUid: 'user-1',
+        observedAt: now,
+        receivedAt: now,
+        source: 'qr',
+        note: undefined,
+        location: undefined,
+        payload: undefined
+      });
+
+      const keys = Object.keys(result.data);
+      expect(keys).not.toContain('objectId');
+      expect(keys).not.toContain('note');
+      expect(keys).not.toContain('location');
+      expect(keys).not.toContain('metadata');
+      expect(keys).not.toContain('payload');
     });
   });
 

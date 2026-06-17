@@ -149,7 +149,6 @@ describe('Write Builder Contracts', () => {
       });
 
       const db = testEnv.authenticatedContext(ownerUid).firestore();
-      console.log("builderOutput.data for success:", JSON.stringify(builderOutput.data));
       await assertSucceeds(setDoc(doc(db, 'observations', builderOutput.id), builderOutput.data));
     });
 

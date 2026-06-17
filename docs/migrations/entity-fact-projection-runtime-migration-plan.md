@@ -251,3 +251,4 @@ Before implementing controlled Scanner observation dual-write (Phase 2), the fol
 - **Non-blocking failures:** The first runtime PR may use non-blocking/shadow target writes. Failures (e.g. from missing target entities) must be observable and diagnosable but shouldn't break the legacy event stream.
 - **Readiness validation:** The [Scanner Observation Dual-Write Readiness Gate](scanner-observation-dual-write-readiness.md) artifact and local validator must pass before rollout.
 - **Rules validation:** The `ops:validate-scanner-observation-target-rules-hardening-design` command must pass.
+- **Runtime Contract Verification:** The `ops:validate-scanner-observation-dual-write-runtime-contract-evidence` command must pass.
