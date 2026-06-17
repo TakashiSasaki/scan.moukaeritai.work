@@ -412,6 +412,8 @@ The application has transitioned from a simple `items` collection to a normalize
     - Scanner observation dual-write must remain feature-gated via `VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE`.
     - Scanner read switching is strictly prohibited during the observation dual-write phase.
     - Target observation failures must be non-blocking and must not break legacy scan resolution or `objectEvents` writes.
+    - Runtime contract closure is not a rollout approval. The next gate is the Scanner Observation Dual-Write Rollout Design Gate.
+    - Feature flag enablement remains separate and explicit.
   - **Phase 3 CaptureForm Marker/Association Dual-Write Guardrails:**
     - CaptureForm marker/association dual-write must remain feature-gated by `VITE_ENABLE_CAPTURE_MARKER_ASSOCIATION_DUAL_WRITE`.
     - CaptureForm reads must remain on legacy `identifiers`/`objectIdentifierBindings` until read-switching phase.
