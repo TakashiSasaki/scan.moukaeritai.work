@@ -285,5 +285,24 @@ describe('scannerObservationDualWrite', () => {
       expect(result.status).toBe('failed');
       expect(result.reason).toContain('Permission denied');
     });
+
+    it('returns failed if source is unsupported and does not call setDoc', async () => {
+      vi.stubEnv('VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE', 'true');
+
+      vi.mocked(firestoreModule.getDoc).mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ ownerId: mockActorUid }),
+      } as any);
+
+      const result = await writeScannerObservationShadow({
+        markerKey: mockMarkerKey,
+        actorUid: mockActorUid,
+        source: 'gateway' as any,
+      });
+
+      expect(result.status).toBe('failed');
+      expect(result.reason).toContain('Unsupported observation source');
+      expect(firestoreModule.setDoc).not.toHaveBeenCalled();
+    });
   });
 });

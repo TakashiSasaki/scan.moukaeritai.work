@@ -320,6 +320,27 @@ export function buildObservationWrite(input: {
   };
 }
 
+export type ScannerObservationTargetWrite = {
+  observationId: string;
+  identifierKey: string;
+  ownerId: string;
+  observerKind: 'user';
+  observerUid: string;
+  observedAt: Timestamp;
+  receivedAt: Timestamp;
+  source: 'qr' | 'nfc' | 'manual' | 'barcode' | 'camera';
+  observationType: 'scan';
+  createdAt: Timestamp;
+  objectId?: string;
+  note?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+  metadata?: Record<string, unknown>;
+  schemaVersion?: number;
+};
+
 export function buildMarkerObservedWrite(input: {
   observationId: string;
   markerKey: string;
@@ -331,8 +352,8 @@ export function buildMarkerObservedWrite(input: {
   note?: string;
   location?: { latitude: number; longitude: number; altitude?: number | null; accuracy?: number | null; altitudeAccuracy?: number | null; heading?: number | null; speed?: number | null };
   payload?: Record<string, unknown>;
-}) {
-  const data = {
+}): EntityFactProjectionWrite<ScannerObservationTargetWrite> {
+  const data: ScannerObservationTargetWrite = {
     observationId: input.observationId,
     identifierKey: input.markerKey,
     ownerId: input.actorUid,
@@ -344,16 +365,20 @@ export function buildMarkerObservedWrite(input: {
     observationType: 'scan',
     objectId: input.objectId,
     note: input.note,
-    location: input.location,
+    location: input.location ? {
+      latitude: input.location.latitude,
+      longitude: input.location.longitude,
+    } : undefined,
     metadata: input.payload,
     schemaVersion: 1,
     createdAt: input.receivedAt,
   };
 
   return {
+    collection: 'observations',
     id: input.observationId,
-    collection: 'observations' as const,
-    data: stripUndefinedDeep(data)
+    path: `observations/${input.observationId}`,
+    data: stripUndefinedDeep(data) as ScannerObservationTargetWrite
   };
 }
 

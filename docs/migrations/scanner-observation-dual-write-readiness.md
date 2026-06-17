@@ -94,3 +94,6 @@ npm run ops:validate-scanner-observation-dual-write-readiness -- \
 - `skipped_*` statuses are expected safe outcomes, not user-facing errors.
 - A `failed` shadow write must not break scan resolution.
 - Passing readiness validation is not rollout approval. Rollout approval or environment config changes must be a separate explicit PR or operator action.
+
+## Runtime Contract Evidence
+A separate local evidence artifact is available to verify the runtime write contract. See `scanner-observation-dual-write-runtime-contract-evidence.md`.

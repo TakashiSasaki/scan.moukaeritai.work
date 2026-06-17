@@ -58,4 +58,4 @@ The target collection for these rules is `observations`. The legacy `identifierO
 
 ## Interpretation
 
-The rules have been implemented and validated via `firestore.rules.test.ts`. This still does not enable `VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE`. This still does not change Scanner runtime behavior. This still does not authorize UI read switching. Rollout remains a separate explicit PR/operator action.
+The rules have been implemented and validated via `firestore.rules.test.ts`. This still does not enable `VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE`. This still does not change Scanner runtime behavior. This still does not authorize UI read switching. Rollout remains a separate explicit PR/operator action. See `scanner-observation-dual-write-runtime-contract-evidence.md` for proof of the explicit runtime boundary closure.

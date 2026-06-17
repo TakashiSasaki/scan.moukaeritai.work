@@ -3,6 +3,16 @@ import { db } from './firebase';
 import { buildMarkerObservedWrite } from './entityFactProjectionWrites';
 import { v7 as uuidv7 } from 'uuid';
 
+type ClientObservationSource = 'qr' | 'nfc' | 'manual' | 'barcode' | 'camera';
+
+function isClientObservationSource(source: string): source is ClientObservationSource {
+  return source === 'qr'
+    || source === 'nfc'
+    || source === 'manual'
+    || source === 'barcode'
+    || source === 'camera';
+}
+
 export function isScannerObservationDualWriteEnabled(): boolean {
   return import.meta.env.VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE === 'true';
 }
@@ -75,6 +85,10 @@ export async function writeScannerObservationShadow(input: {
     }
 
     // 3. Build target observation write
+    if (!isClientObservationSource(input.source)) {
+      return { status: 'failed', reason: `Unsupported observation source: ${input.source}` };
+    }
+
     const observationId = uuidv7();
     const now = Timestamp.now();
     const serverTime = serverTimestamp() as Timestamp;
@@ -87,7 +101,7 @@ export async function writeScannerObservationShadow(input: {
       actorUid: input.actorUid,
       observedAt: now,
       receivedAt: serverTime,
-      source: input.source as any,
+      source: input.source,
       payload,
     });
 
