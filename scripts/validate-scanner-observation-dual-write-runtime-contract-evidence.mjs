@@ -44,7 +44,9 @@ const invariants = {
   readSwitchingAuthorized: false,
   rolloutApproved: false,
   legacyIdentifierObservationsChanged: false,
-  objectEventsAuthoritative: true
+  objectEventsAuthoritative: true,
+  missingOrUnownedObjectIdOmitted: true,
+  markerOwnershipRequired: true
 };
 
 const errors = [];

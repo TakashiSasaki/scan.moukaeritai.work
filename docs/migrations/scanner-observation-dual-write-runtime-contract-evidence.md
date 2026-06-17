@@ -11,8 +11,8 @@ This artifact serves as local-only evidence that the `observations` feature-gate
 - **builderDescriptorIncludesPath**: `true` - The builder correctly emits `{ collection, id, path, data }`.
 - **runtimeShadowWriterFeatureGated**: `true` - The dual-write handler explicitly checks `VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE`.
 - **unsupportedSourcesRejected**: `true` - The write handler strictly enforces client source types (`qr`, `nfc`, `manual`, `barcode`, `camera`) and returns early rather than coercing.
-- **missingOrUnownedObjectIdOmitted**: The handler successfully verifies ownership and omits `objectId` correctly if the object is missing or owned by another user.
-- **markerOwnershipRequired**: The handler explicitly rejects writes if the `markerKey` document is not present and owned.
+- **missingOrUnownedObjectIdOmitted**: `true` - The handler successfully verifies ownership and omits `objectId` correctly if the object is missing or owned by another user, rather than attempting to write it.
+- **markerOwnershipRequired**: `true` - The handler explicitly rejects writes if the `markerKey` document is not present and owned, requiring it before any target `observations` shadow write is attempted.
 
 ## Negative Invariants (Actions NOT Taken)
 
