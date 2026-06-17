@@ -123,16 +123,16 @@ export function validateScannerObservationDualWriteRolloutDesignGate(input) {
          errors.push(`Readiness payload status '${readinessPayload.status}' incorrectly implies rollout/production.`);
      }
   }
-  if (readinessPayload.featureFlagEnabled === true) {
-    errors.push('Readiness payload: featureFlagEnabled must be false.');
+  if (readinessPayload.featureFlagEnabledInThisStride === true) {
+    errors.push('Readiness payload: featureFlagEnabledInThisStride must be false.');
   }
 
   // 4. Validate Target Rules Hardening Design Constraints
-  if (targetRulesDesignPayload.featureFlagEnabled === true) {
-    errors.push('Target rules design: featureFlagEnabled must be false.');
+  if (targetRulesDesignPayload.featureFlagEnabledInThisStride === true) {
+    errors.push('Target rules design: featureFlagEnabledInThisStride must be false.');
   }
-  if (targetRulesDesignPayload.uiReadSwitchingAuthorized === true) {
-    errors.push('Target rules design: uiReadSwitchingAuthorized must be false.');
+  if (targetRulesDesignPayload.readSwitchingAuthorized === true) {
+    errors.push('Target rules design: readSwitchingAuthorized must be false.');
   }
 
   // 5. Check for forbidden phrases across stringified inputs
