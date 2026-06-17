@@ -26,4 +26,11 @@ The following behaviors remain untouched, ensuring safety:
 - **legacyIdentifierObservationsChanged**: `false`
 - **objectEventsAuthoritative**: `true`
 
+
+
 This artifact explicitly closes the readiness milestone.
+
+## Next Gates
+- Runtime contract closure is not a rollout approval.
+- The next gate is the [Scanner Observation Dual-Write Rollout Design Gate](scanner-observation-dual-write-rollout-design-gate.md).
+- Feature flag enablement remains separate and explicit.

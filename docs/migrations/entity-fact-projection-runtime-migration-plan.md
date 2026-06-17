@@ -102,6 +102,8 @@ Using existing mapping helpers in `src/lib/entityFactProjectionMapping.ts` as re
 - Add tests only.
 
 **Phase 2: Controlled dual-write for scanner observations (In Progress)**
+
+Runtime contract closure is not a rollout approval. The next gate is the [Scanner Observation Dual-Write Rollout Design Gate](scanner-observation-dual-write-rollout-design-gate.md). Feature flag enablement remains separate and explicit.
 - Scanner continues reading identifiers.
 - Scanner additionally writes `ObservationDoc` for marker scans via a non-blocking shadow path.
 - `objectEvents` scan write remains authoritative.

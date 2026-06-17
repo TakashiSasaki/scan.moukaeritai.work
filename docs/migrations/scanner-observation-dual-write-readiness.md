@@ -97,3 +97,8 @@ npm run ops:validate-scanner-observation-dual-write-readiness -- \
 
 ## Runtime Contract Evidence
 A separate local evidence artifact is available to verify the runtime write contract. See `scanner-observation-dual-write-runtime-contract-evidence.md`.
+
+## Next Gates
+- Runtime contract closure is not a rollout approval.
+- The next gate is the [Scanner Observation Dual-Write Rollout Design Gate](scanner-observation-dual-write-rollout-design-gate.md).
+- Feature flag enablement remains separate and explicit.
