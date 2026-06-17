@@ -45,7 +45,7 @@ The current runtime still relies on several legacy and transitional collections.
   - `createdBy`
   - `ownerUid`
   - `visibility`
-  - `lastReportedAt`
+  - `lastReportedAt` (Domain time conceptually belongs to Facts/Projections, not the Entity directly)
   - `lastReportedBy`
   - `lastReportedLocation`
   - `lastReportedPlaceLabel`
