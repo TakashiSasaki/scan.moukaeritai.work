@@ -17,6 +17,7 @@ export default function SitemapPage({ onClose }: SitemapPageProps) {
         </div>
         <button
           onClick={onClose}
+          aria-label="Exit"
           className="px-4 py-2 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors flex items-center gap-2"
         >
           <span className="hidden sm:inline">🚪 Exit</span>
