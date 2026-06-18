@@ -359,7 +359,7 @@ export default function UnassignedIdentifierScreen() {
         ) : mode === 'observe' ? (
           <>
             <div className="flex items-center gap-4 mb-6">
-              <button onClick={() => setMode('options')} className="p-2 -ml-2 rounded-full hover:bg-[var(--surface-container-highest)]">
+              <button onClick={() => setMode('options')} aria-label="Go back" className="p-2 -ml-2 rounded-full hover:bg-[var(--surface-container-highest)]">
                  <ArrowRight className="rotate-180" size={24} />
               </button>
               <h2 className="text-xl font-bold text-left">観測だけ記録</h2>
@@ -443,7 +443,7 @@ export default function UnassignedIdentifierScreen() {
         ) : (
           <div className="flex flex-col h-[60vh]">
             <div className="flex items-center gap-4 mb-6">
-              <button onClick={() => setMode('options')} className="p-2 -ml-2 rounded-full hover:bg-[var(--surface-container-highest)]">
+              <button onClick={() => setMode('options')} aria-label="Go back" className="p-2 -ml-2 rounded-full hover:bg-[var(--surface-container-highest)]">
                  <ArrowRight className="rotate-180" size={24} />
               </button>
               <h2 className="text-xl font-bold text-left">Attach to Object</h2>

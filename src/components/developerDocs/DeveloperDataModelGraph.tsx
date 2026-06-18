@@ -253,6 +253,7 @@ export default function DeveloperDataModelGraph() {
           <div className="flex gap-2 items-center">
             <button
               onClick={() => setIsControlsOpen(!isControlsOpen)}
+              aria-label="Toggle filters"
               className="flex items-center gap-2 px-4 py-2 bg-[var(--surface-container-high)] hover:bg-[var(--surface-container-highest)] text-[var(--on-surface)] rounded-full text-sm font-medium transition-colors border border-[var(--outline)]"
             >
               <Filter size={16} />
