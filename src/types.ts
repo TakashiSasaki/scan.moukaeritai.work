@@ -125,6 +125,7 @@ export interface ObjectRecord {
   createdBy?: string;
   ownerUid?: string;
   visibility?: ObjectVisibility;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   lastReportedAt?: Timestamp;
   lastReportedBy?: string;
   lastReportedLocation?: ObservationLocation;
