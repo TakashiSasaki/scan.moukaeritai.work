@@ -72,6 +72,7 @@ export default function UserSettingsPanel({ onClose }: UserSettingsPanelProps) {
               <button
                 onClick={handleSave}
                 disabled={saving || !hasChanges}
+                aria-label="Save settings"
                 className="flex items-center gap-2 bg-[var(--primary)] text-[var(--primary-foreground)] px-4 py-2 rounded-xl font-bold transition-transform active:scale-95 disabled:opacity-50 text-sm shadow-sm"
               >
                 {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
