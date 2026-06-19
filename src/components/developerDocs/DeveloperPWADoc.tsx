@@ -44,7 +44,7 @@ export default function DeveloperPWADoc() {
             <li>Standalone display mode for a native feel.</li>
             <li>Runtime caching strategies for fonts and static assets.</li>
             <li>Increased cache size limit (<code>maximumFileSizeToCacheInBytes: 6000000</code>) to accommodate the React/Vite build payload.</li>
-            <li>Pre-build script execution to dynamically generate requisite PWA icons (manifests, maskable icons) from a source SVG.</li>
+            <li>Pre-build script execution to dynamically generate requisite PWA icons (e.g. <code>public/pwa-icon-192.png</code>, <code>public/favicon-48.png</code>) via <code>scripts/generate-pwa-icons.mjs</code>. Generated PNG fallback assets are created by the build and must not be committed.</li>
           </ul>
         </section>
       </div>

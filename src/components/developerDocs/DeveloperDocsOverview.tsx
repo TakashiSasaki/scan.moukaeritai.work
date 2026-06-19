@@ -63,6 +63,7 @@ export default function DeveloperDocsOverview() {
               <li><code>npm install</code> - Install root dependencies.</li>
               <li><code>npm run lint</code> - Run TypeScript type checking and linting.</li>
               <li><code>npm run test</code> - Run unit tests via Vitest.</li>
+              <li><code>npm run test:rules</code> - Run Firestore rules emulator tests (requires Java).</li>
               <li><code>npm run build</code> - Build the Vite application for production (includes PWA icon generation).</li>
             </ul>
           </div>
