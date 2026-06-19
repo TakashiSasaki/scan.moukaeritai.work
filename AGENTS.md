@@ -459,6 +459,7 @@ The application has transitioned from a simple `items` collection to a normalize
 - The data model graph MUST NOT connect to Firestore or inspect live data.
 - Do not bypass these constraints to make developer documentation routes dynamic or read from the database.
 - Route catalog must stay synchronized with developer routes in `src/lib/routeCatalog.ts`.
+- When making architectural, routing, database, or UI/UX changes, the public developer documentation pages (`src/components/developerDocs/`) and route catalog (`src/lib/routeCatalog.ts`) MUST be reviewed and updated to reflect those changes.
 
 ## Entity/Fact/Projection Guardrails
 - Projection recompute must remain backend/admin-only.
