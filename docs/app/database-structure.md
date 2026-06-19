@@ -191,7 +191,7 @@ Entities are timeless identity nodes.
 
 - `objects`: Represents physical items or assets being tracked. Currently active in production.
 - `markers`: Target concept for physical, scannable tags used to look up objects. Currently represented in production by `identifiers`.
-- `places`: Target concept for stable physical locations or zones. (Do not use `locations` as a top-level collection).
+- `places`: Target concept for stable physical locations or zones. (`locations` is a legacy/current concept; do not use as a top-level collection).
 
 ## 5. Fact Collections
 
@@ -216,9 +216,9 @@ Projections are derived, easily queryable read models built from Facts and Entit
 - `items`: Legacy import source for the previous object model.
 - `objects.currentLocation`: Current runtime compatibility state representing the latest known position; conceptually maps to future `measurements` and `objectSummaries.currentPosition`.
 - `objects.identifierSummary`: Current runtime denormalized state summarizing identifier presence; conceptually moving toward `objectSummaries` and `markerSummaries`.
-- `identifiers`: Current runtime collection mapping to `markers`.
+- `identifiers`: Current runtime compatibility collection mapping to `markers`.
 - `identifiers.objectId`: Legacy compatibility field, non-authoritative.
-- `objectIdentifierBindings`: Current runtime collection mapping to `associations`. (Conceptually maps to associations, not a new bindings collection).
+- `objectIdentifierBindings`: Current runtime compatibility collection mapping to `associations`. (Conceptually maps to associations, not a new bindings collection).
 - `identifierObservations`: Current runtime collection mapping to `observations`.
 - `objectEvents`: Current runtime collection mapping to `events`.
 - `legacy` fields: Embedded metadata fields (e.g., `objects.legacy`, `identifiers.legacy`) preserving import provenance and older schema values. `tagType` is preserved in legacy metadata where applicable.

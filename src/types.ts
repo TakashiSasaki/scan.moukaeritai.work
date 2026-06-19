@@ -108,6 +108,7 @@ export interface ObjectRecord {
     latitude: number;
     longitude: number;
     address?: string;
+    /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
     updatedAt?: Timestamp;
   };
   primaryImageId?: string;
