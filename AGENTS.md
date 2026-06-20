@@ -405,6 +405,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - `Identifier` conceptually maps to `Marker`.
   - `Binding` conceptually maps to `Association`.
   - `locations` conceptually maps to `Place`.
+- When updating developer documentation, explicitly state that `Identifier`, `Binding`, and `locations` are legacy/current implementation terms, and `Marker`, `Association`, and `places` should be preferred for conceptual discussions.
 - Domain time conceptually belongs to Facts, and should not be placed on Entity types directly.
 - Do not remove legacy terms from docs while the runtime still uses them; instead, map them to Marker, Association, and Place.
 - The Entity / Fact / Projection Runtime Migration Plan is documented at `docs/migrations/entity-fact-projection-runtime-migration-plan.md`. This plan outlines the phased approach to transition from the legacy Identifier/Binding model to the Entity/Fact/Projection model.
