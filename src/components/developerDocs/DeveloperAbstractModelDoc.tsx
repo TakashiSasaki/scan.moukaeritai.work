@@ -78,10 +78,18 @@ export default function DeveloperAbstractModelDoc() {
           The current implementation is migrating away from older concepts. The following are kept for backward compatibility during the transition. See the <strong>EFP Drift Audit</strong> for detailed structural tracking.
         </p>
         <ul className="space-y-4 text-sm mb-6">
-          <li><strong>Domain Time:</strong> Time fields (like <code>createdAt</code>, <code>firstObservedAt</code>, <code>attachedAt</code>) currently on legacy Entities conceptually belong to <strong>Facts</strong>, not to the core Entities themselves.</li>
+          <li><strong>Domain Time:</strong> Time fields (like <code>createdAt</code>, <code>lastSeenAt</code>, <code>lastReportedAt</code>, <code>firstObservedAt</code>, <code>attachedAt</code>) currently on legacy Entities conceptually belong to <strong>Facts</strong> or <strong>Projections</strong>, not to the core Entities themselves. Firestore persistence metadata (such as <code>_meta</code> or schema versions) is considered an implementation detail, not domain time.</li>
           <li>
-            <strong className="text-orange-500 block mb-1">Marker, Association, & places</strong>
-            <p className="text-[var(--on-surface-variant)]">Replacing legacy concepts <strong>Identifier</strong>, <strong>Binding</strong>, and <strong>locations</strong>. The older logic treats bindings as the primary relation.</p>
+            <strong className="text-orange-500 block mb-1">Current Legacy Collections to Target Names</strong>
+            <div className="text-[var(--on-surface-variant)]">
+              <ul className="list-disc pl-5 mt-1">
+                <li><code>identifiers</code> maps conceptually to <strong>markers</strong>.</li>
+                <li><code>objectIdentifierBindings</code> maps conceptually to <strong>associations</strong>.</li>
+                <li><code>identifierObservations</code> maps conceptually to <strong>observations</strong>.</li>
+                <li><code>objectEvents</code> maps conceptually to <strong>events</strong>.</li>
+                <li>The older <code>locations</code> top-level collection maps conceptually to <strong>places</strong>. (Do not use <code>locations</code> as a collection name in the forward-looking model).</li>
+              </ul>
+            </div>
           </li>
           <li>
             <strong className="text-orange-500 block mb-1">Legacy Item</strong>

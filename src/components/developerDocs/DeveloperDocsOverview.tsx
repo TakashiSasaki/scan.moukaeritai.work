@@ -72,8 +72,16 @@ export default function DeveloperDocsOverview() {
             <ul className="list-disc list-inside text-xs text-[var(--on-surface-variant)] space-y-1 mt-2">
               <li><code>npm run test:functions-boundary</code> - Validate that functions do not illegally import from the root or packages.</li>
               <li><code>npm run prepare:functions-efp-model</code> - Prepare the local <code>@scan/efp-model</code> dependency inside functions.</li>
-              <li><code>cd functions && npm install</code> - Install functions dependencies.</li>
+              <li><code>cd functions && npm install</code> - Install functions dependencies using deterministic install (e.g. <code>npm ci</code>) in CI.</li>
+              <li><code>npm run test:functions-efp-model</code> - Validate that the functions model dependency works.</li>
               <li><code>cd functions && npm run build</code> - Build Firebase Functions.</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold text-sm text-[var(--on-surface)] mt-4">Operational Validation Commands</h4>
+            <ul className="list-disc list-inside text-xs text-[var(--on-surface-variant)] space-y-1 mt-2">
+              <li><code>npm run ops:validate-efp-drift-audit</code> - Validates the EFP structural drift documentation.</li>
+              <li><code>npm run ops:validate-scanner-observation-dual-write-readiness</code> - Validates planning artifacts for the target implementation.</li>
             </ul>
           </div>
         </div>
