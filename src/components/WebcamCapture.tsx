@@ -94,7 +94,8 @@ export default function WebcamCapture({ onCapture, onCancel }: WebcamCaptureProp
         <button 
           onClick={handleTakePhoto}
           disabled={!!error}
-          className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center p-1 hover:scale-105 active:scale-95 transition-transform disabled:opacity-50 disabled:hover:scale-100"
+          aria-label="Take photo"
+          className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center p-1 hover:scale-105 active:scale-95 transition-transform disabled:opacity-50 disabled:hover:scale-100 focus-visible:ring-4 focus-visible:ring-white/50 focus-visible:outline-none"
         >
           <div className="w-full h-full bg-white rounded-full"></div>
         </button>
