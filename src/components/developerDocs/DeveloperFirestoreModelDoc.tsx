@@ -134,6 +134,7 @@ export default function DeveloperFirestoreModelDoc() {
             <li><code>objectIdentifierBindings</code> maps to <strong>associations</strong></li>
             <li><code>identifierObservations</code> maps to <strong>observations</strong></li>
             <li><code>objectEvents</code> maps to <strong>events</strong></li>
+            <li><code>locations</code> maps to <strong>places</strong></li>
           </ul>
           <p className="text-sm text-[var(--on-surface)] mt-4">
             Phase 7E migration execution (Imported Observation Execution) remains blocked. Furthermore, dual-write read switching requires separate explicit PRs.
