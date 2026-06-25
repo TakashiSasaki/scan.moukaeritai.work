@@ -127,7 +127,16 @@ export default function DeveloperFirestoreModelDoc() {
         <section className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-2xl p-6">
           <h3 className="text-lg font-bold text-[var(--on-surface)] mb-4 text-amber-500">Legacy / Compatibility Notes</h3>
           <p className="text-sm text-[var(--on-surface)]">
-            While the architecture is moving to the Entity / Fact / Projection model, terms like "Identifier" and "Binding" are preserved in documentation because they still exist in the current runtime model. They map directly to "Marker" and "Association" respectively in the target architecture.
+            While the architecture is moving to the Entity / Fact / Projection model, legacy terms are preserved in documentation because they still exist in the current runtime model. They map directly as follows:
+          </p>
+          <ul className="list-disc pl-5 mt-2 space-y-1 text-sm text-[var(--on-surface-variant)]">
+            <li><code>identifiers</code> maps to <strong>markers</strong></li>
+            <li><code>objectIdentifierBindings</code> maps to <strong>associations</strong></li>
+            <li><code>identifierObservations</code> maps to <strong>observations</strong></li>
+            <li><code>objectEvents</code> maps to <strong>events</strong></li>
+          </ul>
+          <p className="text-sm text-[var(--on-surface)] mt-4">
+            Phase 7E migration execution (Imported Observation Execution) remains blocked. Furthermore, dual-write read switching requires separate explicit PRs.
           </p>
         </section>
 

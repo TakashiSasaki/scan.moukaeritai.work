@@ -48,12 +48,17 @@ export default function DeveloperDataModelDoc() {
         <p className="text-[var(--on-surface-variant)] text-sm mb-4">
           The system is continuously evolving from its initial design (the "legacy `items` model") to a robust, distributed scanning framework. Key ongoing transitions include:
         </p>
-        <ul className="list-disc list-inside space-y-2 text-sm text-[var(--on-surface-variant)]">
+        <ul className="list-disc list-inside space-y-2 text-sm text-[var(--on-surface-variant)] mb-4">
           <li><strong>Marker identity:</strong> Transitioning identifiers to globally addressable Markers. The older "ownerless/global identifier" concept is a legacy design thread informing this Marker identity model. The current runtime still uses identifiers, but the long-term conceptual term is Marker.</li>
           <li><strong>Association migration:</strong> Capturing connection state in explicit Association records instead of mutating the main object.</li>
           <li><strong>Observation / Measurement facts:</strong> Normalizing how user sightings, background scans, and telemetry enter the system securely as immutable Facts.</li>
           <li><strong>Projection summaries:</strong> Utilizing derived, easily queryable read models (like ObjectSummary or MarkerSummary) built from underlying Facts and Entities.</li>
         </ul>
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 text-sm mt-4">
+          <p className="text-[var(--on-surface)]">
+            <strong>Status Update:</strong> Phase 7E migration execution (Imported Observation Execution) remains blocked and is explicitly documented as such in migration statuses.
+          </p>
+        </div>
       </section>
     </div>
   );
