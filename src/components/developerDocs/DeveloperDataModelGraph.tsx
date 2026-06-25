@@ -350,7 +350,8 @@ export default function DeveloperDataModelGraph() {
                   <div className="shrink-0 pt-4 lg:pt-0 lg:pl-4 lg:border-l border-[var(--outline)] self-stretch flex items-center">
                     <button
                       onClick={clearFilters}
-                      className="w-full lg:w-auto px-4 py-2 bg-[var(--surface-container-high)] hover:bg-red-500/10 hover:text-red-500 text-[var(--on-surface-variant)] rounded-xl text-sm font-medium transition-colors border border-[var(--outline)] hover:border-red-500/30 whitespace-nowrap"
+                      disabled={activeNodeTypes.size === allNodeTypes.length && activeEdgeTypes.size === allEdgeTypes.length && searchQuery === ''}
+                      className="w-full lg:w-auto px-4 py-2 bg-[var(--surface-container-high)] hover:bg-red-500/10 hover:text-red-500 text-[var(--on-surface-variant)] rounded-xl text-sm font-medium transition-colors border border-[var(--outline)] hover:border-red-500/30 whitespace-nowrap disabled:opacity-50 disabled:pointer-events-none"
                     >
                       Clear Filters
                     </button>

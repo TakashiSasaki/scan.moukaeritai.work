@@ -369,6 +369,8 @@ function AuthenticatedAppLayout({
           <div className="relative" ref={profileMenuRef}>
             <button 
               onClick={() => setShowProfile(!showProfile)}
+              aria-label="Toggle user profile menu"
+              aria-expanded={showProfile}
               className="flex items-center outline-none ring-[var(--primary)] focus-visible:ring-2 rounded-full"
             >
               {user?.photoURL ? (
