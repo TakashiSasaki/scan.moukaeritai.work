@@ -60,7 +60,7 @@ export default function DeveloperDocsOverview() {
           <div>
             <h4 className="font-bold text-sm text-[var(--on-surface)]">Standard Validation Commands</h4>
             <ul className="list-disc list-inside text-xs text-[var(--on-surface-variant)] space-y-1 mt-2">
-              <li><code>npm install</code> - Install root dependencies.</li>
+              <li><code>npm ci</code> - Install root dependencies deterministically (preferred over <code>npm install</code> unless updating lockfile).</li>
               <li><code>npm run lint</code> - Run TypeScript type checking and linting.</li>
               <li><code>npm run test</code> - Run unit tests via Vitest.</li>
               <li><code>npm run test:rules</code> - Run Firestore rules emulator tests (requires Java).</li>
@@ -72,7 +72,7 @@ export default function DeveloperDocsOverview() {
             <ul className="list-disc list-inside text-xs text-[var(--on-surface-variant)] space-y-1 mt-2">
               <li><code>npm run test:functions-boundary</code> - Validate that functions do not illegally import from the root or packages.</li>
               <li><code>npm run prepare:functions-efp-model</code> - Prepare the local <code>@scan/efp-model</code> dependency inside functions.</li>
-              <li><code>cd functions && npm install</code> - Install functions dependencies using deterministic install (e.g. <code>npm ci</code>) in CI.</li>
+              <li><code>cd functions && npm ci</code> - Install functions dependencies using deterministic install (preferred over <code>npm install</code>).</li>
               <li><code>npm run test:functions-efp-model</code> - Validate that the functions model dependency works.</li>
               <li><code>cd functions && npm run build</code> - Build Firebase Functions.</li>
             </ul>
