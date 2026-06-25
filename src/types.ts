@@ -248,6 +248,7 @@ export interface ObjectImageRecord {
   width?: number;
   height?: number;
   sortOrder?: number;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   createdAt: Timestamp;
   createdBy: string;
   legacy?: {
@@ -277,7 +278,9 @@ export interface LegacyItem {
   contextImageUrls: string[];
   bluetoothTags: BluetoothTag[];
   tagType: 'qr' | 'nfc' | 'none';
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   createdAt: Timestamp;
+  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   updatedAt: Timestamp;
 }
 
