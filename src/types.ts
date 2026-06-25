@@ -61,7 +61,6 @@ export type IdentifierObservationRecord = {
   receivedAt: Timestamp;
   source: ObservationSource;
   observationType: ObservationType;
-  /** TODO(Migration): Domain time conceptually belongs to Fact or Projection records, not Entity directly. */
   createdAt: Timestamp;
 
   /**
