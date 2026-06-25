@@ -405,6 +405,7 @@ function AuthenticatedAppLayout({
                     </div>
                     <button 
                       onClick={() => setShowProfile(false)}
+                      aria-label="Close profile menu"
                       className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] p-1.5 -mr-1.5 -mt-1.5 rounded-full transition-colors flex-shrink-0"
                     >
                       <X size={16} />
