@@ -1,5 +1,5 @@
 {
-  "name": "scan.moukaeritai.work",
+  "name": "scan.mw",
   "description": "Tag and track your items using QR codes, NFC, and photos with Firebase backend.",
   "requestFramePermissions": ["camera", "geolocation", "nfc", "bluetooth"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
