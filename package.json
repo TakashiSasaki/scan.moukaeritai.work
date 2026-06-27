@@ -18,6 +18,7 @@
     "ops:recompute-projection": "node scripts/recompute-projection-summary.mjs",
     "ops:reconcile-projection": "node scripts/reconcile-projection-summaries.mjs",
     "ops:report-projection-reconciliation": "node scripts/report-projection-reconciliation.mjs",
+    "generate-efu": "node scripts/generate-efu.js",
     "ops:plan-projection-canary-writes": "node scripts/plan-projection-canary-writes.mjs",
     "ops:validate-projection-canary-writes": "node scripts/validate-projection-canary-writes.mjs",
     "ops:assess-projection-backfill-readiness": "node scripts/assess-projection-backfill-readiness.mjs",
