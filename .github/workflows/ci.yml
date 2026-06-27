@@ -3,10 +3,11 @@ name: CI
 on:
   push:
     branches:
-      - scan.moukaeritai.work
+      - main
   pull_request:
     branches:
-      - scan.moukaeritai.work
+      - main
+  workflow_dispatch:
 
 jobs:
   validate:

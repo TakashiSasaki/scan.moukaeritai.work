@@ -1,0 +1,43 @@
+name: Sync scan.moukaeritai.work branch
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync Branch
+        run: |
+          # 同期元のリポジトリを upstream として追加して fetch
+          git remote add upstream https://github.com/TakashiSasaki/scan.moukaeritai.work.git
+          git fetch upstream scan.moukaeritai.work
+          
+          # 現在のリポジトリ (origin) に対象のブランチが存在するか確認
+          if git ls-remote --exit-code --heads origin scan.moukaeritai.work; then
+            echo "Branch exists on origin. Checking out and merging..."
+            git fetch origin scan.moukaeritai.work
+            git checkout scan.moukaeritai.work
+            # 競合しない限りマージする（履歴が繋がっていない場合も考慮）
+            git merge upstream/scan.moukaeritai.work --allow-unrelated-histories -m "Merge upstream changes"
+          else
+            echo "Branch does not exist on origin. Creating new branch from upstream..."
+            git checkout -b scan.moukaeritai.work upstream/scan.moukaeritai.work
+          fi
+          
+          # origin (TakashiSasaki/scan.mw) の対象ブランチへプッシュ
+          # main ブランチには影響を与えません
+          git push origin scan.moukaeritai.work

@@ -1,0 +1,64 @@
+name: Sync agent branches
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync 'jules' branch
+        run: |
+          # 基準となる main ブランチに戻る
+          git checkout main
+          
+          # origin に jules ブランチが存在するか確認
+          if git ls-remote --exit-code --heads origin jules; then
+            echo "Branch 'jules' exists. Merging main..."
+            git fetch origin jules
+            git checkout jules
+            # コンフリクトが発生しても、main の変更を優先してマージします
+            git merge main -X theirs -m "Merge main into jules"
+          else
+            echo "Branch 'jules' does not exist. Creating from main..."
+            git checkout -b jules
+          fi
+          
+          # origin へプッシュ
+          git push origin jules
+
+      - name: Sync 'codex' branch
+        run: |
+          # 基準となる main ブランチに戻る
+          git checkout main
+          
+          # origin に codex ブランチが存在するか確認
+          if git ls-remote --exit-code --heads origin codex; then
+            echo "Branch 'codex' exists. Merging main..."
+            git fetch origin codex
+            git checkout codex
+            # コンフリクトが発生しても、main の変更を優先してマージします
+            git merge main -X theirs -m "Merge main into codex"
+          else
+            echo "Branch 'codex' does not exist. Creating from main..."
+            git checkout -b codex
+          fi
+          
+          # origin へプッシュ
+          git push origin codex
