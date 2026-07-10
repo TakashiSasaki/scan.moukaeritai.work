@@ -1,0 +1,1182 @@
+{
+  "entities": {
+    "ObjectRecord": {
+      "title": "Object Record",
+      "description": "Represents a real-world physical object being cataloged.",
+      "type": "object",
+      "properties": {
+        "objectId": {
+          "type": "string",
+          "description": "The unique ID matching the document ID."
+        },
+        "name": {
+          "description": "Short name of the object.",
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the object."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the user who owns this object."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "archived",
+            "lost",
+            "disposed"
+          ]
+        },
+        "currentLocation": {
+          "type": "object",
+          "description": "Geographical location (latitude/longitude/address).",
+          "properties": {
+            "latitude": {
+              "type": "number"
+            },
+            "longitude": {
+              "type": "number"
+            },
+            "address": {
+              "type": "string"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "primaryImageId": {
+          "type": "string",
+          "description": "ID of the primary image."
+        },
+        "identifierSummary": {
+          "type": "object",
+          "description": "Denormalized UI summary.",
+          "properties": {
+            "activeKinds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "activeIdentifierCount": {
+              "type": "number"
+            },
+            "hasQr": {
+              "type": "boolean"
+            },
+            "hasNfc": {
+              "type": "boolean"
+            }
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "primaryImageUrl": {
+          "type": "string",
+          "description": "Denormalized URL for fast list view rendering."
+        },
+        "legacy": {
+          "type": "object",
+          "properties": {
+            "sourceCollection": {
+              "type": "string",
+              "enum": [
+                "items"
+              ]
+            },
+            "legacyItemId": {
+              "type": "string"
+            }
+          }
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "ownerUid": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "private",
+            "link_shared",
+            "community_visible",
+            "public_readable"
+          ]
+        },
+        "lastReportedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastReportedBy": {
+          "type": "string"
+        },
+        "lastReportedLocation": {
+          "type": "object"
+        },
+        "lastReportedPlaceLabel": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "objectId",
+        "ownerId",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "IdentifierRecord": {
+      "title": "Identifier Record",
+      "description": "Lookup table from a scanned QR/NFC/manual value to an object.",
+      "type": "object",
+      "properties": {
+        "identifierKey": {
+          "type": "string",
+          "description": "Normalized Firestore-safe ID."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the user who owns this identifier."
+        },
+        "objectId": {
+          "type": "string",
+          "description": "Optional object this identifier resolves to."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "qr",
+            "nfc",
+            "manual",
+            "barcode",
+            "bluetooth"
+          ]
+        },
+        "scheme": {
+          "type": "string",
+          "description": "e.g., qr-url-token, nfc-uid"
+        },
+        "canonicalValue": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "unassigned",
+            "retired",
+            "lost",
+            "replaced"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "rawValue": {
+          "type": "string",
+          "description": "Original raw scanned value."
+        },
+        "label": {
+          "type": "string",
+          "description": "Optional human-readable label."
+        },
+        "firstObservedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "firstObservedBy": {
+          "type": "string"
+        },
+        "firstObservationId": {
+          "type": "string"
+        },
+        "lastObservedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastObservedBy": {
+          "type": "string"
+        },
+        "lastObservationId": {
+          "type": "string"
+        },
+        "lastObservedSource": {
+          "type": "string"
+        },
+        "discoveryState": {
+          "type": "string",
+          "enum": [
+            "observed",
+            "registered",
+            "detached",
+            "unknown"
+          ]
+        },
+        "schemaVersion": {
+          "type": "number"
+        },
+        "lastSeenAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "rawPayload": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ],
+          "description": "Optional raw JSON payload for non-identifying data in v2 models."
+        },
+        "identityModelVersion": {
+          "type": "number",
+          "enum": [
+            1,
+            2
+          ],
+          "description": "Runtime interpretation version. 1 (default) or 2."
+        },
+        "identitySchemaVersion": {
+          "type": "number",
+          "description": "Schema version of the canonical identity payload. Defaults to 1 for v2."
+        },
+        "canonicalizationVersion": {
+          "type": "number",
+          "description": "Version of the JSON canonicalization algorithm. Defaults to 1 for v2."
+        }
+      },
+      "required": [
+        "identifierKey",
+        "ownerId",
+        "kind",
+        "scheme",
+        "canonicalValue",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "IdentifierObservationRecord": {
+      "title": "Identifier Observation Record",
+      "description": "An evidence/log record of an identifier observation. Does not represent canonical object state. Can exist before an object is registered. Direct client-created observations are initially limited by Firestore rules to ordinary user sighting/scan records. Order by observedAt or receivedAt.",
+      "type": "object",
+      "properties": {
+        "observationId": {
+          "type": "string",
+          "description": "Must equal document ID. Use UUIDv7 for client-created, deterministic IDs for imported/synthetic."
+        },
+        "identifierKey": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "The owner/scope boundary for the observation record. Existing pre-ownerId records may lack this field."
+        },
+        "observerKind": {
+          "type": "string",
+          "enum": [
+            "user",
+            "device",
+            "system"
+          ],
+          "description": "Device is reserved for future backend/device-auth ingestion."
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "nfc",
+            "qr",
+            "manual",
+            "barcode",
+            "ble",
+            "camera",
+            "gateway",
+            "import"
+          ],
+          "description": "'import' is reserved for future backend/migration flows. 'gateway' and 'ble' are reserved for later device/sensor ingestion unless explicitly enabled by a later phase."
+        },
+        "observationType": {
+          "type": "string",
+          "enum": [
+            "sighting",
+            "scan",
+            "proximity",
+            "gateway_seen",
+            "imported"
+          ],
+          "description": "'imported' is reserved for future backend/migration flows. 'proximity' and 'gateway_seen' are reserved for later device/sensor ingestion unless explicitly enabled by a later phase."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "objectId": {
+          "type": "string",
+          "description": "Optional object this observation relates to."
+        },
+        "observerUid": {
+          "type": "string"
+        },
+        "observerIsAnonymous": {
+          "type": "boolean"
+        },
+        "observerDeviceId": {
+          "type": "string"
+        },
+        "placeLabel": {
+          "type": "string"
+        },
+        "location": {
+          "type": "object"
+        },
+        "note": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "private",
+            "linked_object",
+            "community",
+            "public"
+          ]
+        },
+        "schemaVersion": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "observationId",
+        "identifierKey",
+        "observerKind",
+        "observedAt",
+        "receivedAt",
+        "source",
+        "observationType",
+        "createdAt"
+      ]
+    },
+    "ObjectIdentifierBindingRecord": {
+      "title": "Object Identifier Binding Record",
+      "description": "Canonical active relationship state linking an object to an identifier. This is NOT an append-only historical log; use objectEvents for history. Observations do not replace canonical bindings.",
+      "type": "object",
+      "properties": {
+        "bindingId": {
+          "type": "string",
+          "description": "Deterministic active ID formatted as ${objectId}__${identifierKey}__active to prevent duplicate active bindings"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "identifierKey": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "detached",
+            "replaced"
+          ]
+        },
+        "attachedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "attachedBy": {
+          "type": "string"
+        },
+        "detachedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "detachedBy": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "bindingId",
+        "ownerId",
+        "objectId",
+        "identifierKey",
+        "status",
+        "attachedAt",
+        "attachedBy",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ObjectEventRecord": {
+      "title": "Object Event Record",
+      "description": "Append-only event log for inventory operations. Remains object operational history, not the generic observation log.",
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "identifierKey": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "created",
+            "updated",
+            "scanned",
+            "located",
+            "image_added",
+            "image_removed",
+            "identifier_attached",
+            "identifier_detached",
+            "identifier_replaced",
+            "migrated"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actorUid": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "qr",
+            "nfc",
+            "manual",
+            "camera",
+            "system",
+            "migration"
+          ]
+        },
+        "location": {
+          "type": "object"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "eventId",
+        "ownerId",
+        "type",
+        "occurredAt",
+        "actorUid"
+      ]
+    },
+    "ObjectImageRecord": {
+      "title": "Object Image Record",
+      "description": "Represents images stored in Firebase Storage.",
+      "type": "object",
+      "properties": {
+        "imageId": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "context",
+            "label",
+            "detail"
+          ]
+        },
+        "storagePath": {
+          "type": "string"
+        },
+        "downloadUrl": {
+          "type": "string"
+        },
+        "contentType": {
+          "type": "string"
+        },
+        "sizeBytes": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "sortOrder": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "legacy": {
+          "type": "object",
+          "properties": {
+            "sourceField": {
+              "type": "string",
+              "enum": [
+                "mainImageUrl",
+                "contextImageUrls"
+              ]
+            },
+            "sourceUrl": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": [
+        "imageId",
+        "ownerId",
+        "objectId",
+        "role",
+        "createdAt",
+        "createdBy"
+      ]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile information.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "photoURL": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "user",
+            "admin"
+          ],
+          "description": "User role, usually not set by user directly."
+        },
+        "settings": {
+          "type": "object",
+          "description": "User specific settings including image capture preferences.",
+          "properties": {
+            "imageFormat": {
+              "type": "string",
+              "enum": [
+                "webp",
+                "jpeg"
+              ]
+            },
+            "compressionQuality": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 1
+            },
+            "maxResolution": {
+              "type": "number",
+              "enum": [
+                512,
+                1024,
+                2048
+              ]
+            }
+          }
+        }
+      },
+      "required": [
+        "uid"
+      ]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Record to identify admin users securely.",
+      "type": "object",
+      "properties": {
+        "grantedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "grantedBy": {
+          "type": "string",
+          "description": "UID of the user who granted this admin right"
+        }
+      }
+    },
+    "MarkerDoc": {
+      "title": "MarkerDoc (Target Migration Schema)",
+      "description": "Target conceptual marker identity.",
+      "type": "object",
+      "properties": {
+        "markerKey": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "medium": {
+          "type": "string"
+        },
+        "mediumSubtype": {
+          "type": "string"
+        },
+        "payloadLayer": {
+          "type": "string"
+        },
+        "payloadKind": {
+          "type": "string"
+        },
+        "canonicalPayload": {
+          "type": "string"
+        },
+        "nativeId": {
+          "type": "object"
+        },
+        "stability": {
+          "type": "string"
+        },
+        "privacy": {
+          "type": "object"
+        },
+        "_meta": {
+          "type": "object"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "markerKey",
+        "medium",
+        "payloadLayer",
+        "payloadKind",
+        "stability"
+      ]
+    },
+    "PlaceDoc": {
+      "title": "PlaceDoc (Target Migration Schema)",
+      "description": "Target conceptual place identity.",
+      "type": "object",
+      "properties": {
+        "placeId": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "_meta": {
+          "type": "object"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "placeId",
+        "ownerId"
+      ]
+    },
+    "AssociationDoc": {
+      "title": "AssociationDoc (Target Migration Schema)",
+      "description": "Target conceptual relationship between entities.",
+      "type": "object",
+      "properties": {
+        "associationId": {
+          "type": "string"
+        },
+        "associationType": {
+          "type": "string"
+        },
+        "participants": {
+          "type": "array"
+        },
+        "participantKeys": {
+          "type": "array"
+        },
+        "objectIds": {
+          "type": "array"
+        },
+        "markerKeys": {
+          "type": "array"
+        },
+        "placeIds": {
+          "type": "array"
+        },
+        "readerIds": {
+          "type": "array"
+        },
+        "deviceIds": {
+          "type": "array"
+        },
+        "userIds": {
+          "type": "array"
+        },
+        "time": {
+          "type": "object"
+        },
+        "status": {
+          "type": "string"
+        },
+        "provenance": {
+          "type": "object"
+        },
+        "note": {
+          "type": "string"
+        },
+        "_meta": {
+          "type": "object"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "associationId",
+        "associationType",
+        "participants",
+        "participantKeys",
+        "time"
+      ]
+    },
+    "ObservationDoc": {
+      "title": "ObservationDoc (Target Migration Schema)",
+      "description": "Target conceptual observation event.",
+      "type": "object",
+      "properties": {
+        "observationId": {
+          "type": "string"
+        },
+        "observationType": {
+          "type": "string"
+        },
+        "participants": {
+          "type": "array"
+        },
+        "participantKeys": {
+          "type": "array"
+        },
+        "objectIds": {
+          "type": "array"
+        },
+        "markerKeys": {
+          "type": "array"
+        },
+        "placeIds": {
+          "type": "array"
+        },
+        "readerIds": {
+          "type": "array"
+        },
+        "deviceIds": {
+          "type": "array"
+        },
+        "userIds": {
+          "type": "array"
+        },
+        "time": {
+          "type": "object"
+        },
+        "source": {
+          "type": "string"
+        },
+        "provenance": {
+          "type": "object"
+        },
+        "note": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "object"
+        },
+        "_meta": {
+          "type": "object"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "observationId",
+        "observationType",
+        "participants",
+        "participantKeys",
+        "time"
+      ]
+    },
+    "MeasurementDoc": {
+      "title": "MeasurementDoc (Target Migration Schema)",
+      "description": "Target conceptual telemetry or measurement event.",
+      "type": "object",
+      "properties": {
+        "measurementId": {
+          "type": "string"
+        },
+        "measurementType": {
+          "type": "string"
+        },
+        "participants": {
+          "type": "array"
+        },
+        "participantKeys": {
+          "type": "array"
+        },
+        "objectIds": {
+          "type": "array"
+        },
+        "markerKeys": {
+          "type": "array"
+        },
+        "placeIds": {
+          "type": "array"
+        },
+        "readerIds": {
+          "type": "array"
+        },
+        "deviceIds": {
+          "type": "array"
+        },
+        "userIds": {
+          "type": "array"
+        },
+        "time": {
+          "type": "object"
+        },
+        "position": {
+          "type": "object"
+        },
+        "place": {
+          "type": "object"
+        },
+        "signal": {
+          "type": "object"
+        },
+        "provenance": {
+          "type": "object"
+        },
+        "note": {
+          "type": "string"
+        },
+        "_meta": {
+          "type": "object"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "measurementId",
+        "measurementType",
+        "participants",
+        "participantKeys",
+        "time"
+      ]
+    },
+    "EventDoc": {
+      "title": "EventDoc (Target Migration Schema)",
+      "description": "Target conceptual operational event log.",
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "eventType": {
+          "type": "string"
+        },
+        "participants": {
+          "type": "array"
+        },
+        "participantKeys": {
+          "type": "array"
+        },
+        "objectIds": {
+          "type": "array"
+        },
+        "markerKeys": {
+          "type": "array"
+        },
+        "placeIds": {
+          "type": "array"
+        },
+        "readerIds": {
+          "type": "array"
+        },
+        "deviceIds": {
+          "type": "array"
+        },
+        "userIds": {
+          "type": "array"
+        },
+        "time": {
+          "type": "object"
+        },
+        "provenance": {
+          "type": "object"
+        },
+        "note": {
+          "type": "string"
+        },
+        "_meta": {
+          "type": "object"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "eventId",
+        "eventType",
+        "participants",
+        "participantKeys",
+        "time"
+      ]
+    },
+    "ObjectSummaryDoc": {
+      "title": "ObjectSummaryDoc (Target Migration Schema)",
+      "description": "Target derived projection for object state.",
+      "type": "object",
+      "properties": {
+        "objectId": {
+          "type": "string"
+        },
+        "currentPlaceId": {
+          "type": "string"
+        },
+        "currentPosition": {
+          "type": "object"
+        },
+        "activeMarkerKeys": {
+          "type": "array"
+        },
+        "lastObservedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastMeasuredAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "derivedFromFactIds": {
+          "type": "array"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "objectId",
+        "asOf"
+      ]
+    },
+    "MarkerSummaryDoc": {
+      "title": "MarkerSummaryDoc (Target Migration Schema)",
+      "description": "Target derived projection for marker state.",
+      "type": "object",
+      "properties": {
+        "markerKey": {
+          "type": "string"
+        },
+        "relatedObjectIds": {
+          "type": "array"
+        },
+        "lastObservedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastObservedPlaceId": {
+          "type": "string"
+        },
+        "recentObservationCount": {
+          "type": "number"
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "derivedFromFactIds": {
+          "type": "array"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "markerKey",
+        "asOf"
+      ]
+    },
+    "PlaceSummaryDoc": {
+      "title": "PlaceSummaryDoc (Target Migration Schema)",
+      "description": "Target derived projection for place state.",
+      "type": "object",
+      "properties": {
+        "placeId": {
+          "type": "string"
+        },
+        "currentObjectIds": {
+          "type": "array"
+        },
+        "currentMarkerKeys": {
+          "type": "array"
+        },
+        "lastActivityAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "derivedFromFactIds": {
+          "type": "array"
+        },
+        "legacy": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "placeId",
+        "asOf"
+      ]
+    }
+  },
+  "firestore": {
+    "/objects/{objectId}": {
+      "schema": "ObjectRecord",
+      "description": "Collection of normalized tracked real-world objects."
+    },
+    "/identifiers/{identifierKey}": {
+      "schema": "IdentifierRecord",
+      "description": "Lookup table from scanned values to objects. Now supports optional first/last observation fields and discoveryState."
+    },
+    "/identifierObservations/{observationId}": {
+      "schema": "IdentifierObservationRecord",
+      "description": "Collection of observation events for identifiers. Independent of object creation."
+    },
+    "/objectIdentifierBindings/{bindingId}": {
+      "schema": "ObjectIdentifierBindingRecord",
+      "description": "Canonical relationship state between objects and identifiers."
+    },
+    "/objectEvents/{eventId}": {
+      "schema": "ObjectEventRecord",
+      "description": "Append-only event log."
+    },
+    "/objectImages/{imageId}": {
+      "schema": "ObjectImageRecord",
+      "description": "Storage metadata for images."
+    },
+    "/items/{itemId}": {
+      "schema": "LegacyItem",
+      "description": "Legacy collection retained only for migration and backward compatibility."
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles."
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "List of administrative users to enable RBAC."
+    },
+    "/markers/{markerKey}": {
+      "schema": "MarkerDoc",
+      "description": "Target collection for physical scannable markers."
+    },
+    "/places/{placeId}": {
+      "schema": "PlaceDoc",
+      "description": "Target collection for physical locations/zones."
+    },
+    "/associations/{associationId}": {
+      "schema": "AssociationDoc",
+      "description": "Target collection for bindings between entities (e.g. object to marker)."
+    },
+    "/observations/{observationId}": {
+      "schema": "ObservationDoc",
+      "description": "Target collection for scans or encounters."
+    },
+    "/measurements/{measurementId}": {
+      "schema": "MeasurementDoc",
+      "description": "Target collection for telemetry and position info."
+    },
+    "/events/{eventId}": {
+      "schema": "EventDoc",
+      "description": "Target collection for operational audit logs."
+    },
+    "/objectSummaries/{objectId}": {
+      "schema": "ObjectSummaryDoc",
+      "description": "Target projection for derived current object state."
+    },
+    "/markerSummaries/{markerKey}": {
+      "schema": "MarkerSummaryDoc",
+      "description": "Target projection for derived current marker state."
+    },
+    "/placeSummaries/{placeId}": {
+      "schema": "PlaceSummaryDoc",
+      "description": "Target projection for derived current place state."
+    }
+  }
+}

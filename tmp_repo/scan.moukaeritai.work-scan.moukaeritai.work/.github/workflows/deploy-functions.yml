@@ -1,0 +1,71 @@
+name: Deploy Firebase Functions
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - scan.moukaeritai.work
+    paths:
+      - 'functions/**'
+      - '.github/workflows/deploy-functions.yml'
+      - 'packages/efp-model/**'
+      - 'scripts/prepare-functions-efp-model-dependency.mjs'
+      - 'scripts/validate-functions-efp-model-dependency.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NODE_OPTIONS: "--no-deprecation"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Validate Functions import boundary
+        run: npm run test:functions-boundary
+
+      - name: Build shared EFP model package
+        run: npm --prefix packages/efp-model run build
+
+      - name: Validate shared EFP model package artifact
+        run: npm --prefix packages/efp-model run test:artifact
+
+      - name: Prepare shared EFP model for Functions
+        run: npm run prepare:functions-efp-model
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: ./functions
+
+      - name: Validate Functions shared EFP model dependency
+        run: npm run test:functions-efp-model
+
+      - name: Build Functions
+        run: npm run build
+        working-directory: ./functions
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}'
+
+      - name: Verify Deploy Targets
+        id: verify-targets
+        run: |
+          DEPLOY_TARGETS="$(node scripts/verify-functions-deploy-targets.mjs)"
+          echo "Generated deploy targets: $DEPLOY_TARGETS"
+          echo "DEPLOY_TARGETS=$DEPLOY_TARGETS" >> $GITHUB_ENV
+
+      - name: Deploy to Firebase
+        run: npx --yes firebase-tools deploy --only "$DEPLOY_TARGETS" --project moukaeritaid --non-interactive

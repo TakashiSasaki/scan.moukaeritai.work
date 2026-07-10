@@ -1,0 +1,11 @@
+{
+  "projectId": "moukaeritaid",
+  "appId": "1:1042140630327:web:f7d95a5a86e741806b9eb2",
+  "apiKey": "AIzaSyC-rNdm8sXy3WOUnMA2GelyXLft0Mjebog",
+  "authDomain": "moukaeritaid.firebaseapp.com",
+  "firestoreDatabaseId": "photo-moukaeritai-work",
+  "storageBucket": "photo-moukaeritai-work",
+  "messagingSenderId": "1042140630327",
+  "measurementId": "",
+  "databaseURL": "https://photo-moukaeritai-work.firebaseio.com/"
+}

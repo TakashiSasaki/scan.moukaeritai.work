@@ -1,0 +1,436 @@
+{
+  "designType": "scanner-observation-target-rules-hardening-design",
+  "schemaVersion": 1,
+  "status": "planning-only",
+  "targetCollection": "observations",
+  "featureFlag": "VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE",
+  "runtimeBehaviorChanged": false,
+  "firestoreRulesChanged": false,
+  "indexesChanged": false,
+  "featureFlagEnabledInThisStride": false,
+  "readSwitchingAuthorized": false,
+  "migrationExecutionAuthorized": false,
+  "sourceReadiness": "docs/migrations/scanner-observation-dual-write-readiness.json",
+  "sourceClosurePlan": "docs/migrations/entity-fact-projection-drift-closure-plan.json",
+  "sourceDriftAudit": "docs/migrations/entity-fact-projection-drift-audit.json",
+  "allowCreateContract": {
+    "operation": "create",
+    "collection": "observations",
+    "allowedActors": [
+      "authenticated-user"
+    ],
+    "disallowedActors": [
+      "signed-out-user"
+    ],
+    "ownerConstraint": "ownerId must equal request.auth.uid",
+    "observerConstraint": "observerKind must be user and observerUid must equal request.auth.uid",
+    "timeConstraint": "receivedAt and createdAt must equal request.time; observedAt must be timestamp",
+    "allowedSources": [
+      "nfc",
+      "qr",
+      "manual",
+      "barcode",
+      "camera"
+    ],
+    "allowedObservationTypes": [
+      "sighting",
+      "scan"
+    ],
+    "requiredFields": [
+      "observationId",
+      "identifierKey",
+      "ownerId",
+      "observerKind",
+      "observerUid",
+      "observedAt",
+      "receivedAt",
+      "source",
+      "observationType",
+      "createdAt"
+    ],
+    "optionalFields": [
+      "objectId",
+      "observerIsAnonymous",
+      "placeLabel",
+      "location",
+      "note",
+      "metadata",
+      "visibility",
+      "schemaVersion"
+    ],
+    "unknownFieldsRejected": true,
+    "normalUserUpdateAllowed": false,
+    "normalUserDeleteAllowed": false,
+    "adminDeleteAllowed": true,
+    "readSwitchingAuthorized": false
+  },
+  "denyContract": [
+    {
+      "id": "signed-out-create-denied",
+      "case": "signed-out create is denied",
+      "operation": "create",
+      "actor": "signed-out",
+      "expected": "deny",
+      "reason": "client-created observations require an authenticated user"
+    },
+    {
+      "id": "owner-id-mismatch-denied",
+      "case": "ownerId not matching auth uid is denied",
+      "operation": "create",
+      "actor": "authenticated-user",
+      "expected": "deny",
+      "reason": "user can only create observations for items they own"
+    },
+    {
+      "id": "observer-uid-mismatch-denied",
+      "case": "observerUid not matching auth uid is denied",
+      "operation": "create",
+      "actor": "authenticated-user",
+      "expected": "deny",
+      "reason": "user cannot fake the observer identity"
+    },
+    {
+      "id": "observer-kind-device-denied",
+      "case": "observerKind other than user is denied for client writes",
+      "operation": "create",
+      "actor": "authenticated-user",
+      "expected": "deny",
+      "reason": "clients cannot create device or system level observations directly"
+    },
+    {
+      "id": "unknown-field-denied",
+      "case": "unknown field is denied",
+      "operation": "create",
+      "actor": "authenticated-user",
+      "expected": "deny",
+      "reason": "strict schema validation prevents unknown fields"
+    },
+    {
+      "id": "invalid-source-denied",
+      "case": "invalid source is denied",
+      "operation": "create",
+      "actor": "authenticated-user",
+      "expected": "deny",
+      "reason": "source must be within allowed enum values"
+    },
+    {
+      "id": "invalid-observation-type-denied",
+      "case": "invalid observationType is denied",
+      "operation": "create",
+      "actor": "authenticated-user",
+      "expected": "deny",
+      "reason": "observationType must be within allowed enum values"
+    },
+    {
+      "id": "invalid-location-denied",
+      "case": "invalid location latitude/longitude is denied",
+      "operation": "create",
+      "actor": "authenticated-user",
+      "expected": "deny",
+      "reason": "location must have valid lat/lng boundaries"
+    },
+    {
+      "id": "received-at-mismatch-denied",
+      "case": "receivedAt not equal to request.time is denied",
+      "operation": "create",
+      "actor": "authenticated-user",
+      "expected": "deny",
+      "reason": "server must stamp receivedAt"
+    },
+    {
+      "id": "created-at-mismatch-denied",
+      "case": "createdAt not equal to request.time is denied",
+      "operation": "create",
+      "actor": "authenticated-user",
+      "expected": "deny",
+      "reason": "server must stamp createdAt"
+    },
+    {
+      "id": "normal-user-update-denied",
+      "case": "normal user update is denied",
+      "operation": "update",
+      "actor": "authenticated-user",
+      "expected": "deny",
+      "reason": "observations are immutable facts"
+    },
+    {
+      "id": "normal-user-delete-denied",
+      "case": "normal user delete is denied",
+      "operation": "delete",
+      "actor": "authenticated-user",
+      "expected": "deny",
+      "reason": "observations are immutable facts"
+    },
+    {
+      "id": "system-imported-observation-denied",
+      "case": "client imported/system/gateway/proximity observations are denied",
+      "operation": "create",
+      "actor": "authenticated-user",
+      "expected": "deny",
+      "reason": "clients cannot write backend-only observation kinds"
+    },
+    {
+      "id": "projection-write-denied",
+      "case": "projection write through observations rules is impossible",
+      "operation": "create",
+      "actor": "authenticated-user",
+      "expected": "deny",
+      "reason": "projections belong to separate collections, cannot be written here"
+    },
+    {
+      "id": "read-switching-not-authorized",
+      "case": "read switching is not authorized",
+      "operation": "list",
+      "actor": "client",
+      "expected": "deny",
+      "reason": "read switching is deferred to future strides"
+    }
+  ],
+  "rulesTestMatrix": [
+    {
+      "id": "owner-can-create-valid-observation",
+      "operation": "create",
+      "actor": "owner",
+      "expected": "allow",
+      "reason": "baseline valid operation",
+      "fixture": "validObservation"
+    },
+    {
+      "id": "signed-out-cannot-create-observation",
+      "operation": "create",
+      "actor": "signed-out",
+      "expected": "deny",
+      "reason": "must be authenticated",
+      "fixture": "validObservation"
+    },
+    {
+      "id": "owner-mismatch-denied",
+      "operation": "create",
+      "actor": "non-owner",
+      "expected": "deny",
+      "reason": "ownerId does not match auth.uid",
+      "fixture": "ownerMismatchObservation"
+    },
+    {
+      "id": "observer-uid-mismatch-denied",
+      "operation": "create",
+      "actor": "owner",
+      "expected": "deny",
+      "reason": "observerUid does not match auth.uid",
+      "fixture": "observerMismatchObservation"
+    },
+    {
+      "id": "observer-kind-device-denied-for-client",
+      "operation": "create",
+      "actor": "owner",
+      "expected": "deny",
+      "reason": "clients cannot create non-user observations",
+      "fixture": "deviceObserverObservation"
+    },
+    {
+      "id": "unknown-field-denied",
+      "operation": "create",
+      "actor": "owner",
+      "expected": "deny",
+      "reason": "strict schema validation",
+      "fixture": "unknownFieldObservation"
+    },
+    {
+      "id": "invalid-source-denied",
+      "operation": "create",
+      "actor": "owner",
+      "expected": "deny",
+      "reason": "source enum validation",
+      "fixture": "invalidSourceObservation"
+    },
+    {
+      "id": "invalid-observation-type-denied",
+      "operation": "create",
+      "actor": "owner",
+      "expected": "deny",
+      "reason": "observationType enum validation",
+      "fixture": "invalidObservationTypeObservation"
+    },
+    {
+      "id": "invalid-location-denied",
+      "operation": "create",
+      "actor": "owner",
+      "expected": "deny",
+      "reason": "location coordinates bounds validation",
+      "fixture": "invalidLocationObservation"
+    },
+    {
+      "id": "received-at-must-be-request-time",
+      "operation": "create",
+      "actor": "owner",
+      "expected": "deny",
+      "reason": "server timestamp enforcement",
+      "fixture": "invalidTimeObservation"
+    },
+    {
+      "id": "created-at-must-be-request-time",
+      "operation": "create",
+      "actor": "owner",
+      "expected": "deny",
+      "reason": "server timestamp enforcement",
+      "fixture": "invalidTimeObservation"
+    },
+    {
+      "id": "normal-user-update-denied",
+      "operation": "update",
+      "actor": "owner",
+      "expected": "deny",
+      "reason": "observations are immutable",
+      "fixture": "validObservation"
+    },
+    {
+      "id": "normal-user-delete-denied",
+      "operation": "delete",
+      "actor": "owner",
+      "expected": "deny",
+      "reason": "observations are immutable",
+      "fixture": "validObservation"
+    },
+    {
+      "id": "admin-delete-allowed",
+      "operation": "delete",
+      "actor": "admin",
+      "expected": "allow",
+      "reason": "admin override",
+      "fixture": "validObservation"
+    },
+    {
+      "id": "read-switching-not-authorized",
+      "operation": "list",
+      "actor": "owner",
+      "expected": "deny",
+      "reason": "reads not yet enabled",
+      "fixture": "validObservation"
+    },
+    {
+      "id": "projection-write-not-authorized",
+      "operation": "create",
+      "actor": "owner",
+      "expected": "deny",
+      "reason": "projections cannot be written via observations rules",
+      "fixture": "validObservation"
+    }
+  ],
+  "fixtureContract": [
+    {
+      "id": "validObservation",
+      "purpose": "baseline valid client-created scanner observation",
+      "baseFields": "minimum valid observation create payload",
+      "overrides": {},
+      "expected": "allow"
+    },
+    {
+      "id": "unknownFieldObservation",
+      "purpose": "observation with unexpected field",
+      "baseFields": "minimum valid observation create payload",
+      "overrides": {
+        "__unknown_field": "value"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "ownerMismatchObservation",
+      "purpose": "observation with ownerId not matching auth uid",
+      "baseFields": "minimum valid observation create payload",
+      "overrides": {
+        "ownerId": "other_user_id"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "observerMismatchObservation",
+      "purpose": "observation with observerUid not matching auth uid",
+      "baseFields": "minimum valid observation create payload",
+      "overrides": {
+        "observerUid": "other_user_id"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "invalidSourceObservation",
+      "purpose": "observation with source outside the client-allowed source enum",
+      "baseFields": "minimum valid observation create payload",
+      "overrides": {
+        "source": "invalid_source"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "invalidObservationTypeObservation",
+      "purpose": "observation with observationType outside the client-allowed enum",
+      "baseFields": "minimum valid observation create payload",
+      "overrides": {
+        "observationType": "invalid_type"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "invalidLocationObservation",
+      "purpose": "observation with invalid location coordinates",
+      "baseFields": "minimum valid observation create payload",
+      "overrides": {
+        "location": {
+          "latitude": 999,
+          "longitude": 999
+        }
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "invalidTimeObservation",
+      "purpose": "observation with receivedAt or createdAt not matching server time",
+      "baseFields": "minimum valid observation create payload",
+      "overrides": {
+        "receivedAt": "not-request-time",
+        "createdAt": "not-request-time"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "deviceObserverObservation",
+      "purpose": "observation with observerKind device",
+      "baseFields": "minimum valid observation create payload",
+      "overrides": {
+        "observerKind": "device"
+      },
+      "expected": "deny"
+    },
+    {
+      "id": "systemImportedObservation",
+      "purpose": "observation simulating backend/system import",
+      "baseFields": "minimum valid observation create payload",
+      "overrides": {
+        "source": "gateway",
+        "observerKind": "system"
+      },
+      "expected": "deny"
+    }
+  ],
+  "indexPlanning": {
+    "indexesChangedInThisStride": false,
+    "likelyFutureQueryPatterns": [
+      "observations by identifierKey",
+      "observations by ownerId",
+      "observations by objectId",
+      "observations by receivedAt",
+      "observations by observedAt"
+    ],
+    "decisionsDeferred": "index decisions deferred until runtime query path is implemented",
+    "notes": "no index file changes in this stride"
+  },
+  "nonGoals": [
+    "modifying firestore.rules",
+    "modifying index configuration",
+    "enabling VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE flag",
+    "changing runtime behavior",
+    "deploying workflows",
+    "migrating data",
+    "switching UI reads",
+    "projection recompute behavior changes"
+  ]
+}

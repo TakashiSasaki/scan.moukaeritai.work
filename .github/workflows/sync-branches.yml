@@ -1,0 +1,59 @@
+name: Sync Branches
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target_branch: [jules, chatgpt, codex]
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_BRANCH: ${{ matrix.target_branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Checking if branch $TARGET_BRANCH exists..."
+          if ! git show-ref --verify --quiet refs/remotes/origin/$TARGET_BRANCH; then
+            echo "Branch $TARGET_BRANCH does not exist. Creating it from main."
+            git checkout -b $TARGET_BRANCH
+            git push origin $TARGET_BRANCH
+          else
+            echo "Branch $TARGET_BRANCH exists. Attempting merge from main."
+            git checkout $TARGET_BRANCH
+            git pull origin $TARGET_BRANCH
+            
+            if git merge main; then
+              echo "Merge successful. Pushing changes to $TARGET_BRANCH."
+              git push origin $TARGET_BRANCH
+            else
+              echo "Merge conflict detected. Aborting merge and creating Pull Request."
+              git merge --abort
+              
+              # Attempt to create a PR. If one already exists, gh pr create will fail gracefully with || true.
+              gh pr create \
+                --base $TARGET_BRANCH \
+                --head main \
+                --title "Sync: Merge main into $TARGET_BRANCH" \
+                --body "Automated PR to resolve conflicts encountered while syncing main into $TARGET_BRANCH." || echo "Pull Request already exists or could not be created."
+            fi
+          fi

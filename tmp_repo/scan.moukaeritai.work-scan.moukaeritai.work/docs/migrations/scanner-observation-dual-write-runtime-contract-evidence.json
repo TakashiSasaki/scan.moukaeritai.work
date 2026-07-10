@@ -1,0 +1,19 @@
+{
+  "evidenceType": "scanner-observation-dual-write-runtime-contract-evidence",
+  "status": "local-evidence-only",
+  "targetObservationsRulesHardened": true,
+  "builderFlatSchemaAligned": true,
+  "builderDescriptorIncludesPath": true,
+  "runtimeShadowWriterFeatureGated": true,
+  "unsupportedSourcesRejected": true,
+  "featureFlagEnabled": false,
+  "runtimeDefaultBehaviorChanged": false,
+  "indexesChanged": false,
+  "migrationExecuted": false,
+  "readSwitchingAuthorized": false,
+  "rolloutApproved": false,
+  "legacyIdentifierObservationsChanged": false,
+  "objectEventsAuthoritative": true,
+  "missingOrUnownedObjectIdOmitted": true,
+  "markerOwnershipRequired": true
+}

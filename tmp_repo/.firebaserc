@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "moukaeritaid"
+  },
+  "targets": {
+    "moukaeritaid": {
+      "hosting": {
+        "scan-moukaeritai-work": [
+          "scan-moukaeritai-work"
+        ]
+      }
+    }
+  }
+}

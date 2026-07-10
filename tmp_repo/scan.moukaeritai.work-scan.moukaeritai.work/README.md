@@ -1,4 +1,4 @@
-# scan.mw
+# scan.moukaeritai.work
 
 [![CI](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml/badge.svg?branch=scan.moukaeritai.work)](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml)
 

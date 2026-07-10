@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - scan.moukaeritai.work
+  pull_request:
+    branches:
+      - scan.moukaeritai.work
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Setup Java (for Firebase Emulator)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Functions import boundary
+        run: npm run test:functions-boundary
+
+      - name: Build shared EFP model package
+        run: npm --prefix packages/efp-model run build
+
+      - name: Typecheck shared EFP model package
+        run: npm --prefix packages/efp-model run typecheck
+
+      - name: Validate shared EFP model package artifact
+        run: npm --prefix packages/efp-model run test:artifact
+
+      - name: Prepare shared EFP model for Functions
+        run: npm run prepare:functions-efp-model
+
+      - name: Install Functions dependencies
+        run: npm ci
+        working-directory: ./functions
+
+      - name: Validate Functions shared EFP model dependency
+        run: npm run test:functions-efp-model
+
+      - name: Build Functions
+        run: npm run build
+        working-directory: ./functions
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run ordinary tests
+        run: npm run test
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Run Firestore rules tests
+        run: npm run test:rules
+
+      - name: Run build
+        run: npm run build
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14

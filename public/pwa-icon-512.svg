@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="scan.moukaeritai.work app icon">
+  <defs>
+    <linearGradient id="bg" x1="160" y1="96" x2="864" y2="928" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="0.52" stop-color="#111827"/>
+      <stop offset="1" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="cubeTop" x1="298" y1="260" x2="720" y2="518" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#67e8f9"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="cubeLeft" x1="280" y1="422" x2="512" y2="768" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0891b2"/>
+      <stop offset="1" stop-color="#0e7490"/>
+    </linearGradient>
+    <linearGradient id="cubeRight" x1="512" y1="422" x2="744" y2="768" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0ea5e9"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+    <filter id="shadow" x="12%" y="12%" width="76%" height="82%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="28" stdDeviation="30" flood-color="#020617" flood-opacity="0.36"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+  <circle cx="226" cy="206" r="152" fill="#38bdf8" opacity="0.10"/>
+  <circle cx="786" cy="820" r="190" fill="#22d3ee" opacity="0.08"/>
+
+  <g fill="none" stroke="#e0f2fe" stroke-linecap="round" stroke-linejoin="round" opacity="0.92">
+    <path d="M210 352V236c0-14 12-26 26-26h116" stroke-width="42"/>
+    <path d="M672 210h116c14 0 26 12 26 26v116" stroke-width="42"/>
+    <path d="M814 672v116c0 14-12 26-26 26H672" stroke-width="42"/>
+    <path d="M352 814H236c-14 0-26-12-26-26V672" stroke-width="42"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <path d="M512 222 746 354 512 486 278 354Z" fill="url(#cubeTop)"/>
+    <path d="M278 354 512 486v294L278 648Z" fill="url(#cubeLeft)"/>
+    <path d="M746 354 512 486v294l234-132Z" fill="url(#cubeRight)"/>
+    <path d="M512 222 746 354 512 486 278 354Z" fill="none" stroke="#cffafe" stroke-width="22" stroke-linejoin="round" opacity="0.85"/>
+    <path d="M278 354v294l234 132 234-132V354" fill="none" stroke="#bae6fd" stroke-width="22" stroke-linejoin="round" opacity="0.78"/>
+    <path d="M512 486v294" stroke="#dff7ff" stroke-width="22" stroke-linecap="round" opacity="0.78"/>
+  </g>
+
+  <g fill="#f8fafc">
+    <rect x="346" y="552" width="56" height="56" rx="14" opacity="0.98"/>
+    <rect x="432" y="552" width="56" height="56" rx="14" opacity="0.98"/>
+    <rect x="346" y="638" width="56" height="56" rx="14" opacity="0.98"/>
+    <rect x="614" y="552" width="56" height="56" rx="14" opacity="0.98"/>
+    <rect x="614" y="638" width="56" height="56" rx="14" opacity="0.98"/>
+  </g>
+</svg>

@@ -1,0 +1,604 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isOwner(ownerId) {
+      return isSignedIn() && request.auth.uid == ownerId;
+    }
+
+    function isOwnedMarkerKey(markerKey) {
+      return markerKey is string
+        && markerKey.size() <= 128
+        && exists(/databases/$(database)/documents/markers/$(markerKey))
+        && get(/databases/$(database)/documents/markers/$(markerKey)).data.ownerId == request.auth.uid;
+    }
+
+    function isValidObservationLocation(loc) {
+      return loc is map
+        && 'latitude' in loc && loc.latitude is number && loc.latitude >= -90 && loc.latitude <= 90
+        && 'longitude' in loc && loc.longitude is number && loc.longitude >= -180 && loc.longitude <= 180;
+    }
+
+    function isOptionalOwnedObjectId(objectId) {
+      return objectId is string
+        && objectId.size() <= 128
+        && exists(/databases/$(database)/documents/objects/$(objectId))
+        && get(/databases/$(database)/documents/objects/$(objectId)).data.ownerId == request.auth.uid;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- OBJECTS ---
+    function isValidObjectBase(data) {
+      return data.keys().hasAll(['objectId', 'ownerId', 'createdAt', 'updatedAt'])
+        && data.objectId is string && data.objectId.size() <= 128
+        && data.ownerId == request.auth.uid
+        && (data.get('name', '') is string && data.get('name', '').size() <= 200)
+        && (data.get('description', '') is string && data.get('description', '').size() <= 2000)
+        && data.get('status', 'active') in ['active', 'archived', 'lost', 'disposed']
+        && (!('currentLocation' in data) || (data.currentLocation is map && 'latitude' in data.currentLocation && data.currentLocation.latitude is number && data.currentLocation.latitude >= -90 && data.currentLocation.latitude <= 90 && 'longitude' in data.currentLocation && data.currentLocation.longitude is number && data.currentLocation.longitude >= -180 && data.currentLocation.longitude <= 180 && (!('address' in data.currentLocation) || (data.currentLocation.address is string && data.currentLocation.address.size() <= 1000)) && (!('updatedAt' in data.currentLocation) || data.currentLocation.updatedAt is timestamp)))
+        && (!('identifierSummary' in data) || (data.identifierSummary is map && 'activeKinds' in data.identifierSummary && data.identifierSummary.activeKinds is list && 'activeIdentifierCount' in data.identifierSummary && data.identifierSummary.activeIdentifierCount is number && data.identifierSummary.activeIdentifierCount >= 0 && (!('hasQr' in data.identifierSummary) || data.identifierSummary.hasQr is bool) && (!('hasNfc' in data.identifierSummary) || data.identifierSummary.hasNfc is bool)))
+        && (!('primaryImageUrl' in data) || (data.primaryImageUrl is string && data.primaryImageUrl.size() <= 2000))
+        && (!('createdBy' in data) || data.createdBy == request.auth.uid)
+        && (!('ownerUid' in data) || data.ownerUid == request.auth.uid)
+        && (!('visibility' in data) || data.visibility in ['private', 'link_shared', 'community_visible', 'public_readable'])
+        && (!('lastReportedAt' in data) || data.lastReportedAt is timestamp)
+        && (!('lastReportedBy' in data) || data.lastReportedBy is string)
+        && (!('lastReportedLocation' in data) || (data.lastReportedLocation is map && 'latitude' in data.lastReportedLocation && data.lastReportedLocation.latitude is number && data.lastReportedLocation.latitude >= -90 && data.lastReportedLocation.latitude <= 90 && 'longitude' in data.lastReportedLocation && data.lastReportedLocation.longitude is number && data.lastReportedLocation.longitude >= -180 && data.lastReportedLocation.longitude <= 180 && (!('address' in data.lastReportedLocation) || (data.lastReportedLocation.address is string && data.lastReportedLocation.address.size() <= 1000))))
+        && (!('lastReportedPlaceLabel' in data) || (data.lastReportedPlaceLabel is string && data.lastReportedPlaceLabel.size() <= 1000));
+    }
+
+    match /objects/{objectId} {
+      allow get: if isOwner(existing().ownerId);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(objectId)
+        && incoming().objectId == objectId
+        && isValidObjectBase(incoming())
+        && incoming().keys().hasOnly(['objectId', 'ownerId', 'name', 'description', 'status', 'currentLocation', 'primaryImageId', 'primaryImageUrl', 'identifierSummary', 'legacy', 'createdBy', 'ownerUid', 'visibility', 'lastReportedAt', 'lastReportedBy', 'lastReportedLocation', 'lastReportedPlaceLabel', 'createdAt', 'updatedAt'])
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn()
+        && isOwner(existing().ownerId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isValidObjectBase(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'status', 'currentLocation', 'primaryImageId', 'primaryImageUrl', 'identifierSummary', 'updatedAt', 'visibility', 'lastReportedAt', 'lastReportedBy', 'lastReportedLocation', 'lastReportedPlaceLabel']);
+
+      allow delete: if isOwner(existing().ownerId);
+    }
+
+    // --- IDENTIFIERS ---
+    match /identifiers/{identifierKey} {
+      allow get: if isSignedIn() && (existing() == null || existing().ownerId == request.auth.uid);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(identifierKey)
+        && incoming().identifierKey == identifierKey
+        && incoming().ownerId == request.auth.uid
+        && incoming().kind in ['qr', 'nfc', 'manual', 'barcode', 'bluetooth']
+        && incoming().scheme is string && incoming().scheme.size() <= 1000
+        && incoming().canonicalValue is string && incoming().canonicalValue.size() <= 1000
+        && (!('rawValue' in incoming()) || (incoming().rawValue is string && incoming().rawValue.size() <= 1000))
+        && (!('label' in incoming()) || (incoming().label is string && incoming().label.size() <= 1000))
+        && (!('lastSeenAt' in incoming()) || incoming().lastSeenAt is timestamp)
+        && (!('firstObservedAt' in incoming()) || incoming().firstObservedAt is timestamp)
+        && (!('firstObservedBy' in incoming()) || incoming().firstObservedBy is string)
+        && (!('firstObservationId' in incoming()) || incoming().firstObservationId is string)
+        && (!('lastObservedAt' in incoming()) || incoming().lastObservedAt is timestamp)
+        && (!('lastObservedBy' in incoming()) || incoming().lastObservedBy is string)
+        && (!('lastObservationId' in incoming()) || incoming().lastObservationId is string)
+        && (!('lastObservedSource' in incoming()) || incoming().lastObservedSource in ['nfc', 'qr', 'manual', 'barcode', 'camera'])
+        && (!('discoveryState' in incoming()) || incoming().discoveryState in ['observed', 'registered', 'detached', 'unknown'])
+        && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
+        && (!('rawPayload' in incoming()) || incoming().rawPayload is map)
+        && (!('identityModelVersion' in incoming()) || incoming().identityModelVersion in [1, 2])
+        && (!('identitySchemaVersion' in incoming()) || incoming().identitySchemaVersion == 1)
+        && (!('canonicalizationVersion' in incoming()) || incoming().canonicalizationVersion == 1)
+        && incoming().status in ['active', 'unassigned', 'retired', 'lost', 'replaced']
+        && (incoming().status in ['unassigned', 'retired', 'lost', 'replaced'] || ('objectId' in incoming() && incoming().objectId is string && incoming().objectId.size() <= 128))
+        && incoming().keys().hasOnly(['identifierKey', 'ownerId', 'objectId', 'kind', 'scheme', 'canonicalValue', 'rawValue', 'rawPayload', 'identityModelVersion', 'identitySchemaVersion', 'canonicalizationVersion', 'label', 'status', 'firstObservedAt', 'firstObservedBy', 'firstObservationId', 'lastObservedAt', 'lastObservedBy', 'lastObservationId', 'lastObservedSource', 'discoveryState', 'schemaVersion', 'createdAt', 'updatedAt', 'lastSeenAt'])
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn()
+        && isOwner(existing().ownerId)
+        && incoming().identifierKey == identifierKey
+        && incoming().ownerId == existing().ownerId
+        && incoming().kind == existing().kind
+        && incoming().scheme == existing().scheme
+        && incoming().canonicalValue == existing().canonicalValue
+        && (!('rawValue' in incoming()) || (incoming().rawValue is string && incoming().rawValue.size() <= 1000))
+        && (!('label' in incoming()) || (incoming().label is string && incoming().label.size() <= 1000))
+        && (!('lastSeenAt' in incoming()) || incoming().lastSeenAt is timestamp)
+        && (!('firstObservedAt' in incoming()) || incoming().firstObservedAt is timestamp)
+        && (!('firstObservedBy' in incoming()) || incoming().firstObservedBy is string)
+        && (!('firstObservationId' in incoming()) || incoming().firstObservationId is string)
+        && (!('lastObservedAt' in incoming()) || incoming().lastObservedAt is timestamp)
+        && (!('lastObservedBy' in incoming()) || incoming().lastObservedBy is string)
+        && (!('lastObservationId' in incoming()) || incoming().lastObservationId is string)
+        && (!('lastObservedSource' in incoming()) || incoming().lastObservedSource in ['nfc', 'qr', 'manual', 'barcode', 'camera'])
+        && (!('discoveryState' in incoming()) || incoming().discoveryState in ['observed', 'registered', 'detached', 'unknown'])
+        && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
+        && (!('rawPayload' in incoming()) || incoming().rawPayload is map)
+        && (!('identityModelVersion' in incoming()) || incoming().identityModelVersion in [1, 2])
+        && (!('identitySchemaVersion' in incoming()) || incoming().identitySchemaVersion == 1)
+        && (!('canonicalizationVersion' in incoming()) || incoming().canonicalizationVersion == 1)
+        && incoming().status in ['active', 'unassigned', 'retired', 'lost', 'replaced']
+        && (incoming().status in ['unassigned', 'retired', 'lost', 'replaced'] || ('objectId' in incoming() && incoming().objectId is string && incoming().objectId.size() <= 128))
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['objectId', 'status', 'label', 'rawValue', 'rawPayload', 'identityModelVersion', 'identitySchemaVersion', 'canonicalizationVersion', 'updatedAt', 'lastSeenAt', 'firstObservedAt', 'firstObservedBy', 'firstObservationId', 'lastObservedAt', 'lastObservedBy', 'lastObservationId', 'lastObservedSource', 'discoveryState', 'schemaVersion']);
+
+      allow delete: if isOwner(existing().ownerId);
+    }
+
+    // --- IDENTIFIER OBSERVATIONS ---
+    match /identifierObservations/{observationId} {
+      allow read: if isSignedIn() && (
+        existing().get('ownerId', null) == request.auth.uid ||
+        existing().get('observerUid', null) == request.auth.uid
+      );
+      allow read: if isAdmin();
+
+      // Client-created observations are initially limited to ordinary user sighting/scan records.
+      // imported/system observations are reserved for future backend/migration flows.
+      // device/proximity/gateway observations are reserved for future device-auth ingestion.
+      allow create: if isSignedIn()
+        && isValidId(observationId)
+        && incoming().observationId == observationId
+        && isValidId(incoming().identifierKey)
+        && incoming().observerKind == 'user'
+        && incoming().observerUid == request.auth.uid
+        && incoming().ownerId == request.auth.uid
+        && incoming().observedAt is timestamp
+        && incoming().receivedAt is timestamp
+        && incoming().createdAt is timestamp
+        && incoming().source in ['nfc', 'qr', 'manual', 'barcode', 'camera']
+        && incoming().observationType in ['sighting', 'scan']
+        && (!('objectId' in incoming()) || (incoming().objectId is string && incoming().objectId.size() <= 128))
+        && (!('observerIsAnonymous' in incoming()) || incoming().observerIsAnonymous is bool)
+        && (!('placeLabel' in incoming()) || (incoming().placeLabel is string && incoming().placeLabel.size() <= 1000))
+        && (!('location' in incoming()) || (incoming().location is map && 'latitude' in incoming().location && incoming().location.latitude is number && incoming().location.latitude >= -90 && incoming().location.latitude <= 90 && 'longitude' in incoming().location && incoming().location.longitude is number && incoming().location.longitude >= -180 && incoming().location.longitude <= 180 && (!('address' in incoming().location) || (incoming().location.address is string && incoming().location.address.size() <= 1000))))
+        && (!('note' in incoming()) || (incoming().note is string && incoming().note.size() <= 2000))
+        && (!('metadata' in incoming()) || incoming().metadata is map)
+        && (!('visibility' in incoming()) || incoming().visibility in ['private', 'linked_object', 'community', 'public'])
+        && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
+        && incoming().keys().hasOnly(['observationId', 'identifierKey', 'ownerId', 'observerKind', 'observedAt', 'receivedAt', 'source', 'observationType', 'createdAt', 'objectId', 'observerUid', 'observerIsAnonymous', 'placeLabel', 'location', 'note', 'metadata', 'visibility', 'schemaVersion'])
+        && incoming().receivedAt == request.time
+        && incoming().createdAt == request.time;
+
+      allow update: if false; // Append mostly, prevent update from client
+      allow delete: if isAdmin();
+    }
+
+    // --- OBJECT IDENTIFIER BINDINGS ---
+    match /objectIdentifierBindings/{bindingId} {
+      allow read: if isOwner(existing().ownerId);
+      allow create: if isSignedIn()
+        && incoming().bindingId == bindingId
+        && incoming().ownerId == request.auth.uid
+        && incoming().objectId is string
+        && incoming().identifierKey is string
+        && incoming().status in ['active', 'detached', 'replaced']
+        && incoming().attachedAt is timestamp
+        && incoming().attachedBy is string
+        && (incoming().status == 'active' || ('detachedAt' in incoming() && incoming().detachedAt is timestamp && 'detachedBy' in incoming() && incoming().detachedBy is string))
+        && (!('note' in incoming()) || (incoming().note is string && incoming().note.size() <= 2000))
+        && incoming().keys().hasOnly(['bindingId', 'ownerId', 'objectId', 'identifierKey', 'status', 'attachedAt', 'attachedBy', 'detachedAt', 'detachedBy', 'note', 'createdAt', 'updatedAt'])
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isOwner(existing().ownerId)
+        && incoming().bindingId == bindingId
+        && incoming().ownerId == existing().ownerId
+        && incoming().objectId == existing().objectId
+        && incoming().identifierKey == existing().identifierKey
+        && incoming().attachedAt == existing().attachedAt
+        && incoming().attachedBy == existing().attachedBy
+        && incoming().status in ['active', 'detached', 'replaced']
+        && (incoming().status == 'active' || ('detachedAt' in incoming() && incoming().detachedAt is timestamp && 'detachedBy' in incoming() && incoming().detachedBy is string))
+        && (!('note' in incoming()) || (incoming().note is string && incoming().note.size() <= 2000))
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'detachedAt', 'detachedBy', 'note', 'updatedAt']);
+    }
+
+    // --- OBJECT EVENTS ---
+    match /objectEvents/{eventId} {
+      allow read: if isOwner(existing().ownerId);
+      allow create: if isSignedIn()
+        && incoming().eventId == eventId
+        && incoming().ownerId == request.auth.uid
+        && (!('objectId' in incoming()) || (incoming().objectId is string && incoming().objectId.size() <= 128))
+        && (!('identifierKey' in incoming()) || (incoming().identifierKey is string && incoming().identifierKey.size() <= 128))
+        && incoming().actorUid == request.auth.uid
+        && incoming().occurredAt == request.time
+        && incoming().type in ['created', 'updated', 'scanned', 'located', 'image_added', 'image_removed', 'identifier_attached', 'identifier_detached', 'identifier_replaced', 'migrated']
+        && (!('source' in incoming()) || incoming().source in ['qr', 'nfc', 'manual', 'camera', 'system', 'migration'])
+        && (!('location' in incoming()) || (incoming().location is map && 'latitude' in incoming().location && incoming().location.latitude is number && incoming().location.latitude >= -90 && incoming().location.latitude <= 90 && 'longitude' in incoming().location && incoming().location.longitude is number && incoming().location.longitude >= -180 && incoming().location.longitude <= 180 && (!('address' in incoming().location) || (incoming().location.address is string && incoming().location.address.size() <= 1000))))
+        && (!('metadata' in incoming()) || incoming().metadata is map)
+        && incoming().keys().hasOnly(['eventId', 'ownerId', 'objectId', 'identifierKey', 'type', 'occurredAt', 'actorUid', 'source', 'location', 'metadata']);
+      // Append only by default, but allow updates if needed for some logic (mostly no).
+      allow update, delete: if isAdmin();
+    }
+
+    // --- OBJECT IMAGES ---
+    match /objectImages/{imageId} {
+      allow read: if isOwner(existing().ownerId);
+      allow create: if isSignedIn()
+        && incoming().imageId == imageId
+        && incoming().ownerId == request.auth.uid
+        && incoming().objectId is string && incoming().objectId.size() <= 128
+        && incoming().role in ['primary', 'context', 'label', 'detail']
+        && (('storagePath' in incoming() && incoming().storagePath is string && incoming().storagePath.size() <= 1000) || ('downloadUrl' in incoming() && incoming().downloadUrl is string && incoming().downloadUrl.size() <= 1000))
+        && (!('contentType' in incoming()) || (incoming().contentType is string && incoming().contentType.size() <= 100))
+        && (!('sizeBytes' in incoming()) || incoming().sizeBytes is number)
+        && (!('width' in incoming()) || incoming().width is number)
+        && (!('height' in incoming()) || incoming().height is number)
+        && (!('sortOrder' in incoming()) || incoming().sortOrder is number)
+        && (!('legacy' in incoming()) || incoming().legacy is map)
+        && incoming().keys().hasOnly(['imageId', 'ownerId', 'objectId', 'role', 'storagePath', 'downloadUrl', 'contentType', 'sizeBytes', 'width', 'height', 'sortOrder', 'createdAt', 'createdBy', 'legacy'])
+        && incoming().createdAt == request.time
+        && incoming().createdBy == request.auth.uid;
+      allow update: if isSignedIn()
+        && isOwner(existing().ownerId)
+        && incoming().imageId == imageId
+        && incoming().ownerId == existing().ownerId
+        && incoming().objectId == existing().objectId
+        && incoming().createdAt == existing().createdAt
+        && incoming().createdBy == existing().createdBy
+        && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'storagePath', 'downloadUrl', 'contentType', 'sizeBytes', 'width', 'height', 'sortOrder']);
+      allow delete: if isOwner(existing().ownerId);
+    }
+
+    // --- LEGACY ITEMS (Read-only or admin for migration, or owner for backward compat) ---
+    function isValidItemBase(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'createdAt', 'updatedAt'])
+        && data.id is string && data.id.size() <= 1024
+        && data.ownerId == request.auth.uid
+        && (data.get('name', '') is string && data.get('name', '').size() <= 200)
+        && (data.get('description', '') is string && data.get('description', '').size() <= 2000)
+        && (data.get('mainImageUrl', '') is string && data.get('mainImageUrl', '').size() <= 1000)
+        && (data.get('contextImageUrls', []) is list && data.get('contextImageUrls', []).size() <= 10)
+        && (data.get('bluetoothTags', []) is list && data.get('bluetoothTags', []).size() <= 50)
+        && (data.get('tagType', 'none') in ['qr', 'nfc', 'none']);
+    }
+
+    match /items/{itemId} {
+      allow get: if isOwner(existing().ownerId) || isAdmin();
+      allow list: if (isSignedIn() && resource.data.ownerId == request.auth.uid) || isAdmin();
+      
+      allow create: if isSignedIn() 
+        && isValidId(itemId)
+        && isValidItemBase(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+        
+      allow update: if isSignedIn()
+        && isOwner(existing().ownerId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isValidItemBase(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'mainImageUrl', 'contextImageUrls', 'bluetoothTags', 'tagType', 'updatedAt', 'location']);
+
+      allow delete: if isOwner(existing().ownerId) || isAdmin();
+    }
+
+    // --- USER PROFILE ---
+    function isValidSettings(settings) {
+      return (!('imageFormat' in settings) || settings.imageFormat in ['webp', 'jpeg'])
+        && (!('compressionQuality' in settings) || (settings.compressionQuality is number && settings.compressionQuality >= 0.1 && settings.compressionQuality <= 1.0))
+        && (!('maxResolution' in settings) || settings.maxResolution in [512, 1024, 2048]);
+    }
+
+    function isValidUser(data) {
+      return data.uid == request.auth.uid
+        && data.keys().hasAll(['uid'])
+        && (data.get('displayName', '') is string && data.get('displayName', '').size() <= 100)
+        && (data.get('email', '') is string && data.get('email', '').size() <= 100)
+        && (data.get('photoURL', '') is string && data.get('photoURL', '').size() <= 500)
+        && (data.get('role', 'user') in ['user', 'admin'])
+        && (!('settings' in data) || isValidSettings(data.settings));
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && incoming().get('role', 'user') == 'user';
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && (incoming().get('role', 'user') == existing().get('role', 'user') || isAdmin());
+    }
+
+    // --- ADMINS ---
+    function isValidAdmin(data) {
+      return data.keys().hasAny(['grantedAt', 'grantedBy']) 
+        && (!('grantedAt' in data) || data.grantedAt == request.time)
+        && (!('grantedBy' in data) || data.grantedBy == request.auth.uid);
+    }
+
+    match /admins/{adminId} {
+      allow read: if isAdmin() || request.auth.uid == adminId;
+      allow write: if isAdmin() && isValidAdmin(incoming());
+    }
+
+
+    // =========================================================================
+    // TARGET ENTITY / FACT / PROJECTION COLLECTIONS
+    // =========================================================================
+
+    // --- TARGET FACT HELPERS ---
+
+    function hasCurrentUser(data) {
+      return !('userIds' in data)
+        ? false
+        : !(data.userIds is list)
+          ? false
+          : request.auth.uid in data.userIds;
+    }
+
+    function isLegacyOwner(data) {
+      return !('legacy' in data)
+        ? false
+        : !(data.legacy is map)
+          ? false
+          : data.legacy.get('ownerId', '') == request.auth.uid;
+    }
+
+    function canAccessFact(data) {
+      return hasCurrentUser(data) || isLegacyOwner(data);
+    }
+
+    function isValidFactIndexArrays(data) {
+      return (!('objectIds' in data) || (data.objectIds is list && data.objectIds.size() <= 20))
+        && (!('markerKeys' in data) || (data.markerKeys is list && data.markerKeys.size() <= 20))
+        && (!('placeIds' in data) || (data.placeIds is list && data.placeIds.size() <= 20))
+        && (!('readerIds' in data) || (data.readerIds is list && data.readerIds.size() <= 20))
+        && (!('deviceIds' in data) || (data.deviceIds is list && data.deviceIds.size() <= 20))
+        && (!('userIds' in data) || (data.userIds is list && data.userIds.size() <= 20));
+    }
+
+    // --- TARGET ENTITY HELPERS ---
+
+    function isValidMarker(data, id) {
+      return data.markerKey == id
+        && data.medium in ['visual_code', 'nfc', 'rfid', 'bluetooth', 'manual', 'visual_recognition', 'unknown']
+        && (!('mediumSubtype' in data) || data.mediumSubtype is string)
+        && data.payloadLayer in ['encoded_payload', 'native_carrier_id', 'radio_signal', 'connected_payload', 'derived_fingerprint', 'manual_input']
+        && data.payloadKind is string
+        && (!('canonicalPayload' in data) || data.canonicalPayload is string)
+        && (!('nativeId' in data) || (data.nativeId is map && 'kind' in data.nativeId && 'normalizedValue' in data.nativeId))
+        && data.stability in ['stable', 'semi_stable', 'rotating', 'session', 'derived', 'unknown']
+        && (!('privacy' in data) || data.privacy is map)
+        && (!('_meta' in data) || data._meta is map)
+        && (!('legacy' in data) || data.legacy is map)
+        && data.keys().hasOnly(['markerKey', 'ownerId', 'medium', 'mediumSubtype', 'payloadLayer', 'payloadKind', 'canonicalPayload', 'nativeId', 'stability', 'privacy', '_meta', 'legacy']);
+    }
+
+    function isValidPlace(data, id) {
+      return data.placeId == id
+        && (!('label' in data) || data.label is string)
+        && (!('_meta' in data) || data._meta is map)
+        && (!('legacy' in data) || data.legacy is map)
+        && data.keys().hasOnly(['placeId', 'ownerId', 'label', '_meta', 'legacy']);
+    }
+
+    // --- MARKERS (Target Entity) ---
+
+    // Helper to verify that participant arrays have consistent sizes
+
+    // Check that ordinary clients only create facts for entities they own
+    function isFactEntitiesOwnedByUser(data) {
+      return (!('objectIds' in data) || data.objectIds.size() == 0 || (
+        data.objectIds.size() == 1 &&
+        isOwner(get(/databases/$(database)/documents/objects/$(data.objectIds[0])).data.ownerId)
+      )) && (!('markerKeys' in data) || data.markerKeys.size() == 0 || (
+        data.markerKeys.size() == 1 &&
+        isOwner(get(/databases/$(database)/documents/markers/$(data.markerKeys[0])).data.ownerId)
+      )) && (!('placeIds' in data) || data.placeIds.size() == 0 || (
+        data.placeIds.size() == 1 &&
+        isOwner(get(/databases/$(database)/documents/places/$(data.placeIds[0])).data.ownerId)
+      ));
+    }
+
+    function isValidFactParticipants(data) {
+      return data.participants is list
+        && data.participantKeys is list
+        && data.participants.size() == data.participantKeys.size()
+        && data.participants.size() <= 20;
+    }
+
+    match /markers/{markerKey} {
+      allow read: if isAdmin() || isOwner(existing().ownerId);
+      allow create: if isSignedIn()
+        && incoming().ownerId == request.auth.uid
+        && isValidMarker(incoming(), markerKey);
+      allow update: if isSignedIn()
+        && isOwner(existing().ownerId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().medium == existing().medium
+        && incoming().payloadLayer == existing().payloadLayer
+        && incoming().payloadKind == existing().payloadKind
+        && (!('canonicalPayload' in existing()) || incoming().canonicalPayload == existing().canonicalPayload)
+        && (!('nativeId' in existing()) || incoming().nativeId == existing().nativeId)
+        && isValidMarker(incoming(), markerKey);
+      allow delete: if isAdmin() || isOwner(existing().ownerId);
+    }
+
+    // --- PLACES (Target Entity) ---
+    match /places/{placeId} {
+      allow read: if isAdmin() || isOwner(existing().ownerId);
+      allow create: if isSignedIn()
+        && incoming().ownerId == request.auth.uid
+        && isValidPlace(incoming(), placeId);
+      allow update: if isSignedIn()
+        && isOwner(existing().ownerId)
+        && incoming().ownerId == existing().ownerId
+        && isValidPlace(incoming(), placeId);
+      allow delete: if isAdmin() || isOwner(existing().ownerId);
+    }
+
+    // --- ASSOCIATIONS (Target Fact) ---
+    match /associations/{associationId} {
+      allow read: if isAdmin() || (isSignedIn() && canAccessFact(existing()));
+      allow create: if isSignedIn()
+        && incoming().associationId == associationId
+        && canAccessFact(incoming())
+        && incoming().associationType is string
+        && isValidFactParticipants(incoming())
+        && isValidFactIndexArrays(incoming())
+        && isFactEntitiesOwnedByUser(incoming())
+        && incoming().time is map
+        && incoming().time.keys().hasOnly(['validFrom', 'validUntil'])
+        && (!('validFrom' in incoming().time) || incoming().time.validFrom is timestamp)
+        && (!('validUntil' in incoming().time) || incoming().time.validUntil is timestamp)
+        && (!('status' in incoming()) || incoming().status in ['active', 'detached', 'superseded', 'replaced'])
+        && (!('provenance' in incoming()) || incoming().provenance is map)
+        && (!('note' in incoming()) || incoming().note is string)
+        && (!('_meta' in incoming()) || incoming()._meta is map)
+        && (!('legacy' in incoming()) || incoming().legacy is map)
+        && incoming().keys().hasOnly(['associationId', 'associationType', 'participants', 'participantKeys', 'objectIds', 'markerKeys', 'placeIds', 'readerIds', 'deviceIds', 'userIds', 'time', 'provenance', 'status', 'note', '_meta', 'legacy']);
+      allow update: if isAdmin(); // Append-only fact, client update denied
+      allow delete: if isAdmin();
+    }
+
+    // --- OBSERVATIONS (Target Fact) ---
+    match /observations/{observationId} {
+      allow read: if isAdmin();
+
+      allow create: if isSignedIn()
+        && incoming().observationId == observationId
+        && incoming().ownerId == request.auth.uid
+        && incoming().observerKind == 'user'
+        && incoming().observerUid == request.auth.uid
+        && incoming().observedAt is timestamp
+        && incoming().receivedAt == request.time
+        && incoming().createdAt == request.time
+        && incoming().source in ['nfc', 'qr', 'manual', 'barcode', 'camera']
+        && incoming().observationType in ['sighting', 'scan']
+        && isOwnedMarkerKey(incoming().identifierKey)
+        && (!('objectId' in incoming()) || isOptionalOwnedObjectId(incoming().objectId))
+        && (!('observerIsAnonymous' in incoming()) || incoming().observerIsAnonymous is bool)
+        && (!('placeLabel' in incoming()) || incoming().placeLabel is string)
+        && (!('location' in incoming()) || isValidObservationLocation(incoming().location))
+        && (!('note' in incoming()) || incoming().note is string)
+        && (!('metadata' in incoming()) || incoming().metadata is map)
+        && (!('visibility' in incoming()) || incoming().visibility in ['private', 'shared'])
+        && (!('schemaVersion' in incoming()) || incoming().schemaVersion is number)
+        && incoming().keys().hasOnly([
+          'observationId',
+          'identifierKey',
+          'ownerId',
+          'observerKind',
+          'observerUid',
+          'observedAt',
+          'receivedAt',
+          'source',
+          'observationType',
+          'createdAt',
+          'objectId',
+          'observerIsAnonymous',
+          'placeLabel',
+          'location',
+          'note',
+          'metadata',
+          'visibility',
+          'schemaVersion'
+        ]);
+
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // --- MEASUREMENTS (Target Fact) ---
+    match /measurements/{measurementId} {
+      allow read: if isAdmin() || (isSignedIn() && canAccessFact(existing()));
+      allow create: if isSignedIn()
+        && incoming().measurementId == measurementId
+        && canAccessFact(incoming())
+        && incoming().measurementType is string
+        && isValidFactParticipants(incoming())
+        && isValidFactIndexArrays(incoming())
+        && isFactEntitiesOwnedByUser(incoming())
+        && incoming().time is map
+        && incoming().time.keys().hasOnly(['measuredAt', 'receivedAt'])
+        && incoming().time.measuredAt is timestamp
+        && (!('receivedAt' in incoming().time) || incoming().time.receivedAt is timestamp)
+        && (!('position' in incoming()) || incoming().position is map)
+        && (!('place' in incoming()) || incoming().place is map)
+        && (!('signal' in incoming()) || incoming().signal is map)
+        && (!('provenance' in incoming()) || incoming().provenance is map)
+        && (!('note' in incoming()) || incoming().note is string)
+        && (!('_meta' in incoming()) || incoming()._meta is map)
+        && (!('legacy' in incoming()) || incoming().legacy is map)
+        && incoming().keys().hasOnly(['measurementId', 'measurementType', 'participants', 'participantKeys', 'objectIds', 'markerKeys', 'placeIds', 'readerIds', 'deviceIds', 'userIds', 'time', 'provenance', 'position', 'place', 'signal', 'note', '_meta', 'legacy']);
+      allow update: if isAdmin(); // Append-only fact, client update denied
+      allow delete: if isAdmin();
+    }
+
+    // --- EVENTS (Target Fact) ---
+    match /events/{eventId} {
+      allow read: if isAdmin() || (isSignedIn() && canAccessFact(existing()));
+      allow create: if isSignedIn()
+        && incoming().eventId == eventId
+        && canAccessFact(incoming())
+        && incoming().eventType is string
+        && isValidFactParticipants(incoming())
+        && isValidFactIndexArrays(incoming())
+        && isFactEntitiesOwnedByUser(incoming())
+        && incoming().time is map
+        && incoming().time.keys().hasOnly(['occurredAt', 'receivedAt'])
+        && incoming().time.occurredAt is timestamp
+        && (!('receivedAt' in incoming().time) || incoming().time.receivedAt is timestamp)
+        && (!('provenance' in incoming()) || incoming().provenance is map)
+        && (!('note' in incoming()) || incoming().note is string)
+        && (!('_meta' in incoming()) || incoming()._meta is map)
+        && (!('legacy' in incoming()) || incoming().legacy is map)
+        && incoming().keys().hasOnly(['eventId', 'eventType', 'participants', 'participantKeys', 'objectIds', 'markerKeys', 'placeIds', 'readerIds', 'deviceIds', 'userIds', 'time', 'provenance', 'note', '_meta', 'legacy']);
+      allow update: if isAdmin(); // Append-only fact, client update denied
+      allow delete: if isAdmin();
+    }
+
+    // --- PROJECTIONS (Derived Summaries) ---
+    match /objectSummaries/{objectId} {
+      allow read: if isAdmin() || (isSignedIn() && isOwner(get(/databases/$(database)/documents/objects/$(objectId)).data.ownerId));
+      allow create, update, delete: if isAdmin(); // Summaries are projections, not ordinary client-owned records
+    }
+
+    match /markerSummaries/{markerKey} {
+      allow read: if isAdmin() || (isSignedIn() && isOwner(get(/databases/$(database)/documents/markers/$(markerKey)).data.ownerId));
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /placeSummaries/{placeId} {
+      allow read: if isAdmin() || (isSignedIn() && isOwner(get(/databases/$(database)/documents/places/$(placeId)).data.ownerId));
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}

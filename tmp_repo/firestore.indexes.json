@@ -1,0 +1,119 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "associations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "objectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "associationType", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "associations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "markerKeys", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "associationType", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "associations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "participantKeys", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "associations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "observations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "markerKeys", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "time.observedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "observations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "objectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "time.observedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "observations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "time.observedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "measurements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "objectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "time.measuredAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "measurements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "markerKeys", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "time.measuredAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "measurements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "placeIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "time.measuredAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "measurements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "time.measuredAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "objectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "time.occurredAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "markerKeys", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "time.occurredAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "time.occurredAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -1,0 +1,71 @@
+{
+  "designType": "scanner-observation-dual-write-rollout-design-gate",
+  "schemaVersion": 1,
+  "status": "ready-for-rollout-design-review",
+  "featureFlag": "VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE",
+  "featureFlagEnabledInThisStride": false,
+  "rolloutApproved": false,
+  "runtimeDefaultBehaviorChanged": false,
+  "uiReadSwitchingAuthorized": false,
+  "migrationExecuted": false,
+  "backfillExecuted": false,
+  "indexesChanged": false,
+  "deployWorkflowChanged": false,
+  "firebaseProductionCalls": false,
+  "firestoreWritesPerformed": false,
+  "legacyIdentifierObservationsAuthoritative": true,
+  "objectEventsAuthoritative": true,
+  "targetObservationsShadowOnly": true,
+  "runtimeContractEvidenceValidated": true,
+  "readinessValidated": true,
+  "targetRulesHardeningValidated": true,
+  "rolloutScope": {
+    "initialEnvironment": "limited-manual-operator-environment",
+    "initialAudience": "single-operator-or-internal-test-user",
+    "maxInitialUsers": 1,
+    "requiresExplicitOperatorAction": true
+  },
+  "preEnablementChecklist": [
+    "All local validation commands pass",
+    "Runtime contract evidence validator passes",
+    "Feature flag default remains disabled",
+    "Legacy identifier lookup remains authoritative",
+    "objectEvents write remains authoritative",
+    "No UI read switching is included",
+    "Rollback is disabling the feature flag"
+  ],
+  "monitoringPlan": {
+    "signals": [
+      "scanner shadow write status distribution",
+      "skipped_disabled count",
+      "skipped_missing_marker count",
+      "skipped_marker_not_owned count",
+      "failed count",
+      "written count",
+      "omittedObjectId count"
+    ],
+    "manualReviewRequired": true,
+    "requiresNoUserFacingScanFailure": true
+  },
+  "stopConditions": [
+    "Any user-facing scan flow regression",
+    "Unexpected increase in failed shadow writes",
+    "Unexpected permission denied errors",
+    "Unexpected writes containing unowned objectId",
+    "Unexpected unsupported source writes",
+    "Any evidence of UI read switching"
+  ],
+  "rollbackPlan": {
+    "primaryAction": "Disable VITE_ENABLE_SCANNER_OBSERVATION_DUAL_WRITE",
+    "legacyPathsRemainAuthoritative": true,
+    "deleteShadowObservationsDuringRollback": false,
+    "readSwitchingRollbackRequired": false
+  },
+  "postRolloutEvidenceRequired": [
+    "limited rollout status summary",
+    "shadow write result counts",
+    "failure reason sample review",
+    "confirmation legacy scan flow remained authoritative",
+    "confirmation UI read switching remained disabled"
+  ]
+}

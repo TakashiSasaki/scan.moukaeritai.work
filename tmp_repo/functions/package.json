@@ -1,0 +1,30 @@
+{
+  "name": "functions",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "test": "npx --yes tsx test-client-ip.ts",
+    "deploy": "firebase deploy --only \"$(node ../scripts/verify-functions-deploy-targets.mjs)\" --project moukaeritaid --non-interactive",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "@google-cloud/monitoring": "^4.1.0",
+    "@google/genai": "^2.0.1",
+    "@scan/efp-model": "file:vendor/efp-model",
+    "firebase-admin": "^13.10.0",
+    "firebase-functions": "^7.2.5",
+    "uuid": "^14.0.0"
+  },
+  "devDependencies": {
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.8.2"
+  },
+  "private": true
+}

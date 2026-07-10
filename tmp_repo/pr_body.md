@@ -1,0 +1,12 @@
+## Manual verification notes
+- Unauthenticated `/` shows landing/login page.
+- Authenticated `/` redirects to `/app`.
+- Authenticated `/app` shows logged-in home/dashboard/item list.
+- Unauthenticated `/app` redirects to `/`.
+- Existing `/object/:id` route still works when authenticated.
+- `/about` works as intended and is public.
+- Profile menu About link still opens `/about` in a new tab.
+- Logout returns to `/`.
+- Desktop wide viewport no longer forces phone-width app shell.
+- Mobile viewport remains usable.
+- Scanner/capture/search routes still render.
