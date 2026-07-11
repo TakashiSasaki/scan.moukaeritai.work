@@ -6,6 +6,7 @@ on:
       - jules
       - chatgpt
       - codex
+      - hermes
   workflow_dispatch:
 
 jobs:
