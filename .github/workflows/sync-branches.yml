@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target_branch: [jules, chatgpt, codex]
+        target_branch: [jules, chatgpt, codex, hermes]
 
     steps:
       - name: Checkout main
