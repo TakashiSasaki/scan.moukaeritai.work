@@ -1,107 +1,71 @@
 import React from 'react';
-import { Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Book, GitMerge, Database, Share2, ArrowLeft, Boxes, AppWindow, Home, Package } from 'lucide-react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import { Book, ChevronLeft, ChevronRight, FileText, Code, Database, Shield } from 'lucide-react';
 import DeveloperDocsOverview from './DeveloperDocsOverview';
-import DeveloperRoutesDoc from './DeveloperRoutesDoc';
-import DeveloperDataModelDoc from './DeveloperDataModelDoc';
-import DeveloperAbstractModelDoc from './DeveloperAbstractModelDoc';
-import DeveloperFirestoreModelDoc from './DeveloperFirestoreModelDoc';
-import DeveloperDataModelGraph from './DeveloperDataModelGraph';
-import DeveloperPWADoc from './DeveloperPWADoc';
-
-const navItems = [
-  { path: '/developer', label: 'Overview', icon: <Book size={18} />, exact: true },
-  { path: '/developer/pwa', label: 'PWA', icon: <AppWindow size={18} /> },
-  { path: '/developer/routes', label: 'Routes', icon: <GitMerge size={18} /> },
-  { path: '/developer/data-model', label: 'Data Hub', icon: <Database size={18} />, exact: true },
-  { path: '/developer/data-model/abstract', label: 'Abstract Model', icon: <Boxes size={18} /> },
-  { path: '/developer/data-model/firestore', label: 'Firestore Model', icon: <Database size={18} /> },
-  { path: '/developer/data-model-graph', label: 'Data Graph', icon: <Share2 size={18} /> }
-];
 
 export default function DeveloperDocsPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const sections = [
+    { id: 'overview', label: 'Overview', icon: <Book size={18} />, path: '/developer' },
+    { id: 'routing', label: 'Routing', icon: <FileText size={18} />, path: '/developer/routing' },
+    { id: 'data-model', label: 'Data Model', icon: <Database size={18} />, path: '/developer/data-model' },
+    { id: 'security', label: 'Security', icon: <Shield size={18} />, path: '/developer/security' },
+  ];
+
+  const currentSection = sections.find(s => s.path === location.pathname) || sections[0];
+
   return (
-    <div className="bg-[var(--surface-container-lowest)] text-[var(--on-surface)] flex flex-col min-h-screen">
-      <header className="bg-[var(--surface-container-lowest)]/80 backdrop-blur-md border-b border-[var(--outline)] px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <button
+    <div className="min-h-screen bg-[var(--surface-container-high)] flex flex-col">
+       <header className="sticky top-0 z-40 bg-[var(--surface-container)]/80 backdrop-blur-md border-b border-[var(--outline)] px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+             <div className="bg-emerald-500 p-2 rounded-xl text-white">
+                <Code size={24} />
+             </div>
+             <div>
+                <h1 className="text-xl font-black italic tracking-tighter">Developer Docs</h1>
+                <p className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest">System Documentation</p>
+             </div>
+          </div>
+          <button 
             onClick={() => navigate('/')}
-            className="p-2 -ml-2 rounded-full hover:bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] transition-colors flex items-center"
-            title="Back to Landing"
-            aria-label="Back to Landing"
+            className="px-4 py-2 bg-[var(--surface)] border border-[var(--outline)] rounded-xl font-bold text-sm"
           >
-            <ArrowLeft size={24} />
+            🚪 Exit
           </button>
-          <div>
-            <h1 className="text-xl font-bold flex items-center gap-2">
-              <Package size={24} className="text-[var(--primary)]" />
-              scan.mw Developer Docs
-            </h1>
-            <p className="text-xs text-[var(--on-surface-variant)] flex items-center gap-1">
-              <Book size={14} /> Public developer reference
-            </p>
-          </div>
-        </div>
+       </header>
 
-                {/* Responsive Nav */}
-        <div className="w-full md:w-auto mt-2 md:mt-0 flex flex-col md:flex-row items-stretch md:items-center gap-4">
-          <div className="md:hidden">
-            <select
-              value={location.pathname}
-              onChange={(e) => navigate(e.target.value)}
-              className="w-full bg-[var(--surface-container)] text-[var(--on-surface)] border border-[var(--outline)] rounded-xl px-4 py-2 text-sm appearance-none"
-            >
-              {navItems.map((item) => (
-                <option key={item.path} value={item.path}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <nav className="hidden md:flex flex-wrap items-center gap-2">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.exact}
-                className={({ isActive }) =>
-                  `flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                    isActive
-                      ? 'bg-[var(--primary)] text-[var(--primary-foreground)]'
-                      : 'bg-[var(--surface-container)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]'
-                  }`
-                }
-              >
-                {item.icon}
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-          
-          <button
-            onClick={() => navigate('/app')}
-            className="flex items-center justify-center gap-2 px-5 py-2 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] rounded-full text-sm font-bold transition-colors whitespace-nowrap shadow-sm"
-          >
-            <Home size={18} />
-            Go to App
-          </button>
-        </div>
-      </header>
+       <div className="flex-1 flex overflow-hidden">
+          <aside className="w-64 border-r border-[var(--outline)] bg-[var(--surface-container)] hidden lg:block overflow-y-auto">
+             <div className="p-4 space-y-1">
+                {sections.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => navigate(section.path)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${location.pathname === section.path ? 'bg-[var(--primary)] text-white shadow-lg' : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)]'}`}
+                  >
+                    {section.icon}
+                    {section.label}
+                  </button>
+                ))}
+             </div>
+          </aside>
 
-      <main className="flex-1 bg-[var(--surface-container-lowest)] relative">
-        <Routes>
-          <Route path="/" element={<DeveloperDocsOverview />} />
-          <Route path="pwa" element={<DeveloperPWADoc />} />
-          <Route path="routes" element={<DeveloperRoutesDoc />} />
-          <Route path="data-model" element={<DeveloperDataModelDoc />} />
-          <Route path="data-model/abstract" element={<DeveloperAbstractModelDoc />} />
-          <Route path="data-model/firestore" element={<DeveloperFirestoreModelDoc />} />
-          <Route path="data-model-graph" element={<DeveloperDataModelGraph />} />
-        </Routes>
-      </main>
+          <main className="flex-1 overflow-y-auto p-6 lg:p-12">
+             <div className="max-w-3xl mx-auto">
+                <AnimatePresence mode="wait">
+                   <Routes location={location}>
+                      <Route path="/" element={<DeveloperDocsOverview />} />
+                      <Route path="/routing" element={<div className="p-12 text-center opacity-50 italic">Routing documentation coming soon...</div>} />
+                      <Route path="/data-model" element={<div className="p-12 text-center opacity-50 italic">Data model documentation coming soon...</div>} />
+                      <Route path="/security" element={<div className="p-12 text-center opacity-50 italic">Security documentation coming soon...</div>} />
+                   </Routes>
+                </AnimatePresence>
+             </div>
+          </main>
+       </div>
     </div>
   );
 }

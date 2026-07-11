@@ -25,21 +25,24 @@ When modifying a skill, update the corresponding `SKILL.md` and any related scri
 
 This document outlines the core architectural decisions, design patterns, and conventions used in this project to ensure consistency during collaborative development.
 
-## 1. Project Overview
-A cloud-based item tracking and inventory management application with QR/NFC scanning capabilities and image-based item identification.
+## 1. Project Overview & v2 Contract-First Paradigm
+**scan.mw** is a cloud-based item tracking and inventory management application with QR/NFC scanning capabilities.
+
+As of version **2.0.0**, the project has transitioned to a **Contract-First Rebuild Baseline**. Future work must respect these critical pillars:
+1. **Canonical Schema Registry**: The `/contracts` directory is the single source of truth for all schemas, semantics, and registries. No runtime data mutations or API changes can occur without updated contracts.
+2. **Entity-Fact-Projection (EFP) Model**: 
+   - Entities represent timeless physical identities (Object, Marker, Place).
+   - Facts represent temporary, timestamped observations/records (Association, Observation, Measurement, Event).
+   - Projections represent derived read-optimized caches (ObjectSummary, MarkerSummary, PlaceSummary).
+3. **SemVer & Version Integrity**: Version bumps in `package.json` are strictly mandatory whenever sensitive files are modified. This is verified by CI.
+4. **Manual-Only Deployments**: Production deployments are restricted to `workflow_dispatch` only.
 
 ### Project Harness / Final Product Goal
-The final objective of this project is to complete and deploy a Firebase-hosted inventory management application. The Entity/Fact/Projection (EFP) migration is the foundational data model for that application.
-
-The purpose of the EFP migration is to support reliable item / marker / place / fact / projection workflows in the eventual user-facing app. Operational validation, canary work, and backfill planning are migration safety mechanisms, not the final product itself. Backfill execution and UI read switching must remain gated by explicit evidence and planning.
-
-All data-model, reconciliation, projection, validation, and backfill work should be evaluated against this final product goal:
-* a deployable Firebase application
-* a robust inventory / item management data model
-* safe migration from legacy data structures
-* reliable derived projections for application reads
-* controlled operational validation before any broad backfill or UI read switching
-* eventual user-facing functionality on top of the EFP model
+The final objective of this project is to complete and deploy a Firebase-hosted inventory management application. The Entity/Fact/Projection (EFP) model is the foundational data model for that application.
+All development, verification, and schema validation must be evaluated against this final product goal:
+* a deployable Firebase application adhering strictly to registered contracts.
+* manual deployment controls.
+* a verified SemVer progression pipeline.
 
 ### Naming & Identification
 To prevent confusion across systems, note the following distinct markers/identifiers used in this project:
@@ -109,6 +112,7 @@ To prevent confusion across systems, note the following distinct markers/identif
 - **Port**: Always runs on port **3000**.
 - **HMR**: Disabled by platform. Rebuilds occur on file save/turn completion.
 - **Environment Variables**: Use `.env.example` as a template.
+- **Component Restoration (2024-07-11)**: Following a codebase inconsistency event, core UI components and utility libraries have been recreated based on the established patterns in `App.tsx`. Stubs have been provided for advanced diagnostic libraries to restore buildability.
 - **Local Validation Dependency Order**:
   - Always install root dependencies (`npm ci` preferred, `npm install` only when lockfile updates are intended) before running root `npm run lint` / `npm run build`.
   - Always install dependencies inside `functions/` (`cd functions && npm ci` preferred) before running `cd functions && npm run build`.

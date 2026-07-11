@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AssociationFact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "associationId",
+    "participants",
+    "associationType",
+    "time"
+  ],
+  "properties": {
+    "associationId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/participant.schema.json"
+      }
+    },
+    "associationType": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "validFrom": { "type": "string", "format": "date-time" },
+        "validUntil": { "type": "string", "format": "date-time" }
+      }
+    },
+    "provenance": {
+      "$ref": "../common/provenance.schema.json"
+    },
+    "status": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "_meta": {
+      "$ref": "../common/record-metadata.schema.json"
+    }
+  }
+}

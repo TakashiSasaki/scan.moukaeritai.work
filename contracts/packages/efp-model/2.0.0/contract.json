@@ -1,0 +1,31 @@
+{
+  "contractId": "efp-model",
+  "version": "2.0.0",
+  "status": "active",
+  "title": "Entity-Fact-Projection Model",
+  "description": "Data contracts and schemas for the EFP model",
+  "contractType": "data-model",
+  "normativeArtifacts": [
+    "common/record-metadata.schema.json",
+    "common/entity-reference.schema.json",
+    "common/participant.schema.json",
+    "common/provenance.schema.json",
+    "entities/object.schema.json",
+    "entities/marker.schema.json",
+    "entities/place.schema.json",
+    "facts/association.schema.json",
+    "facts/observation.schema.json",
+    "facts/measurement.schema.json",
+    "facts/event.schema.json",
+    "projections/object-summary.schema.json",
+    "projections/marker-summary.schema.json",
+    "projections/place-summary.schema.json"
+  ],
+  "dependencies": {
+    "core-vocabulary": "1.0.0"
+  },
+  "compatibility": {
+    "breaksBackwardCompatibility": true,
+    "compatibleWith": []
+  }
+}

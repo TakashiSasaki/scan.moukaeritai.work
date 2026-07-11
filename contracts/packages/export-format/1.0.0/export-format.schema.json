@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExportFormat",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "exportFormatVersion",
+    "dataContractVersion",
+    "appVersion",
+    "exportedAt",
+    "exportId",
+    "collections"
+  ],
+  "properties": {
+    "format": {
+      "type": "string",
+      "const": "scan-mw-export"
+    },
+    "exportFormatVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "dataContractVersion": {
+      "type": "string",
+      "const": "2.0.0"
+    },
+    "appVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "exportedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "exportId": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+    },
+    "collections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "objects",
+        "markers",
+        "places",
+        "associations",
+        "observations",
+        "measurements",
+        "events"
+      ],
+      "properties": {
+        "objects": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "markers": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "places": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "associations": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "observations": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "measurements": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "events": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["assetId", "storagePath", "mimeType", "hash"],
+        "properties": {
+          "assetId": { "type": "string" },
+          "storagePath": { "type": "string" },
+          "mimeType": { "type": "string" },
+          "hash": { "type": "string" }
+        }
+      }
+    },
+    "hashes": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  }
+}

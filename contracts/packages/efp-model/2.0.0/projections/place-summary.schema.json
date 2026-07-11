@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PlaceSummaryProjection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "placeId",
+    "asOf"
+  ],
+  "properties": {
+    "placeId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "currentObjectIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 128
+      }
+    },
+    "currentMarkerKeys": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 128
+      }
+    },
+    "lastActivityAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "derivedFromFactIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 128
+      }
+    }
+  }
+}

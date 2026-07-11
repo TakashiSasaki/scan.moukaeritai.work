@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PlaceEntity",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "placeId",
+    "ownerId"
+  ],
+  "properties": {
+    "placeId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "ownerId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "label": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "_meta": {
+      "$ref": "../common/record-metadata.schema.json"
+    }
+  }
+}

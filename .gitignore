@@ -22,3 +22,6 @@ public/maskable-icon-512.png
 # Generated catalog files
 *.efu
 *.efu.csv
+
+# Legacy export folder
+.local-data/

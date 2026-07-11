@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ObservationFact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "observationId",
+    "participants",
+    "observationType",
+    "time"
+  ],
+  "properties": {
+    "observationId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/participant.schema.json"
+      }
+    },
+    "observationType": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observedAt"],
+      "properties": {
+        "observedAt": { "type": "string", "format": "date-time" },
+        "receivedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "provenance": {
+      "$ref": "../common/provenance.schema.json"
+    },
+    "source": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "payload": {
+      "type": "object"
+    },
+    "_meta": {
+      "$ref": "../common/record-metadata.schema.json"
+    }
+  }
+}

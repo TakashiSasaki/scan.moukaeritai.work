@@ -1,0 +1,10 @@
+{
+  "applicationVersion": "2.0.0",
+  "contracts": {
+    "core-vocabulary": "1.0.0",
+    "efp-model": "2.0.0",
+    "efp-semantics": "1.0.0",
+    "export-format": "1.0.0",
+    "import-protocol": "1.0.0"
+  }
+}

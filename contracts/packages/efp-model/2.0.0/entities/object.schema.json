@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ObjectEntity",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "objectId",
+    "ownerId"
+  ],
+  "properties": {
+    "objectId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "ownerId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "status": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "_meta": {
+      "$ref": "../common/record-metadata.schema.json"
+    }
+  }
+}

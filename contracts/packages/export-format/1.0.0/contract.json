@@ -1,0 +1,18 @@
+{
+  "contractId": "export-format",
+  "version": "1.0.0",
+  "status": "active",
+  "title": "Export Format",
+  "description": "JSON schema for platform-independent backup exports",
+  "contractType": "exchange-format",
+  "normativeArtifacts": [
+    "export-format.schema.json"
+  ],
+  "dependencies": {
+    "efp-model": "2.0.0"
+  },
+  "compatibility": {
+    "breaksBackwardCompatibility": true,
+    "compatibleWith": []
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RecordMetadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recordCreatedAt",
+    "recordUpdatedAt",
+    "recordCreatedBy",
+    "recordUpdatedBy",
+    "schemaVersion"
+  ],
+  "properties": {
+    "recordCreatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The date and time the record was created in the database (RFC 3339 format)"
+    },
+    "recordUpdatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The date and time the record was last updated in the database (RFC 3339 format)"
+    },
+    "recordCreatedBy": {
+      "type": "string",
+      "maxLength": 128,
+      "description": "Identifier/UID of the user or system component that created the record"
+    },
+    "recordUpdatedBy": {
+      "type": "string",
+      "maxLength": 128,
+      "description": "Identifier/UID of the user or system component that last updated the record"
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The schema schema revision version of this document type"
+    }
+  }
+}

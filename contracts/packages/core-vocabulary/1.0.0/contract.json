@@ -1,0 +1,16 @@
+{
+  "contractId": "core-vocabulary",
+  "version": "1.0.0",
+  "status": "active",
+  "title": "Core Vocabulary",
+  "description": "Definition of core entities and terms in scan.mw",
+  "contractType": "vocabulary",
+  "normativeArtifacts": [
+    "vocabulary.md"
+  ],
+  "dependencies": {},
+  "compatibility": {
+    "breaksBackwardCompatibility": true,
+    "compatibleWith": []
+  }
+}

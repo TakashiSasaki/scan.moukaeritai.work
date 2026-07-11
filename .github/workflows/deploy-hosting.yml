@@ -2,21 +2,6 @@ name: Deploy to Firebase Hosting
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - scan.moukaeritai.work
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'index.html'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'vite.config.ts'
-      - 'tailwind.config.js'
-      - 'postcss.config.js'
-      - 'firebase.json'
-      - '.firebaserc'
-      - '.github/workflows/deploy-hosting.yml'
 
 jobs:
   deploy:

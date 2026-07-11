@@ -1,0 +1,18 @@
+{
+  "contractId": "import-protocol",
+  "version": "1.0.0",
+  "status": "active",
+  "title": "Import Protocol",
+  "description": "Phase definitions and schemas for the migration import protocol",
+  "contractType": "import-protocol",
+  "normativeArtifacts": [
+    "import-protocol.md"
+  ],
+  "dependencies": {
+    "efp-model": "2.0.0"
+  },
+  "compatibility": {
+    "breaksBackwardCompatibility": true,
+    "compatibleWith": []
+  }
+}
