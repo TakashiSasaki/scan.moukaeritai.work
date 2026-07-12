@@ -105,6 +105,15 @@ vi.mock('@scan/efp-model', () => {
     validateAssociationSemantics: () => true,
     validateDerivedIndexes: () => true,
     stripUndefinedDeep: (x: any) => x,
+    buildFactIndexFields: () => ({
+      participantKeys: [],
+      objectIds: [],
+      markerKeys: [],
+      placeIds: [],
+      deviceIds: [],
+      readerIds: [],
+      userIds: [],
+    }),
   };
 });
 
@@ -114,7 +123,7 @@ import { submitFactCommand } from '../src/submitFactCommand';
 describe('Callable Authority Boundary Tests', () => {
   test('receivedAt and actorUid are server-authoritative for observations', async () => {
     const maliciousPayload = {
-      commandId: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d', // Valid UUIDv4
+      commandId: '0190a61a-3e5f-7000-8000-000000000000', // Valid UUIDv7
       factType: 'observation',
       data: {
         observationType: 'temperature',
@@ -166,7 +175,7 @@ describe('Callable Authority Boundary Tests', () => {
     mockSet.mockClear();
     
     const maliciousPayload = {
-      commandId: '4b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6e', // Valid UUIDv4
+      commandId: '0190a61a-3e5f-7000-8000-000000000001', // Valid UUIDv7
       factType: 'measurement',
       data: {
         measurementType: 'humidity',

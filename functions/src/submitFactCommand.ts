@@ -1,13 +1,13 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getFirestore, Timestamp, GeoPoint } from "firebase-admin/firestore";
-import { generateUUIDv7, validateAssociationSemantics, validateDerivedIndexes } from "@scan/efp-model";
+import { generateUUIDv7, validateAssociationSemantics, validateDerivedIndexes, buildFactIndexFields } from "@scan/efp-model";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
-import { validateAttach, validateDetach, validateReplace } from "./associationValidation";
+import { validateAttach } from "./associationValidation";
 
 const appletConfig = {
   firestoreDatabaseId: "photo-moukaeritai-work"
@@ -239,18 +239,23 @@ export const submitFactCommand = onCall(async (request: any) => {
 
 
   // 3. Compute Canonical Hash
-  const requestHash = computeRequestHash(data);
+  const payloadToHash = {
+    factType,
+    schemaVersion: 3,
+    data
+  };
+  const requestHash = computeRequestHash(payloadToHash);
 
   // 4. Validate participants & generate index arrays
-  const { objectIds, markerKeys, placeIds, deviceIds, readerIds, userIds } = validateParticipants(data.participants);
-  const participantKeys = Array.from(new Set([
-    ...objectIds,
-    ...markerKeys,
-    ...placeIds,
-    ...deviceIds,
-    ...readerIds,
-    ...userIds
-  ])).sort();
+  validateParticipants(data.participants);
+  const indexFields = buildFactIndexFields(data.participants);
+  const participantKeys = indexFields.participantKeys || [];
+  const objectIds = indexFields.objectIds || [];
+  const markerKeys = indexFields.markerKeys || [];
+  const placeIds = indexFields.placeIds || [];
+  const deviceIds = indexFields.deviceIds || [];
+  const readerIds = indexFields.readerIds || [];
+  const userIds = indexFields.userIds || [];
 
   // 5. Verify physical existence of referenced entities (Objects, Markers, Places) and user ownership
   await verifyParticipantsExistAndOwned(db, ownerId, objectIds, markerKeys, placeIds);
@@ -277,10 +282,8 @@ export const submitFactCommand = onCall(async (request: any) => {
     if (operation === "attach") {
       validateAttach(data);
     } else if (operation === "detach") {
-      await validateDetach(db, ownerId, subjectAssociationId);
       resolvedSubjectId = subjectAssociationId;
     } else if (operation === "replace") {
-      await validateReplace(db, ownerId, subjectAssociationId);
       resolvedSubjectId = subjectAssociationId;
     }
 
@@ -414,6 +417,9 @@ export const submitFactCommand = onCall(async (request: any) => {
     const existingCommand = await transaction.get(idempotencyRef);
     if (existingCommand.exists) {
       const cmdData = existingCommand.data();
+      if (cmdData?.factType !== factType) {
+        throw new HttpsError("invalid-argument", "Same commandId received with a different factType.");
+      }
       if (cmdData?.requestHash !== requestHash) {
         throw new HttpsError("invalid-argument", "Same commandId received with a different payload.");
       }
@@ -422,9 +428,26 @@ export const submitFactCommand = onCall(async (request: any) => {
       return;
     }
 
-    // Association concurrency guard
+    // Transactional Association subject reading & safety checks
     if (factType === "association" && (documentToSave.operation === "detach" || documentToSave.operation === "replace")) {
       const subjectAssociationId = documentToSave.subjectAssociationId;
+      if (!subjectAssociationId) {
+        throw new HttpsError("failed-precondition", `Operation ${documentToSave.operation} requires subjectAssociationId.`);
+      }
+
+      // Read subject association inside the transaction
+      const subjectRef = db.collection("associations").doc(subjectAssociationId);
+      const subjectSnap = await transaction.get(subjectRef);
+      if (!subjectSnap.exists) {
+        throw new HttpsError("failed-precondition", `Referenced subject association ID "${subjectAssociationId}" was not found.`);
+      }
+
+      const subjectData = subjectSnap.data();
+      if (subjectData?.ownerId !== ownerId) {
+        throw new HttpsError("permission-denied", `Referenced subject association "${subjectAssociationId}" does not belong to you.`);
+      }
+
+      // Check for duplicate detaches/replacements
       const duplicateQuery = db.collection("associations")
         .where("subjectAssociationId", "==", subjectAssociationId)
         .where("ownerId", "==", ownerId);
@@ -435,6 +458,48 @@ export const submitFactCommand = onCall(async (request: any) => {
       });
       if (isAlreadyDetached) {
         throw new HttpsError("failed-precondition", `Referenced association "${subjectAssociationId}" is already detached or replaced.`);
+      }
+
+      // Validation matching detach participants with subject
+      if (documentToSave.operation === "detach") {
+        const subjectKeys = subjectData?.participantKeys || [];
+        const incomingKeys = participantKeys;
+        const keysMatch = subjectKeys.length === incomingKeys.length && subjectKeys.every((val: string, index: number) => val === incomingKeys[index]);
+        if (!keysMatch) {
+          throw new HttpsError("failed-precondition", "Participants of the detach command must exactly match those of the subject association.");
+        }
+      }
+
+      // Checking Object/Marker replace consistency
+      if (documentToSave.operation === "replace") {
+        const subjectKeys = subjectData?.participantKeys || [];
+        const incomingKeys = participantKeys;
+        const hasOverlap = incomingKeys.some((k: string) => subjectKeys.includes(k));
+        if (!hasOverlap) {
+          throw new HttpsError("failed-precondition", "Replace operation must share at least one participant with the subject association being replaced.");
+        }
+
+        // Checking old vs new Marker schema integrity
+        const subjectParticipants = subjectData?.participants || [];
+        const oldMarkerKey = subjectParticipants.find((p: any) => p.ref && p.ref.entityType === 'marker')?.ref.id;
+        const newMarkerKey = data.participants.find((p: any) => p.ref && p.ref.entityType === 'marker')?.ref.id;
+
+        if (oldMarkerKey && newMarkerKey && oldMarkerKey !== newMarkerKey) {
+          const oldMarkerSnap = await transaction.get(db.collection("markers").doc(oldMarkerKey));
+          const newMarkerSnap = await transaction.get(db.collection("markers").doc(newMarkerKey));
+
+          if (oldMarkerSnap.exists && newMarkerSnap.exists) {
+            const oldMarkerData = oldMarkerSnap.data();
+            const newMarkerData = newMarkerSnap.data();
+
+            if (oldMarkerData?.identityModelVersion !== newMarkerData?.identityModelVersion) {
+              throw new HttpsError("failed-precondition", `Marker replacement schema mismatch. Old marker version "${oldMarkerData?.identityModelVersion}" does not match new marker version "${newMarkerData?.identityModelVersion}".`);
+            }
+            if (oldMarkerData?.canonicalizationVersion !== newMarkerData?.canonicalizationVersion) {
+              throw new HttpsError("failed-precondition", `Marker replacement canonicalization mismatch. Old canonicalization "${oldMarkerData?.canonicalizationVersion}" does not match new canonicalization "${newMarkerData?.canonicalizationVersion}".`);
+            }
+          }
+        }
       }
     }
 

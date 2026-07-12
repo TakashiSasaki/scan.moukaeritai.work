@@ -1,8 +1,8 @@
-# scan.mw (Version 2.0.14)
+# scan.mw (Version 2.0.15)
 
 [![CI](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml)
 
-Welcome to **scan.mw v2.0.14**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
+Welcome to **scan.mw v2.0.15**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
 
 This repository enforces backward-incompatible, robust schemas, strict version governance, and a registry-first workflow.
 
@@ -18,22 +18,17 @@ This repository enforces backward-incompatible, robust schemas, strict version g
 
 ---
 
-## 🚀 Node-Only Verification Closure and Skill Consistency (v2.0.14)
+## 🚀 Transactional Fact and Projection Safety Closure (v2.0.15)
 
-Version 2.0.14 focuses on establishing a completely unified, Node-only verification baseline and removing Java dependencies and Firebase emulators from the active validation paths.
+Version 2.0.15 focuses on implementing Fact command idempotency, canonical request serialization, derived participant indexes, standard UUIDv7 and UTF-8 SHA-256 hash validation, pure logical Fact builders, backend-authoritative mapping, and Association lifecycle transaction logic.
 
-- **Node-only Rules Static Policy Gate**: Firestore Security Rules are audited using a lightweight Node.js static policy verification script rather than a heavy Firestore Emulator behavior test suite.
-  - *Disclaimer*: Rules validation uses static policy analysis checking rules syntax, default denials, and block configurations. Behavior-level emulator execution is not conducted, and static verification is not represented as runtime behavioral test verification.
-- **Fail-Closed Preflight and Closeout Gates**: Solidified preflight checks and closeout gates to prevent working-tree leakage, dirty deployments, or invalid contract registry modifications.
-- **Transactional Fact and Projection Safety**: Deferred to **2.0.15** (including exact factType request hash verification, canonical JSON standard, typed participantKeys, array sort/deduplication, transactional Association subject, UUIDv7, and projection status tracking).
-- **Rules / Legacy Closure**: Deferred to **2.0.16** (including strict Entity `_meta` rules, Marker identity immutability, denying legacy reads).
 - **Object/Marker Active Workflow**: Not yet fully complete.
 - **Production Deployment**: Deployments are strictly **manual only**.
 - **Major Version Bumps**: Require explicit human approval.
 
 ### 📅 Stride Roadmap & Backlog
-- **2.0.14**: Node-Only Verification Closure and Skill Consistency (Current)
-- **2.0.15**: Transactional Fact and Projection Safety Closure (Deferred)
+- **2.0.14**: Node-Only Verification Closure and Skill Consistency (Completed)
+- **2.0.15**: Transactional Fact and Projection Safety Closure (Current)
 - **2.0.16**: Rules, Legacy Runtime and Export Closure (Deferred)
 - **2.1.0**: EFP-native First Vertical Slice (Deferred)
 

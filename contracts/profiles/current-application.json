@@ -1,5 +1,5 @@
 {
-  "applicationVersion": "2.0.14",
+  "applicationVersion": "2.0.15",
   "contracts": {
     "core-vocabulary": "1.0.0",
     "efp-model": "3.0.0",
@@ -7,6 +7,6 @@
     "export-format": "1.0.0",
     "import-protocol": "1.0.0",
     "firestore-binding": "2.0.0",
-    "callable-functions-api": "1.1.3"
+    "callable-functions-api": "1.1.4"
   }
 }

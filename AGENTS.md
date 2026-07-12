@@ -10,9 +10,9 @@ This repository uses project-specific agent skills listed in the canonical manif
 Canonical skill directory: `.agents/skills/`
 Before performing a task, check whether a relevant skill exists in the manifest and read its `SKILL.md` before acting.
 
-## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.14)
+## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.15)
 **scan.mw** is a cloud-based item tracking and inventory management application.
-As of version **2.0.14**, the project adheres to a **Contract-First Rebuild Baseline**:
+As of version **2.0.15**, the project adheres to a **Contract-First Rebuild Baseline**:
 
 1. **Canonical Schema Registry**: The `/contracts` directory is the single source of truth for all schemas, semantics, and registries. No runtime data mutations or API changes can occur without updated contracts. The active contract profile is defined in `contracts/profiles/current-application.json`.
 2. **Entity-Fact-Projection (EFP) Model**: 
@@ -44,26 +44,26 @@ As of version **2.0.14**, the project adheres to a **Contract-First Rebuild Base
 - Standardized `npx` execution syntax checking under the skill integrity validation.
 - Node-only gates implemented and passing locally (GitHub Actions confirmation unavailable).
 
-**Deferred to 2.0.15 (Transactional Fact and Projection Safety Closure)**:
+**Completed in 2.0.15 (Transactional Fact and Projection Safety Closure)**:
 - request hash verification with exact `factType` & schema version
+- rejecting same `commandId` with different `factType` inside transaction
+- typed `participantKeys` usage in functions (via `buildFactIndexFields`)
+- sorting/deduplication of all index arrays (via `buildFactIndexFields`)
+- Transactional Association subject reading inside Firestore transactions
+- validation matching detach participants with subject (identical participantKeys)
+- checking Object/Marker replace consistency (must share at least one participant key)
+- checking old vs new Marker schema integrity (comparing identityModelVersion and canonicalizationVersion)
+- throwing errors in projection updates instead of swallowing them
+
+**Deferred to 2.0.16 (Rules, Legacy Runtime and Export Closure)**:
 - canonical JSON serialization standard
-- rejecting same `commandId` with different `factType`
-- typed `participantKeys` usage in functions
-- sorting/deduplication of all index arrays
 - rigorous logical Fact validation matching schemas
-- Transactional Association subject reading
-- validation matching detach participants with subject
-- checking Object/Marker replace consistency
-- checking old vs new Marker schema integrity
 - `ownerId` + `subjectAssociationId` composite index
 - standardized UUIDv7 generation
 - standardized UTF-8 SHA-256
-- throwing errors in projection updates
 - duplicate/out-of-order event safety
 - domain-time/fact-ID watermark
 - projection receipt status updates
-
-**Deferred to 2.0.16 (Rules, Legacy Runtime and Export Closure)**:
 - strict Entity `_meta` security rules
 - Marker identity immutability rule
 - restricting Fact reads to `ownerId` scope
@@ -73,8 +73,8 @@ As of version **2.0.14**, the project adheres to a **Contract-First Rebuild Base
 - closure of Draft PR #1 (never merge without human authorization)
 
 ### 📅 Stride Roadmap & Backlog
-- **2.0.14**: Node-Only Verification Closure and Skill Consistency (Current)
-- **2.0.15**: Transactional Fact and Projection Safety Closure (Deferred)
+- **2.0.14**: Node-Only Verification Closure and Skill Consistency (Completed)
+- **2.0.15**: Transactional Fact and Projection Safety Closure (Current)
 - **2.0.16**: Rules, Legacy Runtime and Export Closure (Deferred)
 - **2.1.0**: EFP-native First Vertical Slice (Deferred)
 

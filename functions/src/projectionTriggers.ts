@@ -76,9 +76,12 @@ async function handleFactCreated(data: any) {
     })());
   }
 
-  await Promise.all(tasks).catch(err => {
+  try {
+    await Promise.all(tasks);
+  } catch (err) {
     console.error("Error updating summaries asynchronously:", err);
-  });
+    throw err;
+  }
 }
 
 export const onAssociationCreated = onDocumentCreated({

@@ -47,8 +47,13 @@ try {
     }
   }
   console.log('✅ All contract packages successfully resolved!');
+  
+  // Also run comprehensive contract registry validation
+  console.log('🔹 Executing contracts validation test suite...');
+  execSync('npm run contracts:validate', { stdio: 'inherit', cwd: rootDir });
+  console.log('✅ Contracts validation completed successfully!');
 } catch (e) {
-  fail(`Contract profile resolution failed: ${e.message}`);
+  fail(`Contract profile or validation check failed: ${e.message}`);
 }
 
 // 4. Branch & HEAD display
@@ -56,10 +61,16 @@ console.log('🔹 Repository Info:');
 try {
   const branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
   const commit = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
+  if (!branch) {
+    fail('Git branch is empty.');
+  }
+  if (!commit) {
+    fail('Git HEAD commit is empty.');
+  }
   console.log(`   Branch: ${branch}`);
   console.log(`   HEAD Commit: ${commit}`);
 } catch (e) {
-  console.warn('   ⚠️ Could not retrieve git branch/HEAD info');
+  fail(`Could not retrieve git branch/HEAD info: ${e.message}`);
 }
 
 // 5. Working Tree Status & Dirty check
