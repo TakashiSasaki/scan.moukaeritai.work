@@ -53,9 +53,29 @@ function checkFile(filePath) {
 console.log(`Scanning ${path.relative(rootDir, functionsSrcDir)} for boundary violations...`);
 scanDirectory(functionsSrcDir);
 
+const functionsIndex = path.join(functionsSrcDir, 'index.ts');
+
+if (fs.existsSync(functionsIndex)) {
+  const indexContent = fs.readFileSync(functionsIndex, 'utf-8');
+  const forbiddenExports = [
+    'migrateImagesToFirestore',
+    'addFormatToImages',
+    'processOrphanedImages',
+    'migrateItemsToObjects'
+  ];
+
+  for (const forbidden of forbiddenExports) {
+    if (indexContent.includes(forbidden)) {
+      console.error(`Forbidden export detected in ${path.relative(rootDir, functionsIndex)}: ${forbidden}`);
+      hasError = true;
+    }
+  }
+}
+
 if (hasError) {
-  console.error('Validation failed: Boundary violations found.');
+  console.error('Validation failed: Boundary or forbidden export violations found.');
   process.exit(1);
 } else {
-  console.log('Validation passed: No boundary violations found.');
+  console.log('Validation passed: No boundary or forbidden export violations found.');
 }
+

@@ -125,7 +125,7 @@ To prevent confusion across systems, note the following distinct markers/identif
   - **EFP Core Collections (Active)**:
     - **Entities**:
       - `objects/{objectId}`: The physical objects.
-      - `markers/{markerId}`: Ownerless, unique physical marker tags.
+      - ``markers/{markerId}`: Unique physical marker tags.
       - `places/{placeId}`: Spatial locations.
     - **Facts (Append-Only)**:
       - `associations/{associationId}`: Fact relating objects, markers, and places.
@@ -538,14 +538,14 @@ The application has transitioned from a simple `items` collection to a normalize
 - Passing readiness validation does not enable the feature flag and does not authorize rollout, backfill, or UI read switching.
 - The scanner legacy identifier lookup and objectEvents write remain authoritative until a separate explicit migration/read-switching PR.
 
-### v2.0.2 Baseline Closure and Backend Fact Pipeline (2026-07-11)
-- **EFP Backend-Only Fact Pipeline**: All direct client-side creates, updates, and deletes to the Fact collections (`associations`, `observations`, `measurements`, `events`) are permanently disabled in Firestore Security Rules.
-- **Secure `submitFactCommand` Callable Function**:
-  - Acts as the single entrance gateway for appending immutable Fact records.
-  - Enforces strict v3.0.0 JSON schema validation for client inputs.
-  - Resolves logical timezone/spatial/ISO-8601 properties to native Firestore `Timestamp` and `GeoPoint` types.
-  - Evaluates and verifies the existence and ownership of all referenced Entities before writing.
-  - Writes the Fact document and a `factCommands` command receipt atomically in a single Firestore Transaction to ensure strict Idempotency.
-- **In-Band Projection Reconciliation**:
-  - Following a successful transaction, `submitFactCommand` triggers single-target summary recomputation (`recomputeProjectionSummaryForTarget`) in-band for all referenced Entities (Objects, Markers, Places).
-  - This guarantees perfect read-after-write consistency of read-optimized projection summaries in client interfaces.
+
+### Core Principles & Governance
+- **Contract Source of Truth**: `/contracts` is the ONLY normative source of truth for schemas and contracts. `.
+- **Version Governance**: Major version bumps require explicit human user approval. Minor and patch bumps can be judged and executed by the agent.
+- **Fail-Closed Validation**: Validation failures or unverifiable states are failures, not successes.
+- **Fact Immutability**: Facts are backend-only and immutable.
+- **Association Lifecycle**: Association lifecycle operations (attach, detach, replace) are recorded as immutable operation Facts.
+- **Eventual Consistency**: Projections are asynchronous and eventually consistent. Firestore triggers provide at-least-once execution.
+- **Admin & Authorization**: Admin Panel, Developer Docs, and Admin Sitemap are admin-only. UI menu visibility is NOT a substitute for authorization. Do not use personal email addresses for role validation.
+- **Active Routing Constraints**: The legacy Identifier and Binding UI must NOT be connected to active routing.
+- **Deployment Safety**: Deployments are manual only. No automatic push deployments for Functions. Production operations (deploy, write, delete) require explicit human approval.

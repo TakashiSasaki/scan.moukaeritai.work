@@ -15,17 +15,21 @@ beforeAll(async () => {
     firestore: {
       rules: fs.readFileSync('firestore.rules', 'utf8'),
       host: '127.0.0.1',
-      port: 8080,
+      port: 8081,
     },
   });
 });
 
 afterAll(async () => {
-  await testEnv.cleanup();
+  if (testEnv) {
+    await testEnv.cleanup();
+  }
 });
 
 beforeEach(async () => {
-  await testEnv.clearFirestore();
+  if (testEnv) {
+    await testEnv.clearFirestore();
+  }
 });
 
 describe('Firestore Security Rules', () => {

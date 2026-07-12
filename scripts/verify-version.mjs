@@ -12,10 +12,13 @@ function fail(msg) {
   process.exit(1);
 }
 
-// Semver greater helper
 function isSemverGreater(current, base) {
+  if (!current || !base) return false;
   const cParts = current.split('.').map(Number);
   const bParts = base.split('.').map(Number);
+  if (cParts.length !== 3 || bParts.length !== 3 || cParts.some(isNaN) || bParts.some(isNaN)) {
+    fail(`Invalid SemVer format: ${current} or ${base}`);
+  }
   for (let i = 0; i < 3; i++) {
     if (cParts[i] > bParts[i]) return true;
     if (cParts[i] < bParts[i]) return false;
@@ -25,35 +28,26 @@ function isSemverGreater(current, base) {
 
 console.log('🔍 Running Version Verification...');
 
-// 1. Determine comparison base
 let baseRef = 'HEAD~1';
 if (process.env.GITHUB_BASE_REF) {
-  // Pull request context
   baseRef = `origin/${process.env.GITHUB_BASE_REF}`;
 } else if (process.env.GITHUB_SHA) {
-  // Push context
   baseRef = `${process.env.GITHUB_SHA}~1`;
 }
-
 console.log(`Comparing against base reference: ${baseRef}`);
 
-// Fetch git differences
 let changedFiles = [];
 try {
-  // Ensure we fetch base ref if running in GitHub Actions
   if (process.env.GITHUB_BASE_REF) {
     execSync(`git fetch --depth=10 origin ${process.env.GITHUB_BASE_REF}`, { stdio: 'inherit' });
   }
   const output = execSync(`git diff --name-only ${baseRef}`, { encoding: 'utf8' });
   changedFiles = output.split('\n').map(f => f.trim()).filter(Boolean);
 } catch (err) {
-  console.warn(`⚠️ Git comparison failed: ${err.message}. Falling back to default baseline pass.`);
-  process.exit(0);
+  fail(`Git comparison failed: ${err.message}`);
 }
-
 console.log(`Changed files count: ${changedFiles.length}`);
 
-// 2. Define sensitive paths triggering mandatory version bump (excluding markdown files)
 const sensitivePaths = [
   /^src\//,
   /^functions\//,
@@ -69,71 +63,87 @@ const sensitivePaths = [
 ];
 
 const codeChanged = changedFiles.some(file => {
-  // Exclude markdown files from code-level triggers
   if (file.endsWith('.md')) return false;
   return sensitivePaths.some(pattern => pattern.test(file));
 });
 
-if (!codeChanged) {
-  console.log('✅ No sensitive code or configuration files changed. Version bump is not mandatory.');
-  process.exit(0);
+let currentVersion;
+try {
+  const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
+  currentVersion = pkg.version;
+  if (!currentVersion) fail('Missing version in package.json');
+} catch (e) {
+  fail(`Failed to read/parse current package.json: ${e.message}`);
 }
 
-console.log('⚡ Code or configurations changed. Verifying version bump...');
-
-// 3. Read current version
-const currentPackagePath = path.join(rootDir, 'package.json');
-if (!fs.existsSync(currentPackagePath)) {
-  fail('package.json does not exist');
-}
-const currentPackage = JSON.parse(fs.readFileSync(currentPackagePath, 'utf8'));
-const currentVersion = currentPackage.version;
-
-// 4. Read base version
 let baseVersion;
 try {
   const basePackageContent = execSync(`git show ${baseRef}:package.json`, { encoding: 'utf8' });
   const basePackage = JSON.parse(basePackageContent);
   baseVersion = basePackage.version;
+  if (!baseVersion) fail('Missing version in base package.json');
 } catch (err) {
-  console.warn(`⚠️ Could not retrieve package.json from base ref: ${err.message}. Assuming initial baseline.`);
-  // If we can't load the base package.json, we let it pass.
-  process.exit(0);
+  fail(`Could not retrieve or parse package.json from base ref: ${err.message}`);
 }
 
 console.log(`Current version: ${currentVersion}`);
 console.log(`Base version:    ${baseVersion}`);
 
-if (currentVersion === baseVersion) {
-  fail(`The version in package.json must be bumped. Code changed under sensitive paths, but version remained "${currentVersion}".`);
+if (codeChanged) {
+  if (currentVersion === baseVersion) {
+    fail(`The version in package.json must be bumped. Code changed under sensitive paths, but version remained "${currentVersion}".`);
+  }
+  if (!isSemverGreater(currentVersion, baseVersion)) {
+    fail(`Current version "${currentVersion}" is not greater than base version "${baseVersion}".`);
+  }
 }
 
-if (!isSemverGreater(currentVersion, baseVersion)) {
-  fail(`Current version "${currentVersion}" is not greater than base version "${baseVersion}".`);
+// Check other versions to be consistent
+const checkPackageVersion = (pkgPath) => {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, pkgPath), 'utf8'));
+    if (pkg.version !== currentVersion) {
+      fail(`Version mismatch in ${pkgPath}: Expected ${currentVersion}, got ${pkg.version}`);
+    }
+  } catch (e) {
+    fail(`Failed to verify ${pkgPath}: ${e.message}`);
+  }
+};
+checkPackageVersion('functions/package.json');
+checkPackageVersion('packages/efp-model/package.json');
+
+try {
+  const profilePath = path.join(rootDir, 'contracts/profiles/current-application.json');
+  const profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
+  if (profile.applicationVersion !== currentVersion) {
+    fail(`Version mismatch in current-application.json: Expected ${currentVersion}, got ${profile.applicationVersion}`);
+  }
+} catch (e) {
+  fail(`Failed to verify current-application.json: ${e.message}`);
 }
 
-// 5. Verify applicationVersion in contracts profile matches package.json version
-const contractsProfilePath = path.join(rootDir, 'contracts/profiles/current-application.json');
-if (!fs.existsSync(contractsProfilePath)) {
-  fail('contracts/profiles/current-application.json does not exist');
-}
-const contractsProfile = JSON.parse(fs.readFileSync(contractsProfilePath, 'utf8'));
-const contractsAppVersion = contractsProfile.applicationVersion;
-
-if (contractsAppVersion !== currentVersion) {
-  fail(`Mismatched versions! package.json version is "${currentVersion}", but contracts/profiles/current-application.json applicationVersion is "${contractsAppVersion}". These must be perfectly synchronized.`);
+try {
+  const readme = fs.readFileSync(path.join(rootDir, 'README.md'), 'utf8');
+  if (!readme.includes(`Version ${currentVersion}`) && !readme.includes(`v${currentVersion}`)) {
+    fail(`README.md does not contain the current version ${currentVersion}`);
+  }
+} catch (e) {
+  fail(`Failed to verify README.md: ${e.message}`);
 }
 
-// 6. Major bump approval logic: checks that major version changes are restricted to humans
+// Major bump human approval check
 const currentParts = currentVersion.split('.').map(Number);
 const baseParts = baseVersion.split('.').map(Number);
-
 if (currentParts[0] > baseParts[0]) {
-  const humanApproved = process.env.HUMAN_APPROVED_MAJOR_BUMP === 'true';
-  if (!humanApproved) {
-    fail(`Major version bump detected ("${baseVersion}" -> "${currentVersion}"). Major version bumps are strictly restricted to humans. If this is a human-initiated bump, please run with HUMAN_APPROVED_MAJOR_BUMP=true.`);
+  try {
+    const approvalRecord = execSync(`git show ${baseRef}:contracts/governance/major-bump-approval.json`, { encoding: 'utf8', stdio: 'pipe' });
+    const approval = JSON.parse(approvalRecord);
+    if (approval.approvedVersion !== currentVersion) {
+      fail(`Major version bump requires pre-existing human approval for ${currentVersion} in base branch.`);
+    }
+  } catch (e) {
+    fail(`Major version bump detected without a valid pre-existing human approval record in base branch: ${e.message}`);
   }
-  console.log(`✅ Major version bump ("${baseVersion}" -> "${currentVersion}") has human approval.`);
 }
 
 console.log(`✅ Version bump verified! "${baseVersion}" -> "${currentVersion}"`);

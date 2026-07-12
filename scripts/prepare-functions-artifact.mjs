@@ -6,9 +6,13 @@ import { spawnSync } from 'node:child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
+const profilePath = path.join(rootDir, 'contracts', 'profiles', 'current-application.json');
+const profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
+const activeVersion = profile.contracts['callable-functions-api'];
+
 const packageDir = path.join(rootDir, 'packages', 'efp-model');
 const vendorDir = path.join(rootDir, 'functions', 'vendor', 'efp-model');
-const vendorContractsDir = path.join(rootDir, 'functions', 'vendor', 'contracts', 'callable-functions-api', '1.1.1');
+const vendorContractsDir = path.join(rootDir, 'functions', 'vendor', 'contracts', 'callable-functions-api', activeVersion);
 
 function runCommand(command, args, cwd) {
   const result = spawnSync(command, args, { cwd, stdio: 'inherit', shell: true });
@@ -49,13 +53,13 @@ if (!fs.existsSync(path.join(vendorDir, 'dist'))) {
   process.exit(1);
 }
 
-console.log('Preparing functions/vendor/contracts/callable-functions-api/1.1.1...');
+console.log(`Preparing functions/vendor/contracts/callable-functions-api/${activeVersion}...`);
 if (fs.existsSync(vendorContractsDir)) {
   fs.rmSync(vendorContractsDir, { recursive: true, force: true });
 }
 fs.mkdirSync(vendorContractsDir, { recursive: true });
 
-const srcContractsDir = path.join(rootDir, 'contracts', 'packages', 'callable-functions-api', '1.1.1');
+const srcContractsDir = path.join(rootDir, 'contracts', 'packages', 'callable-functions-api', activeVersion);
 if (!fs.existsSync(srcContractsDir)) {
   console.error(`❌ Source contracts directory not found at: ${srcContractsDir}`);
   process.exit(1);

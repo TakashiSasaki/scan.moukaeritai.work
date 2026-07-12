@@ -1,8 +1,8 @@
-# scan.mw (Version 2.0.5)
+# scan.mw (Version 2.0.7)
 
 [![CI](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml)
 
-Welcome to **scan.mw v2.0.5**, a cloud-based item tracking and inventory management application redesigned and rebuilt using a modern **Contract-First Baseline** and fully aligned EFP architecture.
+Welcome to **scan.mw v2.0.7**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
 
 This repository enforces backward-incompatible, robust schemas, strict version governance, and a registry-first workflow.
 
@@ -15,42 +15,31 @@ This repository enforces backward-incompatible, robust schemas, strict version g
   - **Entities** (Timeless identity, e.g., Objects, Markers, Places)
   - **Facts** (Temporal records of events/observations, e.g., Associations, Observations, Measurements, Events)
   - **Projections** (Derived, eventually-consistent caches optimized for user-facing reads, e.g., ObjectSummaries, MarkerSummaries, PlaceSummaries)
-- **Zero Backwards-Compatibility Bloat**: v2.0.4 represents a clean break from old v1 patterns. Legacy migration schemas are stored for read-only historical lookup, and live transactions strictly adhere to EFP JSON contracts.
+- **Zero Backwards-Compatibility Bloat**: Legacy migration schemas are stored for read-only historical lookup, and live transactions strictly adhere to EFP JSON contracts.
 
 ---
 
-## 🚀 EFP-Native Backend Fact Pipeline (v2.0.4 Milestone)
+## 🚀 Fail-Closed Verification Harness (v2.0.6 Milestone)
 
-This milestone introduces the robust, server-secure EFP Fact Command Pipeline:
-- **Strict Backend-Only Fact Creation**: Direct client-side writes to Firestore Fact collections (`associations`, `observations`, `measurements`, `events`) are strictly blocked by Firestore Security Rules. All Facts are created append-only via the `submitFactCommand` Cloud Callable Function.
-- **Validation & Constraint Hardening**: The command endpoint validates payloads against registered JSON Schema v3.0.0 contracts, injects standard system attributes (`id`, `ownerId`, `_meta`), maps temporal/spatial fields (e.g. converting ISO strings to Native Timestamps/GeoPoints), and stores atomic command receipts to enforce Idempotency.
-- **Asynchronous Projection Update**: On successful Fact append, the backend triggers asynchronous projection summary updates using Cloud Firestore Triggers. This ensures eventual consistency, isolation, and robustness without blocking synchronous callable responses.
-
+Version 2.0.6 is the **fail-closed verification harness milestone**. 
+- **Routing Containment**: Successfully completed. Secure boundaries between authenticated users and admins are enforced.
+- **Object/Marker Workflows**: These are not yet fully EFP-native.
+- **Backend Fact Pipeline**: The pipeline enforces eventual consistency for Projections via Cloud Firestore Triggers. There is remaining backlog for transactional safety in the next stride.
+- **Production Deployment**: Deployments are strictly **manual only**.
+- **Major Version Bumps**: Require explicit human approval.
 
 ---
 
 ## 🛠️ Local Development & Validation
 
-To ensure extreme contract and baseline reliability, use the following commands:
+To ensure extreme contract and baseline reliability, use the single entry point command:
 
 ```bash
 # Install dependencies
 npm ci
 
-# Start the local development server (Port 3000)
-npm run dev
-
-# Run Contract Registry & JSON Schema validations
-npm run contracts:validate
-
-# Verify Semantic Version (SemVer) bump compliance (used on PRs/Strides)
-npm run version:verify
-
-# Run TypeScript linting
-npm run lint
-
-# Build the application
-npm run build
+# Run the complete fail-closed verification pipeline (tests, contracts, artifacts, builds)
+npm run verify:baseline
 ```
 
 ---

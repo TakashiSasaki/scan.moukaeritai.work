@@ -24,49 +24,11 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run contract registry validation
-        run: npm run contracts:validate
-
-      - name: Run check generated types validation
-        run: npm run contracts:check-generated
-
-      - name: Run version verification
-        run: npm run version:verify
-
-      - name: Build shared EFP model package
-        run: npm --prefix packages/efp-model run build
-
-      - name: Typecheck shared EFP model package
-        run: npm --prefix packages/efp-model run typecheck
-
-      - name: Validate shared EFP model package artifact
-        run: npm --prefix packages/efp-model run test:artifact
-
-      - name: Install Functions dependencies
-        run: npm ci
-        working-directory: ./functions
-
-      - name: Build Functions
-        run: npm run build
-        working-directory: ./functions
-
-      - name: Run lint
-        run: npm run lint
-
-      - name: Run ordinary tests
-        run: npm run test
-
       - name: Setup Java (for Firebase Emulator)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
-      - name: Run firestore rules tests
-        run: npm run test:rules
-
-      - name: Run build
-        run: npm run build
+      - name: Run verification baseline
+        run: npm run verify:baseline

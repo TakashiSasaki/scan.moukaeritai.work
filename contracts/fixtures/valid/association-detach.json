@@ -1,0 +1,27 @@
+{
+  "associationId": "0190a2a4-f7a1-77ef-9021-d52eac3c7458",
+  "ownerId": "uid_test_user_123",
+  "operation": "detach",
+  "participants": [
+    { "role": "object", "ref": { "entityType": "object", "id": "0190a2a4-f7a1-77ef-9021-d52eac3c7457" } }
+  ],
+  "participantKeys": ["object:0190a2a4-f7a1-77ef-9021-d52eac3c7457"],
+  "objectIds": ["0190a2a4-f7a1-77ef-9021-d52eac3c7457"],
+  "markerKeys": [],
+  "placeIds": [],
+  "readerIds": [],
+  "deviceIds": [],
+  "userIds": [],
+  "effectiveAt": "2026-07-11T18:00:00Z",
+  "provenance": {
+    "source": "user_confirmed",
+    "confidence": "confirmed"
+  },
+  "_meta": {
+    "recordCreatedAt": "2026-07-11T18:00:00Z",
+    "recordUpdatedAt": "2026-07-11T18:00:00Z",
+    "recordCreatedBy": "system_bot",
+    "recordUpdatedBy": "system_bot",
+    "schemaVersion": 1
+  }
+}
