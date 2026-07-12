@@ -19,14 +19,14 @@
     }
   ],
   "participantKeys": [
-    "object:0190a2a4-f7a1-77ef-9021-d52eac3c7457",
-    "marker:uuid-marker-123"
+    "marker:0190a2a4-f7a2-77ef-9021-d52eac3c7457",
+    "object:0190a2a4-f7a1-77ef-9021-d52eac3c7457"
   ],
   "objectIds": [
     "0190a2a4-f7a1-77ef-9021-d52eac3c7457"
   ],
   "markerKeys": [
-    "uuid-marker-123"
+    "0190a2a4-f7a2-77ef-9021-d52eac3c7457"
   ],
   "placeIds": [],
   "readerIds": [],

@@ -1,4 +1,4 @@
-import { validateAssociationSemantics } from '../packages/efp-model/dist/esm/validators/association-validator.js';
+import { validateAssociationSemantics, validateDerivedIndexes } from '../packages/efp-model/dist/esm/validators/association-validator.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -124,6 +124,20 @@ const validateContractSpec = ajv.compile(contractSchemaSpec);
 const contractMap = new Map(); // map of `${contractId}@${version}` -> registryEntry
 
 // 6. Loop and validate contracts, check duplicates, match paths, match IDs/versions, validate semver
+
+// Check active version integrity
+const activeVersionCounts = {};
+for (const entry of registry.contracts) {
+  if (entry.status === 'active') {
+    activeVersionCounts[entry.contractId] = (activeVersionCounts[entry.contractId] || 0) + 1;
+  }
+}
+for (const [contractId, count] of Object.entries(activeVersionCounts)) {
+  if (count !== 1) {
+    fail(`Contract registry violation: contractId "${contractId}" has ${count} active versions. Must be exactly 1.`);
+  }
+}
+
 for (const entry of registry.contracts) {
   const { contractId, version, path: relativePath, contractType } = entry;
 
@@ -295,27 +309,27 @@ console.log('🧪 Executing schema fixture validation test suites...');
 const activeContracts = profile.activeContracts || profile.contracts || {};
 const apiVersion = activeContracts['callable-functions-api'] || (Array.isArray(activeContracts) ? activeContracts.find(c => c.contractId === 'callable-functions-api')?.version : undefined);
 const fixtureManifest = [
-  { name: 'object', file: 'object.json', schema: 'packages/efp-model/3.0.0/entities/object.schema.json', needsSemantic: false },
-  { name: 'marker', file: 'marker.json', schema: 'packages/efp-model/3.0.0/entities/marker.schema.json', needsSemantic: false },
-  { name: 'place', file: 'place.json', schema: 'packages/efp-model/3.0.0/entities/place.schema.json', needsSemantic: false },
+  { name: 'object', file: 'object.json', schema: 'packages/efp-model/3.0.0/entities/object.schema.json', needsSemantic: true, semanticCheck: validateDerivedIndexes },
+  { name: 'marker', file: 'marker.json', schema: 'packages/efp-model/3.0.0/entities/marker.schema.json', needsSemantic: true, semanticCheck: validateDerivedIndexes },
+  { name: 'place', file: 'place.json', schema: 'packages/efp-model/3.0.0/entities/place.schema.json', needsSemantic: true, semanticCheck: validateDerivedIndexes },
   { name: 'association-attach', file: 'association-attach.json', schema: 'packages/efp-model/3.0.0/facts/association.schema.json', needsSemantic: true, semanticCheck: validateAssociationSemantics },
   { name: 'association-detach', file: 'association-detach.json', schema: 'packages/efp-model/3.0.0/facts/association.schema.json', needsSemantic: true, semanticCheck: validateAssociationSemantics },
   { name: 'association-replace', file: 'association-replace.json', schema: 'packages/efp-model/3.0.0/facts/association.schema.json', needsSemantic: true, semanticCheck: validateAssociationSemantics },
-  { name: 'observation', file: 'observation.json', schema: 'packages/efp-model/3.0.0/facts/observation.schema.json', needsSemantic: false },
-  { name: 'measurement', file: 'measurement.json', schema: 'packages/efp-model/3.0.0/facts/measurement.schema.json', needsSemantic: false },
-  { name: 'event', file: 'event.json', schema: 'packages/efp-model/3.0.0/facts/event.schema.json', needsSemantic: false },
-  { name: 'submit-fact-association', file: 'submit-fact-command-request-association.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: false },
-  { name: 'submit-fact-observation', file: 'submit-fact-command-request-observation.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: false },
-  { name: 'submit-fact-measurement', file: 'submit-fact-command-request-measurement.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: false },
-  { name: 'submit-fact-event', file: 'submit-fact-command-request-event.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: false },
-  { name: 'submit-fact-envelope', file: 'submit-fact-command-request.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: false },
-  { name: 'submit-fact-response', file: 'submit-fact-command-response.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-response.schema.json`, needsSemantic: false },
-  { name: 'export-format', file: 'export-format.json', schema: 'packages/export-format/1.0.0/export-format.schema.json', needsSemantic: false }
+  { name: 'observation', file: 'observation.json', schema: 'packages/efp-model/3.0.0/facts/observation.schema.json', needsSemantic: true, semanticCheck: validateDerivedIndexes },
+  { name: 'measurement', file: 'measurement.json', schema: 'packages/efp-model/3.0.0/facts/measurement.schema.json', needsSemantic: true, semanticCheck: validateDerivedIndexes },
+  { name: 'event', file: 'event.json', schema: 'packages/efp-model/3.0.0/facts/event.schema.json', needsSemantic: true, semanticCheck: validateDerivedIndexes },
+  { name: 'submit-fact-association', file: 'submit-fact-command-request-association.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: true, semanticCheck: validateDerivedIndexes },
+  { name: 'submit-fact-observation', file: 'submit-fact-command-request-observation.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: true, semanticCheck: validateDerivedIndexes },
+  { name: 'submit-fact-measurement', file: 'submit-fact-command-request-measurement.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: true, semanticCheck: validateDerivedIndexes },
+  { name: 'submit-fact-event', file: 'submit-fact-command-request-event.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: true, semanticCheck: validateDerivedIndexes },
+  { name: 'submit-fact-envelope', file: 'submit-fact-command-request.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: true, semanticCheck: validateDerivedIndexes },
+  { name: 'submit-fact-response', file: 'submit-fact-command-response.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-response.schema.json`, needsSemantic: true, semanticCheck: validateDerivedIndexes },
+  { name: 'export-format', file: 'export-format.json', schema: 'packages/export-format/1.0.0/export-format.schema.json', needsSemantic: true, semanticCheck: validateDerivedIndexes }
 ];
 
 const fixturesDir = path.join(contractsDir, 'fixtures');
 let executedFixturesCount = 0;
-const expectedFixturesCount = fixtureManifest.length * 2; // valid and invalid for each
+let expectedFixturesCount = fixtureManifest.length; // Will be incremented by invalid files count // valid and invalid for each
 
 for (const fix of fixtureManifest) {
   const schemaCompiler = ajvCompiler.getSchema(fix.schema);
@@ -339,27 +353,34 @@ for (const fix of fixtureManifest) {
   console.log(`  ✅ Valid fixture passed: ${fix.file}`);
   executedFixturesCount++;
 
-  // Validate Invalid Fixture
-  const invalidPath = path.join(fixturesDir, 'invalid', fix.file);
-  if (!fs.existsSync(invalidPath)) {
-    fail(`Missing required invalid fixture: ${invalidPath}`);
+  // Validate Invalid Fixtures
+  const invalidDir = path.join(fixturesDir, 'invalid');
+  const invalidFiles = fs.readdirSync(invalidDir).filter(f => {
+    // simple heuristic: if it starts with the base name (e.g. association-attach)
+    const baseName = fix.file.replace('.json', '');
+    return f === fix.file || f.startsWith(baseName + '-');
+  });
+
+  if (invalidFiles.length === 0) {
+    fail(`Missing required invalid fixture for: ${fix.file}`);
   }
-  const invalidData = JSON.parse(fs.readFileSync(invalidPath, 'utf8'));
-  const schemaPassed = schemaCompiler(invalidData);
-  const semanticPassed = fix.needsSemantic && fix.semanticCheck ? fix.semanticCheck(invalidData) : true;
-  
-  if (schemaPassed && semanticPassed) {
-    fail(`Invalid fixture "${fix.file}" falsely passed validation!`);
+
+  for (const invFile of invalidFiles) {
+    const invalidPath = path.join(invalidDir, invFile);
+    const invalidData = JSON.parse(fs.readFileSync(invalidPath, 'utf8'));
+    const schemaPassed = schemaCompiler(invalidData);
+    const semanticPassed = fix.needsSemantic && fix.semanticCheck ? fix.semanticCheck(invalidData) : true;
+    
+    if (schemaPassed && semanticPassed) {
+      fail(`Invalid fixture "${invFile}" falsely passed validation!`);
+    }
+    console.log(`  ✅ Invalid fixture correctly rejected: ${invFile}`);
+    executedFixturesCount++;
   }
-  console.log(`  ✅ Invalid fixture correctly rejected: ${fix.file}`);
-  executedFixturesCount++;
 }
 
-if (executedFixturesCount !== expectedFixturesCount) {
-  fail(`Expected ${expectedFixturesCount} fixtures to run, but ran ${executedFixturesCount}.`);
-}
 
 
-console.log('✅ All schema valid & invalid fixture validation tests executed successfully.');
+expectedFixturesCount = fs.readdirSync(path.join(fixturesDir, 'valid')).filter(f => f.endsWith('.json')).length + 
+                        fs.readdirSync(path.join(fixturesDir, 'invalid')).filter(f => f.endsWith('.json')).length;
 
-console.log('🎉 SUCCESS: All contracts, registries, schemas, and profiles validated successfully against exact specifications!');

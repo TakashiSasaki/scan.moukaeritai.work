@@ -3,10 +3,20 @@
   "ownerId": "uid_test_user_123",
   "measurementType": "weight",
   "participants": [
-    { "role": "object", "ref": { "entityType": "object", "id": "0190a2a4-f7a1-77ef-9021-d52eac3c7457" } }
+    {
+      "role": "object",
+      "ref": {
+        "entityType": "object",
+        "id": "0190a2a4-f7a1-77ef-9021-d52eac3c7457"
+      }
+    }
   ],
-  "participantKeys": ["object:0190a2a4-f7a1-77ef-9021-d52eac3c7457"],
-  "objectIds": ["0190a2a4-f7a1-77ef-9021-d52eac3c7457"],
+  "participantKeys": [
+    "object:0190a2a4-f7a1-77ef-9021-d52eac3c7457"
+  ],
+  "objectIds": [
+    "0190a2a4-f7a1-77ef-9021-d52eac3c7457"
+  ],
   "markerKeys": [],
   "placeIds": [],
   "readerIds": [],

@@ -37,6 +37,8 @@ jobs:
       - name: Validate Functions artifact
         run: npm run test:functions-artifact
 
+      - name: Validate Functions runtime gate
+        run: npm run test:functions-runtime-gate
       - name: Validate Functions import boundary
         run: npm run test:functions-boundary
 

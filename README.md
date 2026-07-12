@@ -1,8 +1,8 @@
-# scan.mw (Version 2.0.9)
+# scan.mw (Version 2.0.10)
 
 [![CI](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml)
 
-Welcome to **scan.mw v2.0.9**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
+Welcome to **scan.mw v2.0.10**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
 
 This repository enforces backward-incompatible, robust schemas, strict version governance, and a registry-first workflow.
 
@@ -13,20 +13,21 @@ This repository enforces backward-incompatible, robust schemas, strict version g
 - **Contract-First Source of Truth**: All data models, schemas, and API formats are declared and validated within the `/contracts` directory first.
 - **Entity-Fact-Projection (EFP) Model**: 
   - **Entities** (Timeless identity, e.g., Objects, Markers, Places)
-  - **Facts** (Temporal records of events/observations, e.g., Associations, Observations, Measurements, Events)
-  - **Projections** (Derived, eventually-consistent caches optimized for user-facing reads, e.g., ObjectSummaries, MarkerSummaries, PlaceSummaries)
-- **Zero Backwards-Compatibility Bloat**: Legacy migration schemas are stored for read-only historical lookup, and live transactions strictly adhere to EFP JSON contracts.
+  - **Facts** (Temporal records of events/observations, e.g., Associations, Observations, Measurements, Events) - **Backend-only and immutable**.
+  - **Projections** (Derived caches optimized for user-facing reads) - **Asynchronous and eventually-consistent**.
 
 ---
 
-## 🚀 Fail-Closed Harness Closure (v2.0.9 Milestone)
+## 🚀 Verification Closure Repair and Repository Hygiene (v2.0.10)
 
-Version 2.0.9 completes the **Fail-Closed Harness Closure**.
+Version 2.0.10 focuses on Verification Closure Repair and Repository Hygiene.
 
-- **Routing Containment**: Successfully completed. Secure boundaries between authenticated users and admins are enforced.
-- **Backend Transactional Safety**: Scheduled for 2.0.9.
+- **Active Contract Verification**: Closed and fully validated.
+- **Repository Hygiene**: A repository hygiene gate was added to reject scratch and temporary files.
+- **Routing Containment**: Successfully completed.
+- **Transactional Fact Safety**: Scheduled for 2.0.11.
+- **Rules / Legacy Closure**: Scheduled for 2.0.12.
 - **Object/Marker Active Workflow**: Not yet fully complete.
-- **Projection Updates**: Asynchronous and eventually consistent.
 - **Production Deployment**: Deployments are strictly **manual only**.
 - **Major Version Bumps**: Require explicit human approval.
 
@@ -49,13 +50,15 @@ npm run verify:baseline
 ## 📜 Contract Registry Governance
 
 The canonical definition of application state and data structures is managed under:
+
 * `/contracts/registry.json`: Registry list of active contract versions.
-* `/contracts/packages/`: Raw JSON schemas and contract descriptions (e.g., `efp-model/2.0.0`).
+* `/contracts/packages/`: Raw JSON schemas and contract descriptions.
 * `/contracts/profiles/current-application.json`: Profile specifying which contract package versions the current UI deployment actively supports.
 
 ### Schema Validation
 
 Any changes to `/contracts` can be dynamically verified locally using:
+
 ```bash
 npm run contracts:validate
 ```

@@ -11,6 +11,27 @@ function getDb() {
   return getFirestore(admin.app(), appletConfig.firestoreDatabaseId);
 }
 
+
+async function saveSummaryWithWatermark(db: admin.firestore.Firestore, collection: string, docId: string, fullSummary: any) {
+  const ref = db.collection(collection).doc(docId);
+  await db.runTransaction(async (t) => {
+    const snap = await t.get(ref);
+    if (snap.exists) {
+      const currentData = snap.data();
+      if (currentData?.asOf && fullSummary.asOf) {
+        // Compare Firestore Timestamps directly by their toMillis()
+        const currentMillis = currentData.asOf.toMillis ? currentData.asOf.toMillis() : 0;
+        const newMillis = fullSummary.asOf.toMillis ? fullSummary.asOf.toMillis() : 0;
+        if (currentMillis >= newMillis) {
+          console.log(`Skipping stale summary update for ${collection}/${docId}. Current: ${currentMillis}, New: ${newMillis}`);
+          return;
+        }
+      }
+    }
+    t.set(ref, fullSummary, { merge: true });
+  });
+}
+
 async function handleFactCreated(data: any) {
   if (!data) return;
   const db = getDb();
@@ -30,7 +51,7 @@ async function handleFactCreated(data: any) {
       const { summary } = await recomputeProjectionSummaryForTarget({ db, targetType: "object", targetId: objectId });
       if (summary) {
         const fullSummary = { ...(summary as any), ownerId };
-        await db.collection("objectSummaries").doc(objectId).set(fullSummary, { merge: true });
+        await saveSummaryWithWatermark(db, "objectSummaries", objectId, fullSummary);
       }
     })());
   }
@@ -40,7 +61,7 @@ async function handleFactCreated(data: any) {
       const { summary } = await recomputeProjectionSummaryForTarget({ db, targetType: "marker", targetId: markerKey });
       if (summary) {
         const fullSummary = { ...(summary as any), ownerId };
-        await db.collection("markerSummaries").doc(markerKey).set(fullSummary, { merge: true });
+        await saveSummaryWithWatermark(db, "markerSummaries", markerKey, fullSummary);
       }
     })());
   }
@@ -50,7 +71,7 @@ async function handleFactCreated(data: any) {
       const { summary } = await recomputeProjectionSummaryForTarget({ db, targetType: "place", targetId: placeId });
       if (summary) {
         const fullSummary = { ...(summary as any), ownerId };
-        await db.collection("placeSummaries").doc(placeId).set(fullSummary, { merge: true });
+        await saveSummaryWithWatermark(db, "placeSummaries", placeId, fullSummary);
       }
     })());
   }

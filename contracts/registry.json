@@ -13,7 +13,7 @@
     {
       "contractId": "efp-model",
       "version": "2.0.0",
-      "status": "active",
+      "status": "deprecated",
       "title": "Entity-Fact-Projection Model",
       "description": "Data contracts and schemas for the EFP model",
       "contractType": "data-model",
@@ -22,7 +22,7 @@
     {
       "contractId": "efp-semantics",
       "version": "1.0.0",
-      "status": "active",
+      "status": "deprecated",
       "title": "EFP Semantics",
       "description": "Normative semantic rules and invariants for the EFP model",
       "contractType": "semantics",
@@ -49,7 +49,7 @@
     {
       "contractId": "firestore-binding",
       "version": "1.0.0",
-      "status": "active",
+      "status": "deprecated",
       "title": "Firestore Binding",
       "description": "Strict binding mapping between logical EFP types and Firestore persistence types",
       "contractType": "data-binding",
@@ -85,7 +85,7 @@
     {
       "contractId": "callable-functions-api",
       "version": "1.0.0",
-      "status": "active",
+      "status": "deprecated",
       "title": "Callable Functions API",
       "description": "API contract for the EFP-native backend fact creation pipeline",
       "contractType": "api-contract",
@@ -94,7 +94,7 @@
     {
       "contractId": "callable-functions-api",
       "version": "1.1.0",
-      "status": "active",
+      "status": "deprecated",
       "title": "Callable Functions API",
       "description": "API contract for the EFP-native backend fact creation pipeline with JSON Schema validation",
       "contractType": "api-contract",
@@ -103,7 +103,7 @@
     {
       "contractId": "callable-functions-api",
       "version": "1.1.1",
-      "status": "active",
+      "status": "deprecated",
       "title": "Callable Functions API",
       "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv4 commandId validation",
       "contractType": "api-contract",
@@ -112,7 +112,7 @@
     {
       "contractId": "callable-functions-api",
       "version": "1.1.2",
-      "status": "active",
+      "status": "deprecated",
       "title": "Callable Functions API",
       "description": "API contract for the EFP-native backend fact creation pipeline with union type request bodies",
       "contractType": "api-contract",

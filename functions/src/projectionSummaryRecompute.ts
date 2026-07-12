@@ -8,6 +8,37 @@ import type { Timestamp } from "@scan/efp-model";
 import { getProjectionRecomputeFactQueryPlan } from "./projectionRecomputeFactPlan";
 import type { ProjectionRecomputeTargetType } from "./projectionRecomputeInput";
 
+
+function convertFirestoreToLogical(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj.toDate === 'function') {
+    return obj.toDate().toISOString();
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(convertFirestoreToLogical);
+  }
+  if (typeof obj === 'object') {
+    const res: any = {};
+    for (const key of Object.keys(obj)) {
+      res[key] = convertFirestoreToLogical(obj[key]);
+    }
+    return res;
+  }
+  return obj;
+}
+
+function convertLogicalToFirestore(obj: any, db: admin.firestore.Firestore): any {
+  if (obj === null || obj === undefined) return obj;
+  const res = { ...obj };
+  const dateFields = ['asOf', 'lastObservedAt', 'lastMeasuredAt', 'lastActivityAt'];
+  for (const field of dateFields) {
+    if (typeof res[field] === 'string') {
+      res[field] = admin.firestore.Timestamp.fromDate(new Date(res[field]));
+    }
+  }
+  return res;
+}
+
 export interface RecomputeProjectionSummaryResult {
   summary: unknown;
   factsRead: {
@@ -50,7 +81,7 @@ export async function recomputeProjectionSummaryForTarget(params: {
         .where(entry.indexField, "array-contains", targetId)
         .get();
 
-      const facts = snap.docs.map((doc) => withDocumentId(doc, entry.idField));
+      const facts = snap.docs.map((doc) => convertFirestoreToLogical(withDocumentId(doc, entry.idField)));
 
       if (entry.resultKey === "associations") associations = facts;
       else if (entry.resultKey === "observations") observations = facts;
@@ -72,7 +103,7 @@ export async function recomputeProjectionSummaryForTarget(params: {
     }
   }
 
-  const asOf = admin.firestore.Timestamp.now() as unknown as Timestamp;
+  const asOf = new Date().toISOString() as unknown as Timestamp;
   let summary: any;
 
   if (targetType === "object") {
@@ -105,7 +136,7 @@ export async function recomputeProjectionSummaryForTarget(params: {
   }
 
   return {
-    summary,
+    summary: convertLogicalToFirestore(summary, db),
     factsRead: {
       associations: associations.length,
       observations: observations.length,
