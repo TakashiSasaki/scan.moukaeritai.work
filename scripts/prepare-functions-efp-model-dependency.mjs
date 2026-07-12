@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const packageDir = path.join(rootDir, 'packages', 'efp-model');
 const vendorDir = path.join(rootDir, 'functions', 'vendor', 'efp-model');
+const vendorContractsDir = path.join(rootDir, 'functions', 'vendor', 'contracts', 'callable-functions-api', '1.1.1');
 
 function runCommand(command, args, cwd) {
   const result = spawnSync(command, args, { cwd, stdio: 'inherit', shell: true });
@@ -48,4 +49,22 @@ if (!fs.existsSync(path.join(vendorDir, 'dist'))) {
   process.exit(1);
 }
 
-console.log('✅ Prepared functions/vendor/efp-model dependency successfully.');
+console.log('Preparing functions/vendor/contracts/callable-functions-api/1.1.1...');
+if (fs.existsSync(vendorContractsDir)) {
+  fs.rmSync(vendorContractsDir, { recursive: true, force: true });
+}
+fs.mkdirSync(vendorContractsDir, { recursive: true });
+
+const srcContractsDir = path.join(rootDir, 'contracts', 'packages', 'callable-functions-api', '1.1.1');
+if (!fs.existsSync(srcContractsDir)) {
+  console.error(`❌ Source contracts directory not found at: ${srcContractsDir}`);
+  process.exit(1);
+}
+fs.cpSync(srcContractsDir, vendorContractsDir, { recursive: true });
+
+if (!fs.existsSync(path.join(vendorContractsDir, 'submit-fact-command-request.schema.json'))) {
+  console.error(`❌ Failed to copy contract schemas to vendor contracts dir.`);
+  process.exit(1);
+}
+
+console.log('✅ Prepared functions/vendor/efp-model and contracts dependencies successfully.');

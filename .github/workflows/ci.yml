@@ -30,6 +30,9 @@ jobs:
       - name: Run contract registry validation
         run: npm run contracts:validate
 
+      - name: Run check generated types validation
+        run: npm run contracts:check-generated
+
       - name: Run version verification
         run: npm run version:verify
 

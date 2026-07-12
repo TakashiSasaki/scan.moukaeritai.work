@@ -7,6 +7,6 @@
     "export-format": "1.0.0",
     "import-protocol": "1.0.0",
     "firestore-binding": "2.0.0",
-    "callable-functions-api": "1.1.0"
+    "callable-functions-api": "1.1.1"
   }
 }

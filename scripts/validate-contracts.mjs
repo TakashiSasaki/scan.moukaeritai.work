@@ -291,89 +291,54 @@ console.log('✅ Profile contract assignment mapping verified.');
 // 9. Fixture execution: Validate mock data against compiled v3.0.0 schemas
 console.log('🧪 Executing schema fixture validation test suites...');
 
-const objectSchemaKey = 'packages/efp-model/3.0.0/entities/object.schema.json';
-const associationSchemaKey = 'packages/efp-model/3.0.0/facts/association.schema.json';
+const fixtures = [
+  { file: 'object.json', schema: 'packages/efp-model/3.0.0/entities/object.schema.json' },
+  { file: 'marker.json', schema: 'packages/efp-model/3.0.0/entities/marker.schema.json' },
+  { file: 'place.json', schema: 'packages/efp-model/3.0.0/entities/place.schema.json' },
+  { file: 'association.json', schema: 'packages/efp-model/3.0.0/facts/association.schema.json' },
+  { file: 'observation.json', schema: 'packages/efp-model/3.0.0/facts/observation.schema.json' },
+  { file: 'measurement.json', schema: 'packages/efp-model/3.0.0/facts/measurement.schema.json' },
+  { file: 'event.json', schema: 'packages/efp-model/3.0.0/facts/event.schema.json' },
+  { file: 'submit-fact-command-request-association.json', schema: 'packages/callable-functions-api/1.1.1/submit-fact-command-request.schema.json' },
+  { file: 'submit-fact-command-request-observation.json', schema: 'packages/callable-functions-api/1.1.1/submit-fact-command-request.schema.json' },
+  { file: 'submit-fact-command-request-measurement.json', schema: 'packages/callable-functions-api/1.1.1/submit-fact-command-request.schema.json' },
+  { file: 'submit-fact-command-request-event.json', schema: 'packages/callable-functions-api/1.1.1/submit-fact-command-request.schema.json' },
+  { file: 'submit-fact-command-request.json', schema: 'packages/callable-functions-api/1.1.1/submit-fact-command-request.schema.json', isRequestEnvelope: true },
+  { file: 'submit-fact-command-response.json', schema: 'packages/callable-functions-api/1.1.1/submit-fact-command-response.schema.json' },
+  { file: 'export-format.json', schema: 'packages/export-format/1.0.0/export-format.schema.json' }
+];
 
-const validateObject = ajvCompiler.getSchema(objectSchemaKey);
-const validateAssociation = ajvCompiler.getSchema(associationSchemaKey);
+const fixturesDir = path.join(contractsDir, 'fixtures');
 
-if (!validateObject || !validateAssociation) {
-  fail('Upgraded 3.0.0 Entity and Fact schemas are not registered correctly in AJV.');
+for (const fix of fixtures) {
+  const schemaCompiler = ajvCompiler.getSchema(fix.schema);
+  if (!schemaCompiler) {
+    fail(`Required schema key "${fix.schema}" is not registered/compiled in AJV.`);
+  }
+
+  // Validate Valid Fixture
+  const validPath = path.join(fixturesDir, 'valid', fix.file);
+  if (fs.existsSync(validPath)) {
+    const validData = JSON.parse(fs.readFileSync(validPath, 'utf8'));
+    if (!schemaCompiler(validData)) {
+      console.error(`Validation Errors for Valid Fixture ${fix.file}:`, ajvCompiler.errorsText(schemaCompiler.errors));
+      fail(`Valid fixture "${fix.file}" failed validation under schema "${fix.schema}"`);
+    }
+    console.log(`  ✅ Valid fixture passed: ${fix.file}`);
+  }
+
+  // Validate Invalid Fixture
+  const invalidFile = fix.isRequestEnvelope ? 'submit-fact-command-request.json' : fix.file;
+  const invalidPath = path.join(fixturesDir, 'invalid', invalidFile);
+  if (fs.existsSync(invalidPath)) {
+    const invalidData = JSON.parse(fs.readFileSync(invalidPath, 'utf8'));
+    if (schemaCompiler(invalidData)) {
+      fail(`Invalid fixture "${invalidFile}" falsely passed schema validation for "${fix.schema}"!`);
+    }
+    console.log(`  ✅ Invalid fixture correctly rejected: ${invalidFile}`);
+  }
 }
 
-const mockMeta = {
-  recordCreatedAt: '2026-07-11T18:00:00Z',
-  recordUpdatedAt: '2026-07-11T18:00:00Z',
-  recordCreatedBy: 'system_bot',
-  recordUpdatedBy: 'system_bot',
-  schemaVersion: 1
-};
-
-const validObjectFixture = {
-  objectId: '0190a2a4-f7a1-77ef-9021-d52eac3c7457',
-  ownerId: 'uid_test_user_123',
-  name: 'Standard Packing Box',
-  description: 'Industrial heavy duty shipping container',
-  status: 'active',
-  _meta: mockMeta
-};
-
-const invalidObjectFixture = {
-  objectId: 'not_a_uuid',
-  // Missing ownerId and _meta
-  name: 'Broken Box'
-};
-
-const validAssociationFixture = {
-  associationId: '0190a2a4-f7a1-77ef-9021-d52eac3c7458',
-  ownerId: 'uid_test_user_123',
-  operation: 'attach',
-  participants: [
-    { role: 'object', ref: { entityType: 'object', id: '0190a2a4-f7a1-77ef-9021-d52eac3c7457' } }
-  ],
-  participantKeys: ['object:0190a2a4-f7a1-77ef-9021-d52eac3c7457'],
-  objectIds: ['0190a2a4-f7a1-77ef-9021-d52eac3c7457'],
-  markerKeys: [],
-  placeIds: [],
-  readerIds: [],
-  deviceIds: [],
-  userIds: [],
-  effectiveAt: '2026-07-11T18:00:00Z',
-  provenance: {
-    source: 'user_confirmed',
-    confidence: 'confirmed'
-  },
-  _meta: mockMeta
-};
-
-const invalidAssociationFixture = {
-  associationId: 'uuid',
-  operation: 'unsupported_operation_value', // invalid enum
-  participants: []
-};
-
-// Test valid object fixture
-if (!validateObject(validObjectFixture)) {
-  console.error(ajvCompiler.errorsText(validateObject.errors));
-  fail('Valid Object fixture failed validation under draft-07 constraints');
-}
-
-// Test invalid object fixture
-if (validateObject(invalidObjectFixture)) {
-  fail('Invalid Object fixture falsely passed draft-07 schema validation!');
-}
-
-// Test valid association fixture
-if (!validateAssociation(validAssociationFixture)) {
-  console.error(ajvCompiler.errorsText(validateAssociation.errors));
-  fail('Valid Association fixture failed validation under draft-07 constraints');
-}
-
-// Test invalid association fixture
-if (validateAssociation(invalidAssociationFixture)) {
-  fail('Invalid Association fixture falsely passed draft-07 schema validation!');
-}
-
-console.log('✅ Mock schema valid & invalid fixture validation tests executed successfully.');
+console.log('✅ All schema valid & invalid fixture validation tests executed successfully.');
 
 console.log('🎉 SUCCESS: All contracts, registries, schemas, and profiles validated successfully against exact specifications!');

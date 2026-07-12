@@ -1,0 +1,12 @@
+{
+  "placeId": "0190a2a4-f7a1-77ef-9021-d52eac3c7459",
+  "ownerId": "uid_test_user_123",
+  "label": "Warehouse Section A",
+  "_meta": {
+    "recordCreatedAt": "2026-07-11T18:00:00Z",
+    "recordUpdatedAt": "2026-07-11T18:00:00Z",
+    "recordCreatedBy": "system_bot",
+    "recordUpdatedBy": "system_bot",
+    "schemaVersion": 1
+  }
+}

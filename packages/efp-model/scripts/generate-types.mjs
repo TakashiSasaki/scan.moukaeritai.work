@@ -108,7 +108,7 @@ function generateTypes() {
           output += `  /** ${prop.description} */\n`;
         }
 
-        let propType = 'any';
+        let propType = null;
         if (prop.$ref) {
           propType = resolveRefName(prop.$ref);
         } else if (Array.isArray(prop.type)) {
@@ -134,7 +134,7 @@ function generateTypes() {
           } else if (prop.items && prop.items.type === 'string') {
             propType = 'string[]';
           } else {
-            propType = 'any[]';
+            throw new Error(`Unsupported array items schema in property ${propName}: ${JSON.stringify(prop)}`);
           }
         } else if (prop.type === 'object') {
           if (prop.properties) {
@@ -146,7 +146,7 @@ function generateTypes() {
               if (subProp.description) {
                 nestedType += `    /** ${subProp.description} */\n`;
               }
-              let subType = 'any';
+              let subType = null;
               if (Array.isArray(subProp.type)) {
                 subType = subProp.type.map(t => {
                   if (t === 'integer') return 'number';
@@ -164,7 +164,16 @@ function generateTypes() {
               } else if (subProp.type === 'boolean') {
                 subType = 'boolean';
               } else if (subProp.type === 'array') {
-                subType = 'any[]';
+                if (subProp.items && subProp.items.type === 'string') {
+                  subType = 'string[]';
+                } else if (subProp.items && subProp.items.$ref) {
+                  subType = `${resolveRefName(subProp.items.$ref)}[]`;
+                } else {
+                  throw new Error(`Unsupported nested array items schema in property ${propName}.${subName}: ${JSON.stringify(subProp)}`);
+                }
+              }
+              if (!subType) {
+                throw new Error(`Unsupported nested schema property type for property ${propName}.${subName}: ${JSON.stringify(subProp)}`);
               }
               nestedType += `    ${subName}${subOpt}: ${subType};\n`;
             }
@@ -173,6 +182,10 @@ function generateTypes() {
           } else {
             propType = 'Record<string, any>';
           }
+        }
+
+        if (!propType) {
+          throw new Error(`Unsupported schema property type for property ${propName}: ${JSON.stringify(prop)}`);
         }
 
         output += `  ${propName}${opt}: ${propType};\n`;

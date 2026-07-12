@@ -1,0 +1,15 @@
+{
+  "commandId": "9e107d9d-3cc4-460d-886d-f42eac3c7457",
+  "factType": "association",
+  "data": {
+    "operation": "attach",
+    "effectiveAt": "2026-07-11T18:00:00Z",
+    "participants": [
+      { "role": "object", "ref": { "entityType": "object", "id": "0190a2a4-f7a1-77ef-9021-d52eac3c7457" } }
+    ],
+    "provenance": {
+      "source": "user_confirmed",
+      "confidence": "confirmed"
+    }
+  }
+}

@@ -19,16 +19,12 @@ function getDb() {
 const ajv = new Ajv({ allErrors: true, strict: false });
 addFormats(ajv);
 
-const CONTRACTS_DIR = "/contracts/packages/callable-functions-api/1.1.0";
-
 function loadAndCompileSchema(fileName: string) {
   const pathsToTry = [
-    path.join(__dirname, "../../../contracts/packages/callable-functions-api/1.1.0", fileName),
-    path.join(__dirname, "../../contracts/packages/callable-functions-api/1.1.0", fileName),
-    path.join(process.cwd(), "../contracts/packages/callable-functions-api/1.1.0", fileName),
-    path.join(process.cwd(), "contracts/packages/callable-functions-api/1.1.0", fileName),
-    path.join(CONTRACTS_DIR, fileName),
-    path.join("/workspace/contracts/packages/callable-functions-api/1.1.0", fileName),
+    path.join(__dirname, "../vendor/contracts/callable-functions-api/1.1.1", fileName),
+    path.join(__dirname, "../../vendor/contracts/callable-functions-api/1.1.1", fileName),
+    path.join(process.cwd(), "vendor/contracts/callable-functions-api/1.1.1", fileName),
+    path.join(process.cwd(), "functions/vendor/contracts/callable-functions-api/1.1.1", fileName),
   ];
 
   for (const p of pathsToTry) {
@@ -42,7 +38,7 @@ function loadAndCompileSchema(fileName: string) {
       }
     }
   }
-  throw new Error(`Schema file not found in search paths: ${fileName}`);
+  throw new Error(`Schema file not found in search paths: ${fileName}. Searched paths: ${JSON.stringify(pathsToTry)}`);
 }
 
 let validators: Record<string, any> | null = null;
@@ -193,11 +189,11 @@ export const submitFactCommand = onCall(async (request: any) => {
   const existingCommand = await idempotencyRef.get();
   if (existingCommand.exists) {
     const cmdData = existingCommand.data();
-    if (cmdData?.ownerId === ownerId) {
+    if (cmdData && cmdData.ownerId === ownerId) {
       console.log(`Idempotent Command hit for "${commandId}". Returning cached receipt.`);
       return {
         success: true,
-        factId: cmdData.factId,
+        factId: cmdData.factId as string,
         commandId,
         projectionStatus: "pending"
       };
