@@ -52,6 +52,39 @@ if (!agents.includes(`scan.mw ${currentVersion}`) && !agents.includes(`version *
   fail(`AGENTS.md does not contain the current version "${currentVersion}"`);
 }
 
+// Check prohibited absolute claims in README.md and AGENTS.md
+const prohibitedPhrases = [
+  { phrase: 'All verification passed', regex: /all\s+verification\s+passed/i },
+  { phrase: 'All checks are 100% green', regex: /all\s+(checks|tests|verification|validations)\s+are\s+(100%|100\s*%)\s*green/i },
+  { phrase: 'behavioral tests passed', regex: /behavioral\s+tests\s+passed/i },
+  { phrase: 'fully verified in CI', regex: /fully\s+verified\s+in\s+CI/i }
+];
+
+for (const p of prohibitedPhrases) {
+  if (p.regex.test(readme)) {
+    fail(`README.md contains prohibited absolute verification claim: "${p.phrase}"`);
+  }
+  if (p.regex.test(agents)) {
+    fail(`AGENTS.md contains prohibited absolute verification claim: "${p.phrase}"`);
+  }
+}
+
+// Ensure local-only verification claim exists in README.md
+if (!readme.includes('Node-only gates implemented and passing locally')) {
+  fail('README.md is missing the required local-only verification claim: "Node-only gates implemented and passing locally"');
+}
+if (!readme.includes('GitHub Actions confirmation unavailable')) {
+  fail('README.md is missing the required local-only verification claim: "GitHub Actions confirmation unavailable"');
+}
+
+// Ensure local-only verification claim exists in AGENTS.md
+if (!agents.includes('Node-only gates implemented and passing locally')) {
+  fail('AGENTS.md is missing the required local-only verification claim: "Node-only gates implemented and passing locally"');
+}
+if (!agents.includes('GitHub Actions confirmation unavailable')) {
+  fail('AGENTS.md is missing the required local-only verification claim: "GitHub Actions confirmation unavailable"');
+}
+
 // 4. Validate current-application.json applicationVersion
 const profilePath = path.join(rootDir, 'contracts/profiles/current-application.json');
 if (!fs.existsSync(profilePath)) {

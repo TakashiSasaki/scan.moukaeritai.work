@@ -180,8 +180,8 @@ for (const [skillId, skill] of activeSkillsInManifest.entries()) {
   while ((match = codeBlockPattern.exec(content)) !== null) {
     const rawCmd = match[1].trim();
     
-    // Check if it's an npm run, node execution, or npm install
-    if (rawCmd.startsWith('npm run ') || rawCmd.startsWith('npm --prefix') || rawCmd.startsWith('node ') || rawCmd.startsWith('npm ci')) {
+    // Check if it's an npm run, node execution, npm install, or npx execution
+    if (rawCmd.startsWith('npm run ') || rawCmd.startsWith('npm --prefix') || rawCmd.startsWith('node ') || rawCmd.startsWith('npm ci') || rawCmd.startsWith('npx ')) {
       // Parse command structure
       // 1) npm run <script>
       if (/^npm\s+run\s+([a-zA-Z0-9:-]+)$/.test(rawCmd)) {
@@ -222,6 +222,34 @@ for (const [skillId, skill] of activeSkillsInManifest.entries()) {
         const relative = path.relative(rootDir, fullScriptPath);
         if (relative.startsWith('..') || path.isAbsolute(relative)) {
           fail(`Skill "${skillId}" references path "${scriptPath}" which is outside the repository: \`${rawCmd}\``);
+        }
+      }
+      // 5) npx <package> <args>
+      else if (/^npx\s+(.*)$/.test(rawCmd)) {
+        const afterNpx = rawCmd.match(/^npx\s+(.*)$/)[1].trim();
+        let parts = afterNpx.split(/\s+/);
+        // Skip common npx flags
+        while (parts.length > 0 && (parts[0].startsWith('--') || parts[0].startsWith('-'))) {
+          parts.shift();
+        }
+        if (parts.length === 0) {
+          fail(`Skill "${skillId}" uses npx without specifying a package name: \`${rawCmd}\``);
+        }
+        
+        const pkgName = parts[0];
+        const isLocalScript = fs.existsSync(path.join(rootDir, pkgName));
+        if (!isLocalScript) {
+          const deps = packageJson.dependencies || {};
+          const devDeps = packageJson.devDependencies || {};
+          
+          let mappedPackage = pkgName;
+          if (pkgName === 'tsc') mappedPackage = 'typescript';
+          if (pkgName === 'firebase') mappedPackage = 'firebase-tools';
+          
+          const inDeps = deps[mappedPackage] !== undefined || devDeps[mappedPackage] !== undefined;
+          if (!inDeps) {
+            fail(`Skill "${skillId}" references npx package "${mappedPackage}" (from command \`${rawCmd}\`) which is not registered in package.json dependencies or devDependencies.`);
+          }
         }
       }
     }

@@ -25,11 +25,11 @@ npx tsx .agents/skills/generate-efu-catalog/scripts/generate.js --exclude node_m
 - None. This is a non-destructive read-only operation.
 
 ## Verification
-- 実行後、リポジトリのルートに `index.efu.csv` が生成されていることを確認します。
+- 実行後、`.local-data/generated/index.efu.csv` が生成されていることを確認します。
 - エラーが出力されずに完了していることを確認します。
 
 ## Related scripts
 - `.agents/skills/generate-efu-catalog/scripts/generate.js`
 
 ## Outputs
-- `index.efu.csv` in the root workspace directory containing the files catalog.
+- `.local-data/generated/index.efu.csv` containing the files catalog.

@@ -50,5 +50,7 @@ try {
   fail(`Failed to verify untracked files: ${e.message}`);
 }
 
-console.log('🎉 Stride Closeout Verification Completed Successfully! All checks are 100% green.');
+console.log('🎉 Stride Closeout Verification Completed Successfully!');
+console.log('📝 Node-only gates implemented and passing locally');
+console.log('⚠️ GitHub Actions confirmation unavailable (verification is local-only)');
 process.exit(0);

@@ -53,7 +53,7 @@
       "id": "run-local-tests",
       "path": ".agents/skills/run-local-tests/SKILL.md",
       "status": "active",
-      "description": "Standardizes and runs local tests across frontend, backend, contracts, and Firestore rules.",
+      "description": "Standardizes and runs local tests across frontend, backend, contracts, and Firestore static rules.",
       "requiredFor": ["Every local verification and test execution"]
     },
     {

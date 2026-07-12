@@ -1,8 +1,8 @@
-# scan.mw (Version 2.0.13)
+# scan.mw (Version 2.0.14)
 
 [![CI](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml)
 
-Welcome to **scan.mw v2.0.13**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
+Welcome to **scan.mw v2.0.14**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
 
 This repository enforces backward-incompatible, robust schemas, strict version governance, and a registry-first workflow.
 
@@ -18,41 +18,23 @@ This repository enforces backward-incompatible, robust schemas, strict version g
 
 ---
 
-## 🚀 Verification Enforcement and Skill Execution Closure (v2.0.13)
+## 🚀 Node-Only Verification Closure and Skill Consistency (v2.0.14)
 
-Version 2.0.13 focuses on stabilizing the Agent Skill Harness, verification baselines, and repository hygiene.
+Version 2.0.14 focuses on establishing a completely unified, Node-only verification baseline and removing Java dependencies and Firebase emulators from the active validation paths.
 
-- **Active Contract Verification**: stabilized locally, awaiting CI confirmation.
-- **Repository Hygiene**: Hardened hygiene gate implemented to strictly reject scratch/temporary files and enforce an allowlist.
-- **Routing Containment**: Successfully completed.
-- **Transactional Fact and Projection Safety**: Partially implemented (including owner-scoped command receipt, transaction-nested receipt read, initial request hash, backend-generated receivedAt, backend-enforced actorUid, and initial duplicate query).
-  - *The following Transactional Fact and Projection Safety features remain uncompleted and are deferred to **2.0.14**:*
-    - request hash verification with exact `factType` & schema version
-    - canonical JSON serialization standard
-    - rejecting same `commandId` with different `factType`
-    - typed `participantKeys` usage in functions
-    - sorting/deduplication of all index arrays
-    - rigorous logical Fact validation matching schemas
-    - Transactional Association subject reading
-    - validation matching detach participants with subject
-    - checking Object/Marker replace consistency
-    - checking old vs new Marker schema integrity
-    - `ownerId` + `subjectAssociationId` composite index
-    - standardized UUIDv7 generation
-    - standardized UTF-8 SHA-256
-    - throwing errors in projection updates
-    - duplicate/out-of-order event safety
-    - domain-time/fact-ID watermark
-    - projection receipt status updates
-- **Rules / Legacy Closure**: Deferred to **2.0.15** (including strict Entity `_meta` rules, Marker identity immutability, and denying legacy reads).
+- **Node-only Rules Static Policy Gate**: Firestore Security Rules are audited using a lightweight Node.js static policy verification script rather than a heavy Firestore Emulator behavior test suite.
+  - *Disclaimer*: Rules validation uses static policy analysis checking rules syntax, default denials, and block configurations. Behavior-level emulator execution is not conducted, and static verification is not represented as runtime behavioral test verification.
+- **Fail-Closed Preflight and Closeout Gates**: Solidified preflight checks and closeout gates to prevent working-tree leakage, dirty deployments, or invalid contract registry modifications.
+- **Transactional Fact and Projection Safety**: Deferred to **2.0.15** (including exact factType request hash verification, canonical JSON standard, typed participantKeys, array sort/deduplication, transactional Association subject, UUIDv7, and projection status tracking).
+- **Rules / Legacy Closure**: Deferred to **2.0.16** (including strict Entity `_meta` rules, Marker identity immutability, denying legacy reads).
 - **Object/Marker Active Workflow**: Not yet fully complete.
 - **Production Deployment**: Deployments are strictly **manual only**.
 - **Major Version Bumps**: Require explicit human approval.
 
 ### 📅 Stride Roadmap & Backlog
-- **2.0.13**: Verification Enforcement and Skill Execution Closure (Current)
-- **2.0.14**: Transactional Fact and Projection Safety Closure (Deferred)
-- **2.0.15**: Rules, Legacy Runtime and Export Closure (Deferred)
+- **2.0.14**: Node-Only Verification Closure and Skill Consistency (Current)
+- **2.0.15**: Transactional Fact and Projection Safety Closure (Deferred)
+- **2.0.16**: Rules, Legacy Runtime and Export Closure (Deferred)
 - **2.1.0**: EFP-native First Vertical Slice (Deferred)
 
 ---
@@ -65,7 +47,8 @@ To ensure extreme contract and baseline reliability, use the single entry point 
 # Install dependencies
 npm ci
 
-# Run the fail-closed verification pipeline (stabilized locally, awaiting CI confirmation)
+# Run the fail-closed verification pipeline
+# Node-only gates implemented and passing locally (GitHub Actions confirmation unavailable)
 npm run verify:baseline
 ```
 

@@ -7,7 +7,7 @@ Runs localized unit, integration, and security rules testing across the entire c
 Whenever making active code edits or validating the local test suite.
 
 ## Inputs
-- Test configurations (`vitest.config.ts`, `vitest.rules.config.ts`)
+- Test configurations (`vitest.config.ts`, `scripts/test-firestore-policy.mjs`)
 - Local workspace files
 
 ## Procedure
@@ -23,8 +23,8 @@ Whenever making active code edits or validating the local test suite.
    `npm run test:functions-artifact`
 6. To run Functions runtime gate tests:
    `npm run test:functions-runtime-gate`
-7. To run Firestore rules tests (Requires Java runtime. If Java is unavailable in the environment, report it as unrunnable and defer to GitHub Actions execution):
-   `npm run test:rules`
+7. To run static policy verification for Firestore Security Rules:
+   `npm run test:firestore-policy`
 
 ## Stop conditions
 - Any test fails or throws compilation errors.
@@ -39,7 +39,7 @@ Whenever making active code edits or validating the local test suite.
 - `npm run test:functions`
 - `npm run test:functions-artifact`
 - `npm run test:functions-runtime-gate`
-- `npm run test:rules`
+- `npm run test:firestore-policy`
 
 ## Outputs
 - Passing test logs or identified errors for debugging.

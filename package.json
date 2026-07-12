@@ -1,7 +1,7 @@
 {
   "name": "scan-mw",
   "private": true,
-  "version": "2.0.13",
+  "version": "2.0.14",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
@@ -13,7 +13,7 @@
     "test:routing": "vitest run tests/routing/ --passWithNoTests=false",
     "test:routing-boundary": "node scripts/test-routing-boundary.mjs",
     "test:functions": "npm --prefix functions run test",
-    "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/firestore-rules/ --config vitest.rules.config.ts --passWithNoTests=false\"",
+    "test:firestore-policy": "node scripts/test-firestore-policy.mjs",
     "contracts:validate": "node scripts/validate-contracts.mjs",
     "version:verify": "node scripts/verify-version.mjs",
     "version:verify:static": "node scripts/verify-version.mjs --static",
@@ -23,8 +23,8 @@
     "contracts:check-generated": "node scripts/check-generated-types.mjs",
     "prepare:functions-artifact": "node scripts/prepare-functions-artifact.mjs",
     "test:functions-artifact": "node scripts/test-functions-artifact.mjs",
-    "verify:baseline:node": "npm run test:repository-hygiene:self && npm run test:repository-hygiene && npm run test:agent-skills && npm run test:workflows && npm run version:verify && npm run contracts:validate && npm run contracts:check-generated && npm run test:routing-boundary && npm run test:routing && npm --prefix packages/efp-model run build && npm --prefix packages/efp-model run typecheck && npm --prefix packages/efp-model run test && npm --prefix packages/efp-model run test:artifact && npm run prepare:functions-artifact && npm run test:functions-artifact && npm run test:functions-boundary && npm run test:functions-runtime-gate && npm run test:functions && npm --prefix functions run build && npm run test && npm run lint && npm run build && npm run test:documentation-state",
-    "verify:baseline": "npm run verify:baseline:node && npm run test:rules",
+    "verify:baseline:node": "npm run test:repository-hygiene:self && npm run test:repository-hygiene && npm run test:agent-skills && npm run test:workflows && npm run version:verify && npm run contracts:validate && npm run contracts:check-generated && npm run test:firestore-policy && npm run test:routing-boundary && npm run test:routing && npm --prefix packages/efp-model run build && npm --prefix packages/efp-model run typecheck && npm --prefix packages/efp-model run test && npm --prefix packages/efp-model run test:artifact && npm run prepare:functions-artifact && npm run test:functions-artifact && npm run test:functions-boundary && npm run test:functions-runtime-gate && npm run test:functions && npm --prefix functions run build && npm run test && npm run lint && npm run build && npm run test:documentation-state",
+    "verify:baseline": "npm run verify:baseline:node",
     "verify:preflight": "node scripts/verify-preflight.mjs",
     "verify:closeout": "node scripts/verify-closeout.mjs",
     "test:repository-hygiene:self": "node scripts/test-repository-hygiene.mjs --self-test",
@@ -83,7 +83,6 @@
     "vite": "^6.2.3"
   },
   "devDependencies": {
-    "@firebase/rules-unit-testing": "^4.0.1",
     "@testing-library/react": "^16.3.2",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
@@ -100,6 +99,7 @@
     "typescript": "~5.8.2",
     "vite": "^6.2.3",
     "vite-plugin-pwa": "^1.3.0",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "yaml": "^2.9.0"
   }
 }

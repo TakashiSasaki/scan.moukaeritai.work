@@ -19,7 +19,7 @@ At the end of every stride or before completing the user's task.
 6. Execute routing and authorization integration tests.
 7. Prepare the Cloud Functions build artifact.
 8. Build Cloud Functions and run backend tests.
-9. Verify Firestore rules (if the emulator is available; otherwise note execution limits).
+9. Verify Firestore Security Rules via Node-only static policy analysis.
 10. Execute the hardened repository hygiene check.
 11. Run the documentation reality check to ensure claims align with realities.
 12. Check `git status` to confirm only expected modifications are present.
