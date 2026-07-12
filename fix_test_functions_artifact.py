@@ -1,4 +1,6 @@
-import fs from 'node:fs';
+import re
+
+content = """import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Ajv from 'ajv';
@@ -190,3 +192,7 @@ if (errors.length > 0) {
 } else {
   console.log("Functions artifact validation passed.");
 }
+"""
+
+with open("scripts/test-functions-artifact.mjs", "w") as f:
+    f.write(content)

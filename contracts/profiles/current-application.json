@@ -1,5 +1,5 @@
 {
-  "applicationVersion": "2.0.8",
+  "applicationVersion": "2.0.9",
   "contracts": {
     "core-vocabulary": "1.0.0",
     "efp-model": "3.0.0",

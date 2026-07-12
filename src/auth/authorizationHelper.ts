@@ -1,3 +1,5 @@
+import { routes } from "../lib/routeCatalog";
+
 export type AuthorizationState = {
   authLoading: boolean;
   authorizationLoading: boolean;
@@ -13,8 +15,28 @@ export function evaluateRouteAccess(state: AuthorizationState, path: string): Ro
     return "loading";
   }
 
-  const isAdminRoute = path.startsWith("/admin") || path.startsWith("/developer") || path.startsWith("/demo") || path.startsWith("/library-demo") || path.startsWith("/test");
-  const isProtectedRoute = path.startsWith("/app") || path.startsWith("/settings") || isAdminRoute;
+  let accessPolicy = "public"; // default
+  
+  // Sort routes by length descending to match most specific first
+  const sortedRoutes = [...routes].sort((a, b) => b.path.length - a.path.length);
+  
+  for (const route of sortedRoutes) {
+    if (route.path === '/') {
+      if (path === '/') {
+        accessPolicy = route.access;
+        break;
+      }
+      continue;
+    }
+    const routeRegex = new RegExp('^' + route.path.replace(/:\w+/g, '[^/]+').replace(/\*/g, '.*') + '(?:/.*)?$');
+    if (routeRegex.test(path)) {
+      accessPolicy = route.access;
+      break;
+    }
+  }
+
+  const isAdminRoute = accessPolicy === 'admin';
+  const isProtectedRoute = accessPolicy === 'admin' || accessPolicy === 'authenticated';
 
   if (isProtectedRoute && !state.userPresent) {
     return "login";

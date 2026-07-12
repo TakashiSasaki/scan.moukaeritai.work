@@ -353,7 +353,7 @@ function AppShell() {
 }
 
 // App Routing Orchestrator Component
-function AppRoutes() {
+export function AppRoutes() {
   const { authLoading } = useAuth();
 
   if (authLoading) {

@@ -3,12 +3,31 @@
   "ownerId": "uid_test_user_123",
   "operation": "attach",
   "participants": [
-    { "role": "object", "ref": { "entityType": "object", "id": "0190a2a4-f7a1-77ef-9021-d52eac3c7457" } },
-    { "role": "marker", "ref": { "entityType": "marker", "id": "uuid-marker-123" } }
+    {
+      "role": "object",
+      "ref": {
+        "entityType": "object",
+        "id": "0190a2a4-f7a1-77ef-9021-d52eac3c7457"
+      }
+    },
+    {
+      "role": "marker",
+      "ref": {
+        "entityType": "marker",
+        "id": "0190a2a4-f7a2-77ef-9021-d52eac3c7457"
+      }
+    }
   ],
-  "participantKeys": ["object:0190a2a4-f7a1-77ef-9021-d52eac3c7457", "marker:uuid-marker-123"],
-  "objectIds": ["0190a2a4-f7a1-77ef-9021-d52eac3c7457"],
-  "markerKeys": ["uuid-marker-123"],
+  "participantKeys": [
+    "object:0190a2a4-f7a1-77ef-9021-d52eac3c7457",
+    "marker:uuid-marker-123"
+  ],
+  "objectIds": [
+    "0190a2a4-f7a1-77ef-9021-d52eac3c7457"
+  ],
+  "markerKeys": [
+    "uuid-marker-123"
+  ],
   "placeIds": [],
   "readerIds": [],
   "deviceIds": [],

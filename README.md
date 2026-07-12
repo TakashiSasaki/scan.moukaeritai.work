@@ -1,8 +1,8 @@
-# scan.mw (Version 2.0.8)
+# scan.mw (Version 2.0.9)
 
 [![CI](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml)
 
-Welcome to **scan.mw v2.0.8**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
+Welcome to **scan.mw v2.0.9**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
 
 This repository enforces backward-incompatible, robust schemas, strict version governance, and a registry-first workflow.
 
@@ -19,9 +19,9 @@ This repository enforces backward-incompatible, robust schemas, strict version g
 
 ---
 
-## 🚀 Fail-Closed Harness Closure (v2.0.8 Milestone)
+## 🚀 Fail-Closed Harness Closure (v2.0.9 Milestone)
 
-Version 2.0.8 completes the **Fail-Closed Harness Closure**.
+Version 2.0.9 completes the **Fail-Closed Harness Closure**.
 
 - **Routing Containment**: Successfully completed. Secure boundaries between authenticated users and admins are enforced.
 - **Backend Transactional Safety**: Scheduled for 2.0.9.

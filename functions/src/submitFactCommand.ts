@@ -25,7 +25,7 @@ function getActiveVersion(): string {
   const fallbackVersionFile = path.join(process.cwd(), "vendor/contracts/callable-functions-api/active-version.json");
   let p = fs.existsSync(versionFile) ? versionFile : fallbackVersionFile;
   const data = JSON.parse(fs.readFileSync(p, "utf8"));
-  return data.activeVersion;
+  return data.version || data.activeVersion;
 }
 
 

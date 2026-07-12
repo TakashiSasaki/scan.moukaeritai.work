@@ -25,14 +25,14 @@ export default function SitemapPage({ onClose }: { onClose: () => void }) {
             }`}
           >
             <div className={`p-3 rounded-xl w-fit ${
-              route.isAdminOnly ? 'bg-amber-500/10 text-amber-500' : 'bg-[var(--primary)]/10 text-[var(--primary)]'
+              route.access === 'admin' ? 'bg-amber-500/10 text-amber-500' : 'bg-[var(--primary)]/10 text-[var(--primary)]'
             }`}>
-              {route.isAdminOnly ? <ShieldAlert size={20} /> : <RouteIcon size={20} />}
+              {route.access === 'admin' ? <ShieldAlert size={20} /> : <RouteIcon size={20} />}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-bold text-[var(--on-surface)]">{route.label}</span>
-                {route.isAdminOnly && (
+                {route.access === 'admin' && (
                   <span className="text-[9px] font-bold bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full uppercase font-mono">
                     Admin Only
                   </span>

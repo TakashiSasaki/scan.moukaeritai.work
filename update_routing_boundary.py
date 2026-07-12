@@ -1,4 +1,6 @@
-import fs from 'fs';
+import re
+
+content = """import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -16,8 +18,8 @@ let errors = [];
 // App entry doesn't import Dashboard, CaptureForm, UnassignedIdentifierScreen, SearchScreen, etc
 const forbiddenImports = ['Dashboard', 'CaptureForm', 'UnassignedIdentifierScreen', 'SearchScreen', 'OverviewScreen'];
 for (const forbidden of forbiddenImports) {
-  const staticRegex = new RegExp(`import\s+.*?\b${forbidden}\b.*?from`, 'i');
-  const lazyRegex = new RegExp(`import\s*\(\s*['"].*?\b${forbidden}\b.*?['"]\s*\)`, 'i');
+  const staticRegex = new RegExp(`import\\s+.*?\\b${forbidden}\\b.*?from`, 'i');
+  const lazyRegex = new RegExp(`import\\s*\\(\\s*['"].*?\\b${forbidden}\\b.*?['"]\\s*\\)`, 'i');
   if (staticRegex.test(appEntryContent) || lazyRegex.test(appEntryContent)) {
     errors.push(`App.tsx must not import ${forbidden}. It should be outside active routes.`);
   }
@@ -32,7 +34,7 @@ function checkFileForEmailRole(dir) {
       checkFileForEmailRole(fullPath);
     } else if (entry.isFile() && (fullPath.endsWith('.ts') || fullPath.endsWith('.tsx'))) {
       const content = fs.readFileSync(fullPath, 'utf8');
-      if (content.match(/email\s*===?\s*['"].*@.*['"]/i) || content.match(/['"].*@.*['"]\s*===?\s*email/i)) {
+      if (content.match(/email\s*===?\\s*['"].*@.*['"]/i) || content.match(/['"].*@.*['"]\\s*===?\\s*email/i)) {
         errors.push(`${fullPath} must not use specific email addresses for role validation.`);
       }
     }
@@ -115,3 +117,7 @@ if (errors.length > 0) {
 } else {
   console.log("Routing boundary validation passed.");
 }
+"""
+
+with open("scripts/test-routing-boundary.mjs", "w") as f:
+    f.write(content)

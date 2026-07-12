@@ -8,7 +8,8 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const profilePath = path.join(rootDir, 'contracts', 'profiles', 'current-application.json');
 const profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
-const activeVersion = profile.contracts['callable-functions-api'];
+const activeContracts = profile.activeContracts || profile.contracts || {};
+const activeVersion = activeContracts.find ? activeContracts.find(c => c.contractId === 'callable-functions-api')?.version : activeContracts['callable-functions-api'];
 
 const packageDir = path.join(rootDir, 'packages', 'efp-model');
 const vendorDir = path.join(rootDir, 'functions', 'vendor', 'efp-model');
@@ -78,5 +79,5 @@ console.log('✅ Prepared functions/vendor/efp-model and contracts dependencies 
 
 // Generate active-version.json for the runtime to use
 const activeVersionPath = path.join(rootDir, 'functions', 'vendor', 'contracts', 'callable-functions-api', 'active-version.json');
-fs.writeFileSync(activeVersionPath, JSON.stringify({ activeVersion }, null, 2));
+fs.writeFileSync(activeVersionPath, JSON.stringify({ version: activeVersion }, null, 2));
 console.log('✅ Wrote active-version.json');

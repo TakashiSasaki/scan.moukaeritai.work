@@ -76,7 +76,7 @@ To prevent confusion across systems, note the following distinct markers/identif
 
 ## 4. Feature-Specific Implementations
 
-### Image Provisioning (`CaptureForm.tsx (Legacy, Object/Marker workflow is currently incomplete)`)
+### Image Provisioning (`CaptureForm.tsx`)
 - **Image Data Model**:
   - `objectImages` collection is the source of truth for image asset metadata.
   - `objects.primaryImageUrl (Legacy)` is a denormalized UI cache for Dashboard/Search list views.
@@ -139,13 +139,12 @@ To prevent confusion across systems, note the following distinct markers/identif
   - **Locked Legacy Collections (Read-Only/Frozen)**:
     - `items/*`, `identifiers/* (Legacy)`, `objectIdentifierBindings/*`, `objectImages/*`, `objectEvents/* (Legacy)`, and `identifierObservations/*`. Writing via client SDKs is strictly disallowed by Firestore Security Rules to prevent regressions.
   - **EFP Transition Alignment**:
-    - As of **v2.0.8**, active application version, routing containment is complete. The Object/Marker workflow is incomplete. Facts are backend-only and immutable. Projections are asynchronous and eventually consistent. All runtime states and type constraints are strictly converted between logical EFP types (utilizing RFC 3339 UTC string formats) and Firestore persistence bindings (utilizing native Timestamps/GeoPoints) via the pure `/src/lib/firestore-efp-adapter.ts` adapter.
+    - As of **v2.0.8**, active application version, routing containment is complete. Facts are backend-only and immutable. Projections are asynchronous and eventually consistent. All runtime states and type constraints are strictly converted between logical EFP types (utilizing RFC 3339 UTC string formats) and Firestore persistence bindings (utilizing native Timestamps/GeoPoints) via the pure `/src/lib/firestore-efp-adapter.ts` adapter.
 - **Legacy Identifiers for Backend Resources**: The frontend deployment target uses the current domain name (`scan-moukaeritai-work`), but backend Firebase resources (Firestore Database, Storage Bucket) intentionally retain the legacy identifier `photo-moukaeritai-work`. This is reflected in `firebase-applet-config.json` and must not be altered to match the hosting name.
 - **Cloud Storage Strategy**:
   - Images captured via the application are stored in the designated Firebase Storage bucket (`photo-moukaeritai-work`).
   - Storage quotas and capacities are monitored by checking bucket metadata server-side (via Cloud Functions), surfacing infrastructure usage safely without exposing it to standard clients.
 - **Firestore Rules**: Hardened ABAC (Attribute-Based Access Control) rules are stored in `firestore.rules`.
-- **Blueprints**: `firebase-blueprint.json` acts as the source of truth for the database schema. Update this when adding fields/collections.
 
 ## 7. Authentication & Roles
 - **User Sync**: Authenticated users through Firebase Auth are synchronized to the `users` Firestore collection (`/users/{uid}`) to store metadata and role information.
@@ -167,7 +166,7 @@ To prevent confusion across systems, note the following distinct markers/identif
 
 ## 9. Communication & Logs
 - Do not commit transient PR-helper, review-reply, scratch, or tool-failure files such as `patch_pr.js`, `reply_payload.json`, one-off local scripts, temporary JSON payloads, generated reply bodies, or similar agent-control artifacts. If such files are needed locally by an agent, they must remain untracked.
-- Critical errors during Firestore operations should be logged using the JSON-structured error format defined in `CaptureForm.tsx (Legacy, Object/Marker workflow is currently incomplete)` or similar utility handlers to allow for AI-driven diagnostics.
+- Critical errors during Firestore operations should be logged using the JSON-structured error format defined in `CaptureForm.tsx` or similar utility handlers to allow for AI-driven diagnostics.
 
 ## 10. Image Provisioning Specifications
 

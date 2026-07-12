@@ -1,3 +1,4 @@
+import { validateAssociationSemantics } from '../packages/efp-model/dist/esm/validators/association-validator.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -291,22 +292,24 @@ console.log('✅ Profile contract assignment mapping verified.');
 // 9. Fixture execution: Validate mock data against compiled v3.0.0 schemas
 console.log('🧪 Executing schema fixture validation test suites...');
 
+const activeContracts = profile.activeContracts || profile.contracts || {};
+const apiVersion = activeContracts['callable-functions-api'] || (Array.isArray(activeContracts) ? activeContracts.find(c => c.contractId === 'callable-functions-api')?.version : undefined);
 const fixtureManifest = [
   { name: 'object', file: 'object.json', schema: 'packages/efp-model/3.0.0/entities/object.schema.json', needsSemantic: false },
   { name: 'marker', file: 'marker.json', schema: 'packages/efp-model/3.0.0/entities/marker.schema.json', needsSemantic: false },
   { name: 'place', file: 'place.json', schema: 'packages/efp-model/3.0.0/entities/place.schema.json', needsSemantic: false },
-  { name: 'association-attach', file: 'association-attach.json', schema: 'packages/efp-model/3.0.0/facts/association.schema.json', needsSemantic: true, semanticCheck: (data) => data.operation === 'attach' && data.participants.filter(p => p.ref.entityType === 'object').length === 1 && data.participants.filter(p => p.ref.entityType === 'marker').length === 1 },
-  { name: 'association-detach', file: 'association-detach.json', schema: 'packages/efp-model/3.0.0/facts/association.schema.json', needsSemantic: true, semanticCheck: (data) => data.operation === 'detach' },
-  { name: 'association-replace', file: 'association-replace.json', schema: 'packages/efp-model/3.0.0/facts/association.schema.json', needsSemantic: true, semanticCheck: (data) => data.operation === 'replace' },
+  { name: 'association-attach', file: 'association-attach.json', schema: 'packages/efp-model/3.0.0/facts/association.schema.json', needsSemantic: true, semanticCheck: validateAssociationSemantics },
+  { name: 'association-detach', file: 'association-detach.json', schema: 'packages/efp-model/3.0.0/facts/association.schema.json', needsSemantic: true, semanticCheck: validateAssociationSemantics },
+  { name: 'association-replace', file: 'association-replace.json', schema: 'packages/efp-model/3.0.0/facts/association.schema.json', needsSemantic: true, semanticCheck: validateAssociationSemantics },
   { name: 'observation', file: 'observation.json', schema: 'packages/efp-model/3.0.0/facts/observation.schema.json', needsSemantic: false },
   { name: 'measurement', file: 'measurement.json', schema: 'packages/efp-model/3.0.0/facts/measurement.schema.json', needsSemantic: false },
   { name: 'event', file: 'event.json', schema: 'packages/efp-model/3.0.0/facts/event.schema.json', needsSemantic: false },
-  { name: 'submit-fact-association', file: 'submit-fact-command-request-association.json', schema: 'packages/callable-functions-api/1.1.1/submit-fact-command-request.schema.json', needsSemantic: false },
-  { name: 'submit-fact-observation', file: 'submit-fact-command-request-observation.json', schema: 'packages/callable-functions-api/1.1.1/submit-fact-command-request.schema.json', needsSemantic: false },
-  { name: 'submit-fact-measurement', file: 'submit-fact-command-request-measurement.json', schema: 'packages/callable-functions-api/1.1.1/submit-fact-command-request.schema.json', needsSemantic: false },
-  { name: 'submit-fact-event', file: 'submit-fact-command-request-event.json', schema: 'packages/callable-functions-api/1.1.1/submit-fact-command-request.schema.json', needsSemantic: false },
-  { name: 'submit-fact-envelope', file: 'submit-fact-command-request.json', schema: 'packages/callable-functions-api/1.1.1/submit-fact-command-request.schema.json', needsSemantic: false },
-  { name: 'submit-fact-response', file: 'submit-fact-command-response.json', schema: 'packages/callable-functions-api/1.1.1/submit-fact-command-response.schema.json', needsSemantic: false },
+  { name: 'submit-fact-association', file: 'submit-fact-command-request-association.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: false },
+  { name: 'submit-fact-observation', file: 'submit-fact-command-request-observation.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: false },
+  { name: 'submit-fact-measurement', file: 'submit-fact-command-request-measurement.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: false },
+  { name: 'submit-fact-event', file: 'submit-fact-command-request-event.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: false },
+  { name: 'submit-fact-envelope', file: 'submit-fact-command-request.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-request.schema.json`, needsSemantic: false },
+  { name: 'submit-fact-response', file: 'submit-fact-command-response.json', schema: `packages/callable-functions-api/${apiVersion}/submit-fact-command-response.schema.json`, needsSemantic: false },
   { name: 'export-format', file: 'export-format.json', schema: 'packages/export-format/1.0.0/export-format.schema.json', needsSemantic: false }
 ];
 

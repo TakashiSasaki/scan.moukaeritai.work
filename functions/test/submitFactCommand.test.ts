@@ -7,9 +7,9 @@ describe('Functions artifact tests', () => {
     const activeVersionPath = path.join(__dirname, '..', 'vendor', 'contracts', 'callable-functions-api', 'active-version.json');
     expect(fs.existsSync(activeVersionPath)).toBe(true);
     const versionData = JSON.parse(fs.readFileSync(activeVersionPath, 'utf8'));
-    expect(versionData.activeVersion).toBeTruthy();
+    expect(versionData.version || versionData.activeVersion).toBeTruthy();
 
-    const reqSchemaPath = path.join(__dirname, '..', 'vendor', 'contracts', 'callable-functions-api', versionData.activeVersion, 'submit-fact-command-request.schema.json');
+    const reqSchemaPath = path.join(__dirname, '..', 'vendor', 'contracts', 'callable-functions-api', versionData.version || versionData.activeVersion, 'submit-fact-command-request.schema.json');
     expect(fs.existsSync(reqSchemaPath)).toBe(true);
   });
 
