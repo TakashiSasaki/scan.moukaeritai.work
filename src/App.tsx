@@ -1,54 +1,42 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { 
   auth, 
-  db, 
   signInWithPopup, 
   googleProvider, 
-  onAuthStateChanged, 
-  signOut,
-  User 
+  signOut
 } from './lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { 
   Settings, 
   LogOut, 
   Package, 
-  Search, 
-  PlusCircle, 
-  Scan, 
-  BarChart3, 
-  X, 
   ShieldAlert, 
-  Beaker, 
-  PlaySquare, 
   Route as RouteIcon, 
-  Database, 
   Info, 
-  Lock, 
-  Menu, 
   BookOpen,
-  User as UserIcon,
   ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'react-hot-toast';
 
 // Component imports
-import Dashboard from './components/Dashboard';
-import SearchScreen from './components/SearchScreen';
-import Overview from './components/Overview';
-import UnassignedIdentifierScreen from './components/UnassignedIdentifierScreen';
 import AdminPanel from './components/AdminPanel';
 import UserSettingsPanel from './components/UserSettingsPanel';
 import DeveloperDocsPage from './components/developerDocs/DeveloperDocsPage';
-import CaptureForm from './components/CaptureForm';
 import SitemapPage from './components/SitemapPage';
 import AppAboutPage from './components/AppAboutPage';
 import DemoScreen from './components/DemoScreen';
 import LibraryDemoScreen from './components/LibraryDemoScreen';
 import TestScreen from './components/TestScreen';
+
+import { AuthProvider, useAuth } from './auth/AuthContext';
+import { useAuthorization } from './auth/useAuthorization';
+import EfpBaselineApp from './components/EfpBaselineApp';
+import EfpWorkflowPending from './components/EfpWorkflowPending';
+import ForbiddenPage from './components/ForbiddenPage';
+import { ProtectedRoute } from './routing/ProtectedRoute';
+import { AdminRoute } from './routing/AdminRoute';
 
 // Declarations for Vite-injected global variables
 declare const __APP_VERSION__: string;
@@ -72,11 +60,11 @@ function useClickOutside(ref: React.RefObject<HTMLDivElement | null>, handler: (
   }, [ref, handler]);
 }
 
-// Wrapper for checking parameterized object routes
-function CaptureFormWrapper() {
+// Redirect wrapper for legacy items preserving parameters
+function ItemRedirectWrapper() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  return <CaptureForm objectId={id || null} onClose={() => navigate('/app')} />;
+  const location = useLocation();
+  return <Navigate to={`/object/${id}${location.search}`} replace />;
 }
 
 // Public Landing & Login page
@@ -98,14 +86,9 @@ function LandingPage() {
   const handleLogin = async () => {
     setLoading(true);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      toast.success(`Welcome, ${result.user.displayName || 'User'}!`);
-      // Rule 3: If developer logs in, immediately move to developer docs.
-      if (result.user.email === 'takashi316@gmail.com') {
-        navigate('/developer');
-      } else {
-        navigate('/app');
-      }
+      await signInWithPopup(auth, googleProvider);
+      toast.success("Successfully signed in!");
+      navigate('/app');
     } catch (err: any) {
       console.error("Login error:", err);
       toast.error(err.message || "Failed to sign in");
@@ -114,7 +97,7 @@ function LandingPage() {
     }
   };
 
-  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0.4';
+  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0.5';
   const buildTime = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : new Date().toISOString();
 
   return (
@@ -212,30 +195,16 @@ function LandingPage() {
 
 // Authenticated Application Shell
 function AppShell() {
-  const [activeScreen, setActiveScreen] = useState<'dashboard' | 'search' | 'overview' | 'unassigned' | 'about'>('dashboard');
+  const [activeScreen, setActiveScreen] = useState<'home' | 'about'>('home');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { user, isAdmin } = useAuthorization();
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
-  const user = auth.currentUser;
 
   // Click outside implementation for Profile Menu
   useClickOutside(profileMenuRef, () => {
     setShowProfileMenu(false);
   });
-
-  useEffect(() => {
-    if (!user) return;
-    const checkAdmin = async () => {
-      try {
-        const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-        setIsAdmin(adminDoc.exists());
-      } catch (err) {
-        console.error("Error checking admin status:", err);
-      }
-    };
-    checkAdmin();
-  }, [user]);
 
   if (!user) {
     return <Navigate to="/" replace />;
@@ -244,18 +213,12 @@ function AppShell() {
   // Render active screen
   const renderScreen = () => {
     switch (activeScreen) {
-      case 'dashboard':
-        return <Dashboard onSelectItem={(id) => navigate(`/object/${id}`)} />;
-      case 'search':
-        return <SearchScreen onSelectItem={(id) => navigate(`/object/${id}`)} />;
-      case 'overview':
-        return <Overview />;
-      case 'unassigned':
-        return <UnassignedIdentifierScreen />;
+      case 'home':
+        return <EfpBaselineApp />;
       case 'about':
         return <AppAboutPage />;
       default:
-        return <Dashboard onSelectItem={(id) => navigate(`/object/${id}`)} />;
+        return <EfpBaselineApp />;
     }
   };
 
@@ -308,38 +271,40 @@ function AppShell() {
 
                 <button 
                   onClick={() => { setShowProfileMenu(false); navigate('/settings'); }}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] rounded-xl transition-all"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] rounded-xl transition-all cursor-pointer"
                 >
                   <Settings size={16} /> User Settings
                 </button>
 
                 {isAdmin && (
-                  <button 
-                    onClick={() => { setShowProfileMenu(false); navigate('/admin'); }}
-                    className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-[var(--primary)] hover:bg-[var(--surface-container-highest)] rounded-xl transition-all"
-                  >
-                    <ShieldAlert size={16} /> Admin Panel
-                  </button>
+                  <>
+                    <button 
+                      onClick={() => { setShowProfileMenu(false); navigate('/admin'); }}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-[var(--primary)] hover:bg-[var(--surface-container-highest)] rounded-xl transition-all cursor-pointer"
+                    >
+                      <ShieldAlert size={16} /> Admin Panel
+                    </button>
+
+                    <button 
+                      onClick={() => { setShowProfileMenu(false); navigate('/developer'); }}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-emerald-500 hover:bg-[var(--surface-container-highest)] rounded-xl transition-all cursor-pointer"
+                    >
+                      <BookOpen size={16} /> Developer Docs
+                    </button>
+
+                    <button 
+                      onClick={() => { setShowProfileMenu(false); navigate('/admin/sitemap'); }}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] rounded-xl transition-all cursor-pointer"
+                    >
+                      <RouteIcon size={16} /> Sitemap / Routes
+                    </button>
+                  </>
                 )}
-
-                <button 
-                  onClick={() => { setShowProfileMenu(false); navigate('/developer'); }}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-emerald-500 hover:bg-[var(--surface-container-highest)] rounded-xl transition-all"
-                >
-                  <BookOpen size={16} /> Developer Docs
-                </button>
-
-                <button 
-                  onClick={() => { setShowProfileMenu(false); navigate('/admin/sitemap'); }}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] rounded-xl transition-all"
-                >
-                  <RouteIcon size={16} /> Sitemap / Routes
-                </button>
 
                 <div className="border-t border-[var(--outline)] my-1 pt-1">
                   <button 
                     onClick={() => { setShowProfileMenu(false); signOut(auth); toast.success("Signed out"); }}
-                    className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
                   >
                     <LogOut size={16} /> Sign Out
                   </button>
@@ -368,89 +333,30 @@ function AppShell() {
       {/* Sticky Bottom Navigation optimized for mobile */}
       <nav className="fixed bottom-0 left-0 right-0 z-30 bg-[var(--surface-container)]/95 backdrop-blur-xl border-t border-[var(--outline)] px-4 py-2 md:py-3 flex justify-around items-center max-w-md mx-auto rounded-t-3xl shadow-2xl">
         <button 
-          onClick={() => setActiveScreen('dashboard')}
-          className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all cursor-pointer ${activeScreen === 'dashboard' ? 'text-[var(--primary)] font-black' : 'text-[var(--on-surface-variant)]'}`}
+          onClick={() => setActiveScreen('home')}
+          className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all cursor-pointer ${activeScreen === 'home' ? 'text-[var(--primary)] font-black' : 'text-[var(--on-surface-variant)]'}`}
         >
-          <Package size={20} className={activeScreen === 'dashboard' ? 'scale-110' : ''} />
-          <span className="text-[10px] tracking-tight font-medium">Items</span>
+          <Package size={20} className={activeScreen === 'home' ? 'scale-110' : ''} />
+          <span className="text-[10px] tracking-tight font-medium">Home</span>
         </button>
 
         <button 
-          onClick={() => setActiveScreen('search')}
-          className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all cursor-pointer ${activeScreen === 'search' ? 'text-[var(--primary)] font-black' : 'text-[var(--on-surface-variant)]'}`}
+          onClick={() => setActiveScreen('about')}
+          className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all cursor-pointer ${activeScreen === 'about' ? 'text-[var(--primary)] font-black' : 'text-[var(--on-surface-variant)]'}`}
         >
-          <Search size={20} className={activeScreen === 'search' ? 'scale-110' : ''} />
-          <span className="text-[10px] tracking-tight font-medium">Search</span>
-        </button>
-
-        {/* Dynamic add floating button shortcut */}
-        <button 
-          onClick={() => navigate('/object/new')}
-          className="w-12 h-12 rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center justify-center shadow-lg shadow-[var(--primary)]/25 -translate-y-4 hover:scale-110 transition-transform cursor-pointer"
-        >
-          <PlusCircle size={24} />
-        </button>
-
-        <button 
-          onClick={() => setActiveScreen('overview')}
-          className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all cursor-pointer ${activeScreen === 'overview' ? 'text-[var(--primary)] font-black' : 'text-[var(--on-surface-variant)]'}`}
-        >
-          <BarChart3 size={20} className={activeScreen === 'overview' ? 'scale-110' : ''} />
-          <span className="text-[10px] tracking-tight font-medium">Stats</span>
-        </button>
-
-        <button 
-          onClick={() => setActiveScreen('unassigned')}
-          className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all cursor-pointer ${activeScreen === 'unassigned' ? 'text-[var(--primary)] font-black' : 'text-[var(--on-surface-variant)]'}`}
-        >
-          <ShieldAlert size={20} className={activeScreen === 'unassigned' ? 'scale-110' : ''} />
-          <span className="text-[10px] tracking-tight font-medium">Tags</span>
+          <Info size={20} className={activeScreen === 'about' ? 'scale-110' : ''} />
+          <span className="text-[10px] tracking-tight font-medium">About</span>
         </button>
       </nav>
     </div>
   );
 }
 
-// Protected Route Guard Wrapper
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-    });
-    return unsubscribe;
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3b82f6]"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
-  return <>{children}</>;
-}
-
 // App Routing Orchestrator Component
 function AppRoutes() {
-  const [loading, setLoading] = useState(true);
+  const { authLoading } = useAuth();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, () => {
-      setLoading(false);
-    });
-    return unsubscribe;
-  }, []);
-
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3b82f6]"></div>
@@ -464,23 +370,26 @@ function AppRoutes() {
       <Route path="/app" element={<ProtectedRoute><AppShell /></ProtectedRoute>} />
       
       {/* Dedicated Sub-pages */}
-      <Route path="/admin" element={<ProtectedRoute><AdminPanel onClose={() => window.location.href = '/app'} /></ProtectedRoute>} />
+      <Route path="/admin" element={<AdminRoute><AdminPanel onClose={() => window.location.href = '/app'} /></AdminRoute>} />
       <Route path="/settings" element={<ProtectedRoute><UserSettingsPanel onClose={() => window.location.href = '/app'} /></ProtectedRoute>} />
-      <Route path="/developer/*" element={<ProtectedRoute><DeveloperDocsPage /></ProtectedRoute>} />
+      <Route path="/developer/*" element={<AdminRoute><DeveloperDocsPage /></AdminRoute>} />
       
       {/* Object management */}
-      <Route path="/object/new" element={<ProtectedRoute><CaptureFormWrapper /></ProtectedRoute>} />
-      <Route path="/object/:id" element={<ProtectedRoute><CaptureFormWrapper /></ProtectedRoute>} />
+      <Route path="/object/new" element={<ProtectedRoute><EfpWorkflowPending /></ProtectedRoute>} />
+      <Route path="/object/:id" element={<ProtectedRoute><EfpWorkflowPending /></ProtectedRoute>} />
       
       {/* Redirects */}
-      <Route path="/item/:id" element={<ProtectedRoute><Navigate to="/object/:id" replace /></ProtectedRoute>} />
+      <Route path="/item/:id" element={<ProtectedRoute><ItemRedirectWrapper /></ProtectedRoute>} />
       
       {/* Demos and beta tools */}
-      <Route path="/demo" element={<ProtectedRoute><DemoScreen /></ProtectedRoute>} />
-      <Route path="/library-demo" element={<ProtectedRoute><LibraryDemoScreen /></ProtectedRoute>} />
-      <Route path="/test" element={<ProtectedRoute><TestScreen /></ProtectedRoute>} />
-      <Route path="/admin/sitemap" element={<ProtectedRoute><SitemapPage onClose={() => window.location.href = '/app'} /></ProtectedRoute>} />
+      <Route path="/demo" element={<AdminRoute><DemoScreen /></AdminRoute>} />
+      <Route path="/library-demo" element={<AdminRoute><LibraryDemoScreen /></AdminRoute>} />
+      <Route path="/test" element={<AdminRoute><TestScreen /></AdminRoute>} />
+      <Route path="/admin/sitemap" element={<AdminRoute><SitemapPage onClose={() => window.location.href = '/app'} /></AdminRoute>} />
       
+      {/* Access Denied Gate */}
+      <Route path="/forbidden" element={<ProtectedRoute><ForbiddenPage /></ProtectedRoute>} />
+
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -490,10 +399,12 @@ function AppRoutes() {
 export default function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <AppRoutes />
-        <Toaster position="top-center" />
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+          <Toaster position="top-center" />
+        </BrowserRouter>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
