@@ -14,14 +14,12 @@ import type {
 // -----------------------------------------------------------------------------
 
 /**
- * Safely extracts milliseconds from a Timestamp-like object if valid.
+ * Safely extracts milliseconds from a logical string Timestamp (RFC 3339).
  */
 function toMillisSafely(ts: Timestamp | undefined): number | undefined {
   if (!ts) return undefined;
-  if (typeof ts.toMillis === 'function') {
-    return ts.toMillis();
-  }
-  return undefined;
+  const parsed = Date.parse(ts);
+  return isNaN(parsed) ? undefined : parsed;
 }
 
 /**
@@ -44,10 +42,6 @@ export function getAssociationEffectiveTransitionTime(
 /**
  * Deterministically sorts two facts by effective time (ascending),
  * tie-broken by ID (lexicographically ascending).
- *
- * In this implementation, missing timestamps are considered "smaller"
- * but semantically callers should generally filter them out as invalid
- * before sorting if they need strict timeline ordering.
  */
 export function compareFactsByEffectiveTimeThenId(
   left: { id: string; time?: Timestamp },
@@ -262,14 +256,10 @@ export function reconstructPlaceSummary(input: {
       lastActivityAt = ts;
       latestActivityFactId = factId;
     } else if (millis !== undefined && millis === latestActivityMillis && factId > (latestActivityFactId ?? '')) {
-      // Deterministic tie-breaker for identical timestamps
       lastActivityAt = ts;
       latestActivityFactId = factId;
     }
   }
-
-  // Note: Future Place runtime design may refine currentObjectIds/currentMarkerKeys
-  // into stricter current-presence semantics instead of a simple accumulation.
 
   // Observations
   for (const o of observations) {
@@ -319,10 +309,6 @@ export function reconstructPlaceSummary(input: {
   }
 
   if (derivedFactIds.size > 0) {
-    // Optimization: only strictly include the latest activity fact if not already present
-    // but the instruction says "include Fact IDs directly used for currentObjectIds/currentMarkerKeys"
-    // and "selected latest place activity fact ID".
-    // We already added all matched facts above.
     result.derivedFromFactIds = Array.from(derivedFactIds).sort();
   }
 
@@ -396,15 +382,12 @@ export function reconstructMarkerSummary(input: {
     lastObservedAt = latestObs.time.observedAt;
     derivedFactIds.add(latestObs.observationId);
 
-    // B. lastObservedPlaceId (search backwards for first observation with explicit placeIds)
+    // B. lastObservedPlaceId
     for (let i = validObservations.length - 1; i >= 0; i--) {
       const obs = validObservations[i];
       if (obs.placeIds && obs.placeIds.length > 0) {
         const sortedPlaces = [...obs.placeIds].sort();
         lastObservedPlaceId = sortedPlaces[0];
-        // Note: we do not add this observation to derivedFactIds unless we want to,
-        // but since we only need the absolute latest observation ID per instructions:
-        // "include latest observationId if selected", we keep it minimal.
         break;
       }
     }

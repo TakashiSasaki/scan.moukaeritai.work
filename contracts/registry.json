@@ -45,6 +45,15 @@
       "description": "Phase definitions and schemas for the migration import protocol",
       "contractType": "import-protocol",
       "path": "packages/import-protocol/1.0.0/contract.json"
+    },
+    {
+      "contractId": "firestore-binding",
+      "version": "1.0.0",
+      "status": "active",
+      "title": "Firestore Binding",
+      "description": "Strict binding mapping between logical EFP types and Firestore persistence types",
+      "contractType": "data-binding",
+      "path": "packages/firestore-binding/1.0.0/contract.json"
     }
   ]
 }

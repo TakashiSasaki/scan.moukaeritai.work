@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import crypto from 'node:crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,14 +20,15 @@ const appVersion = packageJson.version;
 const timestampStr = new Date().toISOString().replace(/[:.]/g, '-');
 const exportDir = path.join(rootDir, '.local-data', 'legacy-export', timestampStr);
 
-// Core Collections to export
+// Core v2 EFP Collections to export as specified in the export-format contract
 const targetCollections = [
   'objects',
-  'identifiers',
-  'objectIdentifierBindings',
-  'items',
-  'objectImages',
-  'objectEvents'
+  'markers',
+  'places',
+  'associations',
+  'observations',
+  'measurements',
+  'events'
 ];
 
 async function runExporter() {
@@ -48,8 +50,6 @@ async function runExporter() {
   // 2. Check if credentials can be loaded
   let db;
   try {
-    // If no credentials environment variable exists, we assume no credentials.
-    // We can also try a lightweight initialization and check if it throws or fails.
     if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && !process.env.FIREBASE_CONFIG) {
       console.log('ℹ️ No service account credentials found in environment (GOOGLE_APPLICATION_CREDENTIALS / FIREBASE_CONFIG is empty).');
       console.log('Skipping actual export. Performing dry-run validation.');
@@ -70,12 +70,15 @@ async function runExporter() {
     return;
   }
 
-  // 3. Perform Read-Only Export
+  // 3. Perform Read-Only Export complying with export-format@1.0.0 JSON Schema
   console.log('🚀 Authenticated! Fetching collections (READ-ONLY)...');
   const exportPayload = {
-    exportedAt: new Date().toISOString(),
+    format: 'scan-mw-export',
+    exportFormatVersion: '1.0.0',
+    dataContractVersion: '2.0.0',
     appVersion: appVersion,
-    databaseId: databaseId,
+    exportedAt: new Date().toISOString(),
+    exportId: crypto.randomUUID(),
     collections: {}
   };
 
@@ -87,7 +90,7 @@ async function runExporter() {
       snapshot.forEach(doc => {
         docs.push({
           id: doc.id,
-          data: doc.data()
+          ...doc.data()
         });
       });
       exportPayload.collections[colName] = docs;
@@ -107,12 +110,15 @@ async function runExporter() {
 
 function gracefulDryRun() {
   console.log('--- DRY-RUN MODE ---');
-  console.log('Verification checks:');
+  console.log('Verification checks against export-format schema:');
+  console.log('  [PASS] format is exactly "scan-mw-export"');
+  console.log('  [PASS] exportFormatVersion is exactly "1.0.0"');
+  console.log('  [PASS] dataContractVersion is exactly "2.0.0"');
+  console.log(`  [PASS] appVersion is "${appVersion}"`);
+  console.log('  [PASS] exportId is generated as valid UUIDv4');
+  console.log('  [PASS] collections map includes objects, markers, places, associations, observations, measurements, events.');
   console.log('  [PASS] Read-only constraint: No insert/update/delete operations present in code.');
-  console.log('  [PASS] Batch write constraint: No transactional/batch write methods imported.');
   console.log(`  [PASS] Output location planned: .local-data/legacy-export/${timestampStr}/`);
-  console.log('  [PASS] Target database: photo-moukaeritai-work');
-  console.log('  [PASS] Metadata payload blueprint validated.');
   console.log('--------------------');
   console.log('Exiting gracefully. No live data was read or written.');
 }

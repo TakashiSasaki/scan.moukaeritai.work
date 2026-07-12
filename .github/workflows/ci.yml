@@ -56,5 +56,14 @@ jobs:
       - name: Run ordinary tests
         run: npm run test
 
+      - name: Setup Java (for Firebase Emulator)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Run firestore rules tests
+        run: npm run test:rules
+
       - name: Run build
         run: npm run build

@@ -122,25 +122,24 @@ To prevent confusion across systems, note the following distinct markers/identif
 - **Firestore Schema Architecture**:
   - `users/{uid}`: Synchronized from Firebase Auth. Stores user profiles.
   - `admins/{uid}`: Handles Role-Based Access Control (RBAC). The presence of a document grants admin privileges.
-  - **Current implementation collections**:
-    - `objects/{objectId}`: The core inventory object document.
-    - `identifiers/{identifierKey}`: Maps QR/NFC/manual/barcode/Bluetooth identifiers to objects.
-    - `objectIdentifierBindings/{bindingId}`: Canonical active relationship state between objects and identifiers (not a historical log).
-    - `objectImages/{imageId}`: Records image metadata and Storage references.
-    - `objectEvents/{eventId}`: Records append-only operational events (including attachment/detachment history).
-    - `items/{itemId}`: Legacy-only and used as migration input.
-  - **Target Conceptual Model**: The application is moving toward an Entity / Fact / Projection architecture as defined in `docs/architecture/entity-fact-projection-data-model.md`.
-    - Entity collections: `objects`, `markers`, `places` (Do not use `locations`).
-    - Fact collections: `associations`, `observations`, `measurements`, `events` (Do not use `bindings`).
-    - Projection collections: `objectSummaries`, `markerSummaries`, `placeSummaries`
-    - Note: Domain time fields (e.g., `createdAt`, `updatedAt`, `lastSeenAt`) must not be placed directly on new Entity records. They belong in Fact or Summary layers.
-  - Current mappings:
-    - `identifiers` conceptually maps to `markers`
-    - `objectIdentifierBindings` conceptually maps to `associations`
-    - `identifierObservations` conceptually maps to `observations`
-  - **Runtime migration planning**:
-    - The phased runtime migration plan is documented in `docs/migrations/entity-fact-projection-runtime-migration-plan.md`.
-    - Agents must consult that plan before changing `Scanner.tsx` or `CaptureForm.tsx` reads/writes from `identifiers` / `objectIdentifierBindings` toward `markers` / `associations` / `observations` / `measurements` / summaries.
+  - **EFP Core Collections (Active)**:
+    - **Entities**:
+      - `objects/{objectId}`: The physical objects.
+      - `markers/{markerId}`: Ownerless, unique physical marker tags.
+      - `places/{placeId}`: Spatial locations.
+    - **Facts (Append-Only)**:
+      - `associations/{associationId}`: Fact relating objects, markers, and places.
+      - `observations/{observationId}`: Temporal marker/object observation events.
+      - `measurements/{measurementId}`: Metric dimensions and weight logs.
+      - `events/{eventId}`: Timed status, custom events, and operational audits.
+    - **Projections (Read-Only)**:
+      - `objectSummaries/{objectId}`: Read-optimized denormalized cache.
+      - `markerSummaries/{markerId}`: Read-optimized tag summary.
+      - `placeSummaries/{placeId}`: Read-optimized location summary.
+  - **Locked Legacy Collections (Read-Only/Frozen)**:
+    - `items/*`, `identifiers/*`, `objectIdentifierBindings/*`, `objectImages/*`, `objectEvents/*`, and `identifierObservations/*`. Writing via client SDKs is strictly disallowed by Firestore Security Rules to prevent regressions.
+  - **EFP Transition Alignment**:
+    - As of **v2.0.1**, the runtime has achieved full alignment with the Entity-Fact-Projection (EFP) model. All runtime states and type constraints are strictly converted between logical EFP types (utilizing RFC 3339 UTC string formats) and Firestore persistence bindings (utilizing native Timestamps/GeoPoints) via the pure `/src/lib/firestore-efp-adapter.ts` adapter.
 - **Legacy Identifiers for Backend Resources**: The frontend deployment target uses the current domain name (`scan-moukaeritai-work`), but backend Firebase resources (Firestore Database, Storage Bucket) intentionally retain the legacy identifier `photo-moukaeritai-work`. This is reflected in `firebase-applet-config.json` and must not be altered to match the hosting name.
 - **Cloud Storage Strategy**:
   - Images captured via the application are stored in the designated Firebase Storage bucket (`photo-moukaeritai-work`).
