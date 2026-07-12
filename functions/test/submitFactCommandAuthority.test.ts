@@ -123,7 +123,7 @@ import { submitFactCommand } from '../src/submitFactCommand';
 describe('Callable Authority Boundary Tests', () => {
   test('receivedAt and actorUid are server-authoritative for observations', async () => {
     const maliciousPayload = {
-      commandId: '0190a61a-3e5f-7000-8000-000000000000', // Valid UUIDv7
+      commandId: '0190a61a-3e5f-4000-8000-000000000000', // Valid UUIDv4
       factType: 'observation',
       data: {
         observationType: 'temperature',
@@ -175,7 +175,7 @@ describe('Callable Authority Boundary Tests', () => {
     mockSet.mockClear();
     
     const maliciousPayload = {
-      commandId: '0190a61a-3e5f-7000-8000-000000000001', // Valid UUIDv7
+      commandId: '0190a61a-3e5f-4000-8000-000000000001', // Valid UUIDv4
       factType: 'measurement',
       data: {
         measurementType: 'humidity',
