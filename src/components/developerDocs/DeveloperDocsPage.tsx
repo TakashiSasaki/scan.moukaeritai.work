@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Book, ChevronLeft, ChevronRight, FileText, Code, Database, Shield } from 'lucide-react';
+import { Book, ChevronLeft, ChevronRight, FileText, Code, Database, Shield, Package } from 'lucide-react';
 import DeveloperDocsOverview from './DeveloperDocsOverview';
 
 export default function DeveloperDocsPage() {
@@ -22,16 +22,19 @@ export default function DeveloperDocsPage() {
        <header className="sticky top-0 z-40 bg-[var(--surface-container)]/80 backdrop-blur-md border-b border-[var(--outline)] px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
              <div className="bg-emerald-500 p-2 rounded-xl text-white">
-                <Code size={24} />
+                <Package size={24} />
              </div>
              <div>
-                <h1 className="text-xl font-black italic tracking-tighter">Developer Docs</h1>
-                <p className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest">System Documentation</p>
+                <h1 className="text-xl font-black italic tracking-tighter flex items-center gap-2">
+                  <Package size={20} className="inline md:hidden text-white" />
+                  Developer Docs
+                </h1>
+                <p className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest">System Documentation • App Icon Included</p>
              </div>
           </div>
           <button 
-            onClick={() => navigate('/')}
-            className="px-4 py-2 bg-[var(--surface)] border border-[var(--outline)] rounded-xl font-bold text-sm"
+            onClick={() => navigate('/app')}
+            className="px-4 py-2 bg-[var(--surface)] border border-[var(--outline)] rounded-xl font-bold text-sm cursor-pointer hover:bg-[var(--surface-container-highest)] transition-colors"
           >
             🚪 Exit
           </button>
