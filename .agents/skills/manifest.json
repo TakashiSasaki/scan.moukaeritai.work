@@ -1,0 +1,60 @@
+{
+  "skills": [
+    {
+      "id": "repository-preflight",
+      "path": ".agents/skills/repository-preflight/SKILL.md",
+      "status": "active",
+      "description": "Performs repository preflight checks before modifying files.",
+      "requiredFor": ["Any change request or stride beginning"]
+    },
+    {
+      "id": "version-governance",
+      "path": ".agents/skills/version-governance/SKILL.md",
+      "status": "active",
+      "description": "Enforces semantic versioning, version integrity, and metadata updates.",
+      "requiredFor": ["Any file modifications under sensitive paths"]
+    },
+    {
+      "id": "contract-change",
+      "path": ".agents/skills/contract-change/SKILL.md",
+      "status": "active",
+      "description": "Guides contract evolution, schema updates, generated types check, and runtime synchronization.",
+      "requiredFor": ["Modifying anything inside /contracts or modifying API data formats"]
+    },
+    {
+      "id": "functions-artifact-verification",
+      "path": ".agents/skills/functions-artifact-verification/SKILL.md",
+      "status": "active",
+      "description": "Compiles, validates, and runs integrity checks on functions deployment artifacts.",
+      "requiredFor": ["Changes in Cloud Functions or efp-model package"]
+    },
+    {
+      "id": "repository-hygiene",
+      "path": ".agents/skills/repository-hygiene/SKILL.md",
+      "status": "active",
+      "description": "Enforces repository cleanliness and prevent scratch file commits.",
+      "requiredFor": ["Every task closure and verification baseline execution"]
+    },
+    {
+      "id": "documentation-reality-check",
+      "path": ".agents/skills/documentation-reality-check/SKILL.md",
+      "status": "active",
+      "description": "Audits project claims, completion states, and milestone documentation against test coverage and realities.",
+      "requiredFor": ["Task closeout and status updates"]
+    },
+    {
+      "id": "stride-closeout",
+      "path": ".agents/skills/stride-closeout/SKILL.md",
+      "status": "active",
+      "description": "Ensures complete validation, test passing, hygiene checks, git-status inspection, and clean commit message preparation.",
+      "requiredFor": ["Completing any stride or closing tasks"]
+    },
+    {
+      "id": "run-local-tests",
+      "path": ".agents/skills/run-local-tests/SKILL.md",
+      "status": "active",
+      "description": "Standardizes and runs local tests across frontend, backend, contracts, and Firestore rules.",
+      "requiredFor": ["Every local verification and test execution"]
+    }
+  ]
+}

@@ -1,8 +1,8 @@
-# scan.mw (Version 2.0.10)
+# scan.mw (Version 2.0.12)
 
 [![CI](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml)
 
-Welcome to **scan.mw v2.0.10**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
+Welcome to **scan.mw v2.0.12**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
 
 This repository enforces backward-incompatible, robust schemas, strict version governance, and a registry-first workflow.
 
@@ -18,15 +18,15 @@ This repository enforces backward-incompatible, robust schemas, strict version g
 
 ---
 
-## 🚀 Verification Closure Repair and Repository Hygiene (v2.0.10)
+## 🚀 Agent Skill Harness and Verification Stabilization (v2.0.12)
 
-Version 2.0.10 focuses on Verification Closure Repair and Repository Hygiene.
+Version 2.0.12 focuses on stabilizing the Agent Skill Harness, verification baselines, and repository hygiene.
 
 - **Active Contract Verification**: Closed and fully validated.
-- **Repository Hygiene**: A repository hygiene gate was added to reject scratch and temporary files.
+- **Repository Hygiene**: Hardened hygiene gate implemented to strictly reject scratch/temporary files and enforce an allowlist.
 - **Routing Containment**: Successfully completed.
-- **Transactional Fact Safety**: Scheduled for 2.0.11.
-- **Rules / Legacy Closure**: Scheduled for 2.0.12.
+- **Transactional Fact Safety**: Partially implemented in 2.0.11 (including owner-scoped receipt, transaction-nested receipt read, initial request hash, backend-generated receivedAt, backend-enforced actorUid, and initial duplicate query). Full closure (including exact factType request hash verification, typed participantKeys validation, comprehensive logical Fact validation, and full Association concurrency checks) is deferred to **2.0.13**.
+- **Rules / Legacy Closure**: Scheduled for **2.0.14** (including strict Entity `_meta` rules, Marker identity immutability, and denying legacy reads).
 - **Object/Marker Active Workflow**: Not yet fully complete.
 - **Production Deployment**: Deployments are strictly **manual only**.
 - **Major Version Bumps**: Require explicit human approval.

@@ -50,7 +50,13 @@ Creates an immutable Fact (Association, Observation, Measurement, or Event) on b
 
 * **Client-Specified Fields vs Backend-Authoritative Fields**:
   Client provides specific fields, while the backend injects ID, ownerId, indexing arrays, and _meta.
-  *Note: `time.receivedAt` and `provenance.actorUid` are currently provided by the client (or default injected) but will transition to strictly backend-authoritative fields in the next stride (v2.0.11). The current runtime behavior continues to accept them from the client to avoid mismatch.*
+  *Note: `time.receivedAt` and `provenance.actorUid` are strictly backend-authoritative fields. If provided by the client in the request, they are ignored and overwritten by the backend with the current server timestamp and authenticated user's ID respectively.*
+
+  The following fields are strictly forbidden in client request payloads and will be rejected by the schema validation (due to `additionalProperties: false`):
+  * **ownerId**
+  * **Fact ID** (e.g., `associationId`, `observationId`, `measurementId`, `eventId`)
+  * **derived index arrays** (e.g., `objectIds`, `markerKeys`, `placeIds`, `deviceIds`, `readerIds`, `userIds`, `participantKeys`)
+  * **_meta** (e.g., `recordCreatedAt`, `recordCreatedBy`, etc.)
 
   * For `"association"`:
     ```typescript

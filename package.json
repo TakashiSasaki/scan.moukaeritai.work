@@ -1,7 +1,7 @@
 {
   "name": "scan-mw",
   "private": true,
-  "version": "2.0.11",
+  "version": "2.0.12",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
@@ -22,7 +22,7 @@
     "contracts:check-generated": "node scripts/check-generated-types.mjs",
     "prepare:functions-artifact": "node scripts/prepare-functions-artifact.mjs",
     "test:functions-artifact": "node scripts/test-functions-artifact.mjs",
-    "verify:baseline": "npm run test:repository-hygiene && npm run test:workflows && npm --prefix packages/efp-model run build && npm run contracts:validate && npm run contracts:check-generated && npm run test:routing-boundary && npm run test:routing && npm --prefix packages/efp-model run typecheck && npm --prefix packages/efp-model run test && npm --prefix packages/efp-model run test:artifact && npm run prepare:functions-artifact && npm run test:functions-artifact && npm run test:functions-boundary && npm run test:functions-runtime-gate && npm run test:functions && npm --prefix functions run build && npm run test && npm run lint && npm run build",
+    "verify:baseline": "npm run test:repository-hygiene && npm run test:agent-skills && npm run version:verify && npm run test:workflows && npm --prefix packages/efp-model run build && npm run contracts:validate && npm run contracts:check-generated && npm run test:routing-boundary && npm run test:routing && npm --prefix packages/efp-model run typecheck && npm --prefix packages/efp-model run test && npm --prefix packages/efp-model run test:artifact && npm run prepare:functions-artifact && npm run test:functions-artifact && npm run test:functions-boundary && npm run test:functions-runtime-gate && npm run test:functions && npm --prefix functions run build && npm run test && npm run lint && npm run build",
     "ops:recompute-projection": "node scripts/recompute-projection-summary.mjs",
     "ops:reconcile-projection": "node scripts/reconcile-projection-summaries.mjs",
     "ops:report-projection-reconciliation": "node scripts/report-projection-reconciliation.mjs",
@@ -43,6 +43,7 @@
     "ops:validate-scanner-observation-dual-write-rollout-design-gate": "node scripts/validate-scanner-observation-dual-write-rollout-design-gate.mjs",
     "ops:export-legacy": "node scripts/export-legacy-data.mjs",
     "test:repository-hygiene": "node scripts/test-repository-hygiene.mjs",
+    "test:agent-skills": "node scripts/test-agent-skills.mjs",
     "test:workflows": "node scripts/validate-workflow-yaml.mjs"
   },
   "dependencies": {

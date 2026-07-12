@@ -6,13 +6,13 @@
 
 ## Agent Instructions (Project-Specific Skills)
 
-This repository uses project-specific agent skills.
+This repository uses project-specific agent skills listed in the canonical manifest at `.agents/skills/manifest.json`.
 Canonical skill directory: `.agents/skills/`
-Before performing a task, check whether a relevant skill exists. Read its `SKILL.md` before acting.
+Before performing a task, check whether a relevant skill exists in the manifest and read its `SKILL.md` before acting.
 
-## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.11)
+## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.12)
 **scan.mw** is a cloud-based item tracking and inventory management application.
-As of version **2.0.10**, the project adheres to a **Contract-First Rebuild Baseline**:
+As of version **2.0.12**, the project adheres to a **Contract-First Rebuild Baseline**:
 
 1. **Canonical Schema Registry**: The `/contracts` directory is the single source of truth for all schemas, semantics, and registries. No runtime data mutations or API changes can occur without updated contracts. The active contract profile is defined in `contracts/profiles/current-application.json`.
 2. **Entity-Fact-Projection (EFP) Model**: 
@@ -22,6 +22,45 @@ As of version **2.0.10**, the project adheres to a **Contract-First Rebuild Base
 3. **SemVer & Version Integrity**: Version bumps in `package.json` are strictly mandatory whenever sensitive files are modified. **Major bumps require human approval.**
 4. **Deployments**: Production deployments are restricted to **manual only** (`workflow_dispatch`). Do not automatically deploy to production or perform production write/delete.
 5. **No Scratch Files**: Do not commit scratch files, one-off scripts, PR replies, or generated temporary patches to the root.
+6. **Active Skills Manifest**: Canonical manifest is `.agents/skills/manifest.json`. Active core skills must be executed strictly following preflight, hygiene, and closeout protocols.
+
+### 📋 Active & Completed Backend Work Status
+
+**Completed in 2.0.11/2.0.12**:
+- owner-scoped command receipt
+- transaction-nested receipt read
+- initial request hash calculation
+- backend-generated `receivedAt` timestamp
+- backend-enforced `actorUid` matching authenticated user
+- initial duplicate query within transactions
+
+**Deferred to 2.0.13 (Transactional Fact and Projection Safety Closure)**:
+- request hash verification with exact `factType` & schema version
+- canonical JSON serialization standard
+- rejecting same `commandId` with different `factType`
+- typed `participantKeys` usage in functions
+- sorting/deduplication of all index arrays
+- rigorous logical Fact validation matching schemas
+- Transactional Association subject reading
+- validation matching detach participants with subject
+- checking Object/Marker replace consistency
+- checking old vs new Marker schema integrity
+- `ownerId` + `subjectAssociationId` composite index
+- standardized UUIDv7 generation
+- standardized UTF-8 SHA-256
+- throwing errors in projection updates
+- duplicate/out-of-order event safety
+- domain-time/fact-ID watermark
+- projection receipt status updates
+
+**Deferred to 2.0.14 (Rules and Legacy Closure)**:
+- strict Entity `_meta` security rules
+- Marker identity immutability rule
+- restricting Fact reads to `ownerId` scope
+- client read denial on legacy collections
+- legacy exporter manifest, JSONL, and hash
+- cleanup of remaining migration/dual-write scripts
+- closure of Draft PR #1 (never merge without human authorization)
 
 ## 2. Incomplete Workflows & Legacy UI
 - **Object/Marker Workflows**: The new EFP-native Object and Marker creation UI workflows are **incomplete**. Do not claim they are complete.
