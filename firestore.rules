@@ -147,7 +147,7 @@ service cloud.firestore {
     }
 
     function canAccessFact(data) {
-      return hasCurrentUser(data) || isLegacyOwner(data);
+      return (data.get('ownerId', '') == request.auth.uid) || hasCurrentUser(data) || isLegacyOwner(data);
     }
 
     function isValidFactIndexArrays(data) {
@@ -288,6 +288,10 @@ service cloud.firestore {
     match /objectImages/{imageId} {
       allow read: if isOwner(existing().ownerId);
       allow create, update, delete: if false;
+    }
+
+    match /bluetoothTags/{tagId} {
+      allow read, write: if false;
     }
   }
 }

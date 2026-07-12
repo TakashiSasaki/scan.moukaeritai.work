@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SubmitFactCommandRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["commandId", "factType", "data"],
+  "properties": {
+    "commandId": {
+      "type": "string",
+      "maxLength": 128,
+      "pattern": "^[0-9a-fA-F-]+$"
+    },
+    "factType": {
+      "type": "string",
+      "enum": ["association", "observation", "measurement", "event"]
+    },
+    "data": {
+      "type": "object"
+    }
+  }
+}

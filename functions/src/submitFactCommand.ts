@@ -2,7 +2,11 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getFirestore, Timestamp, GeoPoint } from "firebase-admin/firestore";
 import { generateUUIDv7 } from "@scan/efp-model";
-import { recomputeProjectionSummaryForTarget } from "./projectionSummaryRecompute";
+import Ajv from "ajv";
+import addFormats from "ajv-formats";
+import * as fs from "fs";
+import * as path from "path";
+import { validateAttach, validateDetach, validateReplace } from "./associationValidation";
 
 const appletConfig = {
   firestoreDatabaseId: "photo-moukaeritai-work"
@@ -10,6 +14,50 @@ const appletConfig = {
 
 function getDb() {
   return getFirestore(admin.app(), appletConfig.firestoreDatabaseId);
+}
+
+const ajv = new Ajv({ allErrors: true, strict: false });
+addFormats(ajv);
+
+const CONTRACTS_DIR = "/contracts/packages/callable-functions-api/1.1.0";
+
+function loadAndCompileSchema(fileName: string) {
+  const pathsToTry = [
+    path.join(__dirname, "../../../contracts/packages/callable-functions-api/1.1.0", fileName),
+    path.join(__dirname, "../../contracts/packages/callable-functions-api/1.1.0", fileName),
+    path.join(process.cwd(), "../contracts/packages/callable-functions-api/1.1.0", fileName),
+    path.join(process.cwd(), "contracts/packages/callable-functions-api/1.1.0", fileName),
+    path.join(CONTRACTS_DIR, fileName),
+    path.join("/workspace/contracts/packages/callable-functions-api/1.1.0", fileName),
+  ];
+
+  for (const p of pathsToTry) {
+    if (fs.existsSync(p)) {
+      try {
+        const content = fs.readFileSync(p, "utf8");
+        const schema = JSON.parse(content);
+        return ajv.compile(schema);
+      } catch (err: any) {
+        console.error(`Failed parsing schema from path ${p}: ${err.message}`);
+      }
+    }
+  }
+  throw new Error(`Schema file not found in search paths: ${fileName}`);
+}
+
+let validators: Record<string, any> | null = null;
+
+function getValidators() {
+  if (!validators) {
+    validators = {
+      request: loadAndCompileSchema("submit-fact-command-request.schema.json"),
+      association: loadAndCompileSchema("association-command-data.schema.json"),
+      observation: loadAndCompileSchema("observation-command-data.schema.json"),
+      measurement: loadAndCompileSchema("measurement-command-data.schema.json"),
+      event: loadAndCompileSchema("event-command-data.schema.json"),
+    };
+  }
+  return validators;
 }
 
 /**
@@ -110,59 +158,6 @@ async function verifyParticipantsExistAndOwned(
 }
 
 /**
- * Triggers recomputation of summary projections for any affected entities.
- */
-async function updateAffectedSummaries(
-  db: admin.firestore.Firestore,
-  ownerId: string,
-  objectIds: string[],
-  markerKeys: string[],
-  placeIds: string[]
-) {
-  const tasks: Promise<any>[] = [];
-
-  // Deduplicate target sets
-  const uniqueObjects = Array.from(new Set(objectIds));
-  const uniqueMarkers = Array.from(new Set(markerKeys));
-  const uniquePlaces = Array.from(new Set(placeIds));
-
-  for (const objectId of uniqueObjects) {
-    tasks.push((async () => {
-      const { summary } = await recomputeProjectionSummaryForTarget({ db, targetType: "object", targetId: objectId });
-      if (summary) {
-        // Enforce ownerId on write
-        const fullSummary = { ...(summary as any), ownerId };
-        await db.collection("objectSummaries").doc(objectId).set(fullSummary, { merge: true });
-      }
-    })());
-  }
-
-  for (const markerKey of uniqueMarkers) {
-    tasks.push((async () => {
-      const { summary } = await recomputeProjectionSummaryForTarget({ db, targetType: "marker", targetId: markerKey });
-      if (summary) {
-        const fullSummary = { ...(summary as any), ownerId };
-        await db.collection("markerSummaries").doc(markerKey).set(fullSummary, { merge: true });
-      }
-    })());
-  }
-
-  for (const placeId of uniquePlaces) {
-    tasks.push((async () => {
-      const { summary } = await recomputeProjectionSummaryForTarget({ db, targetType: "place", targetId: placeId });
-      if (summary) {
-        const fullSummary = { ...(summary as any), ownerId };
-        await db.collection("placeSummaries").doc(placeId).set(fullSummary, { merge: true });
-      }
-    })());
-  }
-
-  await Promise.all(tasks).catch(err => {
-    console.error("Error updating summaries in-band:", err);
-  });
-}
-
-/**
  * Secure, backend-only Callable Function to create an EFP Immutable Fact.
  * Enforces authentication, validation, idempotency, spatial/temporal mappings, and transaction safety.
  */
@@ -172,21 +167,26 @@ export const submitFactCommand = onCall(async (request: any) => {
     throw new HttpsError("unauthenticated", "You must be logged in to execute commands.");
   }
 
-  const { commandId, factType, data } = request.data || {};
   const ownerId = request.auth.uid;
-
-  // 2. Validate generic fields
-  if (typeof commandId !== "string" || !commandId) {
-    throw new HttpsError("invalid-argument", "commandId is required and must be a string.");
-  }
-  if (!["association", "observation", "measurement", "event"].includes(factType)) {
-    throw new HttpsError("invalid-argument", `Invalid factType "${factType}".`);
-  }
-  if (!data || typeof data !== "object") {
-    throw new HttpsError("invalid-argument", "data payload is required and must be an object.");
-  }
-
   const db = getDb();
+
+  // Validate the whole request against the request schema first
+  const reqValidators = getValidators();
+  const isReqValid = reqValidators.request(request.data);
+  if (!isReqValid) {
+    const errorsText = ajv.errorsText(reqValidators.request.errors);
+    throw new HttpsError("invalid-argument", `Request schema validation failed: ${errorsText}`);
+  }
+
+  const { commandId, factType, data } = request.data || {};
+
+  // 2. Validate the specific data block against its corresponding schema
+  const dataValidator = reqValidators[factType];
+  const isDataValid = dataValidator(data);
+  if (!isDataValid) {
+    const errorsText = ajv.errorsText(dataValidator.errors);
+    throw new HttpsError("invalid-argument", `Data payload schema validation failed for ${factType}: ${errorsText}`);
+  }
 
   // 3. Enforce Idempotency
   const idempotencyRef = db.collection("factCommands").doc(commandId);
@@ -198,7 +198,8 @@ export const submitFactCommand = onCall(async (request: any) => {
       return {
         success: true,
         factId: cmdData.factId,
-        commandId
+        commandId,
+        projectionStatus: "pending"
       };
     } else {
       throw new HttpsError("permission-denied", "Idempotency collision with another user's command.");
@@ -224,62 +225,56 @@ export const submitFactCommand = onCall(async (request: any) => {
   let collectionName = "";
   let documentToSave: any = {};
 
-  // 6. Type-specific validation and mappings
+  const commonMeta = {
+    recordCreatedAt: Timestamp.now(),
+    recordUpdatedAt: Timestamp.now(),
+    recordCreatedBy: ownerId,
+    recordUpdatedBy: ownerId,
+    schemaVersion: 3
+  };
+
+  // 6. Type-specific logical mappings and omission of undefined optional fields
   if (factType === "association") {
     collectionName = "associations";
-    const { operation, effectiveAt, subjectAssociationId, note } = data;
-
-    if (!["attach", "detach", "replace"].includes(operation)) {
-      throw new HttpsError("invalid-argument", "association operation must be 'attach', 'detach', or 'replace'.");
-    }
-    if (typeof effectiveAt !== "string" || !effectiveAt) {
-      throw new HttpsError("invalid-argument", "association effectiveAt timestamp is required.");
-    }
+    const { operation, effectiveAt, subjectAssociationId, note, provenance } = data;
 
     let resolvedSubjectId: string | null = null;
-    if (operation === "detach" || operation === "replace") {
-      if (typeof subjectAssociationId !== "string" || !subjectAssociationId) {
-        throw new HttpsError("failed-precondition", `Operation '${operation}' requires a valid non-empty 'subjectAssociationId'.`);
-      }
-      // Check if the subject association exists and belongs to the owner
-      const subjectSnap = await db.collection("associations").doc(subjectAssociationId).get();
-      if (!subjectSnap.exists) {
-        throw new HttpsError("failed-precondition", `Referenced subject association ID "${subjectAssociationId}" was not found.`);
-      }
-      if (subjectSnap.data()?.ownerId !== ownerId) {
-        throw new HttpsError("permission-denied", `Referenced subject association "${subjectAssociationId}" does not belong to you.`);
-      }
+    if (operation === "attach") {
+      validateAttach(data);
+    } else if (operation === "detach") {
+      await validateDetach(db, ownerId, subjectAssociationId);
+      resolvedSubjectId = subjectAssociationId;
+    } else if (operation === "replace") {
+      await validateReplace(db, ownerId, subjectAssociationId);
       resolvedSubjectId = subjectAssociationId;
     }
+
+    const associationProvenance = provenance || {
+      source: "user_confirmed",
+      confidence: "confirmed",
+      actorUid: ownerId
+    };
 
     documentToSave = {
       associationId: factId,
       ownerId,
       operation,
       effectiveAt: Timestamp.fromDate(new Date(effectiveAt)),
-      subjectAssociationId: resolvedSubjectId,
       participants: data.participants,
-      note: note || null,
-      _meta: {
-        schemaVersion: "3.0.0",
-        createdAt: Timestamp.now(),
-        createdBy: ownerId
-      }
+      provenance: associationProvenance,
+      _meta: commonMeta
     };
+
+    if (resolvedSubjectId !== null && resolvedSubjectId !== undefined) {
+      documentToSave.subjectAssociationId = resolvedSubjectId;
+    }
+    if (note !== undefined && note !== null) {
+      documentToSave.note = note;
+    }
 
   } else if (factType === "observation") {
     collectionName = "observations";
     const { observationType, time, provenance, source, note, payload } = data;
-
-    if (typeof observationType !== "string" || !observationType) {
-      throw new HttpsError("invalid-argument", "observationType must be a non-empty string.");
-    }
-    if (!time || typeof time !== "object" || typeof time.observedAt !== "string" || !time.observedAt) {
-      throw new HttpsError("invalid-argument", "time.observedAt is required and must be an RFC 3339 string.");
-    }
-    if (!provenance || typeof provenance !== "object" || typeof provenance.source !== "string" || typeof provenance.confidence !== "string") {
-      throw new HttpsError("invalid-argument", "provenance must be an object with source and confidence strings.");
-    }
 
     documentToSave = {
       observationId: factId,
@@ -291,44 +286,22 @@ export const submitFactCommand = onCall(async (request: any) => {
       },
       provenance,
       participants: data.participants,
-      source: source || null,
-      note: note || null,
-      payload: payload || null,
-      _meta: {
-        schemaVersion: "3.0.0",
-        createdAt: Timestamp.now(),
-        createdBy: ownerId
-      }
+      _meta: commonMeta
     };
+
+    if (source !== undefined && source !== null) {
+      documentToSave.source = source;
+    }
+    if (note !== undefined && note !== null) {
+      documentToSave.note = note;
+    }
+    if (payload !== undefined && payload !== null) {
+      documentToSave.payload = payload;
+    }
 
   } else if (factType === "measurement") {
     collectionName = "measurements";
     const { measurementType, time, provenance, position, place, signal, note } = data;
-
-    if (typeof measurementType !== "string" || !measurementType) {
-      throw new HttpsError("invalid-argument", "measurementType must be a non-empty string.");
-    }
-    if (!time || typeof time !== "object" || typeof time.measuredAt !== "string" || !time.measuredAt) {
-      throw new HttpsError("invalid-argument", "time.measuredAt is required and must be an RFC 3339 string.");
-    }
-    if (!provenance || typeof provenance !== "object" || typeof provenance.source !== "string" || typeof provenance.confidence !== "string") {
-      throw new HttpsError("invalid-argument", "provenance must be an object with source and confidence strings.");
-    }
-
-    let mappedPosition: any = null;
-    if (position && typeof position === "object") {
-      const { latitude, longitude, altitude, accuracyMeters } = position;
-      if (typeof latitude !== "number" || typeof longitude !== "number") {
-        throw new HttpsError("invalid-argument", "position latitude and longitude must be numbers.");
-      }
-      mappedPosition = {
-        latitude,
-        longitude,
-        geoPoint: new GeoPoint(latitude, longitude),
-        altitude: typeof altitude === "number" ? altitude : null,
-        accuracyMeters: typeof accuracyMeters === "number" ? accuracyMeters : null
-      };
-    }
 
     documentToSave = {
       measurementId: factId,
@@ -340,30 +313,38 @@ export const submitFactCommand = onCall(async (request: any) => {
       },
       provenance,
       participants: data.participants,
-      position: mappedPosition,
-      place: place || null,
-      signal: signal || null,
-      note: note || null,
-      _meta: {
-        schemaVersion: "3.0.0",
-        createdAt: Timestamp.now(),
-        createdBy: ownerId
-      }
+      _meta: commonMeta
     };
+
+    if (position !== undefined && position !== null) {
+      const { latitude, longitude, altitude, accuracyMeters } = position;
+      const mappedPosition: any = {
+        latitude,
+        longitude,
+        geoPoint: new GeoPoint(latitude, longitude)
+      };
+      if (altitude !== undefined && altitude !== null) {
+        mappedPosition.altitude = altitude;
+      }
+      if (accuracyMeters !== undefined && accuracyMeters !== null) {
+        mappedPosition.accuracyMeters = accuracyMeters;
+      }
+      documentToSave.position = mappedPosition;
+    }
+
+    if (place !== undefined && place !== null) {
+      documentToSave.place = place;
+    }
+    if (signal !== undefined && signal !== null) {
+      documentToSave.signal = signal;
+    }
+    if (note !== undefined && note !== null) {
+      documentToSave.note = note;
+    }
 
   } else if (factType === "event") {
     collectionName = "events";
     const { eventType, time, provenance, note } = data;
-
-    if (typeof eventType !== "string" || !eventType) {
-      throw new HttpsError("invalid-argument", "eventType must be a non-empty string.");
-    }
-    if (!time || typeof time !== "object" || typeof time.occurredAt !== "string" || !time.occurredAt) {
-      throw new HttpsError("invalid-argument", "time.occurredAt is required and must be an RFC 3339 string.");
-    }
-    if (!provenance || typeof provenance !== "object" || typeof provenance.source !== "string" || typeof provenance.confidence !== "string") {
-      throw new HttpsError("invalid-argument", "provenance must be an object with source and confidence strings.");
-    }
 
     documentToSave = {
       eventId: factId,
@@ -375,13 +356,12 @@ export const submitFactCommand = onCall(async (request: any) => {
       },
       provenance,
       participants: data.participants,
-      note: note || null,
-      _meta: {
-        schemaVersion: "3.0.0",
-        createdAt: Timestamp.now(),
-        createdBy: ownerId
-      }
+      _meta: commonMeta
     };
+
+    if (note !== undefined && note !== null) {
+      documentToSave.note = note;
+    }
   }
 
   // Inject indexing fields
@@ -411,12 +391,10 @@ export const submitFactCommand = onCall(async (request: any) => {
 
   console.log(`Successfully created immutable Fact "${factId}" of type "${factType}".`);
 
-  // 8. Recompute summary projections in-band to ensure read-after-write consistency
-  await updateAffectedSummaries(db, ownerId, objectIds, markerKeys, placeIds);
-
   return {
     success: true,
     factId,
-    commandId
+    commandId,
+    projectionStatus: "pending"
   };
 });

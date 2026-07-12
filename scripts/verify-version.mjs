@@ -112,4 +112,28 @@ if (!isSemverGreater(currentVersion, baseVersion)) {
   fail(`Current version "${currentVersion}" is not greater than base version "${baseVersion}".`);
 }
 
+// 5. Verify applicationVersion in contracts profile matches package.json version
+const contractsProfilePath = path.join(rootDir, 'contracts/profiles/current-application.json');
+if (!fs.existsSync(contractsProfilePath)) {
+  fail('contracts/profiles/current-application.json does not exist');
+}
+const contractsProfile = JSON.parse(fs.readFileSync(contractsProfilePath, 'utf8'));
+const contractsAppVersion = contractsProfile.applicationVersion;
+
+if (contractsAppVersion !== currentVersion) {
+  fail(`Mismatched versions! package.json version is "${currentVersion}", but contracts/profiles/current-application.json applicationVersion is "${contractsAppVersion}". These must be perfectly synchronized.`);
+}
+
+// 6. Major bump approval logic: checks that major version changes are restricted to humans
+const currentParts = currentVersion.split('.').map(Number);
+const baseParts = baseVersion.split('.').map(Number);
+
+if (currentParts[0] > baseParts[0]) {
+  const humanApproved = process.env.HUMAN_APPROVED_MAJOR_BUMP === 'true';
+  if (!humanApproved) {
+    fail(`Major version bump detected ("${baseVersion}" -> "${currentVersion}"). Major version bumps are strictly restricted to humans. If this is a human-initiated bump, please run with HUMAN_APPROVED_MAJOR_BUMP=true.`);
+  }
+  console.log(`✅ Major version bump ("${baseVersion}" -> "${currentVersion}") has human approval.`);
+}
+
 console.log(`✅ Version bump verified! "${baseVersion}" -> "${currentVersion}"`);

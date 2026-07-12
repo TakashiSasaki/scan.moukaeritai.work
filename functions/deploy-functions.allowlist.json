@@ -5,10 +5,14 @@
     "identifyMatches",
     "describeImage",
     "getClientIp",
-    "migrateInventoryModel",
     "scanExecuteImportedObservationBatch",
     "recomputeProjectionSummary",
     "reconcileProjectionSummary",
-    "reconcileProjectionSummaries"
+    "reconcileProjectionSummaries",
+    "submitFactCommand",
+    "onAssociationCreated",
+    "onObservationCreated",
+    "onMeasurementCreated",
+    "onEventCreated"
   ]
 }
