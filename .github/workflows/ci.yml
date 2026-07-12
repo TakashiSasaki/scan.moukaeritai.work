@@ -36,11 +36,11 @@ jobs:
       - name: Build efp-model package
         run: npm --prefix packages/efp-model run build
 
-      - name: Install functions dependencies
-        run: npm ci --prefix functions
-
       - name: Prepare functions artifact
         run: npm run prepare:functions-artifact
+
+      - name: Install functions dependencies
+        run: npm ci --prefix functions
 
       - name: Run verification baseline
         run: npm run verify:baseline

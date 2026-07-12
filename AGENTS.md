@@ -10,9 +10,9 @@ This repository uses project-specific agent skills listed in the canonical manif
 Canonical skill directory: `.agents/skills/`
 Before performing a task, check whether a relevant skill exists in the manifest and read its `SKILL.md` before acting.
 
-## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.12)
+## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.13)
 **scan.mw** is a cloud-based item tracking and inventory management application.
-As of version **2.0.12**, the project adheres to a **Contract-First Rebuild Baseline**:
+As of version **2.0.13**, the project adheres to a **Contract-First Rebuild Baseline**:
 
 1. **Canonical Schema Registry**: The `/contracts` directory is the single source of truth for all schemas, semantics, and registries. No runtime data mutations or API changes can occur without updated contracts. The active contract profile is defined in `contracts/profiles/current-application.json`.
 2. **Entity-Fact-Projection (EFP) Model**: 
@@ -26,15 +26,16 @@ As of version **2.0.12**, the project adheres to a **Contract-First Rebuild Base
 
 ### 📋 Active & Completed Backend Work Status
 
-**Completed in 2.0.11/2.0.12**:
+**Completed in 2.0.11/2.0.12/2.0.13**:
 - owner-scoped command receipt
 - transaction-nested receipt read
 - initial request hash calculation
 - backend-generated `receivedAt` timestamp
 - backend-enforced `actorUid` matching authenticated user
 - initial duplicate query within transactions
+- Verification Enforcement and Skill Execution Closure (manifest schema verification, skill command integrity checks, and fail-closed version verifier)
 
-**Deferred to 2.0.13 (Transactional Fact and Projection Safety Closure)**:
+**Deferred to 2.0.14 (Transactional Fact and Projection Safety Closure)**:
 - request hash verification with exact `factType` & schema version
 - canonical JSON serialization standard
 - rejecting same `commandId` with different `factType`
@@ -53,7 +54,7 @@ As of version **2.0.12**, the project adheres to a **Contract-First Rebuild Base
 - domain-time/fact-ID watermark
 - projection receipt status updates
 
-**Deferred to 2.0.14 (Rules and Legacy Closure)**:
+**Deferred to 2.0.15 (Rules, Legacy Runtime and Export Closure)**:
 - strict Entity `_meta` security rules
 - Marker identity immutability rule
 - restricting Fact reads to `ownerId` scope
@@ -61,6 +62,12 @@ As of version **2.0.12**, the project adheres to a **Contract-First Rebuild Base
 - legacy exporter manifest, JSONL, and hash
 - cleanup of remaining migration/dual-write scripts
 - closure of Draft PR #1 (never merge without human authorization)
+
+### 📅 Stride Roadmap & Backlog
+- **2.0.13**: Verification Enforcement and Skill Execution Closure (Current)
+- **2.0.14**: Transactional Fact and Projection Safety Closure (Deferred)
+- **2.0.15**: Rules, Legacy Runtime and Export Closure (Deferred)
+- **2.1.0**: EFP-native First Vertical Slice (Deferred)
 
 ## 2. Incomplete Workflows & Legacy UI
 - **Object/Marker Workflows**: The new EFP-native Object and Marker creation UI workflows are **incomplete**. Do not claim they are complete.

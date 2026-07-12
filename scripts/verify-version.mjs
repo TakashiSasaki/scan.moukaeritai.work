@@ -28,36 +28,30 @@ function isSemverGreater(current, base) {
 
 console.log('🔍 Running Version Verification...');
 
+const isStatic = process.argv.includes('--static');
+
 let baseRef = 'HEAD~1';
 if (process.env.GITHUB_BASE_REF) {
   baseRef = `origin/${process.env.GITHUB_BASE_REF}`;
 } else if (process.env.GITHUB_SHA) {
   baseRef = `${process.env.GITHUB_SHA}~1`;
 }
-console.log(`Comparing against base reference: ${baseRef}`);
 
 let changedFiles = [];
 let baseVersion;
-let gitAvailable = true;
 
-try {
-  if (process.env.GITHUB_BASE_REF) {
-    execSync(`git fetch --depth=10 origin ${process.env.GITHUB_BASE_REF}`, { stdio: 'inherit' });
+if (!isStatic) {
+  console.log(`Comparing against base reference: ${baseRef}`);
+  try {
+    if (process.env.GITHUB_BASE_REF) {
+      execSync(`git fetch --depth=10 origin ${process.env.GITHUB_BASE_REF}`, { stdio: 'inherit' });
+    }
+    const output = execSync(`git diff --name-only ${baseRef}`, { encoding: 'utf8', stdio: 'pipe' });
+    changedFiles = output.split('\n').map(f => f.trim()).filter(Boolean);
+  } catch (err) {
+    fail(`Git comparison failed: ${err.message}. Any failure to compare against Git reference must fail the formal version gate.`);
   }
-  const output = execSync(`git diff --name-only ${baseRef}`, { encoding: 'utf8', stdio: 'pipe' });
-  changedFiles = output.split('\n').map(f => f.trim()).filter(Boolean);
-} catch (err) {
-  const errMsg = err.message + '\n' + (err.stderr?.toString() || '');
-  if (errMsg.includes('corrupt') || errMsg.includes('non-monotonic') || errMsg.includes('inflate: data stream error') || errMsg.includes('unable to unpack') || errMsg.includes('not a git repository')) {
-    console.warn(`⚠️ Git comparison/operations failed (this is expected in local shallow/corrupted sandbox environments): ${err.message}`);
-    console.warn(`⚠️ Falling back to static metadata version alignment checks...`);
-    gitAvailable = false;
-  } else {
-    fail(`Git comparison failed: ${err.message}`);
-  }
-}
 
-if (gitAvailable) {
   try {
     const basePackageContent = execSync(`git show ${baseRef}:package.json`, { encoding: 'utf8', stdio: 'pipe' });
     const basePackage = JSON.parse(basePackageContent);
@@ -66,9 +60,11 @@ if (gitAvailable) {
   } catch (err) {
     fail(`Could not retrieve or parse package.json from base ref: ${err.message}`);
   }
+} else {
+  console.log('⚠️ Running in STATIC alignment verification mode. Git history comparison is bypassed.');
 }
 
-if (gitAvailable) {
+if (!isStatic) {
   console.log(`Changed files count: ${changedFiles.length}`);
 }
 
@@ -82,12 +78,12 @@ try {
 }
 
 console.log(`Current version: ${currentVersion}`);
-if (gitAvailable) {
+if (!isStatic) {
   console.log(`Base version:    ${baseVersion}`);
 }
 
-// 1. Perform git-history-based checks only if git is available
-if (gitAvailable) {
+// 1. Perform git-history-based checks only if in formal (non-static) mode
+if (!isStatic) {
   const sensitivePaths = [
     /^src\//,
     /^functions\//,
@@ -165,8 +161,8 @@ try {
   fail(`Failed to verify README.md: ${e.message}`);
 }
 
-if (gitAvailable) {
+if (!isStatic) {
   console.log(`✅ Version bump verified! "${baseVersion}" -> "${currentVersion}"`);
 } else {
-  console.log(`✅ Version consistency check passed successfully (Git Unavailable Fallback)! Current version is "${currentVersion}"`);
+  console.log(`✅ Version consistency check passed successfully (Static Alignment)! Current version is "${currentVersion}"`);
 }

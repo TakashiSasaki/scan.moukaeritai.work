@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-console.log('🔍 Running Agent Skill Integrity Gate...');
+console.log('🔍 Running Enhanced Agent Skill Integrity Gate...');
 
 function fail(msg) {
   console.error(`❌ Skill Integrity Gate Failed: ${msg}`);
@@ -22,7 +22,19 @@ try {
 }
 const availableScripts = new Set(Object.keys(packageJson.scripts || {}));
 
-// 2. Read manifest
+// Helper to check prefix packages
+const getPackageScripts = (prefixDir) => {
+  try {
+    const pkgPath = path.join(rootDir, prefixDir, 'package.json');
+    if (!fs.existsSync(pkgPath)) return null;
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    return new Set(Object.keys(pkg.scripts || {}));
+  } catch (e) {
+    return null;
+  }
+};
+
+// 2. Read and Validate manifest
 const manifestPath = path.join(rootDir, '.agents/skills/manifest.json');
 if (!fs.existsSync(manifestPath)) {
   fail(`manifest.json not found at ${manifestPath}`);
@@ -39,7 +51,61 @@ if (!Array.isArray(manifest.skills)) {
   fail('manifest.json must contain a "skills" array.');
 }
 
-// 3. Required core skills list
+// Ensure unique IDs and paths
+const ids = new Set();
+const paths = new Set();
+const allowedStatuses = new Set(['active', 'legacy', 'disabled']);
+const activeSkillsInManifest = new Map();
+const allSkillsInManifest = new Map();
+
+for (const entry of manifest.skills) {
+  // Validate presence and type of required fields
+  if (!entry.id || typeof entry.id !== 'string') {
+    fail(`Manifest entry missing or invalid field "id": ${JSON.stringify(entry)}`);
+  }
+  if (!entry.path || typeof entry.path !== 'string') {
+    fail(`Manifest entry missing or invalid field "path": ${JSON.stringify(entry)}`);
+  }
+  if (!entry.status || typeof entry.status !== 'string') {
+    fail(`Manifest entry missing or invalid field "status": ${JSON.stringify(entry)}`);
+  }
+  if (!entry.description || typeof entry.description !== 'string') {
+    fail(`Manifest entry missing or invalid field "description": ${JSON.stringify(entry)}`);
+  }
+  if (!entry.requiredFor || !Array.isArray(entry.requiredFor) || entry.requiredFor.length === 0) {
+    fail(`Manifest entry missing or empty array "requiredFor" for skill "${entry.id}"`);
+  }
+
+  // Validate status
+  if (!allowedStatuses.has(entry.status)) {
+    fail(`Skill "${entry.id}" has invalid status "${entry.status}". Allowed values: active, legacy, disabled.`);
+  }
+
+  // Check unique constraints
+  if (ids.has(entry.id)) {
+    fail(`Duplicate skill id found in manifest: "${entry.id}"`);
+  }
+  ids.add(entry.id);
+
+  if (paths.has(entry.path)) {
+    fail(`Duplicate skill path found in manifest: "${entry.path}"`);
+  }
+  paths.add(entry.path);
+
+  allSkillsInManifest.set(entry.id, entry);
+  if (entry.status === 'active') {
+    activeSkillsInManifest.set(entry.id, entry);
+  }
+
+  // Legacy skill check: legacy skill must not reside in active directory (.agents/skills)
+  if (entry.status === 'legacy') {
+    if (entry.path.startsWith('.agents/skills/')) {
+      fail(`Legacy skill "${entry.id}" must not reside in the active directory ".agents/skills/". Path is: "${entry.path}"`);
+    }
+  }
+}
+
+// Required core skills list
 const REQUIRED_CORE_SKILLS = [
   'repository-preflight',
   'version-governance',
@@ -51,35 +117,35 @@ const REQUIRED_CORE_SKILLS = [
   'run-local-tests'
 ];
 
-const activeSkillsInManifest = new Map();
-for (const entry of manifest.skills) {
-  if (!entry.id || !entry.path || !entry.status) {
-    fail(`Manifest entry missing required fields: ${JSON.stringify(entry)}`);
-  }
-  if (entry.status === 'active') {
-    activeSkillsInManifest.set(entry.id, entry);
-  }
-}
-
 // Check if all required core skills are present and active
 for (const core of REQUIRED_CORE_SKILLS) {
-  if (!activeSkillsInManifest.has(core)) {
-    fail(`Required core skill "${core}" is missing or not active in manifest.json`);
+  const entry = allSkillsInManifest.get(core);
+  if (!entry) {
+    fail(`Required core skill "${core}" is completely missing from manifest.json`);
+  }
+  if (entry.status !== 'active') {
+    fail(`Required core skill "${core}" is not marked as active in manifest.json (status: "${entry.status}")`);
   }
 }
 
-// 4. Check for legacy skills in active manifest
-const FORBIDDEN_LEGACY_SKILLS = [
-  'manage-efp-migration',
-  'manage-scanner-dual-write'
-];
-for (const legacy of FORBIDDEN_LEGACY_SKILLS) {
-  if (activeSkillsInManifest.has(legacy)) {
-    fail(`Forbidden legacy skill "${legacy}" is marked as active in manifest.json`);
+// Detect any unregistered active-looking skill directories under .agents/skills/
+const skillsDir = path.join(rootDir, '.agents/skills');
+if (fs.existsSync(skillsDir)) {
+  const dirs = fs.readdirSync(skillsDir).filter(f => {
+    const p = path.join(skillsDir, f);
+    return fs.statSync(p).isDirectory();
+  });
+
+  for (const d of dirs) {
+    // Each directory under .agents/skills should have a matching entry in manifest.json
+    const found = manifest.skills.some(s => s.path.startsWith(`.agents/skills/${d}/`));
+    if (!found) {
+      fail(`Unregistered active-looking skill directory found under .agents/skills: "${d}"`);
+    }
   }
 }
 
-// 5. Validate each active skill file and sections
+// 5. Validate each active skill file and command integrity
 const REQUIRED_SECTIONS = [
   'Purpose',
   'When to use',
@@ -107,13 +173,57 @@ for (const [skillId, skill] of activeSkillsInManifest.entries()) {
     }
   }
 
-  // Parse and validate npm commands in backticks
-  const npmCmdPattern = /`npm\s+run\s+([a-zA-Z0-9:-]+)`/g;
+  // Scan for inline code blocks (any text in backticks starting with node, npm, or npx)
+  // Let's use a robust pattern that matches backtick commands: `cmd ...`
+  const codeBlockPattern = /`([^`\n]+)`/g;
   let match;
-  while ((match = npmCmdPattern.exec(content)) !== null) {
-    const cmd = match[1];
-    if (!availableScripts.has(cmd)) {
-      fail(`Skill "${skillId}" references non-existent npm script "${cmd}" in package.json`);
+  while ((match = codeBlockPattern.exec(content)) !== null) {
+    const rawCmd = match[1].trim();
+    
+    // Check if it's an npm run, node execution, or npm install
+    if (rawCmd.startsWith('npm run ') || rawCmd.startsWith('npm --prefix') || rawCmd.startsWith('node ') || rawCmd.startsWith('npm ci')) {
+      // Parse command structure
+      // 1) npm run <script>
+      if (/^npm\s+run\s+([a-zA-Z0-9:-]+)$/.test(rawCmd)) {
+        const scriptName = rawCmd.match(/^npm\s+run\s+([a-zA-Z0-9:-]+)$/)[1];
+        if (!availableScripts.has(scriptName)) {
+          fail(`Skill "${skillId}" references non-existent npm script "${scriptName}" in root package.json: \`${rawCmd}\``);
+        }
+      }
+      // 2) npm --prefix <dir> run <script>
+      else if (/^npm\s+--prefix\s+(\S+)\s+run\s+([a-zA-Z0-9:-]+)$/.test(rawCmd)) {
+        const parts = rawCmd.match(/^npm\s+--prefix\s+(\S+)\s+run\s+([a-zA-Z0-9:-]+)$/);
+        const prefixDir = parts[1];
+        const scriptName = parts[2];
+        const prefixScripts = getPackageScripts(prefixDir);
+        if (prefixScripts === null) {
+          fail(`Skill "${skillId}" references non-existent package.json directory "${prefixDir}": \`${rawCmd}\``);
+        }
+        if (!prefixScripts.has(scriptName)) {
+          fail(`Skill "${skillId}" references non-existent script "${scriptName}" in "${prefixDir}/package.json": \`${rawCmd}\``);
+        }
+      }
+      // 3) npm ci --prefix <dir>
+      else if (/^npm\s+ci\s+--prefix\s+(\S+)$/.test(rawCmd)) {
+        const prefixDir = rawCmd.match(/^npm\s+ci\s+--prefix\s+(\S+)$/)[1];
+        const pkgPath = path.join(rootDir, prefixDir, 'package.json');
+        if (!fs.existsSync(pkgPath)) {
+          fail(`Skill "${skillId}" references non-existent package.json under prefix "${prefixDir}": \`${rawCmd}\``);
+        }
+      }
+      // 4) node <script-path>
+      else if (/^node\s+(\S+)(?:\s+.*)?$/.test(rawCmd)) {
+        const scriptPath = rawCmd.match(/^node\s+(\S+)/)[1];
+        const fullScriptPath = path.join(rootDir, scriptPath);
+        if (!fs.existsSync(fullScriptPath)) {
+          fail(`Skill "${skillId}" references non-existent script path "${scriptPath}": \`${rawCmd}\``);
+        }
+        // Verify path is inside repository
+        const relative = path.relative(rootDir, fullScriptPath);
+        if (relative.startsWith('..') || path.isAbsolute(relative)) {
+          fail(`Skill "${skillId}" references path "${scriptPath}" which is outside the repository: \`${rawCmd}\``);
+        }
+      }
     }
   }
 }
@@ -128,5 +238,5 @@ if (!agentsMdContent.includes('.agents/skills/manifest.json')) {
   fail('AGENTS.md must reference the agent skill manifest (.agents/skills/manifest.json).');
 }
 
-console.log('✅ Agent Skill Integrity Gate Passed!');
+console.log('✅ Enhanced Agent Skill Integrity Gate Passed Successfully!');
 process.exit(0);

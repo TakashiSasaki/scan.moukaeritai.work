@@ -55,6 +55,13 @@
       "status": "active",
       "description": "Standardizes and runs local tests across frontend, backend, contracts, and Firestore rules.",
       "requiredFor": ["Every local verification and test execution"]
+    },
+    {
+      "id": "generate-efu-catalog",
+      "path": ".agents/skills/generate-efu-catalog/SKILL.md",
+      "status": "active",
+      "description": "Generates Everything EFU catalogue format file of the workspace.",
+      "requiredFor": ["Workspace cataloguing and listing files"]
     }
   ]
 }

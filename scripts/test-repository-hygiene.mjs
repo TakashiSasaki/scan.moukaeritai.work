@@ -21,8 +21,7 @@ const ALLOWED_ROOT_FILES = new Set([
   'index.html',
   'metadata.json',
   'AGENTS.md',
-  'README.md',
-  'verification_report.txt'
+  'README.md'
 ]);
 
 const ALLOWED_ROOT_DIRS = new Set([
@@ -116,14 +115,18 @@ function checkHygiene(dir, isSelfTest = false, selfTestRoot = null) {
       } else {
         // Skip test, hygiene, fixture, and EFP compilation files from content checks
         const lowercasePath = fullPath.toLowerCase();
-        if (
-          lowercasePath.includes('test') ||
-          lowercasePath.includes('hygiene') ||
-          lowercasePath.includes('fixture') ||
-          lowercasePath.includes('vitest') ||
+        const filename = path.basename(fullPath).toLowerCase();
+        
+        const shouldSkipContentCheck = (
+          filename.includes('test') ||
+          filename.includes('hygiene') ||
+          filename.includes('fixture') ||
+          filename.includes('vitest') ||
           lowercasePath.includes('export-legacy-data') ||
           lowercasePath.includes('packages/efp-model/scripts')
-        ) {
+        );
+
+        if (shouldSkipContentCheck && (!isSelfTest || filename.includes('test') || filename.includes('hygiene'))) {
           continue;
         }
 

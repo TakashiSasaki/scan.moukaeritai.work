@@ -189,4 +189,56 @@ describe("version-verifier integration tests", () => {
     expect(res.success).toBe(true);
     execSync('git reset --hard HEAD~2'); // revert both
   });
+
+  test("static-only command -> metadata validation passes even without Git history", () => {
+    // Create a separate temp directory with NO git repository
+    const nonGitDir = fs.mkdtempSync(path.join(os.tmpdir(), "version-verifier-nongit-"));
+    try {
+      fs.mkdirSync(path.join(nonGitDir, 'scripts'));
+      fs.mkdirSync(path.join(nonGitDir, 'functions'));
+      fs.mkdirSync(path.join(nonGitDir, 'packages/efp-model'), { recursive: true });
+      fs.mkdirSync(path.join(nonGitDir, 'contracts/profiles'), { recursive: true });
+      fs.copyFileSync(path.join(originalCwd, 'scripts', 'verify-version.mjs'), path.join(nonGitDir, 'scripts', 'verify-version.mjs'));
+      fs.writeFileSync(path.join(nonGitDir, 'package.json'), JSON.stringify({ version: "2.0.13" }));
+      fs.writeFileSync(path.join(nonGitDir, 'functions', 'package.json'), JSON.stringify({ version: "2.0.13" }));
+      fs.writeFileSync(path.join(nonGitDir, 'packages/efp-model/package.json'), JSON.stringify({ version: "2.0.13" }));
+      fs.writeFileSync(path.join(nonGitDir, 'contracts/profiles/current-application.json'), JSON.stringify({ applicationVersion: "2.0.13" }));
+      fs.writeFileSync(path.join(nonGitDir, 'README.md'), "Version 2.0.13");
+
+      // Run with --static (should pass)
+      execSync('node scripts/verify-version.mjs --static', { cwd: nonGitDir, stdio: 'pipe' });
+      
+      // Run without --static (should fail since it's not a git repository)
+      let failed = false;
+      try {
+        execSync('node scripts/verify-version.mjs', { cwd: nonGitDir, stdio: 'pipe' });
+      } catch (e) {
+        failed = true;
+      }
+      expect(failed).toBe(true);
+    } finally {
+      fs.rmSync(nonGitDir, { recursive: true, force: true });
+    }
+  });
+
+  test("Git comparison failure or base ref missing or not a git repository -> formal verification fails", () => {
+    // Run the verifier with a completely invalid base ref
+    let failed = false;
+    try {
+      execSync('git show completely-invalid-ref-12345:package.json', { stdio: 'pipe' });
+    } catch (e) {
+      // confirm git fails on invalid ref
+    }
+
+    try {
+      execSync('node scripts/verify-version.mjs', { 
+        stdio: 'pipe', 
+        env: { ...process.env, GITHUB_BASE_REF: 'completely-invalid-ref-12345' } 
+      });
+      failed = false;
+    } catch (e) {
+      failed = true;
+    }
+    expect(failed).toBe(true);
+  });
 });

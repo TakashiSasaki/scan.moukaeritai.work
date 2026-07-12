@@ -107,6 +107,7 @@ export default defineConfig(({mode}) => {
     define: {
       '__APP_VERSION__': JSON.stringify(JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8')).version),
       '__BUILD_TIME__': JSON.stringify(new Date().toISOString()),
+      '__EFP_VERSION__': JSON.stringify(JSON.parse(fs.readFileSync(path.resolve(__dirname, 'contracts/profiles/current-application.json'), 'utf8')).contracts['efp-model'] || '3.0.0'),
     },
     resolve: {
       alias: {

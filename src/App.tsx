@@ -41,6 +41,7 @@ import { AdminRoute } from './routing/AdminRoute';
 // Declarations for Vite-injected global variables
 declare const __APP_VERSION__: string;
 declare const __BUILD_TIME__: string;
+declare const __EFP_VERSION__: string;
 
 // Helper hook for click outside pattern
 function useClickOutside(ref: React.RefObject<HTMLDivElement | null>, handler: () => void) {
@@ -97,7 +98,7 @@ function LandingPage() {
     }
   };
 
-  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0.5';
+  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'unknown';
   const buildTime = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : new Date().toISOString();
 
   return (
@@ -172,7 +173,7 @@ function LandingPage() {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-[#64748b]">DATA MODEL SPEC:</span>
-              <span className="text-[#10b981]">EFP v2.0.0</span>
+              <span className="text-[#10b981]">{typeof __EFP_VERSION__ !== 'undefined' ? `EFP v${__EFP_VERSION__}` : 'EFP 3.0.0'}</span>
             </div>
           </div>
 
