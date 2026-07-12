@@ -16,3 +16,4 @@ Each contract package is versioned independently of the application.
 - **Major**: Backwards-incompatible schema changes or semantic changes (e.g. EFP model 2.0.0).
 - **Minor**: Additive fields or backward-compatible modifications.
 - **Patch**: Description updates, spelling corrections, and non-breaking documentation changes.
+6. **Workspace Package Versioning**: Workspace packages (e.g. `functions`, `packages/efp-model`) MUST share the same application version as the root `package.json`. This is verified by the version verifier.

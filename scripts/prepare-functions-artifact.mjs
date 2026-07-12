@@ -54,9 +54,12 @@ if (!fs.existsSync(path.join(vendorDir, 'dist'))) {
 }
 
 console.log(`Preparing functions/vendor/contracts/callable-functions-api/${activeVersion}...`);
-if (fs.existsSync(vendorContractsDir)) {
-  fs.rmSync(vendorContractsDir, { recursive: true, force: true });
+
+const vendorContractsRoot = path.join(rootDir, 'functions', 'vendor', 'contracts');
+if (fs.existsSync(vendorContractsRoot)) {
+  fs.rmSync(vendorContractsRoot, { recursive: true, force: true });
 }
+
 fs.mkdirSync(vendorContractsDir, { recursive: true });
 
 const srcContractsDir = path.join(rootDir, 'contracts', 'packages', 'callable-functions-api', activeVersion);
@@ -72,3 +75,8 @@ if (!fs.existsSync(path.join(vendorContractsDir, 'submit-fact-command-request.sc
 }
 
 console.log('✅ Prepared functions/vendor/efp-model and contracts dependencies successfully.');
+
+// Generate active-version.json for the runtime to use
+const activeVersionPath = path.join(rootDir, 'functions', 'vendor', 'contracts', 'callable-functions-api', 'active-version.json');
+fs.writeFileSync(activeVersionPath, JSON.stringify({ activeVersion }, null, 2));
+console.log('✅ Wrote active-version.json');

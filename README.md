@@ -1,8 +1,8 @@
-# scan.mw (Version 2.0.7)
+# scan.mw (Version 2.0.8)
 
 [![CI](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml)
 
-Welcome to **scan.mw v2.0.7**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
+Welcome to **scan.mw v2.0.8**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
 
 This repository enforces backward-incompatible, robust schemas, strict version governance, and a registry-first workflow.
 
@@ -19,12 +19,14 @@ This repository enforces backward-incompatible, robust schemas, strict version g
 
 ---
 
-## 🚀 Fail-Closed Verification Harness (v2.0.6 Milestone)
+## 🚀 Fail-Closed Harness Closure (v2.0.8 Milestone)
 
-Version 2.0.6 is the **fail-closed verification harness milestone**. 
+Version 2.0.8 completes the **Fail-Closed Harness Closure**.
+
 - **Routing Containment**: Successfully completed. Secure boundaries between authenticated users and admins are enforced.
-- **Object/Marker Workflows**: These are not yet fully EFP-native.
-- **Backend Fact Pipeline**: The pipeline enforces eventual consistency for Projections via Cloud Firestore Triggers. There is remaining backlog for transactional safety in the next stride.
+- **Backend Transactional Safety**: Scheduled for 2.0.9.
+- **Object/Marker Active Workflow**: Not yet fully complete.
+- **Projection Updates**: Asynchronous and eventually consistent.
 - **Production Deployment**: Deployments are strictly **manual only**.
 - **Major Version Bumps**: Require explicit human approval.
 
@@ -52,10 +54,12 @@ The canonical definition of application state and data structures is managed und
 * `/contracts/profiles/current-application.json`: Profile specifying which contract package versions the current UI deployment actively supports.
 
 ### Schema Validation
+
 Any changes to `/contracts` can be dynamically verified locally using:
 ```bash
 npm run contracts:validate
 ```
+
 This tool uses `ajv` to compile all referenced JSON schemas and verify that the application profile perfectly aligns with registered versions.
 
 ---
@@ -68,4 +72,3 @@ This tool uses `ajv` to compile all referenced JSON schemas and verify that the 
   ```bash
   npm run ops:export-legacy
   ```
-  *(Note: Requires valid Google Application Default Credentials or FIREBASE_CONFIG env vars to run live; otherwise performs a graceful verification dry-run).*

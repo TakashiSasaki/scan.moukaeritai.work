@@ -21,24 +21,28 @@ jobs:
       - name: Install root dependencies
         run: npm ci
 
-      - name: Validate Functions import boundary
-        run: npm run test:functions-boundary
+      - name: Validate contracts
+        run: npm run contracts:validate
 
-      - name: Build shared EFP model package
-        run: npm --prefix packages/efp-model run build
+      - name: Verify versions and profiles
+        run: npm run version:verify
 
-      - name: Validate shared EFP model package artifact
-        run: npm --prefix packages/efp-model run test:artifact
+      - name: Prepare Functions artifact
+        run: npm run prepare:functions-artifact
 
-      - name: Prepare shared EFP model for Functions
-        run: npm run prepare:functions-efp-model
-
-      - name: Install Dependencies
+      - name: Install Functions dependencies
         run: npm ci
         working-directory: ./functions
 
-      - name: Validate Functions shared EFP model dependency
-        run: npm run test:functions-efp-model
+      - name: Validate Functions artifact
+        run: npm run test:functions-artifact
+
+      - name: Validate Functions import boundary
+        run: npm run test:functions-boundary
+
+      - name: Run Functions tests
+        run: npm run test
+        working-directory: ./functions
 
       - name: Build Functions
         run: npm run build

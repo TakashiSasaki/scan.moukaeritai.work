@@ -2,6 +2,8 @@
   "functions": {
     "source": "functions",
     "predeploy": [
+      "npm run prepare:functions-artifact",
+      "npm run test:functions-artifact",
       "npm --prefix \"$RESOURCE_DIR\" run build"
     ]
   },

@@ -1,7 +1,3 @@
-export { scanExecuteImportedObservationBatch } from "./scanExecuteImportedObservationBatch";
-export { recomputeProjectionSummary } from "./projectionRecompute";
-export { reconcileProjectionSummary } from "./projectionReconcile";
-export { reconcileProjectionSummaries } from "./projectionReconcileBatch";
 export { submitFactCommand } from "./submitFactCommand";
 export { onAssociationCreated, onObservationCreated, onMeasurementCreated, onEventCreated } from "./projectionTriggers";
 import { onCall, HttpsError } from "firebase-functions/v2/https";

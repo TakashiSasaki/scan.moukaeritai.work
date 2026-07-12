@@ -13,7 +13,7 @@ export function evaluateRouteAccess(state: AuthorizationState, path: string): Ro
     return "loading";
   }
 
-  const isAdminRoute = path.startsWith("/admin") || path.startsWith("/developer");
+  const isAdminRoute = path.startsWith("/admin") || path.startsWith("/developer") || path.startsWith("/demo") || path.startsWith("/library-demo") || path.startsWith("/test");
   const isProtectedRoute = path.startsWith("/app") || path.startsWith("/settings") || isAdminRoute;
 
   if (isProtectedRoute && !state.userPresent) {

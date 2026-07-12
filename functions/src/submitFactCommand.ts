@@ -19,20 +19,29 @@ function getDb() {
 const ajv = new Ajv({ allErrors: true, strict: false });
 addFormats(ajv);
 
-function loadAndCompileSchema(fileName: string) {
-  const pathsToTry = [
-    path.join(__dirname, "../vendor/contracts/callable-functions-api/1.1.1", fileName),
-    path.join(__dirname, "../../vendor/contracts/callable-functions-api/1.1.1", fileName),
-    path.join(process.cwd(), "vendor/contracts/callable-functions-api/1.1.1", fileName),
-    path.join(process.cwd(), "functions/vendor/contracts/callable-functions-api/1.1.1", fileName),
-  ];
 
+function getActiveVersion(): string {
+  const versionFile = path.join(__dirname, "../vendor/contracts/callable-functions-api/active-version.json");
+  const fallbackVersionFile = path.join(process.cwd(), "vendor/contracts/callable-functions-api/active-version.json");
+  let p = fs.existsSync(versionFile) ? versionFile : fallbackVersionFile;
+  const data = JSON.parse(fs.readFileSync(p, "utf8"));
+  return data.activeVersion;
+}
+
+
+function loadAndParseSchema(fileName: string) {
+  const activeVersion = getActiveVersion();
+  const pathsToTry = [
+    path.join(__dirname, "../vendor/contracts/callable-functions-api", activeVersion, fileName),
+    path.join(__dirname, "../../vendor/contracts/callable-functions-api", activeVersion, fileName),
+    path.join(process.cwd(), "vendor/contracts/callable-functions-api", activeVersion, fileName),
+    path.join(process.cwd(), "functions/vendor/contracts/callable-functions-api", activeVersion, fileName),
+  ];
   for (const p of pathsToTry) {
     if (fs.existsSync(p)) {
       try {
         const content = fs.readFileSync(p, "utf8");
-        const schema = JSON.parse(content);
-        return ajv.compile(schema);
+        return JSON.parse(content);
       } catch (err: any) {
         console.error(`Failed parsing schema from path ${p}: ${err.message}`);
       }
@@ -41,20 +50,34 @@ function loadAndCompileSchema(fileName: string) {
   throw new Error(`Schema file not found in search paths: ${fileName}. Searched paths: ${JSON.stringify(pathsToTry)}`);
 }
 
+
 let validators: Record<string, any> | null = null;
+
 
 function getValidators() {
   if (!validators) {
+    const associationSchema = loadAndParseSchema("association-command-data.schema.json");
+    const observationSchema = loadAndParseSchema("observation-command-data.schema.json");
+    const measurementSchema = loadAndParseSchema("measurement-command-data.schema.json");
+    const eventSchema = loadAndParseSchema("event-command-data.schema.json");
+    const requestSchema = loadAndParseSchema("submit-fact-command-request.schema.json");
+    
+    ajv.addSchema(associationSchema, "association-command-data.schema.json");
+    ajv.addSchema(observationSchema, "observation-command-data.schema.json");
+    ajv.addSchema(measurementSchema, "measurement-command-data.schema.json");
+    ajv.addSchema(eventSchema, "event-command-data.schema.json");
+    
     validators = {
-      request: loadAndCompileSchema("submit-fact-command-request.schema.json"),
-      association: loadAndCompileSchema("association-command-data.schema.json"),
-      observation: loadAndCompileSchema("observation-command-data.schema.json"),
-      measurement: loadAndCompileSchema("measurement-command-data.schema.json"),
-      event: loadAndCompileSchema("event-command-data.schema.json"),
+      request: ajv.compile(requestSchema),
+      association: ajv.getSchema("association-command-data.schema.json"),
+      observation: ajv.getSchema("observation-command-data.schema.json"),
+      measurement: ajv.getSchema("measurement-command-data.schema.json"),
+      event: ajv.getSchema("event-command-data.schema.json"),
     };
   }
   return validators;
 }
+
 
 /**
  * Validates the generic structure of a participant reference.

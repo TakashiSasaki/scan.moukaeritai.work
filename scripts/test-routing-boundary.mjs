@@ -21,19 +21,50 @@ for (const forbidden of forbiddenImports) {
   }
 }
 
-// /admin, /admin/sitemap, /developer/* must use AdminRoute
-if (!appEntryContent.includes('<AdminRoute>')) {
-    errors.push(`App.tsx must use AdminRoute for admin paths.`);
+// Ensure specific paths use expected guards
+const expectedGuards = {
+  '/admin': 'AdminRoute',
+  '/admin/sitemap': 'AdminRoute',
+  '/developer/*': 'AdminRoute',
+  '/demo': 'AdminRoute',
+  '/library-demo': 'AdminRoute',
+  '/test': 'AdminRoute',
+  '/app': 'ProtectedRoute',
+  '/settings': 'ProtectedRoute',
+};
+
+// Use a regex to extract each <Route path="..." element={...} />
+const routeRegex = /<Route\s+path=["']([^"']+)["']\s+element=\{<\s*([A-Za-z]+)/g;
+let match;
+const foundGuards = {};
+
+while ((match = routeRegex.exec(appEntryContent)) !== null) {
+  const routePath = match[1];
+  const guardComponent = match[2];
+  foundGuards[routePath] = guardComponent;
 }
 
-// Check for explicit role assignment using specific email
-const authContextPath = path.join(rootDir, 'src', 'auth', 'AuthContext.tsx');
-if (fs.existsSync(authContextPath)) {
-  const authContextContent = fs.readFileSync(authContextPath, 'utf8');
-  if (authContextContent.match(/email\s*===?\s*['"].*@.*['"]/i)) {
-    errors.push(`AuthContext must not use specific email addresses for role validation.`);
+for (const [routePath, expectedGuard] of Object.entries(expectedGuards)) {
+  if (!foundGuards[routePath]) {
+    errors.push(`Route for ${routePath} not found in App.tsx.`);
+  } else if (foundGuards[routePath] !== expectedGuard) {
+    errors.push(`Route ${routePath} must be protected by ${expectedGuard}, but found ${foundGuards[routePath]}.`);
   }
 }
+
+// Check for explicit role assignment using specific email across whole active source
+function checkFileForEmailRole(filePath) {
+  if (fs.existsSync(filePath)) {
+    const content = fs.readFileSync(filePath, 'utf8');
+    if (content.match(/email\s*===?\s*['"].*@.*['"]/i) || content.match(/['"].*@.*['"]\s*===?\s*email/i)) {
+      errors.push(`${filePath} must not use specific email addresses for role validation.`);
+    }
+  }
+}
+const authContextPath = path.join(rootDir, 'src', 'auth', 'AuthContext.tsx');
+checkFileForEmailRole(authContextPath);
+const authHelperPath = path.join(rootDir, 'src', 'auth', 'authorizationHelper.ts');
+checkFileForEmailRole(authHelperPath);
 
 // Write to identifiers/objectIdentifierBindings from active entry
 if (appEntryContent.includes('objectIdentifierBindings') || appEntryContent.includes('identifiers')) {

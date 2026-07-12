@@ -67,7 +67,7 @@ To prevent confusion across systems, note the following distinct markers/identif
   - Interactive elements must support both hover (PC) and tap (Mobile) states.
 - **Typography**: Clean sans-serif (Inter) for UI, high-contrast monospace for technical data (IDs, tags).
 - **App Layout & Navigation**:
-  - The main application flow is built as a unified Single Page Application (SPA) using a state-driven screen toggle approach (e.g., `type Screen = 'dashboard' | 'search' | 'capture' ...`) to maintain state seamlessly without internal URL fragmenting.
+  - The application uses standard routing. State-driven screen toggle is no longer the only routing method. Legacy UI components must not be connected back into active routes.
   - **Dedicated Routes (Sub-pages)**: Pages like Admin (`/admin`), User Settings (`/settings`), Beta Tests (`/test`), and API Demos (`/demo`) are securely separated using `react-router-dom`. This provides strict access boundaries, dedicated entry points, and prevents the main SPA logic from becoming bloated.
   - **Sticky Top Navigations for Sub-pages**: Dedicated pages use a Sticky Top Navigation header (`sticky top-[57px] z-30 bg-[var(--surface-container-high)]/95 backdrop-blur-xl`) ensuring that critical actions (like "Save" or "Exit" buttons) and tab navigations remain accessible even when the content scrolls vertically.
   - **Exit Button Consistency**: Every authenticated sub-page MUST have an exit button to return to the authenticated app home (`/app`) unless intentionally returning to the public landing/logout flow (`/`). This button should be standardized visually across all pages, using the format `🚪 Exit` (using the door emoji instead of arrows for clear visual affordance and consistency).
@@ -76,10 +76,10 @@ To prevent confusion across systems, note the following distinct markers/identif
 
 ## 4. Feature-Specific Implementations
 
-### Image Provisioning (`CaptureForm.tsx`)
+### Image Provisioning (`CaptureForm.tsx (Legacy, Object/Marker workflow is currently incomplete)`)
 - **Image Data Model**:
   - `objectImages` collection is the source of truth for image asset metadata.
-  - `objects.primaryImageUrl` is a denormalized UI cache for Dashboard/Search list views.
+  - `objects.primaryImageUrl (Legacy)` is a denormalized UI cache for Dashboard/Search list views.
   - `objects.primaryImageId` points to the primary image record in `objectImages`.
   - Legacy migrated images may only have `downloadUrl` and `legacy.sourceUrl` if the original `storagePath` cannot be recovered.
 - **Dual Input Strategy**: Uses separate `<input>` elements for file selection vs. camera capture (`capture="environment"`).
@@ -137,9 +137,9 @@ To prevent confusion across systems, note the following distinct markers/identif
       - `markerSummaries/{markerId}`: Read-optimized tag summary.
       - `placeSummaries/{placeId}`: Read-optimized location summary.
   - **Locked Legacy Collections (Read-Only/Frozen)**:
-    - `items/*`, `identifiers/*`, `objectIdentifierBindings/*`, `objectImages/*`, `objectEvents/*`, and `identifierObservations/*`. Writing via client SDKs is strictly disallowed by Firestore Security Rules to prevent regressions.
+    - `items/*`, `identifiers/* (Legacy)`, `objectIdentifierBindings/*`, `objectImages/*`, `objectEvents/* (Legacy)`, and `identifierObservations/*`. Writing via client SDKs is strictly disallowed by Firestore Security Rules to prevent regressions.
   - **EFP Transition Alignment**:
-    - As of **v2.0.1**, the runtime has achieved full alignment with the Entity-Fact-Projection (EFP) model. All runtime states and type constraints are strictly converted between logical EFP types (utilizing RFC 3339 UTC string formats) and Firestore persistence bindings (utilizing native Timestamps/GeoPoints) via the pure `/src/lib/firestore-efp-adapter.ts` adapter.
+    - As of **v2.0.8**, active application version, routing containment is complete. The Object/Marker workflow is incomplete. Facts are backend-only and immutable. Projections are asynchronous and eventually consistent. All runtime states and type constraints are strictly converted between logical EFP types (utilizing RFC 3339 UTC string formats) and Firestore persistence bindings (utilizing native Timestamps/GeoPoints) via the pure `/src/lib/firestore-efp-adapter.ts` adapter.
 - **Legacy Identifiers for Backend Resources**: The frontend deployment target uses the current domain name (`scan-moukaeritai-work`), but backend Firebase resources (Firestore Database, Storage Bucket) intentionally retain the legacy identifier `photo-moukaeritai-work`. This is reflected in `firebase-applet-config.json` and must not be altered to match the hosting name.
 - **Cloud Storage Strategy**:
   - Images captured via the application are stored in the designated Firebase Storage bucket (`photo-moukaeritai-work`).
@@ -157,17 +157,17 @@ To prevent confusion across systems, note the following distinct markers/identif
 - **Metrics & Backend Logic**: To perform sensitive operations (e.g., fetching Storage Bucket sizes or querying Cloud Monitoring API for read/write metrics), a Cloud Functions setup is present in `/functions/`. Admin privileges are verified within the function runtime.
 - **Cloud Monitoring Constraints**: When using `@google-cloud/monitoring` to fetch metrics, specific dimension filters like `resource.labels.database_id` (Firestore) or `metric.labels.credential_id` (Gemini API) may be prohibited or unavailable depending on the GCP project's setup. The current implementation fetches **overall project-wide metrics**. UI elements displaying these metrics **MUST explicitly state** that they represent the entire GCP project (e.g., over the last 30 days) and indicate that costs/usage are combined if the project is shared with other apps.
 - **AI & Gemini Processing**: API keys must be strictly hidden from the frontend. AI generation (matching images, description building) natively happens in Firebase Callable Functions using the `@google/genai` SDK and Firebase Secret Manager (`GEMINI_API_KEY`). Ensure `vite.config.ts` does not unnecessarily expose the key to the client build context.
-- **CI/CD**: Firebase Functions deployment is handled automatically via a GitHub Actions workflow (`.github/workflows/deploy-functions.yml`) upon pushes to `scan.moukaeritai.work`.
+- **CI/CD**: Deployments are manual only via workflow_dispatch. Automatic deployments are disabled.
 - **Branch Synchronization**: 
-  - `main` to Sub-branches: A workflow (`.github/workflows/sync-branches.yml`) automatically synchronizes `main` branch updates to `jules`, `chatgpt`, and `codex` branches. It automatically creates target branches and opens PRs on conflicts.
-  - Sub-branches to `main`: A workflow (`.github/workflows/create-draft-prs-to-main.yml`) automatically creates draft PRs back to `main` when `jules`, `chatgpt`, or `codex` are updated with new commits.
-- **Deployment Strategy**: We intentionally retain older functions. Therefore, deployments should perform differential updates without forcefully deleting functions that exist in the cloud but are missing from the local source code.
+  - `main` to Sub-branches: Workflow synchronizes to `jules` and `codex` branches. It automatically creates target branches and opens PRs on conflicts.
+  - Sub-branches to `main`: Workflow creates draft PRs back to `main` for `jules` or `codex`.
+- **Deployment Strategy**: Obsolete functions must be removed. We do not intentionally retain older functions.
 - **Incremental Deployment (GitHub Actions)**: To avoid errors such as `'The following functions are found in your project but do not exist in your local source code... Aborting because deletion cannot proceed in non-interactive mode'`, the deployment command in `.github/workflows/deploy-functions.yml` MUST specify individual functions explicitly using `--only "functions:funcA,functions:funcB"`. This circumvents the interactive deletion prompt for outdated deployed functions.
 - **Workflow Synchronization (CRITICAL)**: Whenever you add, rename, or remove a Cloud Function in `/functions/src/index.ts`, you MUST simultaneously update the `--only` flag in `.github/workflows/deploy-functions.yml` to reflect the exact list of functions. Failure to do so will result in deployment mismatches and missing functions.
 
 ## 9. Communication & Logs
 - Do not commit transient PR-helper, review-reply, scratch, or tool-failure files such as `patch_pr.js`, `reply_payload.json`, one-off local scripts, temporary JSON payloads, generated reply bodies, or similar agent-control artifacts. If such files are needed locally by an agent, they must remain untracked.
-- Critical errors during Firestore operations should be logged using the JSON-structured error format defined in `CaptureForm.tsx` or similar utility handlers to allow for AI-driven diagnostics.
+- Critical errors during Firestore operations should be logged using the JSON-structured error format defined in `CaptureForm.tsx (Legacy, Object/Marker workflow is currently incomplete)` or similar utility handlers to allow for AI-driven diagnostics.
 
 ## 10. Image Provisioning Specifications
 
@@ -227,7 +227,7 @@ To facilitate testing, experimental feature development, and device capability d
   - When adding new experimental features or device API tests, add them to the appropriate screen (e.g., `DemoScreen.tsx` for hardware capabilities, `TestScreen.tsx` for UI/UX tests).
   - If a screen requires sub-navigation between different demos, a horizontal tab navigation system (`overflow-x-auto no-scrollbar`) is the standard pattern to select the active view via state.
   - Smooth transitions between sub-tabs should be handled using `<AnimatePresence mode="wait">` and `<motion.div>` from `motion/react`.
-  - These sandbox areas may be accessed by any user (not restricted to admins) to test platform compatibility across different user devices.
+  - These sandbox areas are admin-only.
 
 ## 12. Routing & Sitemap Documentation
 
@@ -322,7 +322,7 @@ The application has transitioned from a simple `items` collection to a normalize
   - **`objects`**: Represents a real-world physical entity. (Replaces legacy `items`).
     - `objects.identifierSummary` is denormalized and should be recomputed from active identifiers when needed.
     - When adding, repairing, or detaching identifiers (e.g., in `CaptureForm`), the summary should be recomputed from the current Firestore identifier state where practical, not only from potentially stale local component state. Use `loadObjectIdentifiersForSummary()` to fetch the source data, and keep local component state updated after a successful write.
-    - `objects.primaryImageUrl` is denormalized and should be kept in sync with the primary `objectImages` record.
+    - `objects.primaryImageUrl (Legacy)` is denormalized and should be kept in sync with the primary `objectImages` record.
   - **`identifiers`**: Legacy/current implementation collection. Represents a physical tag (QR, NFC) or a logical code (barcode, manual). Conceptually maps to the target Marker entity. One object can have zero or more identifiers. One identifier can have at most one active object.
   - **`objectIdentifierBindings`**: Stores canonical relationship state between objects and identifiers. Conceptually maps to `associations` (do not create a new `bindings` collection). Active binding records use deterministic IDs formatted as `${objectId}__${identifierKey}__active`. There must be at most one active binding for a given `(objectId, identifierKey)` pair. Repeated attach of the same identifier to the same object should be idempotent. Reassignment to another object must be explicit and must record events. *Note: Client code should not rely on direct missing-document reads (`getDoc()`) for `objectIdentifierBindings` without checking rules, instead use owner-scoped queries.* **Important:** `objectIdentifierBindings` is NOT a historical log table. The existence of an identifier document does not imply the existence of a binding document.
   - **Document ID Conventions**:
@@ -549,3 +549,16 @@ The application has transitioned from a simple `items` collection to a normalize
 - **Admin & Authorization**: Admin Panel, Developer Docs, and Admin Sitemap are admin-only. UI menu visibility is NOT a substitute for authorization. Do not use personal email addresses for role validation.
 - **Active Routing Constraints**: The legacy Identifier and Binding UI must NOT be connected to active routing.
 - **Deployment Safety**: Deployments are manual only. No automatic push deployments for Functions. Production operations (deploy, write, delete) require explicit human approval.
+
+
+## 14. EFP and Validation Governance
+- /contracts is the only normative source of truth.
+- Active application version is 2.0.8.
+- Routing containment is verified.
+- Admin-only routes include /admin, /admin/sitemap, /demo, /library-demo, /test, /developer/*.
+- Deployments are manual only.
+- Major version bumps require explicit human approval.
+- Validation unavailable means failure.
+- Facts are backend-only and immutable.
+- Projections are asynchronous and eventually consistent.
+- Legacy UI will not be returned to active routing.

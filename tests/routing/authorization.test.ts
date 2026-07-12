@@ -9,6 +9,9 @@ describe("evaluateRouteAccess", () => {
     expect(evaluateRouteAccess(state, "/admin/sitemap")).toBe("login");
     expect(evaluateRouteAccess(state, "/developer")).toBe("login");
     expect(evaluateRouteAccess(state, "/settings")).toBe("login");
+    expect(evaluateRouteAccess(state, "/demo")).toBe("login");
+    expect(evaluateRouteAccess(state, "/library-demo")).toBe("login");
+    expect(evaluateRouteAccess(state, "/test")).toBe("login");
   });
 
   test("authenticated non-admin access", () => {
@@ -18,6 +21,9 @@ describe("evaluateRouteAccess", () => {
     expect(evaluateRouteAccess(state, "/admin")).toBe("forbidden");
     expect(evaluateRouteAccess(state, "/admin/sitemap")).toBe("forbidden");
     expect(evaluateRouteAccess(state, "/developer")).toBe("forbidden");
+    expect(evaluateRouteAccess(state, "/demo")).toBe("forbidden");
+    expect(evaluateRouteAccess(state, "/library-demo")).toBe("forbidden");
+    expect(evaluateRouteAccess(state, "/test")).toBe("forbidden");
   });
 
   test("authenticated admin access", () => {
@@ -26,6 +32,9 @@ describe("evaluateRouteAccess", () => {
     expect(evaluateRouteAccess(state, "/admin")).toBe("allow");
     expect(evaluateRouteAccess(state, "/admin/sitemap")).toBe("allow");
     expect(evaluateRouteAccess(state, "/developer")).toBe("allow");
+    expect(evaluateRouteAccess(state, "/demo")).toBe("allow");
+    expect(evaluateRouteAccess(state, "/library-demo")).toBe("allow");
+    expect(evaluateRouteAccess(state, "/test")).toBe("allow");
   });
 
   test("authorization error", () => {
