@@ -185,98 +185,25 @@ service cloud.firestore {
     // --- ASSOCIATIONS (Target Fact) ---
     match /associations/{associationId} {
       allow read: if isAdmin() || (isSignedIn() && canAccessFact(existing()));
-      allow create: if isSignedIn()
-        && incoming().associationId == associationId
-        && canAccessFact(incoming())
-        && incoming().associationType is string
-        && isValidFactParticipants(incoming())
-        && isValidFactIndexArrays(incoming())
-        && isFactEntitiesOwnedByUser(incoming())
-        && incoming().time is map
-        && incoming().time.keys().hasOnly(['validFrom', 'validUntil'])
-        && (!('validFrom' in incoming().time) || incoming().time.validFrom is timestamp)
-        && (!('validUntil' in incoming().time) || incoming().time.validUntil is timestamp)
-        && (!('status' in incoming()) || incoming().status in ['active', 'detached', 'superseded', 'replaced'])
-        && (!('provenance' in incoming()) || incoming().provenance is map)
-        && (!('note' in incoming()) || incoming().note is string)
-        && (!('_meta' in incoming()) || isValidRecordMetadata(incoming()._meta))
-        && (!('legacy' in incoming()) || incoming().legacy is map)
-        && incoming().keys().hasOnly(['associationId', 'associationType', 'participants', 'participantKeys', 'objectIds', 'markerKeys', 'placeIds', 'readerIds', 'deviceIds', 'userIds', 'time', 'provenance', 'status', 'note', '_meta', 'legacy']);
-      allow update: if false; // Append-only
-      allow delete: if false; // Append-only
+      allow create, update, delete: if false; // strictly backend-only via Callable Functions
     }
 
     // --- OBSERVATIONS (Target Fact) ---
     match /observations/{observationId} {
       allow read: if isAdmin() || (isSignedIn() && canAccessFact(existing()));
-      allow create: if isSignedIn()
-        && incoming().observationId == observationId
-        && canAccessFact(incoming())
-        && incoming().observationType is string
-        && isValidFactParticipants(incoming())
-        && isValidFactIndexArrays(incoming())
-        && isFactEntitiesOwnedByUser(incoming())
-        && incoming().time is map
-        && incoming().time.keys().hasOnly(['observedAt', 'receivedAt'])
-        && incoming().time.observedAt is timestamp
-        && (!('receivedAt' in incoming().time) || incoming().time.receivedAt is timestamp)
-        && (!('provenance' in incoming()) || incoming().provenance is map)
-        && (!('payload' in incoming()) || incoming().payload is map)
-        && (!('note' in incoming()) || incoming().note is string)
-        && (!('_meta' in incoming()) || isValidRecordMetadata(incoming()._meta))
-        && (!('legacy' in incoming()) || incoming().legacy is map)
-        && incoming().keys().hasOnly(['observationId', 'observationType', 'participants', 'participantKeys', 'objectIds', 'markerKeys', 'placeIds', 'readerIds', 'deviceIds', 'userIds', 'time', 'provenance', 'payload', 'note', '_meta', 'legacy']);
-      allow update: if false; // Append-only
-      allow delete: if false; // Append-only
+      allow create, update, delete: if false; // strictly backend-only via Callable Functions
     }
 
     // --- MEASUREMENTS (Target Fact) ---
     match /measurements/{measurementId} {
       allow read: if isAdmin() || (isSignedIn() && canAccessFact(existing()));
-      allow create: if isSignedIn()
-        && incoming().measurementId == measurementId
-        && canAccessFact(incoming())
-        && incoming().measurementType is string
-        && isValidFactParticipants(incoming())
-        && isValidFactIndexArrays(incoming())
-        && isFactEntitiesOwnedByUser(incoming())
-        && incoming().time is map
-        && incoming().time.keys().hasOnly(['measuredAt', 'receivedAt'])
-        && incoming().time.measuredAt is timestamp
-        && (!('receivedAt' in incoming().time) || incoming().time.receivedAt is timestamp)
-        && (!('position' in incoming()) || (incoming().position is map && incoming().position.latitude is number && incoming().position.longitude is number))
-        && (!('place' in incoming()) || incoming().place is map)
-        && (!('signal' in incoming()) || incoming().signal is map)
-        && (!('provenance' in incoming()) || incoming().provenance is map)
-        && (!('note' in incoming()) || incoming().note is string)
-        && (!('_meta' in incoming()) || isValidRecordMetadata(incoming()._meta))
-        && (!('legacy' in incoming()) || incoming().legacy is map)
-        && incoming().keys().hasOnly(['measurementId', 'measurementType', 'participants', 'participantKeys', 'objectIds', 'markerKeys', 'placeIds', 'readerIds', 'deviceIds', 'userIds', 'time', 'provenance', 'position', 'place', 'signal', 'note', '_meta', 'legacy']);
-      allow update: if false; // Append-only
-      allow delete: if false; // Append-only
+      allow create, update, delete: if false; // strictly backend-only via Callable Functions
     }
 
     // --- EVENTS (Target Fact) ---
     match /events/{eventId} {
       allow read: if isAdmin() || (isSignedIn() && canAccessFact(existing()));
-      allow create: if isSignedIn()
-        && incoming().eventId == eventId
-        && canAccessFact(incoming())
-        && incoming().eventType is string
-        && isValidFactParticipants(incoming())
-        && isValidFactIndexArrays(incoming())
-        && isFactEntitiesOwnedByUser(incoming())
-        && incoming().time is map
-        && incoming().time.keys().hasOnly(['occurredAt', 'receivedAt'])
-        && incoming().time.occurredAt is timestamp
-        && (!('receivedAt' in incoming().time) || incoming().time.receivedAt is timestamp)
-        && (!('provenance' in incoming()) || incoming().provenance is map)
-        && (!('note' in incoming()) || incoming().note is string)
-        && (!('_meta' in incoming()) || isValidRecordMetadata(incoming()._meta))
-        && (!('legacy' in incoming()) || incoming().legacy is map)
-        && incoming().keys().hasOnly(['eventId', 'eventType', 'participants', 'participantKeys', 'objectIds', 'markerKeys', 'placeIds', 'readerIds', 'deviceIds', 'userIds', 'time', 'provenance', 'note', '_meta', 'legacy']);
-      allow update: if false; // Append-only
-      allow delete: if false; // Append-only
+      allow create, update, delete: if false; // strictly backend-only via Callable Functions
     }
 
     // --- PROJECTIONS (Derived Summaries) ---

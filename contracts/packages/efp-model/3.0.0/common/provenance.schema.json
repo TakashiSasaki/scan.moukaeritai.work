@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Provenance",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source",
+    "confidence"
+  ],
+  "properties": {
+    "source": {
+      "type": "string",
+      "enum": [
+        "user_confirmed",
+        "user_report",
+        "marker_observation",
+        "location_measurement",
+        "trusted_reader",
+        "system_inference",
+        "admin_import",
+        "migration",
+        "import"
+      ]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "high",
+        "medium",
+        "low",
+        "unknown"
+      ]
+    },
+    "actorUid": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "sourceFactIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 128
+      }
+    }
+  }
+}

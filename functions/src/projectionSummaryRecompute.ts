@@ -59,12 +59,26 @@ export async function recomputeProjectionSummaryForTarget(params: {
     })
   );
 
+  let ownerId = "";
+  const allFacts = [...associations, ...observations, ...measurements, ...events];
+  const firstFactWithOwner = allFacts.find(f => f.ownerId);
+  if (firstFactWithOwner) {
+    ownerId = firstFactWithOwner.ownerId;
+  } else {
+    const entityCollection = targetType === "object" ? "objects" : targetType === "marker" ? "markers" : "places";
+    const entitySnap = await db.collection(entityCollection).doc(targetId).get();
+    if (entitySnap.exists) {
+      ownerId = entitySnap.data()?.ownerId || "";
+    }
+  }
+
   const asOf = admin.firestore.Timestamp.now() as unknown as Timestamp;
   let summary: any;
 
   if (targetType === "object") {
     summary = reconstructObjectSummary({
       objectId: targetId,
+      ownerId,
       associations,
       measurements,
       observations,
@@ -73,6 +87,7 @@ export async function recomputeProjectionSummaryForTarget(params: {
   } else if (targetType === "marker") {
     summary = reconstructMarkerSummary({
       markerKey: targetId,
+      ownerId,
       associations,
       observations,
       asOf,
@@ -80,6 +95,7 @@ export async function recomputeProjectionSummaryForTarget(params: {
   } else if (targetType === "place") {
     summary = reconstructPlaceSummary({
       placeId: targetId,
+      ownerId,
       associations,
       observations,
       measurements,

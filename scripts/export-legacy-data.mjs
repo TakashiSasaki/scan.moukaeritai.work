@@ -20,15 +20,27 @@ const appVersion = packageJson.version;
 const timestampStr = new Date().toISOString().replace(/[:.]/g, '-');
 const exportDir = path.join(rootDir, '.local-data', 'legacy-export', timestampStr);
 
-// Core v2 EFP Collections to export as specified in the export-format contract
+// Core v2 EFP Collections and Legacy Collections to export as specified in the export-format contract
 const targetCollections = [
+  // EFP Core Collections
   'objects',
   'markers',
   'places',
   'associations',
   'observations',
   'measurements',
-  'events'
+  'events',
+  // Projections
+  'objectSummaries',
+  'markerSummaries',
+  'placeSummaries',
+  // Locked Legacy Collections
+  'items',
+  'identifiers',
+  'identifierObservations',
+  'objectIdentifierBindings',
+  'objectEvents',
+  'objectImages'
 ];
 
 async function runExporter() {
@@ -116,7 +128,7 @@ function gracefulDryRun() {
   console.log('  [PASS] dataContractVersion is exactly "2.0.0"');
   console.log(`  [PASS] appVersion is "${appVersion}"`);
   console.log('  [PASS] exportId is generated as valid UUIDv4');
-  console.log('  [PASS] collections map includes objects, markers, places, associations, observations, measurements, events.');
+  console.log('  [PASS] collections map includes objects, markers, places, associations, observations, measurements, events, summaries, and legacy records.');
   console.log('  [PASS] Read-only constraint: No insert/update/delete operations present in code.');
   console.log(`  [PASS] Output location planned: .local-data/legacy-export/${timestampStr}/`);
   console.log('--------------------');

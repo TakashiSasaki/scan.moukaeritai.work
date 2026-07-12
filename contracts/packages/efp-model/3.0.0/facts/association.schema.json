@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AssociationFact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "associationId",
+    "ownerId",
+    "operation",
+    "participants",
+    "participantKeys",
+    "objectIds",
+    "markerKeys",
+    "placeIds",
+    "readerIds",
+    "deviceIds",
+    "userIds",
+    "effectiveAt",
+    "provenance",
+    "_meta"
+  ],
+  "properties": {
+    "associationId": {
+      "type": "string",
+      "maxLength": 128,
+      "description": "Unique identifier of the Association fact (UUIDv7)"
+    },
+    "ownerId": {
+      "type": "string",
+      "maxLength": 128,
+      "description": "Owner identifier (UID) who generated this association fact."
+    },
+    "operation": {
+      "type": "string",
+      "enum": [
+        "attach",
+        "detach",
+        "replace"
+      ],
+      "description": "Immutable lifecycle operation for this object-marker link"
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/participant.schema.json"
+      }
+    },
+    "participantKeys": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Backend-derived indexing helper mapping unique keys of participants"
+    },
+    "objectIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Backend-derived indexing helper of related object IDs"
+    },
+    "markerKeys": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Backend-derived indexing helper of related marker keys"
+    },
+    "placeIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Backend-derived indexing helper of related place IDs"
+    },
+    "readerIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Backend-derived indexing helper of related reader IDs"
+    },
+    "deviceIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Backend-derived indexing helper of related device IDs"
+    },
+    "userIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Backend-derived indexing helper of related user UIDs"
+    },
+    "effectiveAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Domain timestamp at which this operation became effective (RFC 3339 format)"
+    },
+    "subjectAssociationId": {
+      "type": ["string", "null"],
+      "maxLength": 128,
+      "description": "The target Association Fact ID that is being detached or replaced (mandatory for detach and replace operations)"
+    },
+    "provenance": {
+      "$ref": "../common/provenance.schema.json"
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "_meta": {
+      "$ref": "../common/record-metadata.schema.json"
+    }
+  }
+}

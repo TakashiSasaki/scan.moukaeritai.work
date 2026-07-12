@@ -1,7 +1,7 @@
 {
   "name": "scan-mw",
   "private": true,
-  "version": "2.0.1",
+  "version": "2.0.2",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
@@ -74,6 +74,7 @@
     "@types/uuid": "^10.0.0",
     "@vitest/coverage-v8": "^4.1.8",
     "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "autoprefixer": "^10.4.21",
     "firebase-admin": "^14.1.0",
     "firebase-tools": "^15.19.0",

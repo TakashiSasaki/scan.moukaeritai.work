@@ -537,3 +537,15 @@ The application has transitioned from a simple `items` collection to a normalize
 - Scanner observation target rules hardening design artifacts are planning/local-validation only. Passing target rules hardening design validation does not modify Firestore rules, deploy rules, enable the feature flag, authorize runtime dual-write rollout, or authorize UI read switching. Actual Firestore rules changes require a separate explicit PR.
 - Passing readiness validation does not enable the feature flag and does not authorize rollout, backfill, or UI read switching.
 - The scanner legacy identifier lookup and objectEvents write remain authoritative until a separate explicit migration/read-switching PR.
+
+### v2.0.2 Baseline Closure and Backend Fact Pipeline (2026-07-11)
+- **EFP Backend-Only Fact Pipeline**: All direct client-side creates, updates, and deletes to the Fact collections (`associations`, `observations`, `measurements`, `events`) are permanently disabled in Firestore Security Rules.
+- **Secure `submitFactCommand` Callable Function**:
+  - Acts as the single entrance gateway for appending immutable Fact records.
+  - Enforces strict v3.0.0 JSON schema validation for client inputs.
+  - Resolves logical timezone/spatial/ISO-8601 properties to native Firestore `Timestamp` and `GeoPoint` types.
+  - Evaluates and verifies the existence and ownership of all referenced Entities before writing.
+  - Writes the Fact document and a `factCommands` command receipt atomically in a single Firestore Transaction to ensure strict Idempotency.
+- **In-Band Projection Reconciliation**:
+  - Following a successful transaction, `submitFactCommand` triggers single-target summary recomputation (`recomputeProjectionSummaryForTarget`) in-band for all referenced Entities (Objects, Markers, Places).
+  - This guarantees perfect read-after-write consistency of read-optimized projection summaries in client interfaces.

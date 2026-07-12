@@ -54,6 +54,42 @@
       "description": "Strict binding mapping between logical EFP types and Firestore persistence types",
       "contractType": "data-binding",
       "path": "packages/firestore-binding/1.0.0/contract.json"
+    },
+    {
+      "contractId": "efp-model",
+      "version": "3.0.0",
+      "status": "active",
+      "title": "Entity-Fact-Projection Model",
+      "description": "Upgraded immutable data contracts and schemas for the EFP model v3",
+      "contractType": "data-model",
+      "path": "packages/efp-model/3.0.0/contract.json"
+    },
+    {
+      "contractId": "efp-semantics",
+      "version": "2.0.0",
+      "status": "active",
+      "title": "EFP Semantics",
+      "description": "Normative semantic rules and invariants for EFP model v3",
+      "contractType": "semantics",
+      "path": "packages/efp-semantics/2.0.0/contract.json"
+    },
+    {
+      "contractId": "firestore-binding",
+      "version": "2.0.0",
+      "status": "active",
+      "title": "Firestore Binding",
+      "description": "Upgraded strict binding mapping between logical EFP types and Firestore persistence types",
+      "contractType": "data-binding",
+      "path": "packages/firestore-binding/2.0.0/contract.json"
+    },
+    {
+      "contractId": "callable-functions-api",
+      "version": "1.0.0",
+      "status": "active",
+      "title": "Callable Functions API",
+      "description": "API contract for the EFP-native backend fact creation pipeline",
+      "contractType": "api-contract",
+      "path": "packages/callable-functions-api/1.0.0/contract.json"
     }
   ]
 }
