@@ -1,12 +1,11 @@
 {
-  "applicationVersion": "2.0.19",
+  "applicationVersion": "2.0.22",
   "contracts": {
     "core-vocabulary": "1.0.0",
     "efp-model": "3.0.0",
     "efp-semantics": "2.0.0",
     "export-format": "1.0.0",
-    "import-protocol": "1.0.0",
     "firestore-binding": "2.0.0",
-    "callable-functions-api": "1.1.7"
+    "callable-functions-api": "1.1.9"
   }
 }

@@ -1,45 +1,68 @@
 # run-local-tests
 
+## Scope
+Select and run tests relevant to the files changed by the current task.
+
+## Trigger
+Use after edits or when validating a local change.
+
+## Shared policy
+Refer to `.agents/policies/complexity-control.md` for repository-wide complexity-control non-goals.
+
+## Non-goals
+- Do not run every test for every task.
+- Do not run migration, dual-write, backfill, or reconciliation gates during normal task validation.
+- Do not expand Firestore pseudo-emulators because Java is unavailable locally.
+- Do not fix unrelated failures.
+- Do not run release verification unless requested.
+
+## Commands
+Default daily check:
+- `npm run verify:fast`
+
+Changed-path mapping:
+- `src/components/**` -> `npm run test`, `npm run lint`
+- `src/routing/**`, `src/lib/routeCatalog.ts` -> `npm run test:routing`, `npm run test:routing-boundary`, `npm run lint`
+- `functions/src/**` -> `npm --prefix functions run build`, `npm run test:functions`
+- `packages/efp-model/**` -> `npm --prefix packages/efp-model run build`, `npm --prefix packages/efp-model run test`, `npm --prefix packages/efp-model run typecheck`
+- `contracts/**` -> `npm run contracts:validate`, `npm run contracts:check-generated`
+- `firestore.rules` -> `npm run test:firestore-policy`; emulator tests run in CI
+- release metadata or broad governance changes -> `npm run verify:release`
+
+## Execution class
+fast by default; PR or release when changed-path mapping requires it.
+
+## Mutation policy
+read-only
+
+## Stop condition
+Stop when a relevant test fails; report the failing command and do not broaden scope unless the failure is caused by the current change.
+
 ## Purpose
-Runs localized unit, integration, and security rules testing across the entire codebase to detect regressions early.
+See Scope above; this skill is now tiered and bounded by execution class.
 
 ## When to use
-Whenever making active code edits or validating the local test suite.
+See Trigger above.
 
 ## Inputs
-- Test configurations (`vitest.config.ts`, `scripts/test-firestore-policy.mjs`)
-- Local workspace files
+- Current task instructions
+- Changed files and relevant canonical sources
+
 
 ## Procedure
-1. To run standard unit/frontend tests:
-   `npm run test`
-2. To run routing authorization tests:
-   `npm run test:routing`
-3. To run routing boundary validations:
-   `npm run test:routing-boundary`
-4. To run Functions unit tests:
-   `npm run test:functions`
-5. To run Functions artifact validation:
-   `npm run test:functions-artifact`
-6. To run Functions runtime gate tests:
-   `npm run test:functions-runtime-gate`
-7. To run static policy verification for Firestore Security Rules:
-   `npm run test:firestore-policy`
+Follow the Scope, Trigger, Non-goals, Commands, Execution class, Mutation policy, and Stop condition sections above. Prefer the narrowest relevant command set.
 
 ## Stop conditions
-- Any test fails or throws compilation errors.
+See Stop condition above.
 
 ## Verification
-- Check command output logs for successful exit codes and passing assertions.
+Use only the relevant commands listed above for the current execution class.
 
 ## Related scripts
-- `npm run test`
-- `npm run test:routing`
-- `npm run test:routing-boundary`
-- `npm run test:functions`
-- `npm run test:functions-artifact`
-- `npm run test:functions-runtime-gate`
-- `npm run test:firestore-policy`
+- `npm run verify:fast`
+- `npm run verify:pr`
+- `npm run verify:release`
+
 
 ## Outputs
-- Passing test logs or identified errors for debugging.
+A bounded result for the current task without creating unrelated work.

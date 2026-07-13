@@ -1,42 +1,73 @@
 # stride-closeout
 
+## Scope
+Close work at the right verification tier instead of forcing release validation on every task.
+
+## Trigger
+Use before completing a task, preparing a PR, or preparing a release.
+
+## Shared policy
+Refer to `.agents/policies/complexity-control.md` for repository-wide complexity-control non-goals.
+
+## Non-goals
+- Do not run `verify:release` for normal tasks.
+- Do not require version bumps for every sensitive-path edit.
+- Do not add new gates, mutation fixtures, or completion evidence formats.
+- Do not fix unrelated failures.
+- Do not treat archived migration work as pending closeout.
+
+## Commands
+Task closeout:
+- `git diff --stat`
+- relevant tests from `run-local-tests`
+- `git status --short`
+
+PR closeout:
+- `npm run verify:pr`
+- confirm CI-only Firestore Emulator checks are configured when rules changed
+- review security-sensitive changes
+
+Release closeout:
+- `npm run verify:release`
+- artifact isolation
+- full documentation consistency
+- version consistency
+- repository-wide validation
+
+## Execution class
+fast for task closeout; PR for pull requests; release for release candidates.
+
+## Mutation policy
+read-only except for final commit creation requested by the task.
+
+## Stop condition
+Stop if relevant tests fail, unexpected files are present, or release-only requirements are being applied to a normal task without explicit request.
+
 ## Purpose
-Establishes a solid, multi-phase verification closeout process to ensure every logic change is fully tested, clean, version-aligned, and safely committed with zero remaining scratch files.
+See Scope above; this skill is now tiered and bounded by execution class.
 
 ## When to use
-At the end of every stride or before completing the user's task.
+See Trigger above.
 
 ## Inputs
-- Full workspace state
-- Git history and working tree
+- Current task instructions
+- Changed files and relevant canonical sources
+
 
 ## Procedure
-1. Run `git diff` and carefully review all modifications.
-2. Clean up and purge any temporary files, scratch artifacts, or unused files.
-3. Verify that the version matches across all packages and configuration files.
-4. Run schema checks and validate contracts.
-5. Execute local unit tests for the frontend and EFP package.
-6. Execute routing and authorization integration tests.
-7. Prepare the Cloud Functions build artifact.
-8. Build Cloud Functions and run backend tests.
-9. Verify Firestore Security Rules via Node-only static policy analysis.
-10. Execute the hardened repository hygiene check.
-11. Run the documentation reality check to ensure claims align with realities.
-12. Check `git status` to confirm only expected modifications are present.
-13. Prepare a comprehensive, descriptive commit message detailing changes and make a single logical commit.
-14. Run `git status --short` after committing to guarantee that the working tree is completely clean.
-15. Check GitHub Actions pipeline results (or report status if pending). Do not report "green" without confirming the actual CI checks passed.
+Follow the Scope, Trigger, Non-goals, Commands, Execution class, Mutation policy, and Stop condition sections above. Prefer the narrowest relevant command set.
 
 ## Stop conditions
-- Git status is not completely clean after committing.
-- Any unit, integration, or contract verification test fails.
-- Prohibited artifacts remain in the directory.
+See Stop condition above.
 
 ## Verification
-- Run `git status --short` and confirm it is completely clean.
+Use only the relevant commands listed above for the current execution class.
 
 ## Related scripts
-- `npm run verify:baseline`
+- `npm run verify:fast`
+- `npm run verify:pr`
+- `npm run verify:release`
+
 
 ## Outputs
-- Clean, committed logic change with a professional commit message.
+A bounded result for the current task without creating unrelated work.

@@ -40,9 +40,9 @@
     {
       "contractId": "import-protocol",
       "version": "1.0.0",
-      "status": "active",
+      "status": "archived",
       "title": "Import Protocol",
-      "description": "Phase definitions and schemas for the migration import protocol",
+      "description": "Historical migration import protocol retained for reference only; not active runtime scope.",
       "contractType": "import-protocol",
       "path": "packages/import-protocol/1.0.0/contract.json"
     },
@@ -157,11 +157,29 @@
     {
       "contractId": "callable-functions-api",
       "version": "1.1.7",
-      "status": "active",
+      "status": "deprecated",
       "title": "Callable Functions API",
       "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv4-based idempotency validation and comprehensive regression gates",
       "contractType": "api-contract",
       "path": "packages/callable-functions-api/1.1.7/contract.json"
+    },
+    {
+      "contractId": "callable-functions-api",
+      "version": "1.1.8",
+      "status": "deprecated",
+      "title": "Callable Functions API",
+      "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv4-based idempotency validation and comprehensive regression gates",
+      "contractType": "api-contract",
+      "path": "packages/callable-functions-api/1.1.8/contract.json"
+    },
+    {
+      "contractId": "callable-functions-api",
+      "version": "1.1.9",
+      "status": "active",
+      "description": "API contract for regression harness and closure evidence repair",
+      "path": "packages/callable-functions-api/1.1.9/contract.json",
+      "title": "Callable Functions API",
+      "contractType": "api-contract"
     }
   ]
 }

@@ -1,81 +1,62 @@
-# scan.mw (Version 2.0.18)
+# scan.mw
 
-[![CI](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml)
+Cloud-based item tracking and inventory management built on Firebase, React, TypeScript, and the Contract-First Entity-Fact-Projection (EFP) model.
 
-Welcome to **scan.mw v2.0.18**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
+## Current priority
 
-This repository enforces backward-incompatible, robust schemas, strict version governance, and a registry-first workflow.
+The project is focused on the first usable EFP-native vertical slice:
 
----
+1. Create an Object.
+2. Create a Marker.
+3. Attach the Marker to the Object.
+4. Read the Marker.
+5. Display the associated Object.
+6. Detach the Association.
+7. Treat the detached Marker as unassigned.
 
-## 🏗️ Core Architecture & EFP-Native Paradigm
+This slice is limited to Object, Marker, Association attach/detach, and the read models needed to show the current relationship. Place, Observation, Measurement, Event, projection backfill, generic watermarks, processing receipts, migration phases, and broad future abstractions are outside the critical path unless directly needed for this slice.
 
-- **Contract-First Source of Truth**: All data models, schemas, and API formats are declared and validated within the `/contracts` directory first.
-- **Entity-Fact-Projection (EFP) Model**: 
-  - **Entities** (Timeless identity, e.g., Objects, Markers, Places)
-  - **Facts** (Temporal records of events/observations, e.g., Associations, Observations, Measurements, Events) - **Backend-only and immutable**.
-  - **Projections** (Derived caches optimized for user-facing reads) - **Asynchronous and eventually-consistent**.
+## Legacy data policy
 
----
+Legacy data is retained as a read-only Firestore archive.
 
-## 🚀 Fact Command Integrity Closure Repair (v2.0.17)
+- No legacy-to-EFP migration.
+- No dual-write, shadow-write, backfill, reconciliation, canary write, or rollback framework.
+- Legacy Firestore collections remain read-only.
+- Admin browse is allowed.
+- JSON is the only supported legacy export format.
+- New runtime paths must not write to legacy collections.
 
-Version 2.0.17 repairs Fact Command Integrity, properly implementing request identity hashes, strict transactional participant validation, UUIDv7 Fact IDs, and EFP logical model verification.
-
-- **Object/Marker Active Workflow**: Not yet fully complete.
-- **Production Deployment**: Deployments are strictly **manual only**.
-- **Major Version Bumps**: Require explicit human approval.
-
-### 📅 Stride Roadmap & Backlog
-- **2.0.15**: Transactional Fact and Projection Safety Closure (Completed)
-- **2.0.16**: Partial Fact Command Integrity (Completed)
-- **2.0.17**: Fact Command Integrity Closure Repair (修復対象)
-- **2.0.18**: Fact Runtime Recovery and Regression Gate Closure (Current)
-- **2.0.19**: Projection Reliability and Ordering (Deferred)
-- **2.0.20**: Rules, Legacy Runtime and Export Closure (Deferred)
-- **2.1.0**: EFP-native First Vertical Slice (Deferred)
-
-## 🛠️ Local Development & Validation
-
-To ensure extreme contract and baseline reliability, use the single entry point command:
+## Development
 
 ```bash
-# Install dependencies
 npm ci
-
-# Run the fail-closed verification pipeline
-# Node-only gates implemented and passing locally (GitHub Actions confirmation unavailable)
-npm run verify:baseline
+npm run dev
 ```
 
----
+The app runs on port `3000`.
 
-## 📜 Contract Registry Governance
-
-The canonical definition of application state and data structures is managed under:
-
-* `/contracts/registry.json`: Registry list of active contract versions.
-* `/contracts/packages/`: Raw JSON schemas and contract descriptions.
-* `/contracts/profiles/current-application.json`: Profile specifying which contract package versions the current UI deployment actively supports.
-
-### Schema Validation
-
-Any changes to `/contracts` can be dynamically verified locally using:
+## Verification tiers
 
 ```bash
-npm run contracts:validate
+npm run verify:fast
+npm run verify:pr
+npm run verify:release
 ```
 
-This tool uses `ajv` to compile all referenced JSON schemas and verify that the application profile perfectly aligns with registered versions.
+- `verify:fast` is for normal local task checks.
+- `verify:pr` is for pull requests and GitHub Actions.
+- `verify:release` is for release candidates and explicit full validation.
+- `verify:baseline` is kept as an alias for `verify:release` for compatibility.
 
----
+Firestore Emulator integration tests are planned for GitHub Actions. Current PR verification uses Node-based static policy checks only; do not add a local pseudo-emulator.
 
-## 🔒 Security & Deployment Safety
+## Canonical references
 
-- **No Push Deployments**: Automatic deployments on code push are completely disabled.
-- **Workflow Dispatch Only**: Deployments to Firebase Hosting and Firebase Functions must be triggered manually via `workflow_dispatch` through GitHub Actions.
-- **Read-Only Legacy Export Tool**: To back up v1 data without risking production mutations, use the locked read-only tool:
-  ```bash
-  npm run ops:export-legacy
-  ```
- 
+- Application version: `package.json`
+- Active contract profile: `contracts/profiles/current-application.json`
+- Contract registry: `contracts/registry.json`
+- Route access policy: `src/lib/routeCatalog.ts`
+- Agent rules: `AGENTS.md`
+- Agent skills: `.agents/skills/manifest.json`
+- Complexity control policy: `.agents/policies/complexity-control.md`

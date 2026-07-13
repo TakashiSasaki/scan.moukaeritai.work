@@ -1,0 +1,196 @@
+{
+  "stride": "2.0.20",
+  "name": "Fact Runtime Closure Correction and Version Governance Repair",
+  "applicationVersion": "2.0.20",
+  "callableApiVersion": "1.1.8",
+  "status": "ready-for-main-pr",
+  "allowedDeferrals": [
+    "Projection Reliability and Ordering",
+    "Rules, Legacy Runtime and Export Closure"
+  ],
+  "requirements": [
+    {
+      "id": "version-governance-monotonic",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "version-2.0.20",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "callable-api-1.1.8-active",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "request-hash-version-contract-runtime-alignment",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "functions-artifact-profile-resolution",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "functions-artifact-compiled-isolation",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "owner-aware-fake-firestore",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "idempotency-regression-matrix",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "association-transition-matrix",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "marker-replace-normative-policy",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "version-specific-callable-compatibility",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "executable-regression-fixtures",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "query-index-baseline",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "stride-gate-hardening",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "documentation-reality",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "node-only-baseline",
+      "status": "complete",
+      "evidence": [
+        "README.md"
+      ],
+      "verificationCommands": [
+        "test"
+      ]
+    },
+    {
+      "id": "main-target-ci",
+      "status": "pending",
+      "evidence": [],
+      "verificationCommands": []
+    }
+  ],
+  "deferrals": [
+    {
+      "target": "2.0.21",
+      "scope": "Projection Reliability and Ordering",
+      "items": [
+        "historical target corrected by note; actual deferral now tracked in 2.0.21 as 2.0.22"
+      ]
+    },
+    {
+      "target": "2.0.22",
+      "scope": "Rules, Legacy Runtime and Export Closure",
+      "items": [
+        "historical target corrected by note; actual deferral now tracked in 2.0.21 as 2.0.23"
+      ]
+    }
+  ],
+  "historicalCorrectionNote": "2.0.21 identifies that this historical manifest relied heavily on README-only evidence and obsolete deferral targets; 2.0.21 replaces it with typed evidence and fail-closed gates while preserving 2.0.20 as historical record."
+}

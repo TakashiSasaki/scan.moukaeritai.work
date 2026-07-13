@@ -5,12 +5,12 @@ import { fileURLToPath } from 'node:url';
 const ALLOWED_ROOT_FILES = new Set([
   'package.json',
   'package-lock.json',
-  'pnpm-lock.yaml',
   'tsconfig.json',
   'vite.config.ts',
   'vitest.config.ts',
   'vitest.rules.config.ts',
   '.gitignore',
+  '.git',
   '.env.example',
   '.firebaserc',
   'firebase.json',
@@ -81,6 +81,20 @@ const FORBIDDEN_CONTENT_PATTERNS = [
 function checkHygiene(dir, isSelfTest = false, selfTestRoot = null) {
   const violations = [];
   const files = fs.readdirSync(dir);
+  for (const inactive of ['pnpm-lock.yaml','yarn.lock','bun.lock','bun.lockb']) {
+    if (files.includes(inactive)) violations.push(`Inactive package manager lockfile is forbidden: "${inactive}"`);
+  }
+  const packageJsonPath = path.join(dir, 'package.json');
+  if (fs.existsSync(packageJsonPath)) {
+    try {
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+      if (packageJson.packageManager && !String(packageJson.packageManager).startsWith('npm@')) {
+        violations.push(`Non-npm packageManager declaration is forbidden: ${packageJson.packageManager}`);
+      }
+    } catch (error) {
+      violations.push(`Unable to parse package.json for packageManager policy: ${error.message}`);
+    }
+  }
 
   // 1. Root level checks
   for (const file of files) {
@@ -136,7 +150,7 @@ function checkHygiene(dir, isSelfTest = false, selfTestRoot = null) {
           continue;
         }
         // Skip lock files
-        if (item === 'package-lock.json' || item === 'pnpm-lock.yaml') {
+        if (item === 'package-lock.json') {
           continue;
         }
 
@@ -222,6 +236,20 @@ function runSelfTest() {
       throw new Error('Self-test Scenario 6 (ad-hoc regex patch) failed to catch code rewriting logic');
     }
     fs.unlinkSync(path.join(tempDir, 'scripts/regex-patch.js'));
+
+    for (const lock of ['pnpm-lock.yaml','yarn.lock','bun.lock','bun.lockb']) {
+      fs.writeFileSync(path.join(tempDir, lock), 'forbidden');
+      violations = checkHygiene(tempDir, true, tempDir);
+      if (!violations.some(v => v.includes('Inactive package manager lockfile') && v.includes(lock))) {
+        throw new Error(`Self-test inactive lockfile failed to catch ${lock}`);
+      }
+      fs.unlinkSync(path.join(tempDir, lock));
+    }
+    fs.writeFileSync(path.join(tempDir, 'package.json'), JSON.stringify({ packageManager: 'pnpm@9.0.0' }));
+    violations = checkHygiene(tempDir, true, tempDir);
+    if (!violations.some(v => v.includes('Non-npm packageManager'))) {
+      throw new Error('Self-test non-npm packageManager failed');
+    }
 
     console.log("🟢 All Hygiene Self-Test Scenarios Passed Perfectly!");
   } finally {
