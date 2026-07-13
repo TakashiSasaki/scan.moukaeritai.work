@@ -48,13 +48,6 @@ try {
   }
   console.log('✅ All contract packages successfully resolved!');
   
-  // Ensure generated EFP model artifact exists after fresh npm ci; dist is gitignored.
-  const validatorArtifact = path.join(rootDir, 'packages/efp-model/dist/esm/validators/association-validator.js');
-  if (!fs.existsSync(validatorArtifact)) {
-    console.log('🔹 Building @scan/efp-model for contract validation artifact...');
-    execSync('npm --prefix packages/efp-model run build', { stdio: 'inherit', cwd: rootDir });
-  }
-
   // Also run comprehensive contract registry validation
   console.log('🔹 Executing contracts validation test suite...');
   execSync('npm run contracts:validate', { stdio: 'inherit', cwd: rootDir });

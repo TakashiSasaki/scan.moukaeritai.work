@@ -1,8 +1,5 @@
 import * as crypto from "crypto";
 
-export const CANONICAL_JSON_VERSION = 1;
-export const REQUEST_HASH_VERSION = "sha256-canonical-json-v1";
-
 export function getCanonicalRequestIdentity(callableApiVersion: string, factType: string, data: any) {
   const canonicalJson = serializeToCanonicalJson({
     callableApiVersion,
@@ -11,12 +8,10 @@ export function getCanonicalRequestIdentity(callableApiVersion: string, factType
   });
   
   const requestHash = crypto.createHash("sha256").update(canonicalJson, "utf8").digest("hex");
-  const canonicalJsonVersion = CANONICAL_JSON_VERSION;
-  const requestHashVersion = REQUEST_HASH_VERSION;
+  const requestHashVersion = 1;
 
   return {
     canonicalJson,
-    canonicalJsonVersion,
     requestHash,
     requestHashVersion,
     callableApiVersion,

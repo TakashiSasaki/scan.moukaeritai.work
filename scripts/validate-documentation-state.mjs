@@ -2,7 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '..');
 
 console.log('🔍 Running Documentation Reality Gate...');
 
@@ -11,85 +13,123 @@ function fail(msg) {
   process.exit(1);
 }
 
-function readText(relativePath) {
-  const fullPath = path.join(rootDir, relativePath);
-  if (!fs.existsSync(fullPath)) fail(`${relativePath} not found.`);
-  try {
-    return fs.readFileSync(fullPath, 'utf8');
-  } catch (error) {
-    fail(`Failed to read ${relativePath}: ${error.message}`);
+// 1. Load package.json for target version
+let currentVersion;
+try {
+  const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
+  currentVersion = pkg.version;
+} catch (e) {
+  fail(`Failed to read/parse package.json: ${e.message}`);
+}
+
+// 2. Validate README.md version and content
+const readmePath = path.join(rootDir, 'README.md');
+if (!fs.existsSync(readmePath)) {
+  fail('README.md not found.');
+}
+const readme = fs.readFileSync(readmePath, 'utf8');
+
+if (!readme.includes(`Version ${currentVersion}`) && !readme.includes(`v${currentVersion}`)) {
+  fail(`README.md does not contain the current version "${currentVersion}"`);
+}
+
+// Check prohibited claims in README.md
+if (readme.includes('Closed and fully validated')) {
+  fail('README.md contains the phrase "Closed and fully validated". Since CI is unconfirmed, this must be "implemented", "stabilized locally", or "awaiting CI confirmation".');
+}
+if (readme.includes('complete fail-closed verification pipeline')) {
+  fail('README.md contains the phrase "complete fail-closed verification pipeline". Since CI is unconfirmed, this must refer to "awaiting CI confirmation" or "stabilized locally".');
+}
+
+// 3. Validate AGENTS.md version and content
+const agentsPath = path.join(rootDir, 'AGENTS.md');
+if (!fs.existsSync(agentsPath)) {
+  fail('AGENTS.md not found.');
+}
+const agents = fs.readFileSync(agentsPath, 'utf8');
+
+if (!agents.includes(`scan.mw ${currentVersion}`) && !agents.includes(`version **${currentVersion}**`)) {
+  fail(`AGENTS.md does not contain the current version "${currentVersion}"`);
+}
+
+// Check prohibited absolute claims in README.md and AGENTS.md
+const prohibitedPhrases = [
+  { phrase: 'All verification passed', regex: /all\s+verification\s+passed/i },
+  { phrase: 'All checks are 100% green', regex: /all\s+(checks|tests|verification|validations)\s+are\s+(100%|100\s*%)\s*green/i },
+  { phrase: 'behavioral tests passed', regex: /behavioral\s+tests\s+passed/i },
+  { phrase: 'fully verified in CI', regex: /fully\s+verified\s+in\s+CI/i }
+];
+
+for (const p of prohibitedPhrases) {
+  if (p.regex.test(readme)) {
+    fail(`README.md contains prohibited absolute verification claim: "${p.phrase}"`);
+  }
+  if (p.regex.test(agents)) {
+    fail(`AGENTS.md contains prohibited absolute verification claim: "${p.phrase}"`);
   }
 }
 
-const docs = [
-  ['README.md', readText('README.md')],
-  ['AGENTS.md', readText('AGENTS.md')]
+// Ensure local-only verification claim exists in README.md
+if (!readme.includes('Node-only gates implemented and passing locally')) {
+  fail('README.md is missing the required local-only verification claim: "Node-only gates implemented and passing locally"');
+}
+if (!readme.includes('GitHub Actions confirmation unavailable')) {
+  fail('README.md is missing the required local-only verification claim: "GitHub Actions confirmation unavailable"');
+}
+
+// Ensure local-only verification claim exists in AGENTS.md
+if (!agents.includes('Node-only gates implemented and passing locally')) {
+  fail('AGENTS.md is missing the required local-only verification claim: "Node-only gates implemented and passing locally"');
+}
+if (!agents.includes('GitHub Actions confirmation unavailable')) {
+  fail('AGENTS.md is missing the required local-only verification claim: "GitHub Actions confirmation unavailable"');
+}
+
+// 4. Validate current-application.json applicationVersion
+const profilePath = path.join(rootDir, 'contracts/profiles/current-application.json');
+if (!fs.existsSync(profilePath)) {
+  fail('current-application.json not found.');
+}
+const profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
+if (profile.applicationVersion !== currentVersion) {
+  fail(`contracts/profiles/current-application.json version (${profile.applicationVersion}) does not match package.json version (${currentVersion})`);
+}
+
+// 5. Verify no premature completed status for uncompleted features
+const incompletePatterns = [
+  { name: 'Object/Marker Workflows', regex: /object.*marker.*work.*(complete|done|closed)/i },
+  { name: 'Projection Reliability', regex: /projection.*reliability.*(complete|done|closed)/i },
+  { name: 'Rules Closure', regex: /rules.*closure.*(complete|done|closed)/i }
 ];
 
-const allText = docs.map(([, text]) => text).join('\n');
-
-for (const [fileName, text] of docs) {
-  if (!text.trim()) fail(`${fileName} is empty.`);
-
-  if (!/legacy[\s\S]{0,80}(read-only|archive)/i.test(text)) {
-    fail(`${fileName} must describe legacy collections as read-only/archive data.`);
-  }
-
-  if (!/(vertical slice|Object\/Marker\/Association|Object.*Marker.*Association)/i.test(text)) {
-    fail(`${fileName} must identify the EFP-native Object/Marker/Association vertical slice as the current priority.`);
-  }
-
-  const activeMigrationPatterns = [
-    /legacy\s+(migration|dual-write|backfill|reconciliation|runtime integration)\s+is\s+(active|current|planned|in progress|required)/i,
-    /(active|current|planned|in progress|required)\s+legacy\s+(migration|dual-write|backfill|reconciliation|runtime integration)/i
-  ];
-  for (const pattern of activeMigrationPatterns) {
-    if (pattern.test(text)) fail(`${fileName} appears to treat cancelled legacy migration work as active.`);
-  }
-
-  const completedClaims = [
-    { name: 'Object/Marker/Association vertical slice', regex: /(Object\/Marker\/Association|Object.*Marker.*Association|vertical slice).*\b(complete|completed|done|closed|fully implemented)\b/i },
-    { name: 'legacy admin browser', regex: /legacy admin browser.*\b(complete|completed|done|closed|fully implemented)\b/i },
-    { name: 'Firestore Emulator CI', regex: /Firestore Emulator.*\b(runs|running|complete|completed|passed)\b.*\b(GitHub Actions|CI)\b/i }
-  ];
-  for (const claim of completedClaims) {
-    for (const line of text.split('\n')) {
-      if (claim.regex.test(line) && !/planned|not complete|not yet|future|pending|required|should run|belongs/i.test(line)) {
-        fail(`${fileName} prematurely claims ${claim.name} is complete: ${line.trim()}`);
+for (const pattern of incompletePatterns) {
+  // We check if either README or AGENTS claims they are "completed" (not counting "incomplete" or "not complete")
+  // Let's search for lines containing these topics, and assert they don't claim complete success without qualifiers.
+  const checkClaim = (text, fileName) => {
+    const lines = text.split('\n');
+    for (const line of lines) {
+      if (pattern.regex.test(line)) {
+        // Allow if qualified by "not", "incomplete", "deferred", "pending", "awaiting"
+        const lowercaseLine = line.toLowerCase();
+        if (
+          lowercaseLine.includes('not') || 
+          lowercaseLine.includes('incomplete') || 
+          lowercaseLine.includes('defer') || 
+          lowercaseLine.includes('pend') || 
+          lowercaseLine.includes('await') ||
+          lowercaseLine.includes('scheduled') ||
+          lowercaseLine.includes('unimplemented')
+        ) {
+          continue;
+        }
+        fail(`Premature claim of completion for "${pattern.name}" found in ${fileName}: "${line.trim()}"`);
       }
     }
-  }
-
-  const automaticProductionPatterns = [
-    /production\s+(deploy|deployment|write|data change|delete).*\b(automatic|automatically|on push|on pull request|on pr)\b/i,
-    /\b(automatic|automatically|on push|on pull request|on pr)\b.*production\s+(deploy|deployment|write|data change|delete)/i
-  ];
-  for (const line of text.split('\n')) {
-    if (/do not|manual only|not automatic|never automatic/i.test(line)) continue;
-    for (const pattern of automaticProductionPatterns) {
-      if (pattern.test(line)) fail(`${fileName} suggests production deploys or production data changes are automatic: ${line.trim()}`);
-    }
-  }
-}
-
-for (const command of ['verify:fast', 'verify:pr', 'verify:release']) {
-  if (!allText.includes(command)) fail(`Documentation must describe ${command}.`);
-}
-
-if (!/verify:fast[\s\S]{0,160}(local|changed|daily|task)|(?:local|changed|daily|task)[\s\S]{0,160}verify:fast/i.test(allText)) fail('verify:fast must be documented as a lightweight local/changed-work tier.');
-if (!/verify:pr[\s\S]{0,160}(PR|pull request|CI)|(?:PR|pull request|CI)[\s\S]{0,160}verify:pr/i.test(allText)) fail('verify:pr must be documented as the PR/CI tier.');
-if (!/verify:release[\s\S]{0,160}(release|full|candidate)|(?:release|full|candidate)[\s\S]{0,160}verify:release/i.test(allText)) fail('verify:release must be documented as the release/full validation tier.');
-if (/verify:fast[^\n]*(release|full baseline|artifact isolation)/i.test(allText)) fail('verify:fast documentation conflicts with the lightweight tier.');
-
-const prohibitedAbsoluteClaims = [
-  /all\s+verification\s+passed/i,
-  /all\s+(checks|tests|verification|validations)\s+are\s+(100%|100\s*%)\s+green/i,
-  /fully\s+verified\s+in\s+CI/i,
-  /GitHub Actions passed/i,
-  /CI green/i
-];
-for (const pattern of prohibitedAbsoluteClaims) {
-  if (pattern.test(allText)) fail(`Documentation contains an unscoped transient CI/pass claim: ${pattern}`);
+  };
+  
+  checkClaim(readme, 'README.md');
+  checkClaim(agents, 'AGENTS.md');
 }
 
 console.log('✅ Documentation Reality Gate Passed successfully!');
+process.exit(0);

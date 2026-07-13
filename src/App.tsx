@@ -35,6 +35,8 @@ import { useAuthorization } from './auth/useAuthorization';
 import EfpBaselineApp from './components/EfpBaselineApp';
 import EfpWorkflowPending from './components/EfpWorkflowPending';
 import ForbiddenPage from './components/ForbiddenPage';
+import ObjectCreatePage from './features/objects/ObjectCreatePage';
+import ObjectDetailPage from './features/objects/ObjectDetailPage';
 import { ProtectedRoute } from './routing/ProtectedRoute';
 import { AdminRoute } from './routing/AdminRoute';
 
@@ -376,8 +378,8 @@ export function AppRoutes() {
       <Route path="/developer/*" element={<AdminRoute><DeveloperDocsPage /></AdminRoute>} />
       
       {/* Object management */}
-      <Route path="/object/new" element={<ProtectedRoute><EfpWorkflowPending /></ProtectedRoute>} />
-      <Route path="/object/:id" element={<ProtectedRoute><EfpWorkflowPending /></ProtectedRoute>} />
+      <Route path="/object/new" element={<ProtectedRoute><ObjectCreatePage /></ProtectedRoute>} />
+      <Route path="/object/:id" element={<ProtectedRoute><ObjectDetailPage /></ProtectedRoute>} />
       
       {/* Redirects */}
       <Route path="/item/:id" element={<ProtectedRoute><ItemRedirectWrapper /></ProtectedRoute>} />

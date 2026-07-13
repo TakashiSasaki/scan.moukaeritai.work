@@ -1,8 +1,5 @@
 # manage-efp-migration
 
-> Historical only: legacy migration, dual-write, backfill, reconciliation, and runtime integration are cancelled. This archived skill must not be used for active roadmap, verification, or implementation work.
-
-
 ## Purpose
 Guide the execution and validation of the Entity-Fact-Projection (EFP) runtime migration, including canary writes, backfill operations, and data reconciliation.
 

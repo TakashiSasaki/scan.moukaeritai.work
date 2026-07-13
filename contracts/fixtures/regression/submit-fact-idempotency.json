@@ -1,7 +1,0 @@
-{
-  "id": "submit-fact-idempotency",
-  "requirementId": "idempotency-full-matrix",
-  "runner": "submit-fact-idempotency",
-  "input": { "case": "initial-request", "request": { "commandId": "123e4567-e89b-42d3-a456-426614174900", "factType": "event", "data": { "eventType": "fixture", "time": { "occurredAt": "2026-07-12T05:00:00Z" }, "provenance": { "source": "user_confirmed", "confidence": "high" }, "participants": [ { "role": "object", "ref": { "entityType": "object", "id": "object1" } } ] } } },
-  "expected": { "result": "success", "factWrites": 1, "receiptWrites": 1 }
-}

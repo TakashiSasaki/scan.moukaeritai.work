@@ -2,6 +2,9 @@ import fs from 'node:fs';
 import { execSync, spawnSync } from 'node:child_process';
 
 function sh(cmd) {
+  if (cmd.includes('functions') && (cmd.includes('build') || cmd.includes('test'))) {
+    requireFunctionsDependencies();
+  }
   console.log(`\n$ ${cmd}`);
   const result = spawnSync(cmd, { shell: true, stdio: 'inherit' });
   if (result.status !== 0) process.exit(result.status ?? 1);
@@ -99,7 +102,6 @@ if (needs.efpBuild || needs.functionsPackaging || needs.contracts) add(0, 'npm -
 if (needs.efpTypecheck) add(0, 'npm --prefix packages/efp-model run typecheck');
 if (needs.functionsPackaging) add(1, 'npm run prepare:functions-artifact');
 if (needs.functionsSource || needs.functionsPackaging) {
-  requireFunctionsDependencies();
   add(2, 'npm --prefix functions run build');
   add(3, 'npm run test:functions');
 }
@@ -122,7 +124,6 @@ if (needs.routing) {
   add(5, 'npm run test:routing-boundary');
 }
 if (needs.frontend || needs.routing) {
-  requireFunctionsDependencies();
   add(5, 'npm run lint');
   add(5, 'npm run test');
   add(5, 'npm run build');

@@ -24,23 +24,13 @@ function getAjvInstance(cacheKey: string) {
 }
 
 function loadAndParseSchema(fileName: string, baseFolder: string) {
-  const vendorCandidates = [
-    path.join(__dirname, "../vendor/contracts", baseFolder, fileName),
-    path.join(__dirname, "../../vendor/contracts", baseFolder, fileName),
-    path.join(process.cwd(), "vendor/contracts", baseFolder, fileName),
-    path.join(process.cwd(), "functions/vendor/contracts", baseFolder, fileName),
-  ];
-  const testContractsRoot = process.env.SCAN_MW_CONTRACTS_ROOT;
-  const testCandidates = process.env.NODE_ENV === "test" || testContractsRoot
-    ? [
-        ...(testContractsRoot ? [path.join(testContractsRoot, "packages", baseFolder, fileName)] : []),
-        path.join(process.cwd(), "contracts/packages", baseFolder, fileName),
-        path.join(process.cwd(), "../contracts/packages", baseFolder, fileName),
-        path.join(process.cwd(), "../../contracts/packages", baseFolder, fileName),
-      ]
-    : [];
-
-  for (const p of [...vendorCandidates, ...testCandidates]) {
+  const p1 = path.join(process.cwd(), "contracts/packages", baseFolder, fileName);
+  const p2 = path.join(process.cwd(), "../contracts/packages", baseFolder, fileName);
+  const p3 = path.join(process.cwd(), "../../contracts/packages", baseFolder, fileName);
+  const p4 = path.join(__dirname, "../vendor/contracts", baseFolder, fileName);
+  const p5 = path.join(__dirname, "../../vendor/contracts", baseFolder, fileName);
+  
+  for (const p of [p1, p2, p3, p4, p5]) {
     if (fs.existsSync(p)) {
       const data = JSON.parse(fs.readFileSync(p, "utf8"));
       if (!data.$id) {
