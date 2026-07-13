@@ -23,9 +23,12 @@
     "test:artifact": "node scripts/validate-artifact.mjs"
   },
   "dependencies": {
-    "uuid": "^14.0.1"
+    "typescript": "^7.0.2",
+    "uuid": "^14.0.1",
+    "vitest": "^4.1.10"
   },
   "devDependencies": {
+    "@types/node": "^26.1.1",
     "@types/uuid": "^10.0.0"
   }
 }

@@ -9,8 +9,8 @@ const rootDir = path.resolve(__dirname, '..');
 
 const profilePath = path.join(rootDir, 'contracts', 'profiles', 'current-application.json');
 const profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
-const callableApiVersion = profile.callableApiVersion || '1.1.7';
-const efpModelVersion = profile.efpModelVersion || '3.0.0';
+const callableApiVersion = profile.contracts['callable-functions-api'] || '1.1.7';
+const efpModelVersion = profile.contracts['efp-model'] || '3.0.0';
 const applicationVersion = profile.applicationVersion || '2.0.18';
 
 const packageDir = path.join(rootDir, 'packages', 'efp-model');

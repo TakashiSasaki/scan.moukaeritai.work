@@ -8,14 +8,15 @@ const { mockSet, mockGet, mockRunTransaction, mockWhere, idempotencyState, getSe
   const mockSet = vi.fn();
   
   let databaseState: any = {
-    'doc/object1': { ownerId: 'test-user' },
-    'doc/marker1': { ownerId: 'test-user', identityModelVersion: 'v2', canonicalizationVersion: 'v1' },
-    'doc/marker2': { ownerId: 'test-user', identityModelVersion: 'v2', canonicalizationVersion: 'v1' },
-    'doc/marker-other': { ownerId: 'other-user', identityModelVersion: 'v2', canonicalizationVersion: 'v1' },
-    'doc/place1': { ownerId: 'test-user' },
-    'doc/assoc1': { ownerId: 'test-user', operation: 'attach', participantKeys: ['marker:marker1', 'object:object1'], objectIds: ['object1'], markerKeys: ['marker1'] },
-    'doc/assoc1_already_detached': { ownerId: 'test-user', operation: 'attach', participantKeys: ['marker:marker1', 'object:object1'], objectIds: ['object1'], markerKeys: ['marker1'] },
-    'doc/assoc2': { ownerId: 'test-user', operation: 'detach', participantKeys: ['marker:marker1', 'object:object1'], objectIds: ['object1'], markerKeys: ['marker1'] }
+    'objects/object1': { ownerId: 'test-user' },
+    'objects/object-other': { ownerId: 'other-user' },
+    'markers/marker1': { ownerId: 'test-user', identityModelVersion: 'v2', canonicalizationVersion: 'v1' },
+    'markers/marker2': { ownerId: 'test-user', identityModelVersion: 'v2', canonicalizationVersion: 'v1' },
+    'markers/marker-other': { ownerId: 'other-user', identityModelVersion: 'v2', canonicalizationVersion: 'v1' },
+    'places/place1': { ownerId: 'test-user' },
+    'associations/assoc1': { ownerId: 'test-user', operation: 'attach', participantKeys: ['marker:marker1', 'object:object1'], objectIds: ['object1'], markerKeys: ['marker1'] },
+    'associations/assoc1_already_detached': { ownerId: 'test-user', operation: 'attach', participantKeys: ['marker:marker1', 'object:object1'], objectIds: ['object1'], markerKeys: ['marker1'] },
+    'associations/assoc2': { ownerId: 'test-user', operation: 'detach', participantKeys: ['marker:marker1', 'object:object1'], objectIds: ['object1'], markerKeys: ['marker1'] }
   };
   let idempotencyState: any = {};
   let setCallCount = 0;
@@ -51,7 +52,7 @@ const { mockSet, mockGet, mockRunTransaction, mockWhere, idempotencyState, getSe
       get: mockGet,
       set: (ref: any, data: any) => {
          mockSet(ref, data);
-         if (ref && ref.path && ref.path.startsWith('doc/test-user|')) {
+         if (ref && ref.path && ref.path.startsWith('users/test-user/factCommands/')) {
            idempotencyState[ref.path] = data;
          } else if (ref && ref.path) {
            databaseState[ref.path] = data;
@@ -76,8 +77,26 @@ vi.mock('firebase-admin', () => {
 });
 vi.mock('firebase-admin/firestore', () => {
   const mockDb = {
-    collection: vi.fn().mockReturnThis(),
-    doc: vi.fn().mockImplementation((id) => { return { id, path: "doc/"+id, collection: () => mockDb }; }),
+    collection: vi.fn().mockImplementation(function(this: any, colName) {
+      const nextDb: any = Object.assign({}, mockDb);
+      nextDb._colName = colName;
+      nextDb._path = this && this._path ? `${this._path}/${colName}` : colName;
+      return nextDb;
+    }),
+    doc: vi.fn().mockImplementation(function(this: any, id) { 
+      const parentCol = this && this._colName ? this._colName : "unknown";
+      const newPath = this && this._path ? `${this._path}/${id}` : `${parentCol}/${id}`;
+      return { 
+        id, 
+        path: newPath, 
+        collection: (colName: string) => {
+           const nextDb: any = Object.assign({}, mockDb);
+           nextDb._colName = colName;
+           nextDb._path = newPath ? `${newPath}/${colName}` : colName;
+           return nextDb;
+        } 
+      }; 
+    }),
     get: mockGet,
     runTransaction: mockRunTransaction,
     where: mockWhere
@@ -153,12 +172,13 @@ describe('Idempotency and Transitions', () => {
     await expect(submitFactCommand({ auth, data: payloadDifferentData })).rejects.toThrow(/Same commandId received with a different payload/);
 
     // 4. Same commandId, different factType -> reject
-    const payloadDifferentType = { ...payload1, factType: "measurement", data: { measurementType: "test", time: { measuredAt: "2026-07-12T05:00:00Z" }, provenance: { source: "t", confidence: "h" }, participants: [{ role: "object", ref: { entityType: "object", id: "object1" } }] } };
-    await expect(submitFactCommand({ auth, data: payloadDifferentType })).rejects.toThrow(/Same commandId received with a different payload/);
+    const payloadDifferentType = { ...payload1, factType: "measurement", data: { measurementType: "test", time: { measuredAt: "2026-07-12T05:00:00Z" }, provenance: { source: "user_confirmed", confidence: "high" }, participants: [{ role: "object", ref: { entityType: "object", id: "object1" } }] } };
+    await expect(submitFactCommand({ auth, data: payloadDifferentType })).rejects.toThrow(/Same commandId received with a different factType/);
 
     // 5. Different owner, same commandId -> successful independent insert
     const otherAuth = { uid: "other-user" };
-    const res3 = await submitFactCommand({ auth: otherAuth, data: payload1 });
+    const payloadOther = { ...payload1, data: { ...payload1.data, participants: [{ role: "object", ref: { entityType: "object", id: "object-other" } }] } };
+    const res3 = await submitFactCommand({ auth: otherAuth, data: payloadOther });
     expect(res3.success).toBe(true);
     expect(res3.factId).not.toBe(res1.factId);
   });
