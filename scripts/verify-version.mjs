@@ -12,12 +12,12 @@ function fail(msg) {
   process.exit(1);
 }
 
-function isSemverGreater(current, base) {
+export function isSemverGreater(current, base) {
   if (!current || !base) return false;
   const cParts = current.split('.').map(Number);
   const bParts = base.split('.').map(Number);
   if (cParts.length !== 3 || bParts.length !== 3 || cParts.some(isNaN) || bParts.some(isNaN)) {
-    fail(`Invalid SemVer format: ${current} or ${base}`);
+    throw new Error(`Invalid SemVer format: ${current} or ${base}`);
   }
   for (let i = 0; i < 3; i++) {
     if (cParts[i] > bParts[i]) return true;
@@ -25,20 +25,25 @@ function isSemverGreater(current, base) {
   }
   return false;
 }
-
+function verifyTransition({baseVersion,currentVersion,approval,approvalInBase=true}) {
+  if (!isSemverGreater(currentVersion, baseVersion)) return false;
+  const c=currentVersion.split('.').map(Number), b=baseVersion.split('.').map(Number);
+  if (c[0] > b[0]) return Boolean(approvalInBase && approval?.approvedVersion === currentVersion);
+  return true;
+}
 
 if (process.argv.includes('--self-test')) {
   const cases = [
-    ['2.0.20', '2.0.19', true],
-    ['2.0.19', '2.0.19', false],
-    ['2.0.18', '2.0.19', false]
+    ['2.0.20 → 2.0.21', {baseVersion:'2.0.20', currentVersion:'2.0.21'}, true],
+    ['2.0.20 → 2.0.20', {baseVersion:'2.0.20', currentVersion:'2.0.20'}, false],
+    ['2.0.20 → 2.0.19', {baseVersion:'2.0.20', currentVersion:'2.0.19'}, false],
+    ['2.0.20 → 3.0.0 approvalなし', {baseVersion:'2.0.20', currentVersion:'3.0.0'}, false],
+    ['2.0.20 → 3.0.0 wrong approvedVersion', {baseVersion:'2.0.20', currentVersion:'3.0.0', approval:{approvedVersion:'3.0.1'}}, false],
+    ['2.0.20 → 3.0.0 base approval', {baseVersion:'2.0.20', currentVersion:'3.0.0', approval:{approvedVersion:'3.0.0'}, approvalInBase:true}, true],
+    ['task branch後付け approval record', {baseVersion:'2.0.20', currentVersion:'3.0.0', approval:{approvedVersion:'3.0.0'}, approvalInBase:false}, false]
   ];
-  for (const [current, base, expected] of cases) {
-    if (isSemverGreater(current, base) !== expected) {
-      fail(`Self-test failed for ${base} -> ${current}`);
-    }
-  }
-  console.log('✅ Version verifier self-test passed: 2.0.19→2.0.20 pass; equal/downgrade fail; major bump remains approval-gated in formal mode.');
+  for (const [name,input,expected] of cases) if (verifyTransition(input)!==expected) fail(`Self-test failed for ${name}`);
+  console.log('✅ Version governance self-test passed for patch/equal/downgrade/major approval scenarios including approvedVersion and base-only approval policy.');
   process.exit(0);
 }
 
@@ -98,6 +103,7 @@ if (!isStatic) {
   console.log(`Base version:    ${baseVersion}`);
 }
 
+
 // 1. Perform git-history-based checks only if in formal (non-static) mode
 if (!isStatic) {
   const sensitivePaths = [
@@ -123,7 +129,9 @@ if (!isStatic) {
     if (currentVersion === baseVersion) {
       fail(`The version in package.json must be bumped. Code changed under sensitive paths, but version remained "${currentVersion}".`);
     }
-    if (!isSemverGreater(currentVersion, baseVersion)) {
+    let greater;
+    try { greater = isSemverGreater(currentVersion, baseVersion); } catch (e) { fail(e.message); }
+    if (!greater) {
       fail(`Current version "${currentVersion}" is not greater than base version "${baseVersion}".`);
     }
   }
@@ -144,7 +152,7 @@ if (!isStatic) {
   }
 }
 
-// 2. Verify that all other packages and configuration files are perfectly synchronized
+// 0. Verify package/profile/docs synchronization before git-history monotonic checks so drift errors are precise.
 const checkPackageVersion = (pkgPath) => {
   try {
     const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, pkgPath), 'utf8'));
@@ -157,7 +165,6 @@ const checkPackageVersion = (pkgPath) => {
 };
 checkPackageVersion('functions/package.json');
 checkPackageVersion('packages/efp-model/package.json');
-
 try {
   const profilePath = path.join(rootDir, 'contracts/profiles/current-application.json');
   const profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
@@ -167,7 +174,6 @@ try {
 } catch (e) {
   fail(`Failed to verify current-application.json: ${e.message}`);
 }
-
 try {
   const readme = fs.readFileSync(path.join(rootDir, 'README.md'), 'utf8');
   if (!readme.includes(`Version ${currentVersion}`) && !readme.includes(`v${currentVersion}`)) {

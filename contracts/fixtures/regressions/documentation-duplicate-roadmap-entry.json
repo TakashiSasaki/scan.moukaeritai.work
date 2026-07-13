@@ -1,5 +1,0 @@
-{
-  "id": "documentation-duplicate-roadmap-entry",
-  "requirementId": "documentation-duplicate-roadmap-entry",
-  "expected": "regression must be rejected or covered by named gate"
-}

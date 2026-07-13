@@ -1,5 +1,0 @@
-{
-  "id": "same-command-different-api-version-rejected",
-  "requirementId": "same-command-different-api-version-rejected",
-  "expected": "regression must be rejected or covered by named gate"
-}

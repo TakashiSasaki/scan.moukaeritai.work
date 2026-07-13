@@ -2,10 +2,15 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getFirestore, Timestamp, GeoPoint } from "firebase-admin/firestore";
 import { generateUUIDv7 } from "@scan/efp-model";
-import { getCanonicalRequestIdentity } from "./canonicalRequestIdentity";
+import { CANONICAL_JSON_VERSION, REQUEST_HASH_VERSION, getCanonicalRequestIdentity } from "./canonicalRequestIdentity";
 import { buildLogicalFact } from "./logicalFactBuilder";
 import * as fs from "fs";
 import * as path from "path";
+
+
+export const COMMAND_RECEIPT_FIELDS = ["commandId", "ownerId", "factId", "factType", "callableApiVersion", "canonicalJsonVersion", "requestHash", "requestHashVersion", "executedAt"] as const;
+export const REPLAY_COMPARISON_FIELDS = ["callableApiVersion", "factType", "canonicalJsonVersion", "requestHash", "requestHashVersion"] as const;
+export { CANONICAL_JSON_VERSION, REQUEST_HASH_VERSION };
 
 const appletConfig = {
   firestoreDatabaseId: "photo-moukaeritai-work"

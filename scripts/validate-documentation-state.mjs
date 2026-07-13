@@ -94,6 +94,14 @@ const profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
 if (profile.applicationVersion !== currentVersion) {
   fail(`contracts/profiles/current-application.json version (${profile.applicationVersion}) does not match package.json version (${currentVersion})`);
 }
+if (profile.contracts['callable-functions-api'] !== '1.1.9') fail('Callable API version mismatch; expected 1.1.9');
+for (const text of [readme, agents]) {
+  if (!text.includes('canonicalJsonVersion') || !text.includes('1')) fail('canonicalJsonVersion documentation missing');
+  if (!text.includes('sha256-canonical-json-v1')) fail('requestHashVersion documentation missing');
+  if (text.includes('2.0.20 Fact Runtime Closure Correction and Version Governance Repair (Current)')) fail('2.0.20 must not be Current');
+  if (text.includes('2.0.21**: Projection Reliability')) fail('Projection must not remain 2.0.21');
+  if (text.includes('2.0.22**: Rules')) fail('Rules closure must not remain 2.0.22');
+}
 
 
 function extractRoadmap(text, fileName) {
@@ -117,8 +125,9 @@ const requiredRoadmap = [
   ['2.0.18', 'Fact runtime recovery initial implementation'],
   ['2.0.19', 'Main branch Hermes integration and branch workflow update'],
   ['2.0.20', 'Fact Runtime Closure Correction and Version Governance Repair'],
-  ['2.0.21', 'Projection Reliability and Ordering'],
-  ['2.0.22', 'Rules, Legacy Runtime and Export Closure'],
+  ['2.0.21', 'Regression Harness and Closure Evidence Repair'],
+  ['2.0.22', 'Projection Reliability and Ordering'],
+  ['2.0.23', 'Rules, Legacy Runtime and Export Closure'],
   ['2.1.0', 'EFP-native First Vertical Slice']
 ];
 for (const [version, name] of requiredRoadmap) {

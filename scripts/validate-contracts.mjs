@@ -116,6 +116,17 @@ const contractSchemaSpec = {
         breaksBackwardCompatibility: { type: 'boolean' },
         compatibleWith: { type: 'array', items: { type: 'string' } }
       }
+    },
+    requestIdentity: {
+      type: 'object',
+      required: ['canonicalJsonVersion', 'requestHashVersion', 'receiptFields', 'replayComparisonFields'],
+      additionalProperties: false,
+      properties: {
+        canonicalJsonVersion: { type: 'number' },
+        requestHashVersion: { type: 'string' },
+        receiptFields: { type: 'array', items: { type: 'string' } },
+        replayComparisonFields: { type: 'array', items: { type: 'string' } }
+      }
     }
   }
 };

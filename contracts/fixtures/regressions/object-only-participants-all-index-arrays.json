@@ -1,5 +1,0 @@
-{
-  "id": "object-only-participants-all-index-arrays",
-  "requirementId": "object-only-participants-all-index-arrays",
-  "expected": "regression must be rejected or covered by named gate"
-}

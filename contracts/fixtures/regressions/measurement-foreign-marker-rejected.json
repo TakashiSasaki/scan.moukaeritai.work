@@ -1,5 +1,0 @@
-{
-  "id": "measurement-foreign-marker-rejected",
-  "requirementId": "measurement-foreign-marker-rejected",
-  "expected": "regression must be rejected or covered by named gate"
-}

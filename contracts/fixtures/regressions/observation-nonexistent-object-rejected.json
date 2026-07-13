@@ -1,5 +1,0 @@
-{
-  "id": "observation-nonexistent-object-rejected",
-  "requirementId": "observation-nonexistent-object-rejected",
-  "expected": "regression must be rejected or covered by named gate"
-}

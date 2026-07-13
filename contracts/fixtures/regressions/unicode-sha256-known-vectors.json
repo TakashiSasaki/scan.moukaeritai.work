@@ -1,5 +1,0 @@
-{
-  "id": "unicode-sha256-known-vectors",
-  "requirementId": "unicode-sha256-known-vectors",
-  "expected": "regression must be rejected or covered by named gate"
-}

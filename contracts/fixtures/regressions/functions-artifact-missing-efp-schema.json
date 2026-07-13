@@ -1,5 +1,0 @@
-{
-  "id": "functions-artifact-missing-efp-schema",
-  "requirementId": "functions-artifact-missing-efp-schema",
-  "expected": "regression must be rejected or covered by named gate"
-}

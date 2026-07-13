@@ -1,0 +1,13 @@
+{
+  "id": "association-transition",
+  "requirementId": "association-transition-full-matrix",
+  "runner": "association-transition",
+  "input": {},
+  "expected": {
+    "includes": [
+      "subjectAssociationId",
+      "already detached or replaced",
+      "Replace Marker must be different"
+    ]
+  }
+}
