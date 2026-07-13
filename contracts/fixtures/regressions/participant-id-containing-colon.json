@@ -1,5 +1,0 @@
-{
-  "id": "participant-id-containing-colon",
-  "requirementId": "participant-id-containing-colon",
-  "expected": "regression must be rejected or covered by named gate"
-}

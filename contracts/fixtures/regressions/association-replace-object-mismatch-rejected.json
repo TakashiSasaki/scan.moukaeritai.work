@@ -1,5 +1,0 @@
-{
-  "id": "association-replace-object-mismatch-rejected",
-  "requirementId": "association-replace-object-mismatch-rejected",
-  "expected": "regression must be rejected or covered by named gate"
-}

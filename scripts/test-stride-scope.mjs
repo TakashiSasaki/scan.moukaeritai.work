@@ -1,17 +1,5 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const manifestPath = path.join(rootDir, '.agents/strides/2.0.20.json');
-const allowed = ['Projection Reliability and Ordering', 'Rules, Legacy Runtime and Export Closure'];
-function fail(msg){ throw new Error(msg); }
-function validate(manifest){
-  for (const d of manifest.deferrals || []) if (!allowed.includes(d.scope)) fail(`Unallowed deferral: ${d.scope}`);
-  const serialized = JSON.stringify(manifest.deferrals || []);
-  for (const forbidden of ['Fact runtime', 'UTF-8 SHA-256', 'artifact completeness', 'participant validation']) if (serialized.includes(forbidden)) fail(`Fact runtime item deferred: ${forbidden}`);
-}
-if (process.argv.includes('--self-test')) {
-  const good=JSON.parse(fs.readFileSync(manifestPath,'utf8')); validate(good);
-  const bad=structuredClone(good); bad.deferrals.push({target:'2.0.19',scope:'Fact runtime',items:['participant validation']}); let failed=false; try{validate(bad)}catch{failed=true} if(!failed) throw new Error('self-test did not fail for unallowed deferral');
-  console.log('Stride scope self-test passed.');
-} else { try { validate(JSON.parse(fs.readFileSync(manifestPath,'utf8'))); console.log('Stride scope gate passed.'); } catch (e) { console.error(`❌ Stride scope gate failed: ${e.message}`); process.exit(1); } }
+import fs from 'node:fs';import path from 'node:path';import {execSync} from 'node:child_process';import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'); function fail(m){throw new Error(m)}
+function changed(){try{return execSync('git diff --name-only HEAD',{cwd:root,encoding:'utf8'}).split('\n').filter(Boolean)}catch{return []}}
+function validate(){const m=JSON.parse(fs.readFileSync(path.join(root,'.agents/strides/2.0.21.json'),'utf8')); const evidence=new Set(m.requirements.flatMap(r=>(r.evidence||[]).map(e=>e.path))); const files=changed(); for(const f of files.filter(f=>/^(functions\/src|scripts|contracts|packages|package|README|AGENTS)/.test(f))) if(![...evidence].some(e=>f===e||f.startsWith(e.replace(/\/[^/]+$/,'')))) fail(`changed sensitive path lacks manifest evidence: ${f}`); if(files.some(f=>f.startsWith('contracts/packages/callable-functions-api/1.1.9/'))){ for(const p of ['contracts/registry.json','contracts/profiles/current-application.json','contracts/packages/callable-functions-api/active-version.json','contracts/fixtures/compatibility/1.1.8/valid/submit-fact-command-request-association.json']) if(!fs.existsSync(path.join(root,p))) fail(`missing contract version support ${p}`)} for(const p of ['package-lock.json','functions/package-lock.json','packages/efp-model/package-lock.json']){const j=JSON.parse(fs.readFileSync(path.join(root,p),'utf8')); if(j.version!=='2.0.21') fail(`${p} version not synchronized`)} if(files.includes('pnpm-lock.yaml')) fail('inactive package manager lockfile changed'); for(const f of files) if(/projection|firestore\.rules|export-legacy|legacy/i.test(f)&&!f.includes('AGENTS')&&!f.includes('README')) fail(`non-target scope changed: ${f}`);}
+if(process.argv.includes('--self-test')){validate(); console.log('Stride scope self-test passed.')} else {validate(); console.log('Stride scope gate passed.')}

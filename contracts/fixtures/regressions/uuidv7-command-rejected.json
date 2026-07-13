@@ -1,5 +1,0 @@
-{
-  "id": "uuidv7-command-rejected",
-  "requirementId": "uuidv7-command-rejected",
-  "expected": "regression must be rejected or covered by named gate"
-}

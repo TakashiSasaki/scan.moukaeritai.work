@@ -178,28 +178,19 @@
   ],
   "deferrals": [
     {
-      "target": "2.0.19",
+      "target": "2.0.21",
       "scope": "Projection Reliability and Ordering",
       "items": [
-        "retry-safe handler",
-        "duplicate trigger safety",
-        "out-of-order safety",
-        "deterministic Fact order key",
-        "domain-time/Fact-ID watermark",
-        "conditional summary write",
-        "projection processing receipt",
-        "projection status tracking"
+        "historical target corrected by note; actual deferral now tracked in 2.0.21 as 2.0.22"
       ]
     },
     {
-      "target": "2.0.20",
+      "target": "2.0.22",
       "scope": "Rules, Legacy Runtime and Export Closure",
       "items": [
-        "strict Entity _meta security rules",
-        "Marker identity immutability rule",
-        "Fact read owner scope",
-        "legacy export closure"
+        "historical target corrected by note; actual deferral now tracked in 2.0.21 as 2.0.23"
       ]
     }
-  ]
+  ],
+  "historicalCorrectionNote": "2.0.21 identifies that this historical manifest relied heavily on README-only evidence and obsolete deferral targets; 2.0.21 replaces it with typed evidence and fail-closed gates while preserving 2.0.20 as historical record."
 }

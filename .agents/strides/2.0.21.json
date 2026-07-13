@@ -1,0 +1,461 @@
+{
+  "stride": "2.0.21",
+  "name": "Regression Harness and Closure Evidence Repair",
+  "applicationVersion": "2.0.21",
+  "callableApiVersion": "1.1.9",
+  "status": "ready-for-codex-pr",
+  "allowedStatuses": [
+    "in-progress",
+    "ready-for-codex-pr",
+    "ready-for-main-pr",
+    "complete"
+  ],
+  "evidenceKinds": [
+    "source",
+    "test",
+    "contract",
+    "fixture",
+    "gate",
+    "documentation",
+    "workflow"
+  ],
+  "requirements": [
+    {
+      "id": "version-2.0.21",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "package.json",
+          "kind": "source"
+        },
+        {
+          "path": "package-lock.json",
+          "kind": "source"
+        },
+        {
+          "path": "contracts/profiles/current-application.json",
+          "kind": "contract"
+        },
+        {
+          "path": "README.md",
+          "kind": "documentation"
+        },
+        {
+          "path": "AGENTS.md",
+          "kind": "documentation"
+        },
+        {
+          "path": "functions/package.json",
+          "kind": "source"
+        },
+        {
+          "path": "functions/package-lock.json",
+          "kind": "source"
+        },
+        {
+          "path": "packages/efp-model/package.json",
+          "kind": "source"
+        },
+        {
+          "path": "packages/efp-model/package-lock.json",
+          "kind": "source"
+        }
+      ],
+      "verificationCommands": [
+        "version:verify"
+      ]
+    },
+    {
+      "id": "version-governance-harness",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "scripts/verify-version.mjs",
+          "kind": "gate"
+        },
+        {
+          "path": "contracts/fixtures/regression/version-governance-mutation.json",
+          "kind": "fixture"
+        }
+      ],
+      "verificationCommands": [
+        "version:verify:self",
+        "version:verify"
+      ]
+    },
+    {
+      "id": "callable-api-1.1.9-active",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "contracts/packages/callable-functions-api/1.1.9/contract.json",
+          "kind": "contract"
+        },
+        {
+          "path": "contracts/packages/callable-functions-api/active-version.json",
+          "kind": "contract"
+        },
+        {
+          "path": "contracts/registry.json",
+          "kind": "contract"
+        }
+      ],
+      "verificationCommands": [
+        "contracts:validate",
+        "test:callable-compatibility"
+      ]
+    },
+    {
+      "id": "request-identity-contract-runtime-alignment",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "contracts/packages/callable-functions-api/1.1.9/contract.json",
+          "kind": "contract"
+        },
+        {
+          "path": "functions/src/canonicalRequestIdentity.ts",
+          "kind": "source"
+        },
+        {
+          "path": "functions/src/submitFactCommand.ts",
+          "kind": "source"
+        },
+        {
+          "path": "functions/test/requestIdentityContractRuntimeAlignment.test.ts",
+          "kind": "test"
+        },
+        {
+          "path": "scripts/test-contract-runtime-drift.mjs",
+          "kind": "gate"
+        }
+      ],
+      "verificationCommands": [
+        "test:contract-runtime-drift",
+        "test:functions"
+      ]
+    },
+    {
+      "id": "compiled-artifact-isolation",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "scripts/test-functions-artifact-isolation.mjs",
+          "kind": "gate"
+        },
+        {
+          "path": "scripts/prepare-functions-artifact.mjs",
+          "kind": "source"
+        }
+      ],
+      "verificationCommands": [
+        "prepare:functions-artifact",
+        "test:functions-artifact:isolation"
+      ]
+    },
+    {
+      "id": "artifact-isolation-mutation-harness",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "scripts/test-functions-artifact-isolation.mjs",
+          "kind": "gate"
+        },
+        {
+          "path": "contracts/fixtures/regression/artifact-isolation-mutation.json",
+          "kind": "fixture"
+        }
+      ],
+      "verificationCommands": [
+        "test:functions-artifact:isolation",
+        "test:regression-fixtures"
+      ]
+    },
+    {
+      "id": "owner-aware-firestore-harness",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "functions/src/submitFactCommand.ts",
+          "kind": "source"
+        },
+        {
+          "path": "functions/test/harness/fakeFirestore.ts",
+          "kind": "test"
+        },
+        {
+          "path": "functions/test/harness/submitFactCommandHarness.ts",
+          "kind": "test"
+        },
+        {
+          "path": "functions/test/submitFactCommandHarness.test.ts",
+          "kind": "test"
+        }
+      ],
+      "verificationCommands": [
+        "test:functions"
+      ]
+    },
+    {
+      "id": "idempotency-full-matrix",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "functions/src/submitFactCommand.ts",
+          "kind": "source"
+        },
+        {
+          "path": "functions/test/requestIdentityContractRuntimeAlignment.test.ts",
+          "kind": "test"
+        },
+        {
+          "path": "contracts/fixtures/regression/submit-fact-idempotency.json",
+          "kind": "fixture"
+        }
+      ],
+      "verificationCommands": [
+        "test:functions",
+        "test:regression-fixtures"
+      ]
+    },
+    {
+      "id": "association-transition-full-matrix",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "functions/src/submitFactCommand.ts",
+          "kind": "source"
+        },
+        {
+          "path": "functions/test/requestIdentityContractRuntimeAlignment.test.ts",
+          "kind": "test"
+        },
+        {
+          "path": "contracts/fixtures/regression/association-transition.json",
+          "kind": "fixture"
+        }
+      ],
+      "verificationCommands": [
+        "test:functions",
+        "test:regression-fixtures"
+      ]
+    },
+    {
+      "id": "version-specific-callable-compatibility",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "scripts/test-callable-compatibility.mjs",
+          "kind": "gate"
+        },
+        {
+          "path": "contracts/fixtures/compatibility/1.1.8/valid/submit-fact-command-request-association.json",
+          "kind": "fixture"
+        },
+        {
+          "path": "contracts/fixtures/compatibility/1.1.7/valid/submit-fact-command-request-association.json",
+          "kind": "fixture"
+        },
+        {
+          "path": "contracts/packages/callable-functions-api/1.1.9/contract.json",
+          "kind": "contract"
+        }
+      ],
+      "verificationCommands": [
+        "test:callable-compatibility"
+      ]
+    },
+    {
+      "id": "behavioral-regression-fixtures",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "contracts/fixtures/regression/fixture.schema.json",
+          "kind": "contract"
+        },
+        {
+          "path": "contracts/fixtures/regression/sha256-known-vector.json",
+          "kind": "fixture"
+        },
+        {
+          "path": "scripts/test-regression-fixtures.mjs",
+          "kind": "gate"
+        }
+      ],
+      "verificationCommands": [
+        "test:regression-fixtures"
+      ]
+    },
+    {
+      "id": "participant-index-regression",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "packages/efp-model/src/factParticipants.ts",
+          "kind": "source"
+        },
+        {
+          "path": "contracts/fixtures/regression/participant-index.json",
+          "kind": "fixture"
+        },
+        {
+          "path": "scripts/test-regression-fixtures.mjs",
+          "kind": "gate"
+        }
+      ],
+      "verificationCommands": [
+        "test:regression-fixtures"
+      ]
+    },
+    {
+      "id": "query-index-regression",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "firestore.indexes.json",
+          "kind": "contract"
+        },
+        {
+          "path": "scripts/test-query-index-contract.mjs",
+          "kind": "gate"
+        },
+        {
+          "path": "contracts/fixtures/regression/query-index-mutation.json",
+          "kind": "fixture"
+        }
+      ],
+      "verificationCommands": [
+        "test:query-index-contract:self",
+        "test:query-index-contract",
+        "test:regression-fixtures"
+      ]
+    },
+    {
+      "id": "documentation-roadmap-consistency",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "README.md",
+          "kind": "documentation"
+        },
+        {
+          "path": "AGENTS.md",
+          "kind": "documentation"
+        },
+        {
+          "path": "scripts/validate-documentation-state.mjs",
+          "kind": "gate"
+        },
+        {
+          "path": "contracts/fixtures/regression/documentation-mutation.json",
+          "kind": "fixture"
+        }
+      ],
+      "verificationCommands": [
+        "test:documentation-state",
+        "test:regression-fixtures"
+      ]
+    },
+    {
+      "id": "stride-evidence-integrity",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": ".agents/strides/2.0.21.json",
+          "kind": "gate"
+        },
+        {
+          "path": "scripts/test-stride-completion.mjs",
+          "kind": "gate"
+        },
+        {
+          "path": "contracts/fixtures/regression/stride-manifest-mutation.json",
+          "kind": "fixture"
+        }
+      ],
+      "verificationCommands": [
+        "test:stride-completion",
+        "test:stride-completion -- --self-test",
+        "test:regression-fixtures"
+      ]
+    },
+    {
+      "id": "package-manager-lockfile-policy",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "package.json",
+          "kind": "source"
+        },
+        {
+          "path": "package-lock.json",
+          "kind": "source"
+        },
+        {
+          "path": "scripts/test-repository-hygiene.mjs",
+          "kind": "gate"
+        }
+      ],
+      "verificationCommands": [
+        "test:repository-hygiene:self",
+        "test:repository-hygiene"
+      ]
+    },
+    {
+      "id": "node-only-baseline",
+      "status": "complete",
+      "evidence": [
+        {
+          "path": "package.json",
+          "kind": "source"
+        },
+        {
+          "path": "scripts/verify-closeout.mjs",
+          "kind": "gate"
+        }
+      ],
+      "verificationCommands": [
+        "verify:baseline",
+        "verify:closeout"
+      ]
+    },
+    {
+      "id": "codex-target-pr",
+      "status": "pending",
+      "evidence": [],
+      "verificationCommands": []
+    },
+    {
+      "id": "main-target-ci",
+      "status": "pending",
+      "evidence": [],
+      "verificationCommands": []
+    }
+  ],
+  "deferrals": [
+    {
+      "target": "2.0.22",
+      "scope": "Projection Reliability and Ordering",
+      "items": [
+        "retry-safe projection handler",
+        "duplicate trigger safety",
+        "out-of-order safety",
+        "deterministic Fact order key",
+        "domain-time / Fact-ID watermark",
+        "conditional summary write",
+        "projection processing receipt",
+        "projection status tracking"
+      ]
+    },
+    {
+      "target": "2.0.23",
+      "scope": "Rules, Legacy Runtime and Export Closure",
+      "items": [
+        "strict Entity _meta security rules",
+        "Marker identity immutability rule",
+        "Fact read owner scope",
+        "legacy export closure"
+      ]
+    }
+  ]
+}

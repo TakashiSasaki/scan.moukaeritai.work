@@ -1,0 +1,13 @@
+{
+  "id": "submit-fact-idempotency",
+  "requirementId": "idempotency-full-matrix",
+  "runner": "submit-fact-idempotency",
+  "input": {},
+  "expected": {
+    "includes": [
+      "canonicalJsonVersion",
+      "requestHashVersion",
+      "callableApiVersion"
+    ]
+  }
+}

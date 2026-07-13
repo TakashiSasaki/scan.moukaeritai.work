@@ -1,0 +1,14 @@
+{
+  "id": "participant-index",
+  "requirementId": "participant-index-regression",
+  "runner": "participant-index",
+  "input": {},
+  "expected": {
+    "includes": [
+      "participantKeys",
+      "objectIds",
+      "markerKeys",
+      "placeIds"
+    ]
+  }
+}
