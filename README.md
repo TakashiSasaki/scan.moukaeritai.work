@@ -1,25 +1,61 @@
-# scan.mw (Version 2.0.22)
+# scan.mw
 
-Welcome to **scan.mw v2.0.22**, a cloud-based item tracking and inventory management application using the Contract-First EFP architecture.
+Cloud-based item tracking and inventory management built on Firebase, React, TypeScript, and the Contract-First Entity-Fact-Projection (EFP) model.
 
-## Current stride
+## Current priority
 
-**2.0.22 Behavioral Harness Closure and Merge Readiness (Current)** closes the behavioral Node-only regression harness work for the Fact command runtime without expanding Projection, Rules, Legacy Export, Object UI, Marker UI, QR, or NFC scope.
+The project is focused on the first usable EFP-native vertical slice:
 
-- Application version: **2.0.22**.
-- Callable Functions API: **1.1.9** is maintained.
-- Contract/runtime metadata continue to use `canonicalJsonVersion=1` and `requestHashVersion=sha256-canonical-json-v1`.
-- Node-only verification passed locally.
-- Main-target GitHub Actions confirmation is pending.
+1. Create an Object.
+2. Create a Marker.
+3. Attach the Marker to the Object.
+4. Read the Marker.
+5. Display the associated Object.
+6. Detach the Association.
+7. Treat the detached Marker as unassigned.
 
-## Roadmap
+This slice is limited to Object, Marker, Association attach/detach, and the read models needed to show the current relationship. Place, Observation, Measurement, Event, projection backfill, generic watermarks, processing receipts, migration phases, and broad future abstractions are outside the critical path unless directly needed for this slice.
 
-- **2.0.21**: Regression Harness and Closure Evidence Repair (Historical; initial evidence model was improved, but behavioral harness remained incomplete).
-- **2.0.22**: Behavioral Harness Closure and Merge Readiness (Current).
-- **2.0.23**: Projection Reliability and Ordering (Deferred).
-- **2.0.24**: Rules, Legacy Runtime and Export Closure (Deferred).
-- **2.1.0**: EFP-native First Vertical Slice (Deferred).
+## Legacy data policy
 
-## Non-goals in 2.0.22
+Legacy data is retained as a read-only Firestore archive.
 
-Projection ordering, Projection watermarking, Projection processing receipts, Firestore Rules closure, Legacy Export, Object/Marker UI, QR/NFC workflow, Java, Firestore Emulator, production deploys, production writes, and production deletes are outside this stride.
+- No legacy-to-EFP migration.
+- No dual-write, shadow-write, backfill, reconciliation, canary write, or rollback framework.
+- Legacy Firestore collections remain read-only.
+- Admin browse is allowed.
+- JSON is the only supported legacy export format.
+- New runtime paths must not write to legacy collections.
+
+## Development
+
+```bash
+npm ci
+npm run dev
+```
+
+The app runs on port `3000`.
+
+## Verification tiers
+
+```bash
+npm run verify:fast
+npm run verify:pr
+npm run verify:release
+```
+
+- `verify:fast` is for normal local task checks.
+- `verify:pr` is for pull requests and GitHub Actions.
+- `verify:release` is for release candidates and explicit full validation.
+- `verify:baseline` is kept as an alias for `verify:release` for compatibility.
+
+Firestore Emulator Suite checks that require Java should run in GitHub Actions rather than through a local pseudo-emulator.
+
+## Canonical references
+
+- Application version: `package.json`
+- Active contract profile: `contracts/profiles/current-application.json`
+- Contract registry: `contracts/registry.json`
+- Route access policy: `src/lib/routeCatalog.ts`
+- Agent rules: `AGENTS.md`
+- Agent skills: `.agents/skills/manifest.json`

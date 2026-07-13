@@ -1,5 +1,8 @@
 # manage-scanner-dual-write
 
+> Historical only: legacy migration, dual-write, backfill, reconciliation, and runtime integration are cancelled. This archived skill must not be used for active roadmap, verification, or implementation work.
+
+
 ## Purpose
 Manage the rollout and validation of dual-write capabilities for the scanner and observation features during the database migration.
 

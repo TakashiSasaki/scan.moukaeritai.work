@@ -90,9 +90,9 @@ for (const file of files) {
         fail('ci.yml must install Functions dependencies AFTER preparing Functions artifact.');
       }
 
-      const hasBaselineVerify = steps.some(step => step.run && step.run.includes('verify:baseline'));
+      const hasBaselineVerify = steps.some(step => step.run && step.run.includes('verify:pr'));
       if (!hasBaselineVerify) {
-        fail('ci.yml is missing "npm run verify:baseline" step.');
+        fail('ci.yml is missing "npm run verify:pr" step.');
       }
     }
 

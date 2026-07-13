@@ -1,33 +1,56 @@
 # version-governance
 
+## Scope
+Keep release version metadata understandable without forcing every internal change to bump versions.
+
+## Trigger
+Use for release candidates, externally visible compatibility/API changes, or explicit version metadata changes.
+
+## Non-goals
+- Do not require version bumps for ordinary internal fixes, tests, or docs.
+- Do not synchronize versions across unrelated packages by default.
+- Do not treat lockfiles as version sources of truth.
+- Do not duplicate application versions into README manually.
+- Do not bump Callable API versions for internal-only changes.
+
+## Commands
+- `npm run version:verify` for release/external compatibility changes.
+- `npm run verify:release` before release candidates.
+
+## Execution class
+release
+
+## Mutation policy
+may modify version metadata only when the trigger applies.
+
+## Stop condition
+Stop if a required external compatibility version decision is unclear or a major version would be required without human approval.
+
 ## Purpose
-Enforces strict semantic versioning, ensures synchronized metadata files, and verifies version consistency across workspace packages.
+See Scope above; this skill is now tiered and bounded by execution class.
 
 ## When to use
-Whenever code under sensitive paths is modified, or when starting/completing a stride.
+See Trigger above.
 
 ## Inputs
-- `package.json`
-- `functions/package.json`
-- `packages/efp-model/package.json`
-- `contracts/profiles/current-application.json`
-- `README.md`
+- Current task instructions
+- Changed files and relevant canonical sources
+
 
 ## Procedure
-1. Classify the nature of changes (bugfix, refactor, performance, new API feature, security closure, etc.).
-2. Determine whether the modifications warrant a major, minor, or patch version bump.
-3. Synchronize the exact version string across all versioned files (`package.json`, `package-lock.json`, `functions/package.json`, `functions/package-lock.json`, `packages/efp-model/package.json`, `contracts/profiles/current-application.json`, and `README.md`).
-4. Execute `npm run version:verify` to guarantee full metadata integrity.
+Follow the Scope, Trigger, Non-goals, Commands, Execution class, Mutation policy, and Stop condition sections above. Prefer the narrowest relevant command set.
 
 ## Stop conditions
-- A major version bump is detected (stops immediately; requires explicit human authorization).
-- Sensitive path modifications exist but no version bump is proposed.
+See Stop condition above.
 
 ## Verification
-- Run `npm run version:verify` and confirm output indicates `✅ Version bump verified!`.
+Use only the relevant commands listed above for the current execution class.
 
 ## Related scripts
-- `npm run version:verify`
+- `npm run verify:fast`
+- `npm run verify:pr`
+- `npm run verify:release`
+
 
 ## Outputs
-- Updated synchronized version numbers across all package files.
+A bounded result for the current task without creating unrelated work.

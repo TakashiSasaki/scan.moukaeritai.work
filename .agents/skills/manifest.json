@@ -4,64 +4,138 @@
       "id": "repository-preflight",
       "path": ".agents/skills/repository-preflight/SKILL.md",
       "status": "active",
-      "description": "Performs repository preflight checks before modifying files.",
-      "requiredFor": ["Any change request or stride beginning"]
+      "description": "Checks branch/status/diff and relevant AGENTS/skill/profile context before edits.",
+      "requiredFor": [
+        "Before a change request when files may be modified"
+      ],
+      "executionClass": "fast",
+      "mutationPolicy": "read-only",
+      "nonGoals": [
+        "Do not add migration, dual-write, backfill, or reconciliation work.",
+        "Do not add new gates or mutation fixtures.",
+        "Do not run release verification for ordinary task changes."
+      ]
     },
     {
       "id": "version-governance",
       "path": ".agents/skills/version-governance/SKILL.md",
       "status": "active",
-      "description": "Enforces semantic versioning, version integrity, and metadata updates.",
-      "requiredFor": ["Any file modifications under sensitive paths"]
+      "description": "Release/external-compatibility version decision support; ordinary internal changes do not require bumps.",
+      "requiredFor": [
+        "Release candidates or externally visible compatibility/API changes"
+      ],
+      "executionClass": "release",
+      "mutationPolicy": "may modify files",
+      "nonGoals": [
+        "Do not add migration, dual-write, backfill, or reconciliation work.",
+        "Do not add new gates or mutation fixtures.",
+        "Do not run release verification for ordinary task changes."
+      ]
     },
     {
       "id": "contract-change",
       "path": ".agents/skills/contract-change/SKILL.md",
       "status": "active",
-      "description": "Guides contract evolution, schema updates, generated types check, and runtime synchronization.",
-      "requiredFor": ["Modifying anything inside /contracts or modifying API data formats"]
+      "description": "Guides externally visible contract/profile/schema changes without creating versions for docs/tests/internal metadata.",
+      "requiredFor": [
+        "Changes under /contracts or external API/database payload formats"
+      ],
+      "executionClass": "fast/PR",
+      "mutationPolicy": "may modify files",
+      "nonGoals": [
+        "Do not add migration, dual-write, backfill, or reconciliation work.",
+        "Do not add new gates or mutation fixtures.",
+        "Do not run release verification for ordinary task changes."
+      ]
     },
     {
       "id": "functions-artifact-verification",
       "path": ".agents/skills/functions-artifact-verification/SKILL.md",
       "status": "active",
-      "description": "Compiles, validates, and runs integrity checks on functions deployment artifacts.",
-      "requiredFor": ["Changes in Cloud Functions or efp-model package"]
+      "description": "Verifies Functions deploy artifact boundaries when packaging/dependency shape changes.",
+      "requiredFor": [
+        "Functions deployment packaging, allowlist, or dependency boundary changes"
+      ],
+      "executionClass": "PR/release",
+      "mutationPolicy": "read-only",
+      "nonGoals": [
+        "Do not add migration, dual-write, backfill, or reconciliation work.",
+        "Do not add new gates or mutation fixtures.",
+        "Do not run release verification for ordinary task changes."
+      ]
     },
     {
       "id": "repository-hygiene",
       "path": ".agents/skills/repository-hygiene/SKILL.md",
       "status": "active",
-      "description": "Enforces repository cleanliness and prevent scratch file commits.",
-      "requiredFor": ["Every task closure and verification baseline execution"]
+      "description": "Checks task-owned diffs and prevents scratch/prohibited root files.",
+      "requiredFor": [
+        "Task closeout; full script at PR/release or root-file changes"
+      ],
+      "executionClass": "fast/PR/release",
+      "mutationPolicy": "read-only",
+      "nonGoals": [
+        "Do not add migration, dual-write, backfill, or reconciliation work.",
+        "Do not add new gates or mutation fixtures.",
+        "Do not run release verification for ordinary task changes."
+      ]
     },
     {
       "id": "documentation-reality-check",
       "path": ".agents/skills/documentation-reality-check/SKILL.md",
       "status": "active",
-      "description": "Audits project claims, completion states, and milestone documentation against test coverage and realities.",
-      "requiredFor": ["Task closeout and status updates"]
+      "description": "Reviews changed docs against implemented behavior and active policy.",
+      "requiredFor": [
+        "Documentation edits or changes that make touched docs inaccurate"
+      ],
+      "executionClass": "fast/PR/release",
+      "mutationPolicy": "may modify files",
+      "nonGoals": [
+        "Do not add migration, dual-write, backfill, or reconciliation work.",
+        "Do not add new gates or mutation fixtures.",
+        "Do not run release verification for ordinary task changes."
+      ]
     },
     {
       "id": "stride-closeout",
       "path": ".agents/skills/stride-closeout/SKILL.md",
       "status": "active",
-      "description": "Ensures complete validation, test passing, hygiene checks, git-status inspection, and clean commit message preparation.",
-      "requiredFor": ["Completing any stride or closing tasks"]
+      "description": "Tiered task, PR, and release closeout instead of a single mandatory release gate.",
+      "requiredFor": [
+        "Task completion, PR preparation, or release preparation"
+      ],
+      "executionClass": "fast/PR/release",
+      "mutationPolicy": "read-only except commit",
+      "nonGoals": [
+        "Do not add migration, dual-write, backfill, or reconciliation work.",
+        "Do not add new gates or mutation fixtures.",
+        "Do not run release verification for ordinary task changes."
+      ]
     },
     {
       "id": "run-local-tests",
       "path": ".agents/skills/run-local-tests/SKILL.md",
       "status": "active",
-      "description": "Standardizes and runs local tests across frontend, backend, contracts, and Firestore static rules.",
-      "requiredFor": ["Every local verification and test execution"]
+      "description": "Selects relevant tests from changed paths; verify:fast is the default daily gate.",
+      "requiredFor": [
+        "After edits or local validation requests"
+      ],
+      "executionClass": "fast/PR/release",
+      "mutationPolicy": "read-only",
+      "nonGoals": [
+        "Do not add migration, dual-write, backfill, or reconciliation work.",
+        "Do not add new gates or mutation fixtures.",
+        "Do not run release verification for ordinary task changes."
+      ]
     },
     {
       "id": "generate-efu-catalog",
       "path": ".agents/skills/generate-efu-catalog/SKILL.md",
       "status": "active",
       "description": "Generates Everything EFU catalogue format file of the workspace.",
-      "requiredFor": ["Workspace cataloguing and listing files"]
+      "requiredFor": [
+        "Workspace cataloguing and listing files"
+      ]
     }
   ]
 }

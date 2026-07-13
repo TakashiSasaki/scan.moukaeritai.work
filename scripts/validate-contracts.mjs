@@ -55,7 +55,7 @@ const registrySchema = {
         properties: {
           contractId: { type: 'string' },
           version: { type: 'string' },
-          status: { type: 'string', enum: ['active', 'deprecated', 'experimental'] },
+          status: { type: 'string', enum: ['active', 'deprecated', 'experimental', 'archived'] },
           title: { type: 'string' },
           description: { type: 'string' },
           contractType: { type: 'string' },
@@ -97,7 +97,7 @@ const contractSchemaSpec = {
   properties: {
     contractId: { type: 'string' },
     version: { type: 'string' },
-    status: { type: 'string', enum: ['active', 'deprecated', 'experimental'] },
+    status: { type: 'string', enum: ['active', 'deprecated', 'experimental', 'archived'] },
     title: { type: 'string' },
     description: { type: 'string' },
     contractType: { type: 'string' },
