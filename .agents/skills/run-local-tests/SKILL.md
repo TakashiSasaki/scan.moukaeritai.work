@@ -1,39 +1,45 @@
 # run-local-tests
 
 ## Purpose
-Run local unit tests and Firebase rules tests to ensure the application logic and security constraints are functioning correctly.
+Runs localized unit, integration, and security rules testing across the entire codebase to detect regressions early.
 
 ## When to use
-Use this skill when:
-- Making changes to Firestore security rules (`firestore.rules`).
-- Making changes to domain logic or utility functions.
-- Before committing changes that affect data models or backend boundaries.
-- The user asks to "run tests" or "verify rules".
+Whenever making active code edits or validating the local test suite.
 
-## Inputs and assumptions
-- Requires Node.js and `npm` (or `vitest` command).
-- Requires Firebase CLI for emulators (if running rules tests).
-- Local environment variables may need to be loaded from `.env` or defaults.
+## Inputs
+- Test configurations (`vitest.config.ts`, `scripts/test-firestore-policy.mjs`)
+- Local workspace files
 
 ## Procedure
-1. To run standard unit tests:
-   Execute `npm run test` or `npm run test:coverage`.
-2. To run boundary and dependency validation tests:
-   Execute `npm run test:functions-boundary` and `npm run test:functions-efp-model`.
-3. To run Firestore rules tests (requires emulators):
-   Execute `npm run test:rules`.
+1. To run standard unit/frontend tests:
+   `npm run test`
+2. To run routing authorization tests:
+   `npm run test:routing`
+3. To run routing boundary validations:
+   `npm run test:routing-boundary`
+4. To run Functions unit tests:
+   `npm run test:functions`
+5. To run Functions artifact validation:
+   `npm run test:functions-artifact`
+6. To run Functions runtime gate tests:
+   `npm run test:functions-runtime-gate`
+7. To run static policy verification for Firestore Security Rules:
+   `npm run test:firestore-policy`
 
-## Safety rules
-- Do not output full test logs if they contain secrets or tokens.
-- Tests must be run in a non-destructive environment. The emulator handles isolating rules testing.
-- Do not perform live mutations on production Firebase while running unit tests.
+## Stop conditions
+- Any test fails or throws compilation errors.
 
 ## Verification
-- Look for `PASS` or `FAIL` output from Vitest.
-- If a test fails, identify the specific assertion or compilation error and fix it before continuing.
+- Check command output logs for successful exit codes and passing assertions.
 
-## Related files
-- `vitest.config.ts`
-- `vitest.rules.config.ts`
-- `firestore.rules`
-- `package.json` (for npm scripts)
+## Related scripts
+- `npm run test`
+- `npm run test:routing`
+- `npm run test:routing-boundary`
+- `npm run test:functions`
+- `npm run test:functions-artifact`
+- `npm run test:functions-runtime-gate`
+- `npm run test:firestore-policy`
+
+## Outputs
+- Passing test logs or identified errors for debugging.

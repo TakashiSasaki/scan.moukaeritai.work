@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ObjectSummaryProjection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "objectId",
+    "asOf"
+  ],
+  "properties": {
+    "objectId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "currentPlaceId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "currentPosition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["latitude", "longitude"],
+      "properties": {
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "accuracyMeters": { "type": "number" }
+      }
+    },
+    "activeMarkerKeys": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 128
+      }
+    },
+    "lastObservedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lastMeasuredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "derivedFromFactIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 128
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EntityReference",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "entityType",
+    "id"
+  ],
+  "properties": {
+    "entityType": {
+      "type": "string",
+      "enum": [
+        "object",
+        "marker",
+        "place",
+        "association",
+        "observation",
+        "measurement",
+        "event",
+        "user",
+        "reader",
+        "device"
+      ]
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 128
+    }
+  }
+}

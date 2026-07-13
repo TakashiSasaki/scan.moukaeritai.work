@@ -1,0 +1,18 @@
+{
+  "contractId": "firestore-binding",
+  "version": "2.0.0",
+  "status": "active",
+  "title": "Firestore Binding",
+  "description": "Upgraded strict binding mapping between logical EFP types and Firestore persistence types",
+  "contractType": "data-binding",
+  "normativeArtifacts": [
+    "firestore-binding.md"
+  ],
+  "dependencies": {
+    "efp-model": "3.0.0"
+  },
+  "compatibility": {
+    "breaksBackwardCompatibility": true,
+    "compatibleWith": []
+  }
+}

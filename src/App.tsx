@@ -1,692 +1,411 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState, useEffect, useRef } from 'react';
-import { auth, db, signInWithPopup, googleProvider, onAuthStateChanged, User, signOut } from './lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { ThemeProvider, useTheme, ThemeColor, ThemeMode } from './context/ThemeContext';
-import { Settings, LogIn, LogOut, Package, Search, PlusCircle, Scan, BarChart3, X, ShieldAlert, Beaker, PlaySquare, Route as RouteIcon, Database, Info } from 'lucide-react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { 
+  auth, 
+  signInWithPopup, 
+  googleProvider, 
+  signOut
+} from './lib/firebase';
+import { ThemeProvider } from './context/ThemeContext';
+import { 
+  Settings, 
+  LogOut, 
+  Package, 
+  ShieldAlert, 
+  Route as RouteIcon, 
+  Info, 
+  BookOpen,
+  ChevronDown
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'react-hot-toast';
-import Dashboard from './components/Dashboard';
-import SearchScreen from './components/SearchScreen';
-import CaptureForm from './components/CaptureForm';
-import UnassignedIdentifierScreen from './components/UnassignedIdentifierScreen';
-import LibraryDemoScreen from './components/LibraryDemoScreen';
-import Scanner from './components/Scanner';
-import Overview from './components/Overview';
+
+// Component imports
 import AdminPanel from './components/AdminPanel';
-import { Navigate } from 'react-router-dom';
-import SitemapPage from './components/SitemapPage';
 import UserSettingsPanel from './components/UserSettingsPanel';
-import TestScreen from './components/TestScreen';
-import DemoScreen from './components/DemoScreen';
-import { AppStatusDialog } from './components/AppStatusDialog';
-import { ImageMetadataDialog } from './components/ImageMetadataDialog';
-import DatabaseStructurePage from './components/DatabaseStructurePage';
 import DeveloperDocsPage from './components/developerDocs/DeveloperDocsPage';
-
+import SitemapPage from './components/SitemapPage';
 import AppAboutPage from './components/AppAboutPage';
+import DemoScreen from './components/DemoScreen';
+import LibraryDemoScreen from './components/LibraryDemoScreen';
+import TestScreen from './components/TestScreen';
 
-type Screen = 'dashboard' | 'search' | 'capture' | 'scanner' | 'overview';
+import { AuthProvider, useAuth } from './auth/AuthContext';
+import { useAuthorization } from './auth/useAuthorization';
+import EfpBaselineApp from './components/EfpBaselineApp';
+import EfpWorkflowPending from './components/EfpWorkflowPending';
+import ForbiddenPage from './components/ForbiddenPage';
+import { ProtectedRoute } from './routing/ProtectedRoute';
+import { AdminRoute } from './routing/AdminRoute';
 
-import { BrowserRouter, Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom';
-import { sanitizeItemId, extractItemId } from './lib/utils';
+// Declarations for Vite-injected global variables
+declare const __APP_VERSION__: string;
+declare const __BUILD_TIME__: string;
+declare const __EFP_VERSION__: string;
 
-export default function App() {
-  return (
-    <ThemeProvider>
-      <Toaster 
-        position="top-center" 
-        toastOptions={{ 
-          style: { 
-            borderRadius: '16px', 
-            background: 'var(--surface-container-high)', 
-            color: 'var(--on-surface)',
-            border: '1px solid var(--outline)',
-            fontWeight: 'bold',
-            boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
-          } 
-        }} 
-      />
-      <ImageMetadataDialog />
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </ThemeProvider>
-  );
+// Helper hook for click outside pattern
+function useClickOutside(ref: React.RefObject<HTMLDivElement | null>, handler: () => void) {
+  useEffect(() => {
+    const listener = (event: MouseEvent | TouchEvent) => {
+      if (!ref.current || ref.current.contains(event.target as Node)) {
+        return;
+      }
+      handler();
+    };
+    document.addEventListener('mousedown', listener);
+    document.addEventListener('touchstart', listener);
+    return () => {
+      document.removeEventListener('mousedown', listener);
+      document.removeEventListener('touchstart', listener);
+    };
+  }, [ref, handler]);
 }
 
-function AppContent() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [showProfile, setShowProfile] = useState(false);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
+// Redirect wrapper for legacy items preserving parameters
+function ItemRedirectWrapper() {
+  const { id } = useParams<{ id: string }>();
   const location = useLocation();
+  return <Navigate to={`/object/${id}${location.search}`} replace />;
+}
+
+// Public Landing & Login page
+function LandingPage() {
+  const [utcTime, setUtcTime] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent | TouchEvent) {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
-        setShowProfile(false);
-      }
-    }
-
-    if (showProfile) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
+    const updateTime = () => {
+      const now = new Date();
+      setUtcTime(now.toUTCString());
     };
-  }, [showProfile]);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) {
-        try {
-          const userDocRef = doc(db, 'users', u.uid);
-          const userDoc = await getDoc(userDocRef);
-          
-          if (!userDoc.exists()) {
-            await setDoc(userDocRef, {
-              uid: u.uid,
-              displayName: u.displayName || '',
-              email: u.email || '',
-              photoURL: u.photoURL || '',
-              role: 'user'
-            });
-          }
-          
-          const adminDoc = await getDoc(doc(db, 'admins', u.uid));
-          setIsAdmin(adminDoc.exists());
-        } catch (error) {
-          console.error("Failed to sync user or check admin status", error);
-          setIsAdmin(false);
-        }
-      } else {
-        setIsAdmin(false);
-      }
-      setLoading(false);
-    });
-    return unsubscribe;
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogin = async () => {
+    setLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-      console.error('Login error:', error);
+      toast.success("Successfully signed in!");
+      navigate('/app');
+    } catch (err: any) {
+      console.error("Login error:", err);
+      toast.error(err.message || "Failed to sign in");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    window.location.href = '/';
+  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'unknown';
+  const buildTime = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : new Date().toISOString();
+
+  return (
+    <div className="min-h-screen bg-[#0f172a] text-[#f8fafc] font-sans flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Background gradients */}
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-[#3b82f6]/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-[#10b981]/5 blur-[120px] pointer-events-none" />
+
+      {/* Main card */}
+      <div id="main-card" className="w-full max-w-lg bg-[#1e293b]/60 backdrop-blur-xl border border-[#334155]/60 rounded-3xl p-8 md:p-10 shadow-2xl relative z-10 flex flex-col items-center text-center">
+        {/* App Logo */}
+        <div id="logo-badge" className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#3b82f6] to-[#10b981] p-[2px] mb-8 shadow-lg shadow-[#3b82f6]/20">
+          <div className="w-full h-full bg-[#0f172a] rounded-[14px] flex items-center justify-center font-mono text-2xl font-bold tracking-tighter text-[#3b82f6]">
+            sw
+          </div>
+        </div>
+
+        {/* Title */}
+        <h1 id="app-title" className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-[#cbd5e1] to-[#94a3b8] bg-clip-text text-transparent mb-3">
+          scan.mw
+        </h1>
+
+        {/* Subtitle / Baseline description */}
+        <p id="app-baseline" className="text-[#94a3b8] text-base md:text-lg font-medium mb-8">
+          Contract-first EFP rebuild baseline
+        </p>
+
+        {/* Login Button or Dashboard shortcut */}
+        <div className="w-full mb-8">
+          {auth.currentUser ? (
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => navigate('/app')}
+                className="w-full py-4 bg-gradient-to-r from-[#3b82f6] to-[#10b981] text-white rounded-2xl font-bold text-lg hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-[#3b82f6]/15"
+              >
+                Go to App
+              </button>
+              <button
+                onClick={() => {
+                  signOut(auth);
+                  toast.success("Signed out");
+                }}
+                className="text-xs text-[#94a3b8] hover:text-white underline"
+              >
+                Sign out of {auth.currentUser.email}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleLogin}
+              disabled={loading}
+              className="w-full py-4 bg-gradient-to-r from-[#3b82f6] to-[#10b981] text-white rounded-2xl font-bold text-lg hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-[#3b82f6]/15 flex items-center justify-center gap-3 disabled:opacity-50"
+            >
+              {loading ? "Signing in..." : "Sign in with Google"}
+            </button>
+          )}
+        </div>
+
+        {/* Divider */}
+        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#334155] to-transparent mb-8" />
+
+        {/* Metadata Details Grid */}
+        <div id="meta-grid" className="w-full grid grid-cols-1 gap-4 text-left font-mono text-xs text-[#94a3b8] mb-4">
+          <div className="bg-[#0f172a]/40 border border-[#334155]/40 rounded-xl p-4 flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[#64748b]">APPLICATION VERSION:</span>
+              <span className="text-[#3b82f6] font-semibold">{version}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#64748b]">BUILD TIME:</span>
+              <span className="text-white">{buildTime}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#64748b]">DATA MODEL SPEC:</span>
+              <span className="text-[#10b981]">{typeof __EFP_VERSION__ !== 'undefined' ? `EFP v${__EFP_VERSION__}` : 'EFP 3.0.0'}</span>
+            </div>
+          </div>
+
+          <div className="bg-[#0f172a]/40 border border-[#334155]/40 rounded-xl p-4 flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[#64748b]">CURRENT TIME (UTC):</span>
+              <span className="text-white font-medium">{utcTime || 'Loading...'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Small aesthetic footer */}
+      <div className="mt-8 text-center text-xs text-[#475569] font-mono z-10">
+        scan.mw &bull; secure &bull; distributed &bull; timeless
+      </div>
+    </div>
+  );
+}
+
+// Authenticated Application Shell
+function AppShell() {
+  const [activeScreen, setActiveScreen] = useState<'home' | 'about'>('home');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const { user, isAdmin } = useAuthorization();
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
+
+  // Click outside implementation for Profile Menu
+  useClickOutside(profileMenuRef, () => {
+    setShowProfileMenu(false);
+  });
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Render active screen
+  const renderScreen = () => {
+    switch (activeScreen) {
+      case 'home':
+        return <EfpBaselineApp />;
+      case 'about':
+        return <AppAboutPage />;
+      default:
+        return <EfpBaselineApp />;
+    }
   };
 
-  const handleDetected = (id: string) => {
-    navigate(`/object/${extractItemId(id)}`);
-  };
+  return (
+    <div className="min-h-screen bg-[var(--surface-container-low)] text-[var(--on-surface)] flex flex-col font-sans transition-colors duration-300">
+      {/* Sticky Top Header */}
+      <header className="sticky top-0 z-30 bg-[var(--surface-container)]/90 backdrop-blur-xl border-b border-[var(--outline)] px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#3b82f6] to-[#10b981] p-[1.5px]">
+            <div className="w-full h-full bg-[var(--surface-container)] rounded-[10px] flex items-center justify-center font-mono text-base font-bold tracking-tighter text-[var(--primary)]">
+              sw
+            </div>
+          </div>
+          <div>
+            <h1 className="text-xl font-black italic tracking-tighter">scan.mw</h1>
+            <p className="text-[9px] font-bold text-[var(--on-surface-variant)] uppercase tracking-wider">Cloud Inventory Platform</p>
+          </div>
+        </div>
 
-  const handleCancelScanner = () => {
-    navigate('/app');
-  };
+        {/* User profile dropdown container */}
+        <div className="relative" ref={profileMenuRef}>
+          <button 
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className="flex items-center gap-2 p-1.5 bg-[var(--surface-container-highest)] border border-[var(--outline)] rounded-full hover:bg-[var(--surface-container-high)] transition-all cursor-pointer"
+          >
+            {user.photoURL ? (
+              <img src={user.photoURL} alt={user.displayName || 'Profile'} className="w-7 h-7 rounded-full object-cover" />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-xs font-bold">
+                {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
+              </div>
+            )}
+            <span className="text-xs font-bold px-1 hidden md:inline-block max-w-[120px] truncate">{user.displayName || user.email}</span>
+            <ChevronDown size={14} className="text-[var(--on-surface-variant)] mr-1 hidden md:inline-block" />
+          </button>
 
-  const handleOpenApp = () => {
-    const from = (location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null)?.from;
-    const targetPath = from?.pathname && from.pathname !== '/'
-      ? `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`
-      : '/app';
+          {/* Profile Menu Dropdown with Click Outside closure */}
+          <AnimatePresence>
+            {showProfileMenu && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute right-0 mt-2 w-60 bg-[var(--surface-container-high)] border border-[var(--outline)] rounded-2xl shadow-2xl overflow-hidden z-50 p-2 space-y-1"
+              >
+                <div className="px-4 py-3 border-b border-[var(--outline)] mb-1">
+                  <div className="font-bold text-sm truncate">{user.displayName || 'Anonymous User'}</div>
+                  <div className="text-[10px] font-mono text-[var(--on-surface-variant)] truncate">{user.email}</div>
+                </div>
 
-    navigate(targetPath);
-  };
+                <button 
+                  onClick={() => { setShowProfileMenu(false); navigate('/settings'); }}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] rounded-xl transition-all cursor-pointer"
+                >
+                  <Settings size={16} /> User Settings
+                </button>
 
-  if (loading) {
+                {isAdmin && (
+                  <>
+                    <button 
+                      onClick={() => { setShowProfileMenu(false); navigate('/admin'); }}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-[var(--primary)] hover:bg-[var(--surface-container-highest)] rounded-xl transition-all cursor-pointer"
+                    >
+                      <ShieldAlert size={16} /> Admin Panel
+                    </button>
+
+                    <button 
+                      onClick={() => { setShowProfileMenu(false); navigate('/developer'); }}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-emerald-500 hover:bg-[var(--surface-container-highest)] rounded-xl transition-all cursor-pointer"
+                    >
+                      <BookOpen size={16} /> Developer Docs
+                    </button>
+
+                    <button 
+                      onClick={() => { setShowProfileMenu(false); navigate('/admin/sitemap'); }}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)] rounded-xl transition-all cursor-pointer"
+                    >
+                      <RouteIcon size={16} /> Sitemap / Routes
+                    </button>
+                  </>
+                )}
+
+                <div className="border-t border-[var(--outline)] my-1 pt-1">
+                  <button 
+                    onClick={() => { setShowProfileMenu(false); signOut(auth); toast.success("Signed out"); }}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
+                  >
+                    <LogOut size={16} /> Sign Out
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </header>
+
+      {/* Main Content Pane */}
+      <main className="flex-1 overflow-y-auto px-6 py-8 max-w-4xl w-full mx-auto pb-28">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeScreen}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.2 }}
+          >
+            {renderScreen()}
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      {/* Sticky Bottom Navigation optimized for mobile */}
+      <nav className="fixed bottom-0 left-0 right-0 z-30 bg-[var(--surface-container)]/95 backdrop-blur-xl border-t border-[var(--outline)] px-4 py-2 md:py-3 flex justify-around items-center max-w-md mx-auto rounded-t-3xl shadow-2xl">
+        <button 
+          onClick={() => setActiveScreen('home')}
+          className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all cursor-pointer ${activeScreen === 'home' ? 'text-[var(--primary)] font-black' : 'text-[var(--on-surface-variant)]'}`}
+        >
+          <Package size={20} className={activeScreen === 'home' ? 'scale-110' : ''} />
+          <span className="text-[10px] tracking-tight font-medium">Home</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveScreen('about')}
+          className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all cursor-pointer ${activeScreen === 'about' ? 'text-[var(--primary)] font-black' : 'text-[var(--on-surface-variant)]'}`}
+        >
+          <Info size={20} className={activeScreen === 'about' ? 'scale-110' : ''} />
+          <span className="text-[10px] tracking-tight font-medium">About</span>
+        </button>
+      </nav>
+    </div>
+  );
+}
+
+// App Routing Orchestrator Component
+export function AppRoutes() {
+  const { authLoading } = useAuth();
+
+  if (authLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--surface)] text-[var(--on-surface-variant)]">
-        <div className="w-12 h-12 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 font-bold uppercase tracking-widest text-xs animate-pulse">Initializing</p>
+      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3b82f6]"></div>
       </div>
     );
   }
 
-
   return (
     <Routes>
-      <Route path="/" element={
-        <LandingPage
-          user={user}
-          isAdmin={isAdmin}
-          onLogin={handleLogin}
-          onOpenApp={handleOpenApp}
-          showAppStatus={false}
-          onShowAppStatus={() => navigate('/status')}
-          onCloseAppStatus={() => navigate('/')}
-        />
-      } />
-      <Route path="/status" element={
-        <LandingPage
-          user={user}
-          isAdmin={isAdmin}
-          onLogin={handleLogin}
-          onOpenApp={handleOpenApp}
-          showAppStatus={true}
-          onShowAppStatus={() => navigate('/status')}
-          onCloseAppStatus={() => navigate('/')}
-        />
-      } />
-      <Route path="/about" element={<PublicLayout><AppAboutPage /></PublicLayout>} />
-      <Route path="/developer/*" element={<PublicLayout><DeveloperDocsPage /></PublicLayout>} />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/app" element={<ProtectedRoute><AppShell /></ProtectedRoute>} />
+      
+      {/* Dedicated Sub-pages */}
+      <Route path="/admin" element={<AdminRoute><AdminPanel onClose={() => window.location.href = '/app'} /></AdminRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><UserSettingsPanel onClose={() => window.location.href = '/app'} /></ProtectedRoute>} />
+      <Route path="/developer/*" element={<AdminRoute><DeveloperDocsPage /></AdminRoute>} />
+      
+      {/* Object management */}
+      <Route path="/object/new" element={<ProtectedRoute><EfpWorkflowPending /></ProtectedRoute>} />
+      <Route path="/object/:id" element={<ProtectedRoute><EfpWorkflowPending /></ProtectedRoute>} />
+      
+      {/* Redirects */}
+      <Route path="/item/:id" element={<ProtectedRoute><ItemRedirectWrapper /></ProtectedRoute>} />
+      
+      {/* Demos and beta tools */}
+      <Route path="/demo" element={<AdminRoute><DemoScreen /></AdminRoute>} />
+      <Route path="/library-demo" element={<AdminRoute><LibraryDemoScreen /></AdminRoute>} />
+      <Route path="/test" element={<AdminRoute><TestScreen /></AdminRoute>} />
+      <Route path="/admin/sitemap" element={<AdminRoute><SitemapPage onClose={() => window.location.href = '/app'} /></AdminRoute>} />
+      
+      {/* Access Denied Gate */}
+      <Route path="/forbidden" element={<ProtectedRoute><ForbiddenPage /></ProtectedRoute>} />
 
-      <Route path="*" element={
-        <RequireAuth user={user}>
-          <AuthenticatedAppLayout
-            user={user}
-            isAdmin={isAdmin}
-            showProfile={showProfile}
-            setShowProfile={setShowProfile}
-            profileMenuRef={profileMenuRef}
-            handleLogout={handleLogout}
-            onDetected={handleDetected}
-            onCancelScanner={handleCancelScanner}
-          />
-        </RequireAuth>
-      } />
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
 
-
-function LandingPage({
-  user,
-  isAdmin,
-  onLogin,
-  onOpenApp,
-  showAppStatus,
-  onShowAppStatus,
-  onCloseAppStatus
-}: {
-  user: User | null,
-  isAdmin: boolean,
-  onLogin: () => void,
-  onOpenApp: () => void,
-  showAppStatus: boolean,
-  onShowAppStatus: () => void,
-  onCloseAppStatus: () => void
-}) {
-  const isAuthenticated = Boolean(user);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isAuthenticated && isAdmin && !showAppStatus) {
-      navigate('/developer');
-    }
-  }, [isAuthenticated, isAdmin, navigate, showAppStatus]);
-
+export default function App() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-900 p-6 text-white text-center selection:bg-[var(--primary)]/30">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-12 max-w-sm w-full"
-      >
-        <div className="space-y-6">
-          <div className="relative inline-block">
-            <div className="absolute -inset-4 bg-[var(--primary)] rounded-full blur-3xl opacity-20 animate-pulse"></div>
-            <div className="relative bg-neutral-800 p-8 rounded-[40px] border border-neutral-700 shadow-2xl">
-              <Package className="w-24 h-24 text-[var(--primary)] mx-auto" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-4xl font-black tracking-tighter italic whitespace-nowrap">scan.mw</h1>
-            <p className="text-neutral-400 font-medium">
-              Smart Asset Tracking with<br />
-              <span className="text-white">QR, NFC, and Gemini AI.</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <button
-            onClick={isAuthenticated ? onOpenApp : onLogin}
-            className="group relative flex items-center justify-center gap-3 bg-white text-neutral-900 px-8 py-5 rounded-[24px] font-bold shadow-xl hover:bg-neutral-100 transition-all w-full active:scale-95 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-neutral-200/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-            {isAuthenticated ? <Package size={22} /> : <LogIn size={22} />}
-            {isAuthenticated ? 'Open App' : 'Continue with Google'}
-          </button>
-          <button
-            onClick={onShowAppStatus}
-            className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-[20px] border border-white/10 bg-white/5 text-neutral-200 font-bold hover:bg-white/10 transition-all active:scale-95"
-          >
-            <Info size={18} />
-            App Status
-          </button>
-
-          {isAuthenticated && (
-            <p className="text-xs text-neutral-400 font-medium">
-              Signed in as <span className="text-white">{user?.displayName || user?.email || 'your account'}</span>
-            </p>
-          )}
-          <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Enterprise Ready • Secure Cloud Sync</p>
-        </div>
-      </motion.div>
-      <AppStatusDialog
-        isOpen={showAppStatus}
-        onClose={onCloseAppStatus}
-      />
-    </div>
-  );
-}
-
-function RequireAuth({ user, children }: { user: User | null, children: React.ReactNode }) {
-  const location = useLocation();
-  if (!user) {
-    return <Navigate to="/" state={{ from: location }} replace />;
-  }
-  return <>{children}</>;
-}
-
-function PublicLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-[var(--surface-container-high)] flex justify-center selection:bg-[var(--primary)]/30">
-      <div className="app-container flex flex-col w-full transition-colors duration-300">
-        <main className="flex-1 w-full mx-auto max-w-7xl">
-           {children}
-        </main>
-      </div>
-    </div>
-  );
-}
-
-function AuthenticatedAppLayout({
-  user,
-  isAdmin,
-  showProfile,
-  setShowProfile,
-  profileMenuRef,
-  handleLogout,
-  onDetected,
-  onCancelScanner
-}: any) {
-  const navigate = useNavigate();
-
-  return (
-    <div className="min-h-screen bg-[var(--surface-container-high)] flex justify-center selection:bg-[var(--primary)]/30">
-      <div className="app-container flex flex-col w-full transition-colors duration-300">
-        <div className="h-1 bg-[var(--primary)]/20 w-1/3 mx-auto mt-2 rounded-full mb-1 sm:block hidden"></div>
-        <header className="sticky top-0 z-40 bg-[var(--surface-container)]/80 backdrop-blur-md border-b border-[var(--outline)] px-4 py-3 flex justify-between items-center">
-        <button
-          type="button"
-          className="flex items-center gap-2 cursor-pointer rounded-xl outline-none ring-[var(--primary)] focus-visible:ring-2"
-          onClick={() => navigate('/')}
-          aria-label="Return to landing page"
-        >
-          <div className="bg-[var(--primary)] p-1.5 rounded-lg text-[var(--primary-foreground)] transition-all">
-            <Package size={20} />
-          </div>
-          <span className="font-bold text-xl tracking-tight">photo.mw</span>
-        </button>
-        <div className="flex items-center gap-3">
-          <div className="relative" ref={profileMenuRef}>
-            <button 
-              onClick={() => setShowProfile(!showProfile)}
-              aria-label="Toggle user profile menu"
-              aria-expanded={showProfile}
-              className="flex items-center outline-none ring-[var(--primary)] focus-visible:ring-2 rounded-full"
-            >
-              {user?.photoURL ? (
-                <img 
-                  src={user.photoURL} 
-                  alt="Profile" 
-                  className="w-8 h-8 rounded-full border border-[var(--outline)] shadow-sm transition-transform hover:scale-105"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-[var(--surface-container-highest)] flex items-center justify-center border border-[var(--outline)] transition-transform hover:scale-105">
-                  <span className="text-xs font-bold text-[var(--on-surface-variant)]">{user?.displayName?.[0] || 'U'}</span>
-                </div>
-              )}
-            </button>
-            <AnimatePresence>
-              {showProfile && (
-                <>
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute right-0 mt-3 w-56 bg-[var(--surface-container-high)] backdrop-blur-xl border border-[var(--outline)] shadow-2xl rounded-2xl overflow-hidden z-[51] origin-top-right"
-                  >
-                  <div className="p-4 border-b border-[var(--outline)] bg-[var(--surface)]/50 flex justify-between items-start">
-                    <div className="overflow-hidden">
-                      <div className="font-bold text-sm text-[var(--on-surface)] truncate">{user?.displayName || 'User'}</div>
-                      {isAdmin && (
-                        <div className="flex gap-2 mt-1">
-                          <div className="text-[10px] text-amber-500 font-bold uppercase tracking-wider bg-amber-500/10 inline-block px-2 py-0.5 rounded-full">Admin</div>
-                        </div>
-                      )}
-                    </div>
-                    <button 
-                      onClick={() => setShowProfile(false)}
-                      aria-label="Close profile menu"
-                      className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] p-1.5 -mr-1.5 -mt-1.5 rounded-full transition-colors flex-shrink-0"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                  <div className="p-2">
-                    {isAdmin && (
-                      <>
-                        <button
-                          onClick={() => {
-                             setShowProfile(false);
-                             navigate('/admin');
-                           }}
-                           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
-                        >
-                           <ShieldAlert size={16} className="text-amber-500" /> Admin Panel
-                        </button>
-                     <button
-                          onClick={() => {
-                             setShowProfile(false);
-                             navigate('/admin/sitemap');
-                           }}
-                           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
-                        >
-                           <RouteIcon size={16} className="text-amber-500" /> Route Map
-                        </button>
-                      </>
-                    )}
-                     <button
-                        onClick={() => {
-                          setShowProfile(false);
-                          window.open('/about', '_blank', 'noopener,noreferrer');
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
-                     >
-                        <Info size={16} className="text-[var(--primary)]" /> About this app
-                     </button>
-                     <button
-                        onClick={() => {
-                          setShowProfile(false);
-                          navigate('/demo');
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
-                     >
-                        <PlaySquare size={16} className="text-blue-500" /> Browser API Demo
-                     </button>
-                     <button
-                        onClick={() => {
-                          setShowProfile(false);
-                          navigate('/library-demo');
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
-                     >
-                        <PlaySquare size={16} className="text-purple-500" /> Library API Demo
-                     </button>
-                     <button
-                        onClick={() => {
-                          setShowProfile(false);
-                          navigate('/test');
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
-                     >
-                        <Beaker size={16} className="text-purple-500" /> Beta Tests
-                     </button>
-                     <button
-                        onClick={() => {
-                          setShowProfile(false);
-                          navigate('/settings');
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] transition-colors mb-1"
-                     >
-                        <Settings size={16} className="text-[var(--primary)]" /> Settings
-                     </button>
-                     <button
-                        onClick={() => {
-                          setShowProfile(false);
-                          handleLogout();
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-500/10 transition-colors"
-                     >
-                        <LogOut size={16} /> Log Out
-                     </button>
-                  </div>
-                </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </header>
-
-      <Routes>
-        <Route path="/admin" element={
-          <main className="flex-1 w-full mx-auto max-w-7xl">
-            {isAdmin ? (
-               <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                 <AdminPanel onClose={() => navigate('/app')} />
-               </motion.div>
-            ) : (
-               <div className="p-12 mt-4 text-center bg-[var(--surface)] border border-red-500/20 rounded-2xl mx-4">
-                 <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                 <h2 className="text-xl font-bold text-red-500 mb-2">Access Denied</h2>
-                 <p className="text-[var(--on-surface-variant)]">You do not have permission to view this page.</p>
-               </div>
-            )}
-          </main>
-        } />
-        <Route path="/admin/migration" element={
-          <main className="flex-1 w-full mx-auto max-w-7xl">
-            {isAdmin ? (
-               <motion.div key="admin-migration" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                 <div className="p-8">
-                   <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-8 text-center max-w-md mx-auto mt-12">
-                     <Database className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-                     <h2 className="text-xl font-bold text-[var(--on-surface)] mb-2">Migration Tool Retired</h2>
-                     <p className="text-[var(--on-surface-variant)] mb-6">
-                       The legacy items-to-objects migration tool has been retired and is no longer available.
-                       The repository is currently entering a new non-destructive observation-model migration phase.
-                     </p>
-                     <button
-                       onClick={() => navigate('/app')}
-                       className="px-6 py-2 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors"
-                     >
-                       Return to Home
-                     </button>
-                   </div>
-                 </div>
-               </motion.div>
-            ) : (
-               <div className="p-12 mt-4 text-center bg-[var(--surface)] border border-red-500/20 rounded-2xl mx-4">
-                 <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                 <h2 className="text-xl font-bold text-red-500 mb-2">Access Denied</h2>
-                 <p className="text-[var(--on-surface-variant)]">You do not have permission to view this page.</p>
-               </div>
-            )}
-          </main>
-        } />
-        <Route path="/admin/sitemap" element={
-          <main className="flex-1 w-full mx-auto max-w-7xl">
-            {isAdmin ? (
-               <motion.div key="admin-sitemap" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                 <SitemapPage onClose={() => navigate('/app')} />
-               </motion.div>
-            ) : (
-               <div className="p-12 mt-4 text-center bg-[var(--surface)] border border-red-500/20 rounded-2xl mx-4">
-                 <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                 <h2 className="text-xl font-bold text-red-500 mb-2">Access Denied</h2>
-                 <p className="text-[var(--on-surface-variant)]">You do not have permission to view this page.</p>
-               </div>
-            )}
-          </main>
-        } />
-        <Route path="/settings" element={
-          <main className="flex-1 w-full mx-auto max-w-7xl">
-            <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <UserSettingsPanel onClose={() => navigate('/app')} />
-            </motion.div>
-          </main>
-        } />
-        <Route path="/test" element={
-          <main className="flex-1 w-full mx-auto max-w-7xl">
-            <motion.div key="test" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <TestScreen />
-            </motion.div>
-          </main>
-        } />
-        <Route path="/demo" element={
-          <main className="flex-1 w-full mx-auto max-w-7xl">
-            <motion.div key="demo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <DemoScreen />
-            </motion.div>
-          </main>
-        } />
-        <Route path="/library-demo" element={
-          <main className="flex-1 w-full mx-auto max-w-7xl">
-            <motion.div key="library-demo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <LibraryDemoScreen />
-            </motion.div>
-          </main>
-        } />
-        <Route path="/database-structure" element={
-          <div className="flex-1 w-full mx-auto max-w-7xl">
-            <motion.div key="database-structure" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <DatabaseStructurePage />
-            </motion.div>
-          </div>
-        } />
-        <Route path="*" element={
-          <MainLayout
-            onDetected={onDetected}
-            onCancelScanner={onCancelScanner}
-          />
-        } />
-      </Routes>
-    </div>
-    </div>
-  );
-}
-
-function NavButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
-  return (
-    <button 
-      onClick={onClick}
-      className={`flex flex-col items-center gap-1 transition-all duration-300 ${active ? 'text-[var(--primary)] scale-110' : 'text-[var(--on-surface-variant)] hover:text-[var(--on-surface)]'}`}
-    >
-      <div className={`p-2 rounded-[18px] transition-all duration-300 ${active ? 'bg-[var(--primary)]/15' : 'hover:bg-[var(--surface-container-high)]'}`}>
-        {icon}
-      </div>
-      <span className={`text-[10px] font-bold uppercase tracking-wider transition-opacity duration-300 ${active ? 'opacity-100' : 'opacity-40 font-medium'}`}>{label}</span>
-    </button>
-  );
-}
-
-
-function ObjectCaptureRoute() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const state = location.state as { identifier?: any };
-
-  return (
-    <CaptureForm
-      objectId={id ? sanitizeItemId(id.toUpperCase()) : null}
-      initialIdentifier={state?.identifier}
-      onClose={() => { navigate('/app'); }}
-    />
-  );
-}
-
-function LegacyItemRedirect() {
-  const { id } = useParams<{ id: string }>();
-  return <Navigate to={`/object/${id}`} replace />;
-}
-
-function MainLayout({ onDetected, onCancelScanner }: any) {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const currentPath = location.pathname;
-
-  return (
-    <>
-      <main className="flex-1 w-full mx-auto max-w-7xl p-4 md:p-8">
-        <AnimatePresence mode="wait">
-          {/* @ts-ignore */}
-          <Routes location={location} key={location.pathname}>
-            <Route path="/app" element={
-              <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <Dashboard onSelectItem={(id) => { navigate(`/object/${encodeURIComponent(id)}`); }} />
-              </motion.div>
-            } />
-            <Route path="/search" element={
-              <motion.div key="search" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <SearchScreen onSelectItem={(id) => { navigate(`/object/${encodeURIComponent(id)}`); }} />
-              </motion.div>
-            } />
-            <Route path="/item/:id" element={<LegacyItemRedirect />} />
-            <Route path="/object/new" element={
-              <motion.div key="capture-new" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <ObjectCaptureRoute />
-              </motion.div>
-            } />
-            <Route path="/object/:id" element={
-              <motion.div key="capture" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <ObjectCaptureRoute />
-              </motion.div>
-            } />
-            <Route path="/unassigned" element={
-              <motion.div key="unassigned" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <UnassignedIdentifierScreen />
-              </motion.div>
-            } />
-            <Route path="/scanner" element={
-              <motion.div key="scanner" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <Scanner
-                  onDetected={onDetected}
-                  onCancel={onCancelScanner}
-                />
-              </motion.div>
-            } />
-            <Route path="/overview" element={
-              <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <Overview />
-              </motion.div>
-            } />
-          </Routes>
-        </AnimatePresence>
-      </main>
-
-      <nav className="sticky bottom-0 w-full bg-[var(--surface-container)]/90 backdrop-blur-lg border-t border-[var(--outline)] px-6 py-2 pb-safe flex justify-around items-center z-50">
-        <NavButton active={currentPath === '/app'} onClick={() => navigate('/app')} icon={<Package size={24} />} label="Home" />
-        <NavButton active={currentPath === '/search'} onClick={() => navigate('/search')} icon={<Search size={24} />} label="Search" />
-        <div className="relative -top-6">
-          <button
-            onClick={() => navigate('/scanner')}
-            aria-label="Scan item"
-            className="bg-[var(--primary)] text-[var(--primary-foreground)] p-4 rounded-[22px] shadow-xl shadow-[var(--primary)]/20 hover:scale-105 transition-all active:scale-95"
-          >
-            <Scan size={28} />
-          </button>
-        </div>
-        <NavButton active={currentPath === '/overview'} onClick={() => navigate('/overview')} icon={<BarChart3 size={24} />} label="Stats" />
-        <NavButton active={currentPath === '/object/new'} onClick={() => navigate('/object/new')} icon={<PlusCircle size={24} />} label="New" />
-      </nav>
-
-    </>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+          <Toaster position="top-center" />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

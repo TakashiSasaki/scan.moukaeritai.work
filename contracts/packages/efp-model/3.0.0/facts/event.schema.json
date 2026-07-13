@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EventFact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "ownerId",
+    "participants",
+    "participantKeys",
+    "objectIds",
+    "markerKeys",
+    "placeIds",
+    "readerIds",
+    "deviceIds",
+    "userIds",
+    "eventType",
+    "time",
+    "provenance",
+    "_meta"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "maxLength": 128,
+      "description": "Unique identifier of the Event fact (UUIDv7)"
+    },
+    "ownerId": {
+      "type": "string",
+      "maxLength": 128,
+      "description": "Owner identifier (UID)"
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/participant.schema.json"
+      }
+    },
+    "participantKeys": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "objectIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "markerKeys": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "placeIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "readerIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "deviceIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "userIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "eventType": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["occurredAt"],
+      "properties": {
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "receivedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "provenance": {
+      "$ref": "../common/provenance.schema.json"
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "_meta": {
+      "$ref": "../common/record-metadata.schema.json"
+    }
+  }
+}

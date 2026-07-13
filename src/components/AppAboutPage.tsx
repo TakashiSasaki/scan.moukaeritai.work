@@ -1,127 +1,59 @@
 import React from 'react';
-import { Info, ExternalLink, Database, Link as LinkIcon, Activity, Lock, Smartphone } from 'lucide-react';
+import { Package, Github, Globe, Mail } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export default function AppAboutPage() {
-  const GITHUB_DOCS_URL = 'https://github.com/TakashiSasaki/scan.moukaeritai.work/blob/scan.moukaeritai.work/docs/app/database-structure.md';
-
   return (
-    <div className="min-h-screen bg-[var(--surface-container-lowest)] text-[var(--on-surface)] flex flex-col">
-      <header className="sticky top-0 z-10 bg-[var(--surface-container-lowest)]/80 backdrop-blur-md border-b border-[var(--outline)] px-4 py-4 flex items-center justify-center shadow-sm">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <Info size={24} className="text-[var(--primary)]" />
-          About scan.mw
-        </h1>
-      </header>
-
-      <main className="flex-1 p-4 max-w-4xl mx-auto w-full space-y-8 mt-4">
-
-        {/* Core Explanation */}
-        <section className="bg-[var(--surface-container)] border border-[var(--outline)] rounded-[32px] p-6 shadow-sm">
-          <h2 className="text-lg font-bold mb-4 text-[var(--primary)]">What is this app?</h2>
-          <p className="text-sm text-[var(--on-surface-variant)] leading-relaxed mb-4">
-            scan.mw is an inventory tracking and observation application. It enables tracking of physical assets and objects using various scannable identifiers.
-            The system focuses on creating immutable records of observations when tags are scanned, building a reliable history for each tracked item.
-          </p>
-        </section>
-
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FeatureCard
-            icon={<Database className="text-blue-500" size={24} />}
-            title="Objects & Assets"
-            description="Core entities representing physical items. Each object can have metadata, relationships, images, and an event history."
-          />
-          <FeatureCard
-            icon={<LinkIcon className="text-amber-500" size={24} />}
-            title="Identifiers"
-            description="Scannable tags linked to objects. Supported types include QR codes, NFC tags, barcodes, Bluetooth, and manual entry."
-          />
-          <FeatureCard
-            icon={<Activity className="text-green-500" size={24} />}
-            title="Observations & Events"
-            description="Immutable evidence of scans and interactions. Observations record when and how an identifier was seen."
-          />
-          <FeatureCard
-            icon={<Lock className="text-purple-500" size={24} />}
-            title="Privacy & Ownership"
-            description="Strong privacy controls. Users own their data (objects, identifiers, events) managed securely via Firebase rules."
-          />
+    <div className="p-6 lg:p-12 max-w-4xl mx-auto space-y-12 pb-24">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-center space-y-6"
+      >
+        <div className="relative inline-block">
+          <div className="absolute -inset-4 bg-[var(--primary)] rounded-full blur-3xl opacity-20"></div>
+          <div className="relative bg-[var(--surface-container)] p-8 rounded-[40px] border border-[var(--outline)] shadow-xl">
+             <Package size={80} className="text-[var(--primary)] mx-auto" />
+          </div>
         </div>
+        <div>
+          <h1 className="text-5xl font-black italic tracking-tighter mb-2">scan.mw</h1>
+          <p className="text-xl text-[var(--on-surface-variant)] font-medium">Smart Asset Tracking Platform</p>
+        </div>
+      </motion.div>
 
-        {/* Technical Overview */}
-        <section className="bg-[var(--surface-container-low)] border border-[var(--outline)] rounded-[32px] p-6 shadow-sm">
-          <h2 className="text-lg font-bold mb-4 text-[var(--on-surface)] flex items-center gap-2">
-            <Smartphone size={20} className="text-[var(--primary)]" />
-            Backend & Architecture
-          </h2>
-          <p className="text-sm text-[var(--on-surface-variant)] leading-relaxed mb-4">
-            The application relies on Firebase Firestore for scalable, real-time data synchronization. Data is aggressively cached locally in the browser to enable robust offline support and fast UI responses. The backend enforces security rules to ensure you only access your own inventory.
-          </p>
+      <div className="prose prose-neutral dark:prose-invert max-w-none">
+        <h2 className="text-2xl font-bold italic tracking-tight">Mission</h2>
+        <p className="text-lg text-[var(--on-surface-variant)] leading-relaxed">
+          Our mission is to simplify physical asset management through intuitive scanning, 
+          robust cloud persistence, and AI-driven identification. We believe tracking your 
+          belongings should be as fast as snapping a photo.
+        </p>
 
-          <div className="mt-6 border-t border-[var(--outline-variant)] pt-6">
-            <h3 className="text-sm font-bold text-[var(--on-surface)] mb-3">Future Extensions (Not Implemented)</h3>
-            <ul className="space-y-2 text-sm text-[var(--on-surface-variant)] list-disc pl-5 marker:text-amber-500">
-              <li>Grouping multiple observations via <span className="font-mono text-xs">observationSets</span>.</li>
-              <li>Generic relationship bindings via <span className="font-mono text-xs">identifierTargetBindings</span>.</li>
-              <li>Background scanning of Bluetooth Low Energy (BLE), Wi-Fi, and integration with dedicated sensor gateways.</li>
-            </ul>
-            <p className="mt-3 text-xs italic text-[var(--on-surface-variant)]">
-              Note: Radio and sensor data are highly privacy-sensitive and will require rigorous security boundaries if fully implemented.
-            </p>
-          </div>
-        </section>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 not-prose">
+           <div className="p-6 bg-[var(--surface-container)] rounded-3xl border border-[var(--outline)]">
+              <h3 className="font-bold text-lg mb-2">Open Source</h3>
+              <p className="text-sm text-[var(--on-surface-variant)]">Built with transparency and community in mind.</p>
+           </div>
+           <div className="p-6 bg-[var(--surface-container)] rounded-3xl border border-[var(--outline)]">
+              <h3 className="font-bold text-lg mb-2">Privacy First</h3>
+              <p className="text-sm text-[var(--on-surface-variant)]">Your inventory data is encrypted and owned by you.</p>
+           </div>
+           <div className="p-6 bg-[var(--surface-container)] rounded-3xl border border-[var(--outline)]">
+              <h3 className="font-bold text-lg mb-2">Cross Platform</h3>
+              <p className="text-sm text-[var(--on-surface-variant)]">Access your data on any device via our PWA.</p>
+           </div>
+        </div>
+      </div>
 
-        {/* Database Documentation Link */}
-        <section className="bg-[var(--primary)]/10 border border-[var(--primary)]/20 rounded-[32px] p-8 flex flex-col items-center justify-center text-center shadow-sm">
-          <Database size={48} className="text-[var(--primary)] mb-4" />
-          <h2 className="text-xl font-bold mb-2 text-[var(--on-surface)]">Database Structure Documentation</h2>
-          <p className="text-sm text-[var(--on-surface-variant)] max-w-lg mb-6">
-            Detailed, canonical documentation regarding the Firestore collections, schemas, fields, and relationships used by this application is maintained on GitHub.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4">
-            <a
-              href={GITHUB_DOCS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--primary)] text-white font-bold rounded-full hover:opacity-90 transition-opacity"
-            >
-              <ExternalLink size={18} />
-              Database Structure
-            </a>
-            <a
-              href="https://github.com/TakashiSasaki/scan.moukaeritai.work/blob/scan.moukaeritai.work/docs/app/database-design-decision-matrix.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--surface-container-high)] text-[var(--on-surface)] font-bold rounded-full hover:bg-[var(--surface-container-highest)] transition-colors text-sm"
-            >
-              <ExternalLink size={18} />
-              Design Decision Matrix
-            </a>
-            <a
-              href="https://github.com/TakashiSasaki/scan.moukaeritai.work/blob/scan.moukaeritai.work/docs/app/ownerless-global-identifier-model.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--surface-container-high)] text-[var(--on-surface)] font-bold rounded-full hover:bg-[var(--surface-container-highest)] transition-colors text-sm"
-            >
-              <ExternalLink size={18} />
-              Ownerless Global Identifier Model
-            </a>
-          </div>
-        </section>
-
-        <div className="pb-12"></div>
-      </main>
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
-  return (
-    <div className="bg-[var(--surface-container)] rounded-[24px] p-5 border border-[var(--outline)] shadow-sm">
-      <div className="mb-3">{icon}</div>
-      <h3 className="font-bold text-[var(--on-surface)] mb-2">{title}</h3>
-      <p className="text-sm text-[var(--on-surface-variant)] leading-relaxed">{description}</p>
+      <footer className="pt-12 border-t border-[var(--outline)] flex flex-col items-center gap-6">
+         <div className="flex gap-4">
+            <button className="p-3 bg-[var(--surface-container)] rounded-2xl hover:bg-[var(--surface-container-highest)] transition-colors"><Github size={20} /></button>
+            <button className="p-3 bg-[var(--surface-container)] rounded-2xl hover:bg-[var(--surface-container-highest)] transition-colors"><Globe size={20} /></button>
+            <button className="p-3 bg-[var(--surface-container)] rounded-2xl hover:bg-[var(--surface-container-highest)] transition-colors"><Mail size={20} /></button>
+         </div>
+         <p className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest">© 2024 Takashi Sasaki • Version 1.7.35</p>
+      </footer>
     </div>
   );
 }

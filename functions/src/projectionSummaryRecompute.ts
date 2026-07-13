@@ -8,6 +8,37 @@ import type { Timestamp } from "@scan/efp-model";
 import { getProjectionRecomputeFactQueryPlan } from "./projectionRecomputeFactPlan";
 import type { ProjectionRecomputeTargetType } from "./projectionRecomputeInput";
 
+
+function convertFirestoreToLogical(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj.toDate === 'function') {
+    return obj.toDate().toISOString();
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(convertFirestoreToLogical);
+  }
+  if (typeof obj === 'object') {
+    const res: any = {};
+    for (const key of Object.keys(obj)) {
+      res[key] = convertFirestoreToLogical(obj[key]);
+    }
+    return res;
+  }
+  return obj;
+}
+
+function convertLogicalToFirestore(obj: any, db: admin.firestore.Firestore): any {
+  if (obj === null || obj === undefined) return obj;
+  const res = { ...obj };
+  const dateFields = ['asOf', 'lastObservedAt', 'lastMeasuredAt', 'lastActivityAt'];
+  for (const field of dateFields) {
+    if (typeof res[field] === 'string') {
+      res[field] = admin.firestore.Timestamp.fromDate(new Date(res[field]));
+    }
+  }
+  return res;
+}
+
 export interface RecomputeProjectionSummaryResult {
   summary: unknown;
   factsRead: {
@@ -50,7 +81,7 @@ export async function recomputeProjectionSummaryForTarget(params: {
         .where(entry.indexField, "array-contains", targetId)
         .get();
 
-      const facts = snap.docs.map((doc) => withDocumentId(doc, entry.idField));
+      const facts = snap.docs.map((doc) => convertFirestoreToLogical(withDocumentId(doc, entry.idField)));
 
       if (entry.resultKey === "associations") associations = facts;
       else if (entry.resultKey === "observations") observations = facts;
@@ -59,12 +90,26 @@ export async function recomputeProjectionSummaryForTarget(params: {
     })
   );
 
-  const asOf = admin.firestore.Timestamp.now() as unknown as Timestamp;
+  let ownerId = "";
+  const allFacts = [...associations, ...observations, ...measurements, ...events];
+  const firstFactWithOwner = allFacts.find(f => f.ownerId);
+  if (firstFactWithOwner) {
+    ownerId = firstFactWithOwner.ownerId;
+  } else {
+    const entityCollection = targetType === "object" ? "objects" : targetType === "marker" ? "markers" : "places";
+    const entitySnap = await db.collection(entityCollection).doc(targetId).get();
+    if (entitySnap.exists) {
+      ownerId = entitySnap.data()?.ownerId || "";
+    }
+  }
+
+  const asOf = new Date().toISOString() as unknown as Timestamp;
   let summary: any;
 
   if (targetType === "object") {
     summary = reconstructObjectSummary({
       objectId: targetId,
+      ownerId,
       associations,
       measurements,
       observations,
@@ -73,6 +118,7 @@ export async function recomputeProjectionSummaryForTarget(params: {
   } else if (targetType === "marker") {
     summary = reconstructMarkerSummary({
       markerKey: targetId,
+      ownerId,
       associations,
       observations,
       asOf,
@@ -80,6 +126,7 @@ export async function recomputeProjectionSummaryForTarget(params: {
   } else if (targetType === "place") {
     summary = reconstructPlaceSummary({
       placeId: targetId,
+      ownerId,
       associations,
       observations,
       measurements,
@@ -89,7 +136,7 @@ export async function recomputeProjectionSummaryForTarget(params: {
   }
 
   return {
-    summary,
+    summary: convertLogicalToFirestore(summary, db),
     factsRead: {
       associations: associations.length,
       observations: observations.length,

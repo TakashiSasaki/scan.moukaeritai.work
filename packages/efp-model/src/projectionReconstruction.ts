@@ -14,40 +14,26 @@ import type {
 // -----------------------------------------------------------------------------
 
 /**
- * Safely extracts milliseconds from a Timestamp-like object if valid.
+ * Safely extracts milliseconds from a logical string Timestamp (RFC 3339).
  */
 function toMillisSafely(ts: Timestamp | undefined): number | undefined {
   if (!ts) return undefined;
-  if (typeof ts.toMillis === 'function') {
-    return ts.toMillis();
-  }
-  return undefined;
+  const parsed = Date.parse(ts);
+  return isNaN(parsed) ? undefined : parsed;
 }
 
 /**
- * Gets the effective transition time for an association based on its status.
- * 'active' uses validFrom.
- * 'detached' uses validUntil.
+ * Gets the effective transition time for an association.
  */
 export function getAssociationEffectiveTransitionTime(
   association: AssociationDoc
 ): Timestamp | undefined {
-  if (association.status === 'active') {
-    return association.time?.validFrom;
-  }
-  if (association.status === 'detached' || association.status === 'superseded' || association.status === 'replaced') {
-    return association.time?.validUntil;
-  }
-  return undefined;
+  return association.effectiveAt;
 }
 
 /**
  * Deterministically sorts two facts by effective time (ascending),
  * tie-broken by ID (lexicographically ascending).
- *
- * In this implementation, missing timestamps are considered "smaller"
- * but semantically callers should generally filter them out as invalid
- * before sorting if they need strict timeline ordering.
  */
 export function compareFactsByEffectiveTimeThenId(
   left: { id: string; time?: Timestamp },
@@ -66,7 +52,7 @@ export function compareFactsByEffectiveTimeThenId(
 }
 
 /**
- * Resolves the latest state of an object-marker relationship.
+ * Resolves the latest state of an object-marker relationship under immutable operations.
  */
 export function resolveObjectMarkerRelationState(input: {
   objectId: string;
@@ -78,37 +64,43 @@ export function resolveObjectMarkerRelationState(input: {
 } {
   const { objectId, markerKey, associations } = input;
 
-  const relevantAssocs = associations.filter(
-    (a) =>
-      a.associationType === 'object_has_marker' &&
-      a.objectIds?.includes(objectId) &&
-      a.markerKeys?.includes(markerKey)
+  const relevant = associations.filter(
+    (a) => a.objectIds?.includes(objectId) && a.markerKeys?.includes(markerKey)
   );
 
-  const assocsWithTime = relevantAssocs
-    .map((a) => ({
-      assoc: a,
-      effectiveTime: getAssociationEffectiveTransitionTime(a),
-    }))
-    .filter((a) => a.effectiveTime !== undefined);
-
-  if (assocsWithTime.length === 0) {
+  if (relevant.length === 0) {
     return { state: 'unknown' };
   }
 
-  // Sort ascending by time, then id
-  assocsWithTime.sort((left, right) =>
+  // Sort ascending by effectiveAt, then associationId
+  const sorted = [...relevant].sort((left, right) =>
     compareFactsByEffectiveTimeThenId(
-      { id: left.assoc.associationId, time: left.effectiveTime },
-      { id: right.assoc.associationId, time: right.effectiveTime }
+      { id: left.associationId, time: left.effectiveAt },
+      { id: right.associationId, time: right.effectiveAt }
     )
   );
 
-  const latest = assocsWithTime[assocsWithTime.length - 1].assoc;
+  let state: 'active' | 'detached' | 'unknown' = 'unknown';
+  let latestId: string | undefined;
+  let activeAttachId: string | undefined;
+
+  for (const a of sorted) {
+    if (a.operation === 'attach') {
+      state = 'active';
+      latestId = a.associationId;
+      activeAttachId = a.associationId;
+    } else if (a.operation === 'detach' || a.operation === 'replace') {
+      if (!a.subjectAssociationId || a.subjectAssociationId === activeAttachId) {
+        state = 'detached';
+        latestId = a.associationId;
+        activeAttachId = undefined;
+      }
+    }
+  }
 
   return {
-    state: latest.status === 'active' ? 'active' : latest.status === 'detached' ? 'detached' : 'unknown',
-    latestAssociationId: latest.associationId,
+    state,
+    latestAssociationId: latestId,
   };
 }
 
@@ -118,20 +110,20 @@ export function resolveObjectMarkerRelationState(input: {
 
 export function reconstructObjectSummary(input: {
   objectId: string;
+  ownerId: string;
   associations?: AssociationDoc[];
   measurements?: MeasurementDoc[];
   observations?: ObservationDoc[];
   asOf: Timestamp;
 }): ObjectSummaryDoc {
-  const { objectId, asOf, associations = [], measurements = [], observations = [] } = input;
+  const { objectId, ownerId, asOf, associations = [], measurements = [], observations = [] } = input;
   const derivedFactIds = new Set<string>();
 
   // 1. activeMarkerKeys
   const activeMarkerKeys: string[] = [];
 
-  // Group associations by markerKey for this objectId
   const assocsForObject = associations.filter(
-    (a) => a.associationType === 'object_has_marker' && a.objectIds?.includes(objectId)
+    (a) => a.objectIds?.includes(objectId)
   );
 
   const markerKeysSet = new Set<string>();
@@ -207,6 +199,7 @@ export function reconstructObjectSummary(input: {
 
   const result: ObjectSummaryDoc = {
     objectId,
+    ownerId,
     asOf,
   };
 
@@ -239,13 +232,14 @@ export function reconstructObjectSummary(input: {
 
 export function reconstructPlaceSummary(input: {
   placeId: string;
+  ownerId: string;
   associations?: AssociationDoc[];
   observations?: ObservationDoc[];
   measurements?: MeasurementDoc[];
   events?: EventDoc[];
   asOf: Timestamp;
 }): PlaceSummaryDoc {
-  const { placeId, asOf, observations = [], measurements = [], events = [] } = input;
+  const { placeId, ownerId, asOf, observations = [], measurements = [], events = [] } = input;
   const derivedFactIds = new Set<string>();
 
   const currentObjectIds = new Set<string>();
@@ -262,14 +256,10 @@ export function reconstructPlaceSummary(input: {
       lastActivityAt = ts;
       latestActivityFactId = factId;
     } else if (millis !== undefined && millis === latestActivityMillis && factId > (latestActivityFactId ?? '')) {
-      // Deterministic tie-breaker for identical timestamps
       lastActivityAt = ts;
       latestActivityFactId = factId;
     }
   }
-
-  // Note: Future Place runtime design may refine currentObjectIds/currentMarkerKeys
-  // into stricter current-presence semantics instead of a simple accumulation.
 
   // Observations
   for (const o of observations) {
@@ -303,6 +293,7 @@ export function reconstructPlaceSummary(input: {
 
   const result: PlaceSummaryDoc = {
     placeId,
+    ownerId,
     asOf,
   };
 
@@ -319,10 +310,6 @@ export function reconstructPlaceSummary(input: {
   }
 
   if (derivedFactIds.size > 0) {
-    // Optimization: only strictly include the latest activity fact if not already present
-    // but the instruction says "include Fact IDs directly used for currentObjectIds/currentMarkerKeys"
-    // and "selected latest place activity fact ID".
-    // We already added all matched facts above.
     result.derivedFromFactIds = Array.from(derivedFactIds).sort();
   }
 
@@ -335,19 +322,20 @@ export function reconstructPlaceSummary(input: {
 
 export function reconstructMarkerSummary(input: {
   markerKey: string;
+  ownerId: string;
   associations?: AssociationDoc[];
   observations?: ObservationDoc[];
   asOf: Timestamp;
   recentObservationWindowDays?: number;
 }): MarkerSummaryDoc {
-  const { markerKey, asOf, associations = [], observations = [], recentObservationWindowDays = 30 } = input;
+  const { markerKey, ownerId, asOf, associations = [], observations = [], recentObservationWindowDays = 30 } = input;
   const derivedFactIds = new Set<string>();
 
   // 1. relatedObjectIds
   const relatedObjectIds: string[] = [];
 
   const assocsForMarker = associations.filter(
-    (a) => a.associationType === 'object_has_marker' && a.markerKeys?.includes(markerKey)
+    (a) => a.markerKeys?.includes(markerKey)
   );
 
   const objectIdsSet = new Set<string>();
@@ -396,15 +384,12 @@ export function reconstructMarkerSummary(input: {
     lastObservedAt = latestObs.time.observedAt;
     derivedFactIds.add(latestObs.observationId);
 
-    // B. lastObservedPlaceId (search backwards for first observation with explicit placeIds)
+    // B. lastObservedPlaceId
     for (let i = validObservations.length - 1; i >= 0; i--) {
       const obs = validObservations[i];
       if (obs.placeIds && obs.placeIds.length > 0) {
         const sortedPlaces = [...obs.placeIds].sort();
         lastObservedPlaceId = sortedPlaces[0];
-        // Note: we do not add this observation to derivedFactIds unless we want to,
-        // but since we only need the absolute latest observation ID per instructions:
-        // "include latest observationId if selected", we keep it minimal.
         break;
       }
     }
@@ -422,6 +407,7 @@ export function reconstructMarkerSummary(input: {
 
   const result: MarkerSummaryDoc = {
     markerKey,
+    ownerId,
     asOf,
   };
 

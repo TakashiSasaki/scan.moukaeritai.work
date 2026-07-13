@@ -1,0 +1,17 @@
+{
+  "markerKey": "abc123xyz",
+  "ownerId": "uid_test_user_123",
+  "identityModelVersion": "1.0.0",
+  "canonicalizationVersion": "1.0.0",
+  "medium": "visual_code",
+  "payloadLayer": "encoded_payload",
+  "payloadKind": "qr",
+  "stability": "stable",
+  "_meta": {
+    "recordCreatedAt": "2026-07-11T18:00:00Z",
+    "recordUpdatedAt": "2026-07-11T18:00:00Z",
+    "recordCreatedBy": "system_bot",
+    "recordUpdatedBy": "system_bot",
+    "schemaVersion": 1
+  }
+}

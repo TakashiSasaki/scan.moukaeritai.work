@@ -1,0 +1,18 @@
+{
+  "contractId": "efp-semantics",
+  "version": "2.0.0",
+  "status": "active",
+  "title": "EFP Semantics",
+  "description": "Normative semantic rules and invariants for EFP model v3",
+  "contractType": "semantics",
+  "normativeArtifacts": [
+    "semantics.md"
+  ],
+  "dependencies": {
+    "efp-model": "3.0.0"
+  },
+  "compatibility": {
+    "breaksBackwardCompatibility": true,
+    "compatibleWith": []
+  }
+}

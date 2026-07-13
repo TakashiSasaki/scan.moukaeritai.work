@@ -57,14 +57,12 @@ export function buildFactIndexFields(participants: Participant[]): FactIndexFiel
 
   const result: FactIndexFields = {
     participantKeys,
+    objectIds: Array.from(objectIds).sort(),
+    markerKeys: Array.from(markerKeys).sort(),
+    placeIds: Array.from(placeIds).sort(),
+    readerIds: Array.from(readerIds).sort(),
+    deviceIds: Array.from(deviceIds).sort(),
+    userIds: Array.from(userIds).sort(),
   };
-
-  if (objectIds.size > 0) result.objectIds = Array.from(objectIds).sort();
-  if (markerKeys.size > 0) result.markerKeys = Array.from(markerKeys).sort();
-  if (placeIds.size > 0) result.placeIds = Array.from(placeIds).sort();
-  if (readerIds.size > 0) result.readerIds = Array.from(readerIds).sort();
-  if (deviceIds.size > 0) result.deviceIds = Array.from(deviceIds).sort();
-  if (userIds.size > 0) result.userIds = Array.from(userIds).sort();
-
   return result;
 }

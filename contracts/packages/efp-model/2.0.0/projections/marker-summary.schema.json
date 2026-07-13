@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MarkerSummaryProjection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "markerKey",
+    "asOf"
+  ],
+  "properties": {
+    "markerKey": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "relatedObjectIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 128
+      }
+    },
+    "lastObservedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lastObservedPlaceId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "recentObservationCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "derivedFromFactIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 128
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "format": "scan-mw-export",
+  "exportFormatVersion": "1.0.0",
+  "dataContractVersion": "2.0.0",
+  "appVersion": "2.0.4",
+  "exportedAt": "2026-07-11T18:00:00Z",
+  "exportId": "9e107d9d-3cc4-460d-886d-f42eac3c7457",
+  "collections": {
+    "objects": [],
+    "markers": [],
+    "places": [],
+    "associations": [],
+    "observations": [],
+    "measurements": [],
+    "events": []
+  },
+  "assets": [],
+  "hashes": {}
+}

@@ -3,10 +3,11 @@ name: CI
 on:
   push:
     branches:
-      - scan.moukaeritai.work
+      - main
   pull_request:
     branches:
-      - scan.moukaeritai.work
+      - main
+  workflow_dispatch:
 
 jobs:
   validate:
@@ -14,6 +15,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -21,59 +24,17 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - name: Setup Java (for Firebase Emulator)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - name: Install dependencies
+      - name: Install root dependencies
         run: npm ci
 
-      - name: Validate Functions import boundary
-        run: npm run test:functions-boundary
-
-      - name: Build shared EFP model package
+      - name: Build efp-model package
         run: npm --prefix packages/efp-model run build
 
-      - name: Typecheck shared EFP model package
-        run: npm --prefix packages/efp-model run typecheck
+      - name: Prepare functions artifact
+        run: npm run prepare:functions-artifact
 
-      - name: Validate shared EFP model package artifact
-        run: npm --prefix packages/efp-model run test:artifact
+      - name: Install functions dependencies
+        run: npm ci --prefix functions
 
-      - name: Prepare shared EFP model for Functions
-        run: npm run prepare:functions-efp-model
-
-      - name: Install Functions dependencies
-        run: npm ci
-        working-directory: ./functions
-
-      - name: Validate Functions shared EFP model dependency
-        run: npm run test:functions-efp-model
-
-      - name: Build Functions
-        run: npm run build
-        working-directory: ./functions
-
-      - name: Run lint
-        run: npm run lint
-
-      - name: Run ordinary tests
-        run: npm run test
-
-      - name: Run tests with coverage
-        run: npm run test:coverage
-
-      - name: Run Firestore rules tests
-        run: npm run test:rules
-
-      - name: Run build
-        run: npm run build
-
-      - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 14
+      - name: Run verification baseline
+        run: npm run verify:baseline

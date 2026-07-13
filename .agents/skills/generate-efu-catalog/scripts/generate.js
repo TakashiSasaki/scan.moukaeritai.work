@@ -18,7 +18,11 @@ if (excludeIndex !== -1 && args.length > excludeIndex + 1) {
 }
 
 const rootDir = process.cwd();
-const outputFile = path.join(rootDir, 'index.efu.csv');
+const outputDir = path.join(rootDir, '.local-data', 'generated');
+if (!fs.existsSync(outputDir)) {
+  fs.mkdirSync(outputDir, { recursive: true });
+}
+const outputFile = path.join(outputDir, 'index.efu.csv');
 
 const stream = fs.createWriteStream(outputFile);
 stream.write('"Filename","Size","Date Modified","Date Created","Attributes"\r\n');
@@ -55,4 +59,4 @@ function walk(dir) {
 
 walk(rootDir);
 stream.end();
-console.log(`index.efu.csv created successfully. (Excluded: ${excludes.join(', ')})`);
+console.log(`.local-data/generated/index.efu.csv created successfully. (Excluded: ${excludes.join(', ')})`);

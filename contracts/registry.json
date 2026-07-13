@@ -1,0 +1,167 @@
+{
+  "registryVersion": "1.0.0",
+  "contracts": [
+    {
+      "contractId": "core-vocabulary",
+      "version": "1.0.0",
+      "status": "active",
+      "title": "Core Vocabulary",
+      "description": "Definition of core entities and terms in scan.mw",
+      "contractType": "vocabulary",
+      "path": "packages/core-vocabulary/1.0.0/contract.json"
+    },
+    {
+      "contractId": "efp-model",
+      "version": "2.0.0",
+      "status": "deprecated",
+      "title": "Entity-Fact-Projection Model",
+      "description": "Data contracts and schemas for the EFP model",
+      "contractType": "data-model",
+      "path": "packages/efp-model/2.0.0/contract.json"
+    },
+    {
+      "contractId": "efp-semantics",
+      "version": "1.0.0",
+      "status": "deprecated",
+      "title": "EFP Semantics",
+      "description": "Normative semantic rules and invariants for the EFP model",
+      "contractType": "semantics",
+      "path": "packages/efp-semantics/1.0.0/contract.json"
+    },
+    {
+      "contractId": "export-format",
+      "version": "1.0.0",
+      "status": "active",
+      "title": "Export Format",
+      "description": "JSON schema for platform-independent backup exports",
+      "contractType": "exchange-format",
+      "path": "packages/export-format/1.0.0/contract.json"
+    },
+    {
+      "contractId": "import-protocol",
+      "version": "1.0.0",
+      "status": "active",
+      "title": "Import Protocol",
+      "description": "Phase definitions and schemas for the migration import protocol",
+      "contractType": "import-protocol",
+      "path": "packages/import-protocol/1.0.0/contract.json"
+    },
+    {
+      "contractId": "firestore-binding",
+      "version": "1.0.0",
+      "status": "deprecated",
+      "title": "Firestore Binding",
+      "description": "Strict binding mapping between logical EFP types and Firestore persistence types",
+      "contractType": "data-binding",
+      "path": "packages/firestore-binding/1.0.0/contract.json"
+    },
+    {
+      "contractId": "efp-model",
+      "version": "3.0.0",
+      "status": "active",
+      "title": "Entity-Fact-Projection Model",
+      "description": "Upgraded immutable data contracts and schemas for the EFP model v3",
+      "contractType": "data-model",
+      "path": "packages/efp-model/3.0.0/contract.json"
+    },
+    {
+      "contractId": "efp-semantics",
+      "version": "2.0.0",
+      "status": "active",
+      "title": "EFP Semantics",
+      "description": "Normative semantic rules and invariants for EFP model v3",
+      "contractType": "semantics",
+      "path": "packages/efp-semantics/2.0.0/contract.json"
+    },
+    {
+      "contractId": "firestore-binding",
+      "version": "2.0.0",
+      "status": "active",
+      "title": "Firestore Binding",
+      "description": "Upgraded strict binding mapping between logical EFP types and Firestore persistence types",
+      "contractType": "data-binding",
+      "path": "packages/firestore-binding/2.0.0/contract.json"
+    },
+    {
+      "contractId": "callable-functions-api",
+      "version": "1.0.0",
+      "status": "deprecated",
+      "title": "Callable Functions API",
+      "description": "API contract for the EFP-native backend fact creation pipeline",
+      "contractType": "api-contract",
+      "path": "packages/callable-functions-api/1.0.0/contract.json"
+    },
+    {
+      "contractId": "callable-functions-api",
+      "version": "1.1.0",
+      "status": "deprecated",
+      "title": "Callable Functions API",
+      "description": "API contract for the EFP-native backend fact creation pipeline with JSON Schema validation",
+      "contractType": "api-contract",
+      "path": "packages/callable-functions-api/1.1.0/contract.json"
+    },
+    {
+      "contractId": "callable-functions-api",
+      "version": "1.1.1",
+      "status": "deprecated",
+      "title": "Callable Functions API",
+      "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv4 commandId validation",
+      "contractType": "api-contract",
+      "path": "packages/callable-functions-api/1.1.1/contract.json"
+    },
+    {
+      "contractId": "callable-functions-api",
+      "version": "1.1.2",
+      "status": "deprecated",
+      "title": "Callable Functions API",
+      "description": "API contract for the EFP-native backend fact creation pipeline with union type request bodies",
+      "contractType": "api-contract",
+      "path": "packages/callable-functions-api/1.1.2/contract.json"
+    },
+    {
+      "contractId": "callable-functions-api",
+      "version": "1.1.3",
+      "status": "deprecated",
+      "title": "Callable Functions API",
+      "description": "API contract for the EFP-native backend fact creation pipeline with union type request bodies and strict valid fixtures",
+      "contractType": "api-contract",
+      "path": "packages/callable-functions-api/1.1.3/contract.json"
+    },
+    {
+      "contractId": "callable-functions-api",
+      "version": "1.1.4",
+      "status": "deprecated",
+      "title": "Callable Functions API",
+      "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv7-based idempotency validation",
+      "contractType": "api-contract",
+      "path": "packages/callable-functions-api/1.1.4/contract.json"
+    },
+    {
+      "contractId": "callable-functions-api",
+      "version": "1.1.5",
+      "status": "deprecated",
+      "title": "Callable Functions API",
+      "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv4-based idempotency validation",
+      "contractType": "api-contract",
+      "path": "packages/callable-functions-api/1.1.5/contract.json"
+    },
+    {
+      "contractId": "callable-functions-api",
+      "version": "1.1.6",
+      "status": "deprecated",
+      "title": "Callable Functions API",
+      "description": "API contract for the EFP-native backend fact creation pipeline with complete Fact Command Integrity closure",
+      "contractType": "api-contract",
+      "path": "packages/callable-functions-api/1.1.6/contract.json"
+    },
+    {
+      "contractId": "callable-functions-api",
+      "version": "1.1.7",
+      "status": "active",
+      "title": "Callable Functions API",
+      "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv4-based idempotency validation and comprehensive regression gates",
+      "contractType": "api-contract",
+      "path": "packages/callable-functions-api/1.1.7/contract.json"
+    }
+  ]
+}

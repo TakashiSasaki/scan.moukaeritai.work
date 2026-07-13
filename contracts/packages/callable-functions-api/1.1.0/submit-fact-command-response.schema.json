@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SubmitFactCommandResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["success", "factId", "commandId", "projectionStatus"],
+  "properties": {
+    "success": {
+      "type": "boolean"
+    },
+    "factId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "commandId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "projectionStatus": {
+      "type": "string",
+      "enum": ["pending", "complete"]
+    }
+  }
+}
