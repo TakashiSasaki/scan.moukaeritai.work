@@ -194,7 +194,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
             <div>
               <div className="text-xs font-bold text-amber-500 uppercase tracking-widest">New Tag Detected</div>
               <div className="text-sm font-bold text-[var(--on-surface)]">{initialIdentifier.identifierKey}</div>
-              <div className="text-[10px] text-[var(--on-surface-variant)] font-medium">This tag will be bound to the new object.</div>
+              <div className="text-[10px] text-[var(--on-surface-variant)] font-medium">This legacy tag is read-only and will not be bound. Use the EFP Marker association workflow after creating the Object.</div>
             </div>
           </div>
         )}

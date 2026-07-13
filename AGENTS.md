@@ -50,6 +50,10 @@ Legacy data is an archive, not a migration source.
 
 The new runtime must not create, update, delete, dual-write, shadow-write, backfill, reconcile, or canary-write legacy collections. Existing legacy collections remain in Firestore as read-only records. The only supported legacy export format is JSON.
 
+## Complexity control
+
+Shared simplification rules live in `.agents/policies/complexity-control.md`. Do not add new gates, mutation fixtures, contract versions, or unrelated foundation work for normal internal tasks.
+
 ## Current vertical slice priority
 
 The next product priority is the first usable EFP-native Object/Marker/Association slice:
@@ -77,7 +81,7 @@ Do not expand Place, Observation, Measurement, Event, projection backfill, gener
 - `npm run verify:release`: release-only full baseline, compatibility, artifact isolation, full documentation consistency, and version consistency.
 - `npm run verify:baseline`: backward-compatible alias for `verify:release`.
 
-Firestore Emulator Suite checks that require Java belong in GitHub Actions, not in a new local pseudo-emulator.
+Firestore Emulator integration tests are planned for GitHub Actions. Current PR verification uses Node-based static policy checks only; do not add a local pseudo-emulator.
 
 ## Version and contract governance
 

@@ -6,6 +6,9 @@ Close work at the right verification tier instead of forcing release validation 
 ## Trigger
 Use before completing a task, preparing a PR, or preparing a release.
 
+## Shared policy
+Refer to `.agents/policies/complexity-control.md` for repository-wide complexity-control non-goals.
+
 ## Non-goals
 - Do not run `verify:release` for normal tasks.
 - Do not require version bumps for every sensitive-path edit.

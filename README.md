@@ -49,7 +49,7 @@ npm run verify:release
 - `verify:release` is for release candidates and explicit full validation.
 - `verify:baseline` is kept as an alias for `verify:release` for compatibility.
 
-Firestore Emulator Suite checks that require Java should run in GitHub Actions rather than through a local pseudo-emulator.
+Firestore Emulator integration tests are planned for GitHub Actions. Current PR verification uses Node-based static policy checks only; do not add a local pseudo-emulator.
 
 ## Canonical references
 
@@ -59,3 +59,4 @@ Firestore Emulator Suite checks that require Java should run in GitHub Actions r
 - Route access policy: `src/lib/routeCatalog.ts`
 - Agent rules: `AGENTS.md`
 - Agent skills: `.agents/skills/manifest.json`
+- Complexity control policy: `.agents/policies/complexity-control.md`
