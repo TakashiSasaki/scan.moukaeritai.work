@@ -1,81 +1,48 @@
-# scan.mw (Version 2.0.18)
+# scan.mw (Version 2.0.20)
 
 [![CI](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml)
 
-Welcome to **scan.mw v2.0.18**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
+Welcome to **scan.mw v2.0.20**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
 
-This repository enforces backward-incompatible, robust schemas, strict version governance, and a registry-first workflow.
+This repository enforces robust schemas, strict version governance, and a registry-first workflow.
 
----
+## Core Architecture & EFP-Native Paradigm
 
-## 🏗️ Core Architecture & EFP-Native Paradigm
+- **Contract-First Source of Truth**: All schemas and API formats are declared and validated under `/contracts` first.
+- **Entity-Fact-Projection (EFP) Model**: Entities are physical identities; Facts are backend-only immutable records; Projections are asynchronous and eventually consistent.
 
-- **Contract-First Source of Truth**: All data models, schemas, and API formats are declared and validated within the `/contracts` directory first.
-- **Entity-Fact-Projection (EFP) Model**: 
-  - **Entities** (Timeless identity, e.g., Objects, Markers, Places)
-  - **Facts** (Temporal records of events/observations, e.g., Associations, Observations, Measurements, Events) - **Backend-only and immutable**.
-  - **Projections** (Derived caches optimized for user-facing reads) - **Asynchronous and eventually-consistent**.
+## Fact Runtime Closure Correction and Version Governance Repair (v2.0.20)
 
----
+Version 2.0.20 is the current correction stride. It repairs the 2.0.18 codex implementation so it can move forward from main 2.0.19 without a version downgrade, aligns Callable API 1.1.8 with runtime request hash constants, and hardens compiled Functions artifact, idempotency, compatibility, regression fixture, stride, and documentation gates.
 
-## 🚀 Fact Command Integrity Closure Repair (v2.0.17)
-
-Version 2.0.17 repairs Fact Command Integrity, properly implementing request identity hashes, strict transactional participant validation, UUIDv7 Fact IDs, and EFP logical model verification.
-
+- **Verification status**: Node-only verification passed locally. Main-target GitHub Actions confirmation is pending.
+- **Production Deployment**: Deployments are manual only.
 - **Object/Marker Active Workflow**: Not yet fully complete.
-- **Production Deployment**: Deployments are strictly **manual only**.
-- **Major Version Bumps**: Require explicit human approval.
 
-### 📅 Stride Roadmap & Backlog
-- **2.0.15**: Transactional Fact and Projection Safety Closure (Completed)
-- **2.0.16**: Partial Fact Command Integrity (Completed)
-- **2.0.17**: Fact Command Integrity Closure Repair (修復対象)
-- **2.0.18**: Fact Runtime Recovery and Regression Gate Closure (Current)
-- **2.0.19**: Projection Reliability and Ordering (Deferred)
-- **2.0.20**: Rules, Legacy Runtime and Export Closure (Deferred)
+### Stride Roadmap & Backlog
+
+- **2.0.18**: Fact Runtime Recovery and Regression Gate Closure (initial codex implementation; version governance, contract/runtime alignment, and test evidence required correction)
+- **2.0.19**: Hermes Branch Integration and Branch Workflow Update (main history; not Rules/Legacy/Export closure)
+- **2.0.20**: Fact Runtime Closure Correction and Version Governance Repair (Current)
+- **2.0.21**: Projection Reliability and Ordering (Deferred)
+- **2.0.22**: Rules, Legacy Runtime and Export Closure (Deferred)
 - **2.1.0**: EFP-native First Vertical Slice (Deferred)
 
-## 🛠️ Local Development & Validation
-
-To ensure extreme contract and baseline reliability, use the single entry point command:
+## Local Development & Validation
 
 ```bash
-# Install dependencies
 npm ci
-
-# Run the fail-closed verification pipeline
-# Node-only gates implemented and passing locally (GitHub Actions confirmation unavailable)
 npm run verify:baseline
 ```
 
----
+## Contract Registry Governance
 
-## 📜 Contract Registry Governance
+- `/contracts/registry.json`: registry of contract package versions.
+- `/contracts/packages/`: normative JSON schemas and contract descriptions.
+- `/contracts/profiles/current-application.json`: active application contract profile.
 
-The canonical definition of application state and data structures is managed under:
+## Security & Deployment Safety
 
-* `/contracts/registry.json`: Registry list of active contract versions.
-* `/contracts/packages/`: Raw JSON schemas and contract descriptions.
-* `/contracts/profiles/current-application.json`: Profile specifying which contract package versions the current UI deployment actively supports.
-
-### Schema Validation
-
-Any changes to `/contracts` can be dynamically verified locally using:
-
-```bash
-npm run contracts:validate
-```
-
-This tool uses `ajv` to compile all referenced JSON schemas and verify that the application profile perfectly aligns with registered versions.
-
----
-
-## 🔒 Security & Deployment Safety
-
-- **No Push Deployments**: Automatic deployments on code push are completely disabled.
-- **Workflow Dispatch Only**: Deployments to Firebase Hosting and Firebase Functions must be triggered manually via `workflow_dispatch` through GitHub Actions.
-- **Read-Only Legacy Export Tool**: To back up v1 data without risking production mutations, use the locked read-only tool:
-  ```bash
-  npm run ops:export-legacy
-  ```
- 
+- Automatic production deployments on push are disabled.
+- Firebase Hosting and Functions deploys must be manually triggered.
+- Do not perform production write/delete from agent workflows.

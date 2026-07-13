@@ -1,0 +1,17 @@
+{
+  "id": "object-only-participants-all-index-arrays",
+  "requirementId": "object-only-participants-all-index-arrays",
+  "runner": "derived-index",
+  "input": {
+    "participants": [
+      {
+        "role": "object",
+        "ref": {
+          "entityType": "object",
+          "id": "obj1"
+        }
+      }
+    ]
+  },
+  "expected": "pass"
+}

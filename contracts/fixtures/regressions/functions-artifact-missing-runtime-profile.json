@@ -1,0 +1,9 @@
+{
+  "id": "functions-artifact-missing-runtime-profile",
+  "requirementId": "functions-artifact-missing-runtime-profile",
+  "runner": "artifact-mutation",
+  "input": {
+    "mutation": "delete-runtime-profile"
+  },
+  "expected": "fail"
+}

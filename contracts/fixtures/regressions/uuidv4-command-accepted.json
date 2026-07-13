@@ -1,0 +1,9 @@
+{
+  "id": "uuidv4-command-accepted",
+  "requirementId": "uuidv4-command-accepted",
+  "runner": "callable-schema-validation",
+  "input": {
+    "fixture": "contracts/fixtures/valid/submit-fact-command-request-association.json"
+  },
+  "expected": "pass"
+}

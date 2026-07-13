@@ -1,0 +1,9 @@
+{
+  "id": "association-subject-foreign-owner-rejected",
+  "requirementId": "association-subject-foreign-owner-rejected",
+  "runner": "association-transition",
+  "input": {
+    "case": "subject-foreign-owner"
+  },
+  "expected": "fail"
+}

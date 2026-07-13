@@ -10,83 +10,46 @@ This repository uses project-specific agent skills listed in the canonical manif
 Canonical skill directory: `.agents/skills/`
 Before performing a task, check whether a relevant skill exists in the manifest and read its `SKILL.md` before acting.
 
-## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.19)
+## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.20)
 **scan.mw** is a cloud-based item tracking and inventory management application.
-As of version **2.0.19**, the project adheres to a **Contract-First Rebuild Baseline**:
+As of version **2.0.20**, the project follows a **Contract-First Rebuild Baseline**:
 
-1. **Canonical Schema Registry**: The `/contracts` directory is the single source of truth for all schemas, semantics, and registries. No runtime data mutations or API changes can occur without updated contracts. The active contract profile is defined in `contracts/profiles/current-application.json`.
-2. **Entity-Fact-Projection (EFP) Model**: 
-   - Entities (Object, Marker, Place) are physical identities.
-   - Facts (Association, Observation, Measurement, Event) are **backend-only and strictly immutable**.
-   - Projections (ObjectSummary, MarkerSummary, PlaceSummary) are **asynchronous and eventually consistent**.
-3. **SemVer & Version Integrity**: Version bumps in `package.json` are strictly mandatory whenever sensitive files are modified. **Major bumps require human approval.**
-4. **Deployments**: Production deployments are restricted to **manual only** (`workflow_dispatch`). Do not automatically deploy to production or perform production write/delete.
-5. **No Scratch Files**: Do not commit scratch files, one-off scripts, PR replies, or generated temporary patches to the root.
-6. **Active Skills Manifest**: Canonical manifest is `.agents/skills/manifest.json`. Active core skills must be executed strictly following preflight, hygiene, and closeout protocols.
+1. `/contracts` is the source of truth for schemas, semantics, registries, and active profiles.
+2. Entity-Fact-Projection (EFP): Entities are physical identities; Facts are backend-only immutable records; Projections are asynchronous and eventually consistent.
+3. SemVer and version integrity are mandatory; major bumps require human approval.
+4. Production deployments are manual only (`workflow_dispatch`); no production write/delete.
+5. No scratch files or generated temporary patches at repository root.
+6. Active skills manifest is `.agents/skills/manifest.json`.
 
-### 📋 Active & Completed Backend Work Status
+### Active & Completed Backend Work Status
 
-**Completed in 2.0.11/2.0.12/2.0.13**:
-- owner-scoped command receipt
-- transaction-nested receipt read
-- initial request hash calculation
-- backend-generated `receivedAt` timestamp
-- backend-enforced `actorUid` matching authenticated user
-- initial duplicate query within transactions
-- Verification Enforcement and Skill Execution Closure (manifest schema verification, skill command integrity checks, and fail-closed version verifier)
+**2.0.18 Fact Runtime Recovery and Regression Gate Closure (initial codex implementation)**:
+- Added Functions vendor runtime profile, EFP schema vendoring, derived index arrays, participant validation, UTF-8 SHA-256, UUIDv7, canonical identity tests, logical Fact tests, query/index gate, stride manifest, and documentation reality gate.
+- This version remained incomplete for main integration because version governance, contract/runtime alignment, executable evidence, and compiled artifact isolation required correction.
 
-**Completed in 2.0.14 (Node-Only Verification Closure and Skill Consistency)**:
-- Removing Java runtime setups, setup-java, and Firebase Firestore emulators from active verification pipeline, local scripts, and skills.
-- Node-only static policy validation for Firestore Security Rules (`test:firestore-policy`).
-  - *Disclaimer*: Firestore Security Rules are checked via Node-only static policy analysis (verifying syntactic structures, global deny existence, and write locks). Behavioral tests using the Emulator are not conducted, and static verification is not represented as runtime behavior validated.
-- Solidified fail-closed preflight validation and closeout procedures.
-- Standardized EFu catalog output directory to `.local-data/generated/index.efu.csv` with Hygiene Gate integration.
-- Standardized `npx` execution syntax checking under the skill integrity validation.
-- Node-only gates implemented and passing locally (GitHub Actions confirmation unavailable).
+**2.0.19 Hermes Branch Integration and Branch Workflow Update (main history)**:
+- Main branch integration and branch workflow updates.
+- This is not recorded as Rules/Legacy/Export closure.
 
-**Completed in 2.0.15 (Transactional Fact and Projection Safety Closure)**:
-- request hash verification with exact `factType` & schema version
-- rejecting same `commandId` with different `factType` inside transaction
-- typed `participantKeys` usage in functions (via `buildFactIndexFields`)
-- sorting/deduplication of all index arrays (via `buildFactIndexFields`)
-- Transactional Association subject reading inside Firestore transactions
-- validation matching detach participants with subject (identical participantKeys)
-- checking Object/Marker replace consistency (must share at least one participant key)
-- checking old vs new Marker schema integrity (comparing identityModelVersion and canonicalizationVersion)
-- throwing errors in projection updates instead of swallowing them
+**2.0.20 Fact Runtime Closure Correction and Version Governance Repair (Current)**:
+- Application version moves forward from main 2.0.19 to 2.0.20; no version downgrade exception is permitted.
+- Callable Functions API 1.1.8 is active.
+- `requestHashVersion` is the string `sha256-canonical-json-v1` across contract and runtime.
+- Functions artifact checks target compiled deployment artifacts.
+- Idempotency, Association transition, compatibility, regression fixture, stride, and documentation gates are hardened.
+- Node-only verification passed locally. Main-target GitHub Actions confirmation is pending.
 
-**Completed in 2.0.16 (Partial Fact Command Integrity)**:
-- Reverted commandId UUID validation from strict UUIDv7 to UUIDv4 across all API contracts, schemas, and fixtures.
-- Created and registered Callable Functions API Contract version 1.1.5.
-- Fixed 1.1.4 API backward-compatibility issues regarding client-submitted UUIDv4 commandIds.
+**Deferred to 2.0.21 (Projection Reliability and Ordering)**:
+- retry-safe projection handler
+- duplicate trigger safety
+- out-of-order safety
+- deterministic Fact order key
+- domain-time / Fact-ID watermark
+- conditional summary write
+- projection processing receipt
+- projection status tracking
 
-**Completed in 2.0.17 (Fact Command Integrity Closure Repair)**:
-- Fixed request hash to use active Callable API version (instead of schemaVersion 3).
-- command receipt saves callableApiVersion and requestHashVersion.
-- canonical serialization as a pure helper.
-- pure logical Fact builder and pre-save EFP schema validation.
-- Standard UUIDv7 Fact ID using `uuid` package.
-- Standard UTF-8 SHA-256 for Marker keys.
-- Participant Entity read inside transaction.
-- Strict Association replace check.
-- `ownerId` + `subjectAssociationId` composite index.
-- Query/index integrity gate added.
-- Authority boundary and idempotency tests added.
-
-**Deferred to 2.0.18 (Projection Reliability and Ordering)**:
-- projection receipt status updates
-- duplicate/out-of-order event safety
-- domain-time/fact-ID watermark
-
-**Completed in 2.0.19 (Rules, Legacy Runtime and Export Closure)**:
-- closure of Draft PR #1 (hermes branch CI integration)
-
-**Deferred to 2.0.20 (Rules, Legacy Runtime and Export Closure)**:
-- canonical JSON serialization standard
-- rigorous logical Fact validation matching schemas
-- `ownerId` + `subjectAssociationId` composite index
-- standardized UUIDv7 generation
-- standardized UTF-8 SHA-256
+**Deferred to 2.0.22 (Rules, Legacy Runtime and Export Closure)**:
 - strict Entity `_meta` security rules
 - Marker identity immutability rule
 - restricting Fact reads to `ownerId` scope
@@ -94,13 +57,12 @@ As of version **2.0.19**, the project adheres to a **Contract-First Rebuild Base
 - legacy exporter manifest, JSONL, and hash
 - cleanup of remaining migration/dual-write scripts
 
-### 📅 Stride Roadmap & Backlog
-- **2.0.15**: Transactional Fact and Projection Safety Closure (Completed)
-- **2.0.16**: Partial Fact Command Integrity (Completed)
-- **2.0.17**: Fact Command Integrity Closure Repair (修復対象)
-- **2.0.18**: Fact Runtime Recovery and Regression Gate Closure (Current)
-- **2.0.19**: Projection Reliability and Ordering (Deferred)
-- **2.0.20**: Rules, Legacy Runtime and Export Closure (Deferred)
+### Stride Roadmap & Backlog
+- **2.0.18**: Fact Runtime Recovery and Regression Gate Closure (initial codex implementation requiring correction)
+- **2.0.19**: Hermes Branch Integration and Branch Workflow Update (main history; not Rules/Legacy/Export closure)
+- **2.0.20**: Fact Runtime Closure Correction and Version Governance Repair (Current)
+- **2.0.21**: Projection Reliability and Ordering (Deferred)
+- **2.0.22**: Rules, Legacy Runtime and Export Closure (Deferred)
 - **2.1.0**: EFP-native First Vertical Slice (Deferred)
 
 ## 2. Incomplete Workflows & Legacy UI

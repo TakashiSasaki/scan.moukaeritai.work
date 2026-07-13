@@ -1,0 +1,9 @@
+{
+  "id": "missing-association-composite-index",
+  "requirementId": "missing-association-composite-index",
+  "runner": "query-index-mutation",
+  "input": {
+    "mutation": "delete-index"
+  },
+  "expected": "fail"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "same-command-different-api-version-rejected",
+  "requirementId": "same-command-different-api-version-rejected",
+  "runner": "idempotency-replay",
+  "input": {
+    "drift": "callableApiVersion"
+  },
+  "expected": "fail"
+}

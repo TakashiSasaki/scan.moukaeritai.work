@@ -1,0 +1,9 @@
+{
+  "id": "documentation-duplicate-roadmap-entry",
+  "requirementId": "documentation-duplicate-roadmap-entry",
+  "runner": "documentation-mutation",
+  "input": {
+    "mutation": "duplicate-roadmap"
+  },
+  "expected": "fail"
+}

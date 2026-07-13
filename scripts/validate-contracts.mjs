@@ -109,6 +109,10 @@ const contractSchemaSpec = {
       type: 'object',
       additionalProperties: { type: 'string' }
     },
+    metadata: {
+      type: 'object',
+      additionalProperties: { type: ['string', 'number', 'boolean'] }
+    },
     compatibility: {
       type: 'object',
       required: ['breaksBackwardCompatibility', 'compatibleWith'],

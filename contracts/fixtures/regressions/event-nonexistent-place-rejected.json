@@ -1,0 +1,9 @@
+{
+  "id": "event-nonexistent-place-rejected",
+  "requirementId": "event-nonexistent-place-rejected",
+  "runner": "callable-schema-validation",
+  "input": {
+    "fixture": "contracts/fixtures/valid/submit-fact-command-request-event.json"
+  },
+  "expected": "pass"
+}

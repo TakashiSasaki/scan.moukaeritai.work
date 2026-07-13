@@ -1,0 +1,9 @@
+{
+  "id": "different-owner-same-command-independent",
+  "requirementId": "different-owner-same-command-independent",
+  "runner": "idempotency-replay",
+  "input": {
+    "case": "different-owner"
+  },
+  "expected": "pass"
+}

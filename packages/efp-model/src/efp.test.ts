@@ -25,6 +25,12 @@ describe("EFP Model Utility Tests", () => {
     expect(uuids.size).toBe(numTests);
   });
 
+  test("UUIDv7 basic chronological order", () => {
+    const early = generateUUIDv7(1700000000000);
+    const later = generateUUIDv7(1700000000001);
+    expect(early < later).toBe(true);
+  });
+
   test("Marker key is owner independent and deterministic", () => {
     const input1 = {
       medium: "qr",

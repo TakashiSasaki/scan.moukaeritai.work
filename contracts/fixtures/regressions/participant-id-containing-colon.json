@@ -1,0 +1,17 @@
+{
+  "id": "participant-id-containing-colon",
+  "requirementId": "participant-id-containing-colon",
+  "runner": "derived-index",
+  "input": {
+    "participants": [
+      {
+        "role": "object",
+        "ref": {
+          "entityType": "object",
+          "id": "urn:example:object:123"
+        }
+      }
+    ]
+  },
+  "expected": "pass"
+}

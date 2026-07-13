@@ -13,7 +13,7 @@ describe("Logical Fact Builder", () => {
     recordCreatedAt: "2024-01-01T00:00:00.000Z",
     actorUid: "user123",
     efpModelVersion: "3.0.0",
-    callableApiVersion: "1.1.7"
+    callableApiVersion: "1.1.8"
   };
 
   test("valid Association fact", () => {

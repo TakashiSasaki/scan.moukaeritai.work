@@ -1,0 +1,9 @@
+{
+  "id": "observation-nonexistent-object-rejected",
+  "requirementId": "observation-nonexistent-object-rejected",
+  "runner": "callable-schema-validation",
+  "input": {
+    "fixture": "contracts/fixtures/valid/submit-fact-command-request-observation.json"
+  },
+  "expected": "pass"
+}

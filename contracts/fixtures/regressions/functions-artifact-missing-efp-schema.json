@@ -1,0 +1,9 @@
+{
+  "id": "functions-artifact-missing-efp-schema",
+  "requirementId": "functions-artifact-missing-efp-schema",
+  "runner": "artifact-mutation",
+  "input": {
+    "mutation": "delete-efp-schema"
+  },
+  "expected": "fail"
+}

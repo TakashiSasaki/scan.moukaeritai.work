@@ -1,0 +1,9 @@
+{
+  "id": "association-replace-object-mismatch-rejected",
+  "requirementId": "association-replace-object-mismatch-rejected",
+  "runner": "association-transition",
+  "input": {
+    "case": "replace-object-mismatch"
+  },
+  "expected": "fail"
+}

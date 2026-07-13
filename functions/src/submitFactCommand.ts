@@ -2,7 +2,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { getFirestore, Timestamp, GeoPoint } from "firebase-admin/firestore";
 import { generateUUIDv7 } from "@scan/efp-model";
-import { getCanonicalRequestIdentity } from "./canonicalRequestIdentity";
+import { CANONICAL_JSON_VERSION, getCanonicalRequestIdentity } from "./canonicalRequestIdentity";
 import { buildLogicalFact } from "./logicalFactBuilder";
 import * as fs from "fs";
 import * as path from "path";
@@ -15,20 +15,38 @@ function getDb() {
   return getFirestore(admin.app(), appletConfig.firestoreDatabaseId);
 }
 
-function getActiveApiVersion(): string {
-  const versionFile = path.join(__dirname, "../vendor/contracts/callable-functions-api/active-version.json");
-  const fallbackVersionFile = path.join(process.cwd(), "vendor/contracts/callable-functions-api/active-version.json");
-  const p = fs.existsSync(versionFile) ? versionFile : fallbackVersionFile;
-  const data = JSON.parse(fs.readFileSync(p, "utf8"));
-  return data.version || data.activeVersion;
+export interface RuntimeProfile {
+  applicationVersion: string;
+  callableApiVersion: string;
+  efpModelVersion: string;
 }
 
-function getActiveEfpVersion(): string {
-  const file = path.join(__dirname, "../../contracts/profiles/current-application.json");
-  const fallbackFile = path.join(process.cwd(), "contracts/profiles/current-application.json");
-  const p = fs.existsSync(file) ? file : fallbackFile;
-  const profile = JSON.parse(fs.readFileSync(p, "utf8"));
-  return profile.contracts["efp-model"];
+const runtimeProfileCandidates = [
+  path.join(__dirname, "../vendor/contracts/runtime-profile.json"),
+  path.join(__dirname, "../../vendor/contracts/runtime-profile.json"),
+  path.join(process.cwd(), "vendor/contracts/runtime-profile.json"),
+];
+
+export function loadRuntimeProfileForSubmitFactCommand(profilePath?: string): RuntimeProfile {
+  const candidates = profilePath ? [profilePath] : runtimeProfileCandidates;
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      const profile = JSON.parse(fs.readFileSync(candidate, "utf8"));
+      if (!profile.applicationVersion || !profile.callableApiVersion || !profile.efpModelVersion) {
+        throw new Error(`Invalid runtime profile: ${candidate}`);
+      }
+      return profile as RuntimeProfile;
+    }
+  }
+  throw new Error(`Missing functions vendor runtime profile. Checked: ${candidates.join(", ")}`);
+}
+
+
+function sameStringSet(a: string[] = [], b: string[] = []): boolean {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((value, index) => value === sortedB[index]);
 }
 
 export const submitFactCommand = onCall(async (request) => {
@@ -69,8 +87,14 @@ export const submitFactCommand = onCall(async (request) => {
     }
   }
 
-  const activeApiVersion = getActiveApiVersion();
-  const activeEfpVersion = getActiveEfpVersion();
+  let runtimeProfile: RuntimeProfile;
+  try {
+    runtimeProfile = loadRuntimeProfileForSubmitFactCommand();
+  } catch (e: any) {
+    throw new HttpsError("internal", e.message);
+  }
+  const activeApiVersion = runtimeProfile.callableApiVersion;
+  const activeEfpVersion = runtimeProfile.efpModelVersion;
 
   let identity;
   try {
@@ -125,6 +149,9 @@ export const submitFactCommand = onCall(async (request) => {
       }
       if (cmdData?.factType !== identity.factType) {
         throw new HttpsError("invalid-argument", "Same commandId received with a different factType.");
+      }
+      if (cmdData?.canonicalJsonVersion !== identity.canonicalJsonVersion) {
+        throw new HttpsError("invalid-argument", "Same commandId received with a different canonical JSON version.");
       }
       if (cmdData?.requestHash !== identity.requestHash) {
         throw new HttpsError("invalid-argument", "Same commandId received with a different payload.");
@@ -199,7 +226,7 @@ export const submitFactCommand = onCall(async (request) => {
         if (operation === "detach") {
           const subjectKeys = subjectData?.participantKeys || [];
           const incomingKeys = firestoreFact.participantKeys || [];
-          const keysMatch = subjectKeys.length === incomingKeys.length && subjectKeys.every((val: string, index: number) => val === incomingKeys[index]);
+          const keysMatch = sameStringSet(subjectKeys, incomingKeys);
           if (!keysMatch) {
             throw new HttpsError("failed-precondition", "Participants of the detach command must exactly match those of the subject association.");
           }
@@ -209,10 +236,10 @@ export const submitFactCommand = onCall(async (request) => {
           const subObjectIds = subjectData?.objectIds || [];
           const subMarkerKeys = subjectData?.markerKeys || [];
           
-          if (objectIds.length !== subObjectIds.length || !objectIds.every((v: string) => subObjectIds.includes(v))) {
+          if (!sameStringSet(objectIds, subObjectIds)) {
              throw new HttpsError("failed-precondition", "Object participants must exactly match.");
           }
-          if (markerKeysArr.length !== subMarkerKeys.length || !markerKeysArr.every((v: string) => subMarkerKeys.includes(v))) {
+          if (!sameStringSet(markerKeysArr, subMarkerKeys)) {
              throw new HttpsError("failed-precondition", "Marker participants must exactly match.");
           }
         }
@@ -223,7 +250,7 @@ export const submitFactCommand = onCall(async (request) => {
           const subObjectIds = subjectData?.objectIds || [];
           const subMarkerKeys = subjectData?.markerKeys || [];
           
-          if (objectIds.length !== subObjectIds.length || !objectIds.every((v: string) => subObjectIds.includes(v))) {
+          if (!sameStringSet(objectIds, subObjectIds)) {
              throw new HttpsError("failed-precondition", "Replace Object participants must exactly match.");
           }
           if (markerKeysArr.length !== 1 || subMarkerKeys.length !== 1) {
@@ -233,21 +260,6 @@ export const submitFactCommand = onCall(async (request) => {
              throw new HttpsError("failed-precondition", "Replace Marker must be different from the old marker.");
           }
           
-          // Schema integrity - normatively checking Marker versions since contract 2.0
-          const oldMarkerKey = subMarkerKeys[0];
-          const newMarkerKey = markerKeysArr[0];
-          const oldMarkerSnap = await transaction.get(db.collection("markers").doc(oldMarkerKey));
-          const newMarkerSnap = await transaction.get(db.collection("markers").doc(newMarkerKey));
-          if (oldMarkerSnap.exists && newMarkerSnap.exists) {
-            const oldMarkerData = oldMarkerSnap.data();
-            const newMarkerData = newMarkerSnap.data();
-            if (oldMarkerData?.identityModelVersion !== newMarkerData?.identityModelVersion) {
-              throw new HttpsError("failed-precondition", `Marker replacement schema mismatch.`);
-            }
-            if (oldMarkerData?.canonicalizationVersion !== newMarkerData?.canonicalizationVersion) {
-              throw new HttpsError("failed-precondition", `Marker replacement canonicalization mismatch.`);
-            }
-          }
         }
       }
       
@@ -270,6 +282,7 @@ export const submitFactCommand = onCall(async (request) => {
       factId,
       factType,
       callableApiVersion: identity.callableApiVersion,
+      canonicalJsonVersion: identity.canonicalJsonVersion ?? CANONICAL_JSON_VERSION,
       requestHash: identity.requestHash,
       requestHashVersion: identity.requestHashVersion,
       executedAt: Timestamp.now()

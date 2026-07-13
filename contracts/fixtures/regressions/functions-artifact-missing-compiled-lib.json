@@ -1,0 +1,9 @@
+{
+  "id": "functions-artifact-missing-compiled-lib",
+  "requirementId": "functions-artifact-missing-compiled-lib",
+  "runner": "artifact-mutation",
+  "input": {
+    "mutation": "delete-compiled-lib"
+  },
+  "expected": "fail"
+}

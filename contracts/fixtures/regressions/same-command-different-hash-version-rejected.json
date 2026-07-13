@@ -1,0 +1,9 @@
+{
+  "id": "same-command-different-hash-version-rejected",
+  "requirementId": "same-command-different-hash-version-rejected",
+  "runner": "idempotency-replay",
+  "input": {
+    "drift": "requestHashVersion"
+  },
+  "expected": "fail"
+}

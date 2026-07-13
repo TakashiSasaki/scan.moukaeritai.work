@@ -1,0 +1,9 @@
+{
+  "id": "uuidv7-command-rejected",
+  "requirementId": "uuidv7-command-rejected",
+  "runner": "callable-schema-validation",
+  "input": {
+    "commandId": "018f2f21-7f91-7f00-8000-000000000000"
+  },
+  "expected": "fail"
+}

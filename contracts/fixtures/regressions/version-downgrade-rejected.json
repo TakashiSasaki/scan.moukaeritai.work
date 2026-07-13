@@ -1,0 +1,10 @@
+{
+  "id": "version-downgrade-rejected",
+  "requirementId": "version-downgrade-rejected",
+  "runner": "version-governance-mutation",
+  "input": {
+    "from": "2.0.19",
+    "to": "2.0.18"
+  },
+  "expected": "fail"
+}

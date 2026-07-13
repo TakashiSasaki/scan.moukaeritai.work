@@ -1,0 +1,9 @@
+{
+  "id": "documentation-completed-deferred-conflict",
+  "requirementId": "documentation-completed-deferred-conflict",
+  "runner": "documentation-mutation",
+  "input": {
+    "mutation": "completed-deferred-conflict"
+  },
+  "expected": "fail"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "unicode-sha256-known-vectors",
+  "requirementId": "unicode-sha256-known-vectors",
+  "runner": "sha256-known-vector",
+  "input": {
+    "values": [
+      "",
+      "abc",
+      "日本語",
+      "scan.mw🔖"
+    ]
+  },
+  "expected": "pass"
+}

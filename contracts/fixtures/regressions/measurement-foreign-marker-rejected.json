@@ -1,0 +1,9 @@
+{
+  "id": "measurement-foreign-marker-rejected",
+  "requirementId": "measurement-foreign-marker-rejected",
+  "runner": "callable-schema-validation",
+  "input": {
+    "fixture": "contracts/fixtures/valid/submit-fact-command-request-measurement.json"
+  },
+  "expected": "pass"
+}

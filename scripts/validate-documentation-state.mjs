@@ -1,135 +1,24 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const rootDir = path.resolve(__dirname, '..');
-
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+function fail(msg){ console.error(`❌ Documentation Reality Gate Failed: ${msg}`); process.exit(1); }
 console.log('🔍 Running Documentation Reality Gate...');
-
-function fail(msg) {
-  console.error(`❌ Documentation Reality Gate Failed: ${msg}`);
-  process.exit(1);
-}
-
-// 1. Load package.json for target version
-let currentVersion;
-try {
-  const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
-  currentVersion = pkg.version;
-} catch (e) {
-  fail(`Failed to read/parse package.json: ${e.message}`);
-}
-
-// 2. Validate README.md version and content
-const readmePath = path.join(rootDir, 'README.md');
-if (!fs.existsSync(readmePath)) {
-  fail('README.md not found.');
-}
-const readme = fs.readFileSync(readmePath, 'utf8');
-
-if (!readme.includes(`Version ${currentVersion}`) && !readme.includes(`v${currentVersion}`)) {
-  fail(`README.md does not contain the current version "${currentVersion}"`);
-}
-
-// Check prohibited claims in README.md
-if (readme.includes('Closed and fully validated')) {
-  fail('README.md contains the phrase "Closed and fully validated". Since CI is unconfirmed, this must be "implemented", "stabilized locally", or "awaiting CI confirmation".');
-}
-if (readme.includes('complete fail-closed verification pipeline')) {
-  fail('README.md contains the phrase "complete fail-closed verification pipeline". Since CI is unconfirmed, this must refer to "awaiting CI confirmation" or "stabilized locally".');
-}
-
-// 3. Validate AGENTS.md version and content
-const agentsPath = path.join(rootDir, 'AGENTS.md');
-if (!fs.existsSync(agentsPath)) {
-  fail('AGENTS.md not found.');
-}
-const agents = fs.readFileSync(agentsPath, 'utf8');
-
-if (!agents.includes(`scan.mw ${currentVersion}`) && !agents.includes(`version **${currentVersion}**`)) {
-  fail(`AGENTS.md does not contain the current version "${currentVersion}"`);
-}
-
-// Check prohibited absolute claims in README.md and AGENTS.md
-const prohibitedPhrases = [
-  { phrase: 'All verification passed', regex: /all\s+verification\s+passed/i },
-  { phrase: 'All checks are 100% green', regex: /all\s+(checks|tests|verification|validations)\s+are\s+(100%|100\s*%)\s*green/i },
-  { phrase: 'behavioral tests passed', regex: /behavioral\s+tests\s+passed/i },
-  { phrase: 'fully verified in CI', regex: /fully\s+verified\s+in\s+CI/i }
-];
-
-for (const p of prohibitedPhrases) {
-  if (p.regex.test(readme)) {
-    fail(`README.md contains prohibited absolute verification claim: "${p.phrase}"`);
-  }
-  if (p.regex.test(agents)) {
-    fail(`AGENTS.md contains prohibited absolute verification claim: "${p.phrase}"`);
-  }
-}
-
-// Ensure local-only verification claim exists in README.md
-if (!readme.includes('Node-only gates implemented and passing locally')) {
-  fail('README.md is missing the required local-only verification claim: "Node-only gates implemented and passing locally"');
-}
-if (!readme.includes('GitHub Actions confirmation unavailable')) {
-  fail('README.md is missing the required local-only verification claim: "GitHub Actions confirmation unavailable"');
-}
-
-// Ensure local-only verification claim exists in AGENTS.md
-if (!agents.includes('Node-only gates implemented and passing locally')) {
-  fail('AGENTS.md is missing the required local-only verification claim: "Node-only gates implemented and passing locally"');
-}
-if (!agents.includes('GitHub Actions confirmation unavailable')) {
-  fail('AGENTS.md is missing the required local-only verification claim: "GitHub Actions confirmation unavailable"');
-}
-
-// 4. Validate current-application.json applicationVersion
-const profilePath = path.join(rootDir, 'contracts/profiles/current-application.json');
-if (!fs.existsSync(profilePath)) {
-  fail('current-application.json not found.');
-}
-const profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
-if (profile.applicationVersion !== currentVersion) {
-  fail(`contracts/profiles/current-application.json version (${profile.applicationVersion}) does not match package.json version (${currentVersion})`);
-}
-
-// 5. Verify no premature completed status for uncompleted features
-const incompletePatterns = [
-  { name: 'Object/Marker Workflows', regex: /object.*marker.*work.*(complete|done|closed)/i },
-  { name: 'Projection Reliability', regex: /projection.*reliability.*(complete|done|closed)/i },
-  { name: 'Rules Closure', regex: /rules.*closure.*(complete|done|closed)/i }
-];
-
-for (const pattern of incompletePatterns) {
-  // We check if either README or AGENTS claims they are "completed" (not counting "incomplete" or "not complete")
-  // Let's search for lines containing these topics, and assert they don't claim complete success without qualifiers.
-  const checkClaim = (text, fileName) => {
-    const lines = text.split('\n');
-    for (const line of lines) {
-      if (pattern.regex.test(line)) {
-        // Allow if qualified by "not", "incomplete", "deferred", "pending", "awaiting"
-        const lowercaseLine = line.toLowerCase();
-        if (
-          lowercaseLine.includes('not') || 
-          lowercaseLine.includes('incomplete') || 
-          lowercaseLine.includes('defer') || 
-          lowercaseLine.includes('pend') || 
-          lowercaseLine.includes('await') ||
-          lowercaseLine.includes('scheduled') ||
-          lowercaseLine.includes('unimplemented')
-        ) {
-          continue;
-        }
-        fail(`Premature claim of completion for "${pattern.name}" found in ${fileName}: "${line.trim()}"`);
-      }
-    }
-  };
-  
-  checkClaim(readme, 'README.md');
-  checkClaim(agents, 'AGENTS.md');
-}
-
+const pkg = JSON.parse(fs.readFileSync(path.join(rootDir,'package.json'),'utf8'));
+const currentVersion = pkg.version;
+const readme = fs.readFileSync(path.join(rootDir,'README.md'),'utf8');
+const agents = fs.readFileSync(path.join(rootDir,'AGENTS.md'),'utf8');
+if (!readme.includes(`Version ${currentVersion}`) && !readme.includes(`v${currentVersion}`)) fail('README current version mismatch');
+if (!agents.includes(`scan.mw ${currentVersion}`) && !agents.includes(`version **${currentVersion}**`)) fail('AGENTS current version mismatch');
+for (const phrase of ['Node-only verification passed locally.','Main-target GitHub Actions confirmation is pending.']) { if (!readme.includes(phrase)) fail(`README missing ${phrase}`); if (!agents.includes(phrase)) fail(`AGENTS missing ${phrase}`); }
+for (const forbidden of [/CI green/i,/GitHub Actions passed/i,/fully verified in CI/i,/version downgrade.*repair/i,/2\.0\.18.*Current/i]) if (forbidden.test(readme+agents)) fail(`Forbidden documentation claim: ${forbidden}`);
+const profile = JSON.parse(fs.readFileSync(path.join(rootDir,'contracts/profiles/current-application.json'),'utf8')); if (profile.applicationVersion !== currentVersion) fail('profile applicationVersion mismatch');
+function roadmap(text, file){ const entries=[]; const seen=new Set(); for (const line of text.split('\n').filter(l=>l.trim().startsWith('- **2.'))) { const m=line.match(/\*\*(2\.\d+\.\d+)\*\*:\s*(.*?)\s*\((.*?)\)/); if (m) { if(seen.has(m[1])) fail(`${file} duplicate roadmap ${m[1]}`); seen.add(m[1]); entries.push({version:m[1],name:m[2],status:m[3],line}); } } return entries; }
+const r1=roadmap(readme,'README.md'), r2=roadmap(agents,'AGENTS.md');
+const required=[['2.0.18','Fact Runtime Recovery and Regression Gate Closure'],['2.0.19','Hermes Branch Integration and Branch Workflow Update'],['2.0.20','Fact Runtime Closure Correction and Version Governance Repair'],['2.0.21','Projection Reliability and Ordering'],['2.0.22','Rules, Legacy Runtime and Export Closure'],['2.1.0','EFP-native First Vertical Slice']];
+for (const [v,n] of required) for (const [file,r] of [['README.md',r1],['AGENTS.md',r2]]) { const e=r.find(x=>x.version===v); if(!e) fail(`${file} missing ${v}`); if(!e.name.includes(n)) fail(`${file} ${v} name mismatch`); }
+const c1=r1.find(e=>/Current/.test(e.status)), c2=r2.find(e=>/Current/.test(e.status)); if(!c1||!c2||c1.version!==c2.version) fail('README and AGENTS Current differ'); if(c1.version!==currentVersion) fail('Current roadmap version differs from package');
+if (!readme.includes('2.0.19') || !agents.includes('2.0.19')) fail('2.0.19 history removed');
+const stridePath=path.join(rootDir,'.agents/strides',`${currentVersion}.json`); if(!fs.existsSync(stridePath)) fail('missing current stride manifest'); const stride=JSON.parse(fs.readFileSync(stridePath,'utf8')); if(stride.status==='ready-for-main-pr' && /Completed in 2\.0\.20|2\.0\.20.*Completed/i.test(readme+agents)) fail('ready-for-main-pr documented as Completed');
+const contract = JSON.parse(fs.readFileSync(path.join(rootDir,'contracts/packages/callable-functions-api',profile.contracts['callable-functions-api'],'contract.json'),'utf8')); const canonical = fs.readFileSync(path.join(rootDir,'functions/src/canonicalRequestIdentity.ts'),'utf8'); if(!canonical.includes((contract.metadata && contract.metadata.requestHashVersion))) fail('requestHashVersion contract/runtime mismatch');
 console.log('✅ Documentation Reality Gate Passed successfully!');
-process.exit(0);

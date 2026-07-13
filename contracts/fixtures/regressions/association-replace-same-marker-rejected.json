@@ -1,0 +1,9 @@
+{
+  "id": "association-replace-same-marker-rejected",
+  "requirementId": "association-replace-same-marker-rejected",
+  "runner": "association-transition",
+  "input": {
+    "case": "replace-same-marker"
+  },
+  "expected": "fail"
+}
