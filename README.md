@@ -18,18 +18,19 @@ This repository enforces backward-incompatible, robust schemas, strict version g
 
 ---
 
-## 🚀 Fact Command Integrity Closure Repair (v2.0.17)
+## 🚀 Fact Runtime Recovery and Regression Gate Closure (v2.0.18)
 
-Version 2.0.17 repairs Fact Command Integrity, properly implementing request identity hashes, strict transactional participant validation, UUIDv7 Fact IDs, and EFP logical model verification.
+Version 2.0.18 is the current Fact runtime recovery stride. It repairs the deployable Functions artifact boundary, active Callable API 1.1.7 runtime profile usage, required derived index arrays, all-Fact Object/Marker/Place participant validation, UTF-8 SHA-256 evidence, UUIDv4 command acceptance, UUIDv7 Fact ID evidence, canonical request identity tests, logical Fact builder tests, idempotency tests, Association transition tests, compatibility gates, query/index gates, stride gates, regression fixtures, and documentation reality checks.
+
+The previous **2.0.17 Fact Command Integrity Closure Repair** is recorded as a partially implemented baseline / 修復対象, not as proof that UTF-8 SHA-256, artifact completeness, or all-Fact participant validation were fully closed.
 
 - **Object/Marker Active Workflow**: Not yet fully complete.
 - **Production Deployment**: Deployments are strictly **manual only**.
 - **Major Version Bumps**: Require explicit human approval.
+- **Verification status**: Node-only gates implemented and passing locally (GitHub Actions confirmation unavailable).
 
 ### 📅 Stride Roadmap & Backlog
-- **2.0.15**: Transactional Fact and Projection Safety Closure (Completed)
-- **2.0.16**: Partial Fact Command Integrity (Completed)
-- **2.0.17**: Fact Command Integrity Closure Repair (修復対象)
+- **2.0.17**: Fact Command Integrity Closure Repair (修復対象 / partially implemented baseline)
 - **2.0.18**: Fact Runtime Recovery and Regression Gate Closure (Current)
 - **2.0.19**: Projection Reliability and Ordering (Deferred)
 - **2.0.20**: Rules, Legacy Runtime and Export Closure (Deferred)

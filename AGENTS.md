@@ -10,9 +10,9 @@ This repository uses project-specific agent skills listed in the canonical manif
 Canonical skill directory: `.agents/skills/`
 Before performing a task, check whether a relevant skill exists in the manifest and read its `SKILL.md` before acting.
 
-## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.19)
+## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.18)
 **scan.mw** is a cloud-based item tracking and inventory management application.
-As of version **2.0.19**, the project adheres to a **Contract-First Rebuild Baseline**:
+As of version **2.0.18**, the project adheres to a **Contract-First Rebuild Baseline**:
 
 1. **Canonical Schema Registry**: The `/contracts` directory is the single source of truth for all schemas, semantics, and registries. No runtime data mutations or API changes can occur without updated contracts. The active contract profile is defined in `contracts/profiles/current-application.json`.
 2. **Entity-Fact-Projection (EFP) Model**: 
@@ -26,67 +26,36 @@ As of version **2.0.19**, the project adheres to a **Contract-First Rebuild Base
 
 ### 📋 Active & Completed Backend Work Status
 
-**Completed in 2.0.11/2.0.12/2.0.13**:
-- owner-scoped command receipt
-- transaction-nested receipt read
-- initial request hash calculation
-- backend-generated `receivedAt` timestamp
-- backend-enforced `actorUid` matching authenticated user
-- initial duplicate query within transactions
-- Verification Enforcement and Skill Execution Closure (manifest schema verification, skill command integrity checks, and fail-closed version verifier)
+**Completed through 2.0.16**:
+- Node-only verification closure and skill consistency.
+- Transactional Fact and Projection Safety Closure.
+- Partial Fact Command Integrity with client-generated UUIDv4 `commandId` compatibility.
 
-**Completed in 2.0.14 (Node-Only Verification Closure and Skill Consistency)**:
-- Removing Java runtime setups, setup-java, and Firebase Firestore emulators from active verification pipeline, local scripts, and skills.
-- Node-only static policy validation for Firestore Security Rules (`test:firestore-policy`).
-  - *Disclaimer*: Firestore Security Rules are checked via Node-only static policy analysis (verifying syntactic structures, global deny existence, and write locks). Behavioral tests using the Emulator are not conducted, and static verification is not represented as runtime behavior validated.
-- Solidified fail-closed preflight validation and closeout procedures.
-- Standardized EFu catalog output directory to `.local-data/generated/index.efu.csv` with Hygiene Gate integration.
-- Standardized `npx` execution syntax checking under the skill integrity validation.
+**2.0.17 Fact Command Integrity Closure Repair (修復対象 / partially implemented baseline)**:
+- Introduced active Callable API based request identity and receipt fields.
+- Introduced logical Fact builder and UUIDv7 Fact ID generation.
+- Introduced query/index integrity checks.
+- The 2.0.17 baseline is explicitly treated as repair対象 for artifact completeness, UTF-8 SHA-256 evidence, and all-Fact participant validation until the 2.0.18 gates verify them.
+
+**2.0.18 Fact Runtime Recovery and Regression Gate Closure (Current)**:
+- Functions deployment artifact must be self-contained under `functions/vendor`.
+- Callable Functions API 1.1.7 is the active API contract.
+- Derived Fact index arrays are required, deterministic, deduplicated, and sorted.
+- Object/Marker/Place participant existence and ownership validation applies to Association, Observation, Measurement, and Event Facts.
+- UTF-8 SHA-256, UUIDv4 command acceptance, UUIDv7 Fact IDs, canonical identity, logical Fact builder, idempotency, Association transition, compatibility, query/index, stride, regression fixture, and documentation reality gates are tracked by `.agents/strides/2.0.18.json`.
 - Node-only gates implemented and passing locally (GitHub Actions confirmation unavailable).
 
-**Completed in 2.0.15 (Transactional Fact and Projection Safety Closure)**:
-- request hash verification with exact `factType` & schema version
-- rejecting same `commandId` with different `factType` inside transaction
-- typed `participantKeys` usage in functions (via `buildFactIndexFields`)
-- sorting/deduplication of all index arrays (via `buildFactIndexFields`)
-- Transactional Association subject reading inside Firestore transactions
-- validation matching detach participants with subject (identical participantKeys)
-- checking Object/Marker replace consistency (must share at least one participant key)
-- checking old vs new Marker schema integrity (comparing identityModelVersion and canonicalizationVersion)
-- throwing errors in projection updates instead of swallowing them
-
-**Completed in 2.0.16 (Partial Fact Command Integrity)**:
-- Reverted commandId UUID validation from strict UUIDv7 to UUIDv4 across all API contracts, schemas, and fixtures.
-- Created and registered Callable Functions API Contract version 1.1.5.
-- Fixed 1.1.4 API backward-compatibility issues regarding client-submitted UUIDv4 commandIds.
-
-**Completed in 2.0.17 (Fact Command Integrity Closure Repair)**:
-- Fixed request hash to use active Callable API version (instead of schemaVersion 3).
-- command receipt saves callableApiVersion and requestHashVersion.
-- canonical serialization as a pure helper.
-- pure logical Fact builder and pre-save EFP schema validation.
-- Standard UUIDv7 Fact ID using `uuid` package.
-- Standard UTF-8 SHA-256 for Marker keys.
-- Participant Entity read inside transaction.
-- Strict Association replace check.
-- `ownerId` + `subjectAssociationId` composite index.
-- Query/index integrity gate added.
-- Authority boundary and idempotency tests added.
-
-**Deferred to 2.0.18 (Projection Reliability and Ordering)**:
-- projection receipt status updates
-- duplicate/out-of-order event safety
-- domain-time/fact-ID watermark
-
-**Completed in 2.0.19 (Rules, Legacy Runtime and Export Closure)**:
-- closure of Draft PR #1 (hermes branch CI integration)
+**Deferred to 2.0.19 (Projection Reliability and Ordering)**:
+- retry-safe projection handler
+- duplicate trigger safety
+- out-of-order safety
+- deterministic Fact order key
+- domain-time / Fact-ID watermark
+- conditional summary write
+- projection processing receipt
+- projection status tracking
 
 **Deferred to 2.0.20 (Rules, Legacy Runtime and Export Closure)**:
-- canonical JSON serialization standard
-- rigorous logical Fact validation matching schemas
-- `ownerId` + `subjectAssociationId` composite index
-- standardized UUIDv7 generation
-- standardized UTF-8 SHA-256
 - strict Entity `_meta` security rules
 - Marker identity immutability rule
 - restricting Fact reads to `ownerId` scope
@@ -95,9 +64,7 @@ As of version **2.0.19**, the project adheres to a **Contract-First Rebuild Base
 - cleanup of remaining migration/dual-write scripts
 
 ### 📅 Stride Roadmap & Backlog
-- **2.0.15**: Transactional Fact and Projection Safety Closure (Completed)
-- **2.0.16**: Partial Fact Command Integrity (Completed)
-- **2.0.17**: Fact Command Integrity Closure Repair (修復対象)
+- **2.0.17**: Fact Command Integrity Closure Repair (修復対象 / partially implemented baseline)
 - **2.0.18**: Fact Runtime Recovery and Regression Gate Closure (Current)
 - **2.0.19**: Projection Reliability and Ordering (Deferred)
 - **2.0.20**: Rules, Legacy Runtime and Export Closure (Deferred)
