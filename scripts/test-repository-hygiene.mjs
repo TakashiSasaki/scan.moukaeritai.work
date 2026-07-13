@@ -10,6 +10,7 @@ const ALLOWED_ROOT_FILES = new Set([
   'vitest.config.ts',
   'vitest.rules.config.ts',
   '.gitignore',
+  '.git',
   '.env.example',
   '.firebaserc',
   'firebase.json',

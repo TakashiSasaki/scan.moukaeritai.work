@@ -52,8 +52,10 @@ for (const file of files) {
       if (!pushBranches.includes('main')) {
         fail('ci.yml is missing "main" branch in on.push.branches');
       }
-      if (!prBranches.includes('main')) {
-        fail('ci.yml is missing "main" branch in on.pull_request.branches');
+      for (const branch of ['main', 'codex', 'jules', 'hermes']) {
+        if (!prBranches.includes(branch)) {
+          fail(`ci.yml is missing "${branch}" branch in on.pull_request.branches`);
+        }
       }
 
       const steps = parsed.jobs?.validate?.steps || [];
@@ -72,27 +74,17 @@ for (const file of files) {
         fail('ci.yml is missing root "npm ci" execution step.');
       }
 
-      const prepareArtifactIndex = steps.findIndex(step => step.run && step.run.includes('prepare:functions-artifact'));
-      if (prepareArtifactIndex === -1) {
-        fail('ci.yml is missing "npm run prepare:functions-artifact" step.');
-      }
-
-      const functionsNpmCiIndex = steps.findIndex(step => {
-        if (!step.run) return false;
-        const runsNpmCi = step.run.includes('npm ci');
-        const worksOnFunctions = step.run.includes('functions') || (step['working-directory'] && step['working-directory'].includes('functions'));
-        return runsNpmCi && worksOnFunctions;
-      });
-
-      if (functionsNpmCiIndex === -1) {
-        fail('ci.yml is missing npm ci in Functions directory.');
-      } else if (functionsNpmCiIndex < prepareArtifactIndex) {
-        fail('ci.yml must install Functions dependencies AFTER preparing Functions artifact.');
-      }
-
-      const hasBaselineVerify = steps.some(step => step.run && step.run.includes('verify:pr'));
-      if (!hasBaselineVerify) {
+      const hasPrVerify = steps.some(step => step.run && step.run.includes('verify:pr'));
+      if (!hasPrVerify) {
         fail('ci.yml is missing "npm run verify:pr" step.');
+      }
+
+      const prScript = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')).scripts?.['verify:pr'] || '';
+      if (!prScript.includes('prepare:functions-artifact')) {
+        fail('verify:pr must prepare the Functions artifact for clean CI runs.');
+      }
+      if (!prScript.includes('npm ci --prefix functions')) {
+        fail('verify:pr must install Functions dependencies after preparing the artifact.');
       }
     }
 

@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - main
+      - codex
+      - jules
+      - hermes
   workflow_dispatch:
 
 jobs:
@@ -26,15 +29,6 @@ jobs:
 
       - name: Install root dependencies
         run: npm ci
-
-      - name: Build efp-model package
-        run: npm --prefix packages/efp-model run build
-
-      - name: Prepare functions artifact
-        run: npm run prepare:functions-artifact
-
-      - name: Install functions dependencies
-        run: npm ci --prefix functions
 
       - name: Run PR verification
         run: npm run verify:pr
