@@ -8,10 +8,12 @@ export function getCanonicalRequestIdentity(callableApiVersion: string, factType
   });
   
   const requestHash = crypto.createHash("sha256").update(canonicalJson, "utf8").digest("hex");
-  const requestHashVersion = 1;
+  const canonicalJsonVersion = 1;
+  const requestHashVersion = "sha256-canonical-json-v1";
 
   return {
     canonicalJson,
+    canonicalJsonVersion,
     requestHash,
     requestHashVersion,
     callableApiVersion,

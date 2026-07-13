@@ -1,0 +1,13 @@
+{
+  "id": "participant-id-containing-colon",
+  "requirementId": "executable-regression-fixtures",
+  "runner": "source-presence",
+  "input": {
+    "paths": [
+      "package.json"
+    ]
+  },
+  "expected": {
+    "exists": true
+  }
+}

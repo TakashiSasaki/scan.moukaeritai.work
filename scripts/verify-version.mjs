@@ -12,18 +12,6 @@ function fail(msg) {
   process.exit(1);
 }
 
-function isVersionGovernanceRepair(current, base) {
-  const manifestPath = path.join(rootDir, '.agents/strides', `${current}.json`);
-  if (!fs.existsSync(manifestPath)) return false;
-  try {
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-    return manifest.applicationVersion === current &&
-      manifest.status === 'complete' &&
-      manifest.name === 'Fact Runtime Recovery and Regression Gate Closure' &&
-      base === '2.0.19' && current === '2.0.18';
-  } catch { return false; }
-}
-
 function isSemverGreater(current, base) {
   if (!current || !base) return false;
   const cParts = current.split('.').map(Number);
@@ -36,6 +24,22 @@ function isSemverGreater(current, base) {
     if (cParts[i] < bParts[i]) return false;
   }
   return false;
+}
+
+
+if (process.argv.includes('--self-test')) {
+  const cases = [
+    ['2.0.20', '2.0.19', true],
+    ['2.0.19', '2.0.19', false],
+    ['2.0.18', '2.0.19', false]
+  ];
+  for (const [current, base, expected] of cases) {
+    if (isSemverGreater(current, base) !== expected) {
+      fail(`Self-test failed for ${base} -> ${current}`);
+    }
+  }
+  console.log('✅ Version verifier self-test passed: 2.0.19→2.0.20 pass; equal/downgrade fail; major bump remains approval-gated in formal mode.');
+  process.exit(0);
 }
 
 console.log('🔍 Running Version Verification...');
@@ -119,10 +123,8 @@ if (!isStatic) {
     if (currentVersion === baseVersion) {
       fail(`The version in package.json must be bumped. Code changed under sensitive paths, but version remained "${currentVersion}".`);
     }
-    if (!isSemverGreater(currentVersion, baseVersion) && !isVersionGovernanceRepair(currentVersion, baseVersion)) {
+    if (!isSemverGreater(currentVersion, baseVersion)) {
       fail(`Current version "${currentVersion}" is not greater than base version "${baseVersion}".`);
-    } else if (isVersionGovernanceRepair(currentVersion, baseVersion)) {
-      console.log('⚠️ Version governance repair mode: aligning incorrectly advanced baseline back to target stride 2.0.18.');
     }
   }
 

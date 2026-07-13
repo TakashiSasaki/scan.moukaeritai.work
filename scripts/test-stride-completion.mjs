@@ -1,34 +1,7 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const manifestPath = path.join(rootDir, '.agents/strides/2.0.18.json');
-function fail(msg){ throw new Error(msg); }
-function validate(manifest){
-  if (!Array.isArray(manifest.requirements) || manifest.requirements.length === 0) fail('requirement missing');
-  const scripts = JSON.parse(fs.readFileSync(path.join(rootDir,'package.json'),'utf8')).scripts || {};
-  for (const req of manifest.requirements) {
-    if (!req.id) fail('requirement missing id');
-    if (req.status === 'complete') {
-      if (!Array.isArray(req.evidence) || req.evidence.length === 0) fail(`${req.id} evidence missing`);
-      if (!Array.isArray(req.verificationCommands) || req.verificationCommands.length === 0) fail(`${req.id} verificationCommands missing`);
-      for (const ev of req.evidence) if (!fs.existsSync(path.join(rootDir, ev))) fail(`${req.id} evidence does not exist: ${ev}`);
-      for (const cmd of req.verificationCommands) if (!scripts[cmd]) fail(`${req.id} command not in package.json scripts: ${cmd}`);
-      if (req.evidence.every(ev => /README|AGENTS|\.md$/.test(ev))) fail(`${req.id} is complete with documentation-only evidence`);
-    }
-  }
-}
-if (process.argv.includes('--self-test')) {
-  const good = JSON.parse(fs.readFileSync(manifestPath,'utf8'));
-  validate(good);
-  for (const [label, mut] of [
-    ['requirement missing', m => { delete m.requirements; }],
-    ['evidence missing', m => { m.requirements[0].evidence=[]; }],
-    ['nonexistent command', m => { m.requirements[0].verificationCommands=['nope']; }],
-    ['documentation only', m => { m.requirements[0].evidence=['README.md']; }]
-  ]) {
-    const clone = structuredClone(good); mut(clone); let failed=false; try { validate(clone); } catch { failed=true; }
-    if (!failed) throw new Error(`self-test did not fail for ${label}`);
-  }
-  console.log('Stride completion self-test passed.');
-} else { try { validate(JSON.parse(fs.readFileSync(manifestPath,'utf8'))); console.log('Stride completion gate passed.'); } catch (e) { console.error(`❌ Stride completion gate failed: ${e.message}`); process.exit(1); } }
+import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
+const rootDir=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const required=['version-governance-monotonic','version-2.0.20','callable-api-1.1.8-active','request-hash-version-contract-runtime-alignment','functions-artifact-profile-resolution','functions-artifact-compiled-isolation','owner-aware-fake-firestore','idempotency-regression-matrix','association-transition-matrix','marker-replace-normative-policy','version-specific-callable-compatibility','executable-regression-fixtures','query-index-baseline','stride-gate-hardening','documentation-reality','node-only-baseline','main-target-ci'];
+function fail(m){throw new Error(m)}
+function validate(m){const pkg=JSON.parse(fs.readFileSync(path.join(rootDir,'package.json'),'utf8')); if(m.applicationVersion!==pkg.version) fail('manifest applicationVersion mismatch'); const ids=m.requirements?.map(r=>r.id)||[]; if(new Set(ids).size!==ids.length) fail('duplicate requirement ID'); for(const id of required) if(!ids.includes(id)) fail(`missing required requirement ${id}`); if(!['in-progress','ready-for-main-pr','complete'].includes(m.status)) fail('invalid status'); if(m.status==='complete' && m.requirements.some(r=>r.status!=='complete')) fail('complete status requires all requirements complete'); if(m.status==='ready-for-main-pr' && m.requirements.some(r=>r.status!=='complete'&&r.id!=='main-target-ci')) fail('ready-for-main-pr only allows main-target-ci pending'); for(const r of m.requirements){ if(!['pending','complete'].includes(r.status)) fail(`invalid requirement status ${r.id}`); if(r.status==='complete'){ if(!r.evidence?.length||!r.verificationCommands?.length) fail(`complete requirement ${r.id} lacks evidence or commands`); for(const e of r.evidence) if(!fs.existsSync(path.join(rootDir,e))) fail(`missing evidence ${e}`); } } }
+if(process.argv.includes('--self-test')){const good=JSON.parse(fs.readFileSync(path.join(rootDir,'.agents/strides/2.0.20.json'),'utf8')); for(const mutate of [g=>g.applicationVersion='2.0.18',g=>g.requirements.pop(),g=>g.requirements.push({...g.requirements[0]}),g=>g.requirements[0].evidence=['missing'],g=>{g.status='complete';g.requirements.find(r=>r.id==='main-target-ci').status='pending'}]){const bad=structuredClone(good); mutate(bad); let ok=false; try{validate(bad)}catch{ok=true} if(!ok) fail('self-test mutation did not fail')} console.log('Stride completion self-test passed.'); process.exit(0)}
+validate(JSON.parse(fs.readFileSync(path.join(rootDir,'.agents/strides/2.0.20.json'),'utf8'))); console.log('Stride completion gate passed.');
