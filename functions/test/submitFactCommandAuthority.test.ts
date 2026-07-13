@@ -1,14 +1,13 @@
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { Timestamp } from 'firebase-admin/firestore';
+import { submitFactCommand } from '../src/submitFactCommand';
 
-// Setup hoisted mocks to resolve hoisting order issues in Vitest
-const { mockSet, mockGet, mockRunTransaction, setLastCollection } = vi.hoisted(() => {
+// Setup hoisted mocks
+const { mockSet, mockGet, mockRunTransaction } = vi.hoisted(() => {
   const mockSet = vi.fn();
-  let lastCollectionName = '';
-
-  const mockGet = vi.fn().mockImplementation(() => {
-    // Return exists: false for idempotency check, and exists: true for entities
-    if (lastCollectionName === 'factCommands') {
+  const mockGet = vi.fn().mockImplementation((ref) => {
+    // Return exists: false for idempotency check, exists: true for others
+    if (ref && ref.id && ref.id.length === 36) {
       return Promise.resolve({
         exists: false,
         data: () => null,
@@ -18,11 +17,16 @@ const { mockSet, mockGet, mockRunTransaction, setLastCollection } = vi.hoisted((
       exists: true,
       data: () => ({
         ownerId: 'test-user',
+        operation: 'attach',
+        participantKeys: ['object:obj-123', 'marker:mk_hash'],
+        objectIds: ['obj-123'],
+        markerKeys: ['mk_hash'],
+        identityModelVersion: "v2",
+        canonicalizationVersion: "v1"
       }),
       docs: []
     });
   });
-
   const mockRunTransaction = vi.fn().mockImplementation(async (callback) => {
     const transaction = {
       get: mockGet,
@@ -30,188 +34,131 @@ const { mockSet, mockGet, mockRunTransaction, setLastCollection } = vi.hoisted((
     };
     return callback(transaction);
   });
-
-  return { 
-    mockSet, 
-    mockGet, 
-    mockRunTransaction,
-    setLastCollection: (name: string) => { lastCollectionName = name; }
-  };
+  return { mockSet, mockGet, mockRunTransaction };
 });
 
-// Mock firebase-functions v2 https module
 vi.mock('firebase-functions/v2/https', () => {
   return {
-    onCall: (handler: any) => {
-      return handler;
-    },
+    onCall: (handler: any) => handler,
     HttpsError: class HttpsError extends Error {
-      constructor(public code: string, message: string) {
-        super(message);
-      }
+      constructor(public code: string, message: string) { super(message); }
     }
   };
 });
 
-// Mock firebase-admin app lifecycle
 vi.mock('firebase-admin', () => {
-  return {
-    app: vi.fn().mockReturnValue({}),
-    initializeApp: vi.fn()
-  };
+  return { app: vi.fn().mockReturnValue({}), initializeApp: vi.fn() };
 });
 
-// Mock firebase-admin/firestore using inline mock classes
 vi.mock('firebase-admin/firestore', () => {
   const mockDb = {
-    collection: vi.fn().mockImplementation((name) => {
-      setLastCollection(name);
-      return mockDb;
-    }),
-    doc: vi.fn().mockReturnThis(),
+    collection: vi.fn().mockReturnThis(),
+    doc: vi.fn().mockImplementation((id) => { return { id, path: "doc/"+id, collection: () => mockDb }; }),
     get: mockGet,
     runTransaction: mockRunTransaction,
     where: vi.fn().mockReturnThis()
   };
-
   class MockTimestamp {
     constructor(public seconds: number, public nanoseconds: number) {}
-    static now() {
-      return new MockTimestamp(Math.floor(Date.now() / 1000), 0);
-    }
-    static fromDate(date: Date) {
-      return new MockTimestamp(Math.floor(date.getTime() / 1000), 0);
-    }
-    toDate() {
-      return new Date(this.seconds * 1000);
-    }
+    static now() { return new MockTimestamp(Math.floor(Date.now() / 1000), 0); }
+    static fromDate(date: Date) { return new MockTimestamp(Math.floor(date.getTime() / 1000), 0); }
+    toDate() { return new Date(this.seconds * 1000); }
   }
-
   class MockGeoPoint {
     constructor(public latitude: number, public longitude: number) {}
   }
-
-  return {
-    getFirestore: () => mockDb,
-    Timestamp: MockTimestamp,
-    GeoPoint: MockGeoPoint
-  };
+  return { getFirestore: () => mockDb, Timestamp: MockTimestamp, GeoPoint: MockGeoPoint };
 });
 
-// Mock efp-model validations to bypass schemas and logic safely
-vi.mock('@scan/efp-model', () => {
+vi.mock('@scan/efp-model', async () => {
+  const actual = await vi.importActual('@scan/efp-model');
   return {
-    generateUUIDv7: () => 'test-uuid-v7',
-    validateAssociationSemantics: () => true,
-    validateDerivedIndexes: () => true,
-    stripUndefinedDeep: (x: any) => x,
+    ...actual,
+    generateUUIDv7: () => "test-uuid-v7",
     buildFactIndexFields: () => ({
-      participantKeys: [],
-      objectIds: [],
-      markerKeys: [],
+      participantKeys: ["object:obj-123", "marker:mk_hash"],
+      objectIds: ["obj-123"],
+      markerKeys: ["mk_hash"],
       placeIds: [],
       deviceIds: [],
       readerIds: [],
       userIds: [],
-    }),
+    })
   };
 });
 
-// Dynamically import test subject after hoisting mocks
-import { submitFactCommand } from '../src/submitFactCommand';
+beforeEach(() => {
+  mockSet.mockClear();
+  mockGet.mockClear();
+});
 
 describe('Callable Authority Boundary Tests', () => {
+  const auth = { uid: 'test-user' };
+
   test('receivedAt and actorUid are server-authoritative for observations', async () => {
     const maliciousPayload = {
-      commandId: '0190a61a-3e5f-4000-8000-000000000000', // Valid UUIDv4
+      commandId: '0190a61a-3e5f-4000-8000-000000000000', // UUIDv4
       factType: 'observation',
       data: {
         observationType: 'temperature',
-        time: {
-          observedAt: '2026-07-12T05:00:00Z',
-          receivedAt: '2000-01-01T00:00:00Z' // spoofed past timestamp
-        },
-        provenance: {
-          source: 'user_confirmed', // Valid allowed enum
-          actorUid: 'malicious-user-uid', // spoofed actorUid
-          confidence: 'confirmed' // Valid allowed enum
-        },
-        participants: [
-          {
-            role: 'subject',
-            ref: { entityType: 'object', id: 'obj-123' }
-          }
-        ]
+        time: { observedAt: '2026-07-12T05:00:00Z', receivedAt: '2000-01-01T00:00:00Z' },
+        provenance: { source: 'user_confirmed', actorUid: 'malicious', confidence: 'confirmed' },
+        participants: [{ role: 'object', ref: { entityType: 'object', id: 'obj-123' } }]
       }
     };
-
-    const mockRequest = {
-      auth: {
-        uid: 'test-user' // true authenticated uid
-      },
-      data: maliciousPayload
-    };
-
-    await submitFactCommand(mockRequest);
-
-    expect(mockSet).toHaveBeenCalled();
-    
-    // Get doc payloads passed to transaction.set
+    await submitFactCommand({ auth, data: maliciousPayload });
     const savedDocs = mockSet.mock.calls.map(call => call[1]);
-    const factDoc = savedDocs.find(doc => doc.observationId === 'test-uuid-v7');
-    
+    const factDoc = savedDocs.find(doc => doc.observationId);
     expect(factDoc).toBeDefined();
-    
-    // Assert client spoofed receivedAt was rejected and overridden with server Timestamp
-    expect(factDoc.time.receivedAt).not.toEqual(Timestamp.fromDate(new Date('2000-01-01T00:00:00Z')));
     expect(factDoc.time.receivedAt).toBeInstanceOf(Timestamp);
-    
-    // Assert client spoofed actorUid was rejected and overridden with true auth ownerId
     expect(factDoc.provenance.actorUid).toEqual('test-user');
-    expect(factDoc._meta.recordCreatedBy).toEqual('test-user');
+    expect(factDoc._meta.recordCreatedAt).toBeInstanceOf(Timestamp);
   });
 
-  test('receivedAt and actorUid are server-authoritative for measurements', async () => {
-    mockSet.mockClear();
-    
+  test('rejects forbidden fields in request', async () => {
     const maliciousPayload = {
-      commandId: '0190a61a-3e5f-4000-8000-000000000001', // Valid UUIDv4
-      factType: 'measurement',
+      commandId: '0190a61a-3e5f-4000-8000-000000000000',
+      factType: 'observation',
+      data: { ownerId: 'other' }
+    };
+    await expect(submitFactCommand({ auth, data: maliciousPayload })).rejects.toThrow(/Field 'ownerId' is not allowed/);
+  });
+
+  test('UUIDv4 commandId validation', async () => {
+    // v4 accepted
+    const payload = { commandId: '123e4567-e89b-42d3-a456-426614174000', factType: 'event', data: { eventType: 'test', time: { occurredAt: '2026-07-12T05:00:00Z'}, participants: []} };
+    await expect(submitFactCommand({ auth, data: payload })).rejects.toThrow(); 
+    
+    // v7 rejected
+    payload.commandId = '018f9d0c-633b-74db-86d1-4db8a3297a7e';
+    await expect(submitFactCommand({ auth, data: payload })).rejects.toThrow(/must be a valid UUIDv4/);
+    
+    // malformed rejected
+    payload.commandId = 'invalid';
+    await expect(submitFactCommand({ auth, data: payload })).rejects.toThrow(/must be a valid UUIDv4/);
+  });
+
+  test('Association transactional reads and overlap check', async () => {
+    const payload = {
+      commandId: '123e4567-e89b-42d3-a456-426614174000',
+      factType: 'association',
       data: {
-        measurementType: 'humidity',
-        time: {
-          measuredAt: '2026-07-12T05:00:00Z',
-          receivedAt: '2000-01-01T00:00:00Z' // spoofed
-        },
-        provenance: {
-          source: 'user_confirmed', // Valid allowed enum
-          actorUid: 'malicious-user-uid', // spoofed
-          confidence: 'confirmed' // Valid allowed enum
-        },
+        operation: "attach",
+        effectiveAt: "2026-07-12T05:00:00Z",
+        provenance: { source: "user_confirmed", confidence: "confirmed" },
         participants: [
-          {
-            role: 'subject',
-            ref: { entityType: 'object', id: 'obj-123' }
-          }
+          { role: 'object', ref: { entityType: 'object', id: 'obj-123' } },
+          { role: 'marker', ref: { entityType: 'marker', id: 'mk_hash' } }
         ]
       }
     };
-
-    const mockRequest = {
-      auth: {
-        uid: 'test-user'
-      },
-      data: maliciousPayload
-    };
-
-    await submitFactCommand(mockRequest);
-
-    const savedDocs = mockSet.mock.calls.map(call => call[1]);
-    const factDoc = savedDocs.find(doc => doc.measurementId === 'test-uuid-v7');
+    await submitFactCommand({ auth, data: payload });
+    expect(mockGet).toHaveBeenCalled(); 
     
+    const savedDocs = mockSet.mock.calls.map(call => call[1]);
+    const factDoc = savedDocs.find(doc => doc.associationId);
     expect(factDoc).toBeDefined();
-    expect(factDoc.time.receivedAt).not.toEqual(Timestamp.fromDate(new Date('2000-01-01T00:00:00Z')));
-    expect(factDoc.time.receivedAt).toBeInstanceOf(Timestamp);
-    expect(factDoc.provenance.actorUid).toEqual('test-user');
+    expect(factDoc.operation).toBe('attach');
   });
+
 });

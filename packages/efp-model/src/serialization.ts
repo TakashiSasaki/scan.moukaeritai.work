@@ -1,3 +1,4 @@
+import { v7 as uuidv7 } from "uuid";
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (value === null || typeof value !== 'object') return false;
   const proto = Object.getPrototypeOf(value);
@@ -43,26 +44,10 @@ export function stripUndefinedDeep<T>(value: T): T {
 }
 
 /**
- * Generates a standard time-ordered UUIDv7 in pure JS/TS.
+ * Generates a standard time-ordered UUIDv7 using the official uuid package.
  */
-export function generateUUIDv7(timestampMs: number = Date.now()): string {
-  const tsHex = timestampMs.toString(16).padStart(12, '0');
-  const randA = Math.floor(Math.random() * 0x1000).toString(16).padStart(3, '0');
-  const part2 = '7' + randA;
-  
-  const randB1 = Math.floor(Math.random() * 0x4000) | 0x8000;
-  const randB1Hex = randB1.toString(16).padStart(4, '0');
-  
-  const randB2Hex = Math.floor(Math.random() * 0x100000000).toString(16).padStart(8, '0');
-  const randB3Hex = Math.floor(Math.random() * 0x10000).toString(16).padStart(4, '0');
-  
-  const p1 = tsHex.substring(0, 8);
-  const p2 = tsHex.substring(8, 12);
-  const p3 = part2;
-  const p4 = randB1Hex;
-  const p5 = randB2Hex + randB3Hex;
-  
-  return `${p1}-${p2}-${p3}-${p4}-${p5}`;
+export function generateUUIDv7(timestampMs?: number): string {
+  return timestampMs ? uuidv7({ msecs: timestampMs }) : uuidv7();
 }
 
 /**
@@ -92,10 +77,7 @@ export function sha256(ascii: string): string {
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
   ];
 
-  const asciiBytes: number[] = [];
-  for (let i = 0; i < ascii.length; i++) {
-    asciiBytes.push(ascii.charCodeAt(i) & 0xff);
-  }
+  const asciiBytes: number[] = Array.from(new TextEncoder().encode(ascii));
 
   asciiBytes.push(0x80);
   while (asciiBytes.length % 64 !== 56) {

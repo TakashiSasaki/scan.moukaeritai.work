@@ -1,8 +1,8 @@
-# scan.mw (Version 2.0.16)
+# scan.mw (Version 2.0.17)
 
 [![CI](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml)
 
-Welcome to **scan.mw v2.0.16**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
+Welcome to **scan.mw v2.0.17**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
 
 This repository enforces backward-incompatible, robust schemas, strict version governance, and a registry-first workflow.
 
@@ -18,9 +18,9 @@ This repository enforces backward-incompatible, robust schemas, strict version g
 
 ---
 
-## 🚀 Fact Command Integrity Completion (v2.0.16)
+## 🚀 Fact Command Integrity Closure Repair (v2.0.17)
 
-Version 2.0.16 focuses on implementing Fact Command Integrity, reverting commandId back to strictly UUIDv4 validation across API contracts, schema registries, and test fixtures.
+Version 2.0.17 repairs Fact Command Integrity, properly implementing request identity hashes, strict transactional participant validation, UUIDv7 Fact IDs, and EFP logical model verification.
 
 - **Object/Marker Active Workflow**: Not yet fully complete.
 - **Production Deployment**: Deployments are strictly **manual only**.
@@ -28,7 +28,11 @@ Version 2.0.16 focuses on implementing Fact Command Integrity, reverting command
 
 ### 📅 Stride Roadmap & Backlog
 - **2.0.15**: Transactional Fact and Projection Safety Closure (Completed)
-- **2.0.16**: Fact Command Integrity Completion (Current)
+- **2.0.16**: Partial Fact Command Integrity (Completed)
+- **2.0.17**: Fact Command Integrity Closure Repair (Current)
+- **2.0.18**: Projection Reliability and Ordering (Deferred)
+- **2.0.19**: Rules, Legacy Runtime and Export Closure (Deferred)
+- **2.1.0**: EFP-native First Vertical Slice (Deferred)
 - **2.1.0**: EFP-native First Vertical Slice (Deferred)
 
 ---

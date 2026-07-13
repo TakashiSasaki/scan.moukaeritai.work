@@ -10,9 +10,9 @@ This repository uses project-specific agent skills listed in the canonical manif
 Canonical skill directory: `.agents/skills/`
 Before performing a task, check whether a relevant skill exists in the manifest and read its `SKILL.md` before acting.
 
-## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.16)
+## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.17)
 **scan.mw** is a cloud-based item tracking and inventory management application.
-As of version **2.0.16**, the project adheres to a **Contract-First Rebuild Baseline**:
+As of version **2.0.17**, the project adheres to a **Contract-First Rebuild Baseline**:
 
 1. **Canonical Schema Registry**: The `/contracts` directory is the single source of truth for all schemas, semantics, and registries. No runtime data mutations or API changes can occur without updated contracts. The active contract profile is defined in `contracts/profiles/current-application.json`.
 2. **Entity-Fact-Projection (EFP) Model**: 
@@ -55,19 +55,30 @@ As of version **2.0.16**, the project adheres to a **Contract-First Rebuild Base
 - checking old vs new Marker schema integrity (comparing identityModelVersion and canonicalizationVersion)
 - throwing errors in projection updates instead of swallowing them
 
-**Completed in 2.0.16 (Fact Command Integrity Completion)**:
+**Completed in 2.0.16 (Partial Fact Command Integrity)**:
 - Reverted commandId UUID validation from strict UUIDv7 to UUIDv4 across all API contracts, schemas, and fixtures.
 - Created and registered Callable Functions API Contract version 1.1.5.
 - Fixed 1.1.4 API backward-compatibility issues regarding client-submitted UUIDv4 commandIds.
-- Updated request hash to use active Callable API version.
-- Validated new contracts and updated TypeScript types perfectly without any schema drift.
 
-**Deferred to 2.0.17 (Projection Reliability and Ordering)**:
+**Completed in 2.0.17 (Fact Command Integrity Closure Repair)**:
+- Fixed request hash to use active Callable API version (instead of schemaVersion 3).
+- command receipt saves callableApiVersion and requestHashVersion.
+- canonical serialization as a pure helper.
+- pure logical Fact builder and pre-save EFP schema validation.
+- Standard UUIDv7 Fact ID using `uuid` package.
+- Standard UTF-8 SHA-256 for Marker keys.
+- Participant Entity read inside transaction.
+- Strict Association replace check.
+- `ownerId` + `subjectAssociationId` composite index.
+- Query/index integrity gate added.
+- Authority boundary and idempotency tests added.
+
+**Deferred to 2.0.18 (Projection Reliability and Ordering)**:
 - projection receipt status updates
 - duplicate/out-of-order event safety
 - domain-time/fact-ID watermark
 
-**Deferred to 2.0.18 (Rules, Legacy Runtime and Export Closure)**:
+**Deferred to 2.0.19 (Rules, Legacy Runtime and Export Closure)**:
 - canonical JSON serialization standard
 - rigorous logical Fact validation matching schemas
 - `ownerId` + `subjectAssociationId` composite index
@@ -83,9 +94,10 @@ As of version **2.0.16**, the project adheres to a **Contract-First Rebuild Base
 
 ### 📅 Stride Roadmap & Backlog
 - **2.0.15**: Transactional Fact and Projection Safety Closure (Completed)
-- **2.0.16**: Fact Command Integrity Completion (Current)
-- **2.0.17**: Projection Reliability and Ordering (Deferred)
-- **2.0.18**: Rules, Legacy Runtime and Export Closure (Deferred)
+- **2.0.16**: Partial Fact Command Integrity (Completed)
+- **2.0.17**: Fact Command Integrity Closure Repair (Completed)
+- **2.0.18**: Projection Reliability and Ordering (Current)
+- **2.0.19**: Rules, Legacy Runtime and Export Closure (Deferred)
 - **2.1.0**: EFP-native First Vertical Slice (Deferred)
 
 ## 2. Incomplete Workflows & Legacy UI

@@ -1,7 +1,7 @@
 {
   "name": "scan-mw",
   "private": true,
-  "version": "2.0.16",
+  "version": "2.0.17",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
@@ -51,7 +51,8 @@
     "ops:export-legacy": "node scripts/export-legacy-data.mjs",
     "test:repository-hygiene": "node scripts/test-repository-hygiene.mjs",
     "test:agent-skills": "node scripts/test-agent-skills.mjs",
-    "test:workflows": "node scripts/validate-workflow-yaml.mjs"
+    "test:workflows": "node scripts/validate-workflow-yaml.mjs",
+    "test:query-index-contract": "node scripts/test-query-index-contract.mjs"
   },
   "dependencies": {
     "@google-cloud/monitoring": "^5.3.2",
