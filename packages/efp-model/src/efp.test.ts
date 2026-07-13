@@ -42,18 +42,13 @@ describe("EFP Model Utility Tests", () => {
     expect(key1).toMatch(/^mk_[a-f0-9]{64}$/);
   });
 
-  test("Marker key hashing for non-ASCII defaults to UTF-8 SHA-256 issue", () => {
-    // Current sha256 implementation might not handle non-ascii properly since it iterates charCodeAt.
-    // We document this via test.
-    const input = {
-      medium: "qr",
-      payloadLayer: "url",
-      payloadKind: "string",
-      canonicalPayload: "日本語"
-    };
-    const key = generateMarkerKey(input);
-    expect(key).toBeTruthy();
-    // TODO: Verify if the pure JS sha256 matches node crypto exactly for non-ASCII
+  test("sha256 implementation exact match with Node crypto (including UTF-8)", async () => {
+    const crypto = await import("crypto");
+    const testCases = ["", "abc", "日本語", "scan.mw🔖"];
+    for (const vector of testCases) {
+      const expected = crypto.createHash("sha256").update(vector, "utf8").digest("hex");
+      expect(sha256(vector)).toBe(expected);
+    }
   });
 
   test("stripUndefinedDeep", () => {
@@ -75,15 +70,42 @@ describe("EFP Model Utility Tests", () => {
     expect(output.f[2]).not.toHaveProperty('g');
   });
 
-  test("buildFactIndexFields", () => {
-    const participants = [
-      { role: "subject", ref: { entityType: "object" as const, id: "obj1" } },
-      { role: "target", ref: { entityType: "marker" as const, id: "mk1" } }
-    ];
-    const index = buildFactIndexFields(participants as any);
-    expect(index.participantKeys).toContain("object:obj1");
-    expect(index.participantKeys).toContain("marker:mk1");
-    expect(index.objectIds).toContain("obj1");
-    expect(index.markerKeys).toContain("mk1");
+  test("buildFactIndexFields exhaustive tests", () => {
+    // 1. Object only
+    const objIndex = buildFactIndexFields([{ role: "test", ref: { entityType: "object", id: "obj1" } }] as any);
+    expect(objIndex.objectIds).toEqual(["obj1"]);
+    expect(objIndex.markerKeys).toEqual([]);
+    expect(objIndex.placeIds).toEqual([]);
+    expect(objIndex.readerIds).toEqual([]);
+    expect(objIndex.deviceIds).toEqual([]);
+    expect(objIndex.userIds).toEqual([]);
+
+    // 2. Marker only
+    const mkIndex = buildFactIndexFields([{ role: "test", ref: { entityType: "marker", id: "mk1" } }] as any);
+    expect(mkIndex.objectIds).toEqual([]);
+    expect(mkIndex.markerKeys).toEqual(["mk1"]);
+
+    // 3. No participants
+    const emptyIndex = buildFactIndexFields([]);
+    expect(emptyIndex.objectIds).toEqual([]);
+    expect(emptyIndex.markerKeys).toEqual([]);
+    expect(emptyIndex.placeIds).toEqual([]);
+
+    // 4. Same ID, different types
+    const sameIdIndex = buildFactIndexFields([
+      { role: "a", ref: { entityType: "object", id: "same" } },
+      { role: "b", ref: { entityType: "marker", id: "same" } }
+    ] as any);
+    expect(sameIdIndex.objectIds).toEqual(["same"]);
+    expect(sameIdIndex.markerKeys).toEqual(["same"]);
+    expect(sameIdIndex.participantKeys).toEqual(["marker:same", "object:same"]);
+
+    // 5. Order independence & deduplication
+    const idx1 = buildFactIndexFields([
+      { role: "a", ref: { entityType: "object", id: "z" } },
+      { role: "b", ref: { entityType: "object", id: "a" } },
+      { role: "c", ref: { entityType: "object", id: "z" } }
+    ] as any);
+    expect(idx1.objectIds).toEqual(["a", "z"]);
   });
 });

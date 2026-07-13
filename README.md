@@ -1,8 +1,8 @@
-# scan.mw (Version 2.0.17)
+# scan.mw (Version 2.0.18)
 
 [![CI](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml)
 
-Welcome to **scan.mw v2.0.17**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
+Welcome to **scan.mw v2.0.18**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
 
 This repository enforces backward-incompatible, robust schemas, strict version governance, and a registry-first workflow.
 
@@ -29,13 +29,11 @@ Version 2.0.17 repairs Fact Command Integrity, properly implementing request ide
 ### 📅 Stride Roadmap & Backlog
 - **2.0.15**: Transactional Fact and Projection Safety Closure (Completed)
 - **2.0.16**: Partial Fact Command Integrity (Completed)
-- **2.0.17**: Fact Command Integrity Closure Repair (Current)
-- **2.0.18**: Projection Reliability and Ordering (Deferred)
-- **2.0.19**: Rules, Legacy Runtime and Export Closure (Deferred)
+- **2.0.17**: Fact Command Integrity Closure Repair (修復対象)
+- **2.0.18**: Fact Runtime Recovery and Regression Gate Closure (Current)
+- **2.0.19**: Projection Reliability and Ordering (Deferred)
+- **2.0.20**: Rules, Legacy Runtime and Export Closure (Deferred)
 - **2.1.0**: EFP-native First Vertical Slice (Deferred)
-- **2.1.0**: EFP-native First Vertical Slice (Deferred)
-
----
 
 ## 🛠️ Local Development & Validation
 

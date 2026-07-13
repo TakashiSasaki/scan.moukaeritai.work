@@ -33,12 +33,12 @@ export type FactProvenance = Provenance;
 
 export type FactIndexFields = {
   participantKeys: string[];
-  objectIds?: string[];
-  markerKeys?: string[];
-  placeIds?: string[];
-  readerIds?: string[];
-  deviceIds?: string[];
-  userIds?: string[];
+  objectIds: string[];
+  markerKeys: string[];
+  placeIds: string[];
+  readerIds: string[];
+  deviceIds: string[];
+  userIds: string[];
 };
 
 // Map old document types to generated contract types with optional legacy fields for backward compatibility.

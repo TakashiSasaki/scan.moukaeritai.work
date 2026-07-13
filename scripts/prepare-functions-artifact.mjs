@@ -6,14 +6,16 @@ import { spawnSync } from 'node:child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
+
 const profilePath = path.join(rootDir, 'contracts', 'profiles', 'current-application.json');
 const profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
-const activeContracts = profile.activeContracts || profile.contracts || {};
-const activeVersion = activeContracts.find ? activeContracts.find(c => c.contractId === 'callable-functions-api')?.version : activeContracts['callable-functions-api'];
+const callableApiVersion = profile.callableApiVersion || '1.1.7';
+const efpModelVersion = profile.efpModelVersion || '3.0.0';
+const applicationVersion = profile.applicationVersion || '2.0.18';
 
 const packageDir = path.join(rootDir, 'packages', 'efp-model');
 const vendorDir = path.join(rootDir, 'functions', 'vendor', 'efp-model');
-const vendorContractsDir = path.join(rootDir, 'functions', 'vendor', 'contracts', 'callable-functions-api', activeVersion);
+const vendorContractsRoot = path.join(rootDir, 'functions', 'vendor', 'contracts');
 
 function runCommand(command, args, cwd) {
   const result = spawnSync(command, args, { cwd, stdio: 'inherit', shell: true });
@@ -40,44 +42,36 @@ if (fs.existsSync(vendorDir)) {
   fs.rmSync(vendorDir, { recursive: true, force: true });
 }
 fs.mkdirSync(vendorDir, { recursive: true });
-
 fs.cpSync(path.join(packageDir, 'package.json'), path.join(vendorDir, 'package.json'));
 fs.cpSync(path.join(packageDir, 'README.md'), path.join(vendorDir, 'README.md'));
 fs.cpSync(distDir, path.join(vendorDir, 'dist'), { recursive: true });
 
-if (!fs.existsSync(path.join(vendorDir, 'package.json'))) {
-  console.error(`❌ Failed to copy package.json to vendor dir.`);
-  process.exit(1);
-}
-if (!fs.existsSync(path.join(vendorDir, 'dist'))) {
-  console.error(`❌ Failed to copy dist to vendor dir.`);
-  process.exit(1);
-}
-
-console.log(`Preparing functions/vendor/contracts/callable-functions-api/${activeVersion}...`);
-
-const vendorContractsRoot = path.join(rootDir, 'functions', 'vendor', 'contracts');
+console.log('Preparing functions/vendor/contracts...');
 if (fs.existsSync(vendorContractsRoot)) {
   fs.rmSync(vendorContractsRoot, { recursive: true, force: true });
 }
+fs.mkdirSync(vendorContractsRoot, { recursive: true });
 
-fs.mkdirSync(vendorContractsDir, { recursive: true });
+// Copy callable-functions-api active-version.json and schema
+const callableApiDir = path.join(vendorContractsRoot, 'callable-functions-api');
+fs.mkdirSync(callableApiDir, { recursive: true });
+const srcCallableApiVersionJson = path.join(rootDir, 'contracts', 'packages', 'callable-functions-api', 'active-version.json');
+fs.cpSync(srcCallableApiVersionJson, path.join(callableApiDir, 'active-version.json'));
+const srcCallableApiVersionDir = path.join(rootDir, 'contracts', 'packages', 'callable-functions-api', callableApiVersion);
+fs.cpSync(srcCallableApiVersionDir, path.join(callableApiDir, callableApiVersion), { recursive: true });
 
-const srcContractsDir = path.join(rootDir, 'contracts', 'packages', 'callable-functions-api', activeVersion);
-if (!fs.existsSync(srcContractsDir)) {
-  console.error(`❌ Source contracts directory not found at: ${srcContractsDir}`);
-  process.exit(1);
-}
-fs.cpSync(srcContractsDir, vendorContractsDir, { recursive: true });
+// Copy efp-model schemas
+const efpModelDir = path.join(vendorContractsRoot, 'efp-model');
+fs.mkdirSync(efpModelDir, { recursive: true });
+const srcEfpModelDir = path.join(rootDir, 'contracts', 'packages', 'efp-model', efpModelVersion);
+fs.cpSync(srcEfpModelDir, path.join(efpModelDir, efpModelVersion), { recursive: true });
 
-if (!fs.existsSync(path.join(vendorContractsDir, 'submit-fact-command-request.schema.json'))) {
-  console.error(`❌ Failed to copy contract schemas to vendor contracts dir.`);
-  process.exit(1);
-}
+// Write runtime-profile.json
+const runtimeProfilePath = path.join(vendorContractsRoot, 'runtime-profile.json');
+fs.writeFileSync(runtimeProfilePath, JSON.stringify({
+  applicationVersion,
+  callableApiVersion,
+  efpModelVersion
+}, null, 2));
 
-console.log('✅ Prepared functions/vendor/efp-model and contracts dependencies successfully.');
-
-// Generate active-version.json for the runtime to use
-const activeVersionPath = path.join(rootDir, 'functions', 'vendor', 'contracts', 'callable-functions-api', 'active-version.json');
-fs.writeFileSync(activeVersionPath, JSON.stringify({ version: activeVersion }, null, 2));
-console.log('✅ Wrote active-version.json');
+console.log('✅ Prepared functions/vendor dependencies and schemas successfully.');

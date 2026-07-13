@@ -59,8 +59,6 @@ export function sha256(ascii: string): string {
   };
 
   const words: number[] = [];
-  const asciiLength = ascii.length * 8;
-  
   let hash = [
     0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
     0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
@@ -78,6 +76,7 @@ export function sha256(ascii: string): string {
   ];
 
   const asciiBytes: number[] = Array.from(new TextEncoder().encode(ascii));
+  const asciiLength = asciiBytes.length * 8;
 
   asciiBytes.push(0x80);
   while (asciiBytes.length % 64 !== 56) {

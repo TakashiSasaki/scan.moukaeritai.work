@@ -10,9 +10,9 @@ This repository uses project-specific agent skills listed in the canonical manif
 Canonical skill directory: `.agents/skills/`
 Before performing a task, check whether a relevant skill exists in the manifest and read its `SKILL.md` before acting.
 
-## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.17)
+## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.18)
 **scan.mw** is a cloud-based item tracking and inventory management application.
-As of version **2.0.17**, the project adheres to a **Contract-First Rebuild Baseline**:
+As of version **2.0.18**, the project adheres to a **Contract-First Rebuild Baseline**:
 
 1. **Canonical Schema Registry**: The `/contracts` directory is the single source of truth for all schemas, semantics, and registries. No runtime data mutations or API changes can occur without updated contracts. The active contract profile is defined in `contracts/profiles/current-application.json`.
 2. **Entity-Fact-Projection (EFP) Model**: 
@@ -95,9 +95,10 @@ As of version **2.0.17**, the project adheres to a **Contract-First Rebuild Base
 ### 📅 Stride Roadmap & Backlog
 - **2.0.15**: Transactional Fact and Projection Safety Closure (Completed)
 - **2.0.16**: Partial Fact Command Integrity (Completed)
-- **2.0.17**: Fact Command Integrity Closure Repair (Completed)
-- **2.0.18**: Projection Reliability and Ordering (Current)
-- **2.0.19**: Rules, Legacy Runtime and Export Closure (Deferred)
+- **2.0.17**: Fact Command Integrity Closure Repair (修復対象)
+- **2.0.18**: Fact Runtime Recovery and Regression Gate Closure (Current)
+- **2.0.19**: Projection Reliability and Ordering (Deferred)
+- **2.0.20**: Rules, Legacy Runtime and Export Closure (Deferred)
 - **2.1.0**: EFP-native First Vertical Slice (Deferred)
 
 ## 2. Incomplete Workflows & Legacy UI

@@ -72,7 +72,12 @@ export const submitFactCommand = onCall(async (request) => {
   const activeApiVersion = getActiveApiVersion();
   const activeEfpVersion = getActiveEfpVersion();
 
-  const identity = getCanonicalRequestIdentity(activeApiVersion, factType, payloadData);
+  let identity;
+  try {
+    identity = getCanonicalRequestIdentity(activeApiVersion, factType, payloadData);
+  } catch (e: any) {
+    throw new HttpsError("invalid-argument", `Request canonicalization failed: ${e.message}`);
+  }
   
   const factId = generateUUIDv7();
   const receivedAtStr = new Date().toISOString();
@@ -131,30 +136,32 @@ export const submitFactCommand = onCall(async (request) => {
       return;
     }
 
-    // 2. participant Entity reads and subject Association read
-    if (factType === "association") {
-      const { operation, subjectAssociationId } = firestoreFact;
-      const participantKeys = firestoreFact.participantKeys || [];
+    
+    // 2. participant Entity reads
+    const participants = firestoreFact.participants || [];
+    for (const p of participants) {
+      const eType = p.ref.entityType;
+      const eId = p.ref.id;
+      let eCol = "";
+      if (eType === "object") eCol = "objects";
+      else if (eType === "marker") eCol = "markers";
+      else if (eType === "place") eCol = "places";
+      else continue;
 
-      // Read participant entities to verify they exist and belong to owner
-      for (const pk of participantKeys) {
-        const parts = pk.split(":");
-        const eType = parts[0];
-        const eId = parts[1];
-        let eCol = "";
-        if (eType === "object") eCol = "objects";
-        else if (eType === "marker") eCol = "markers";
-        else if (eType === "place") eCol = "places";
-        else continue;
-
-        const docSnap = await transaction.get(db.collection(eCol).doc(eId));
-        if (!docSnap.exists) {
-          throw new HttpsError("failed-precondition", `Participant entity ${eType} ${eId} not found.`);
-        }
-        if (docSnap.data()?.ownerId !== ownerId) {
-          throw new HttpsError("permission-denied", `Participant entity ${eType} ${eId} does not belong to you.`);
-        }
+      const docSnap = await transaction.get(db.collection(eCol).doc(eId));
+      if (!docSnap.exists) {
+        throw new HttpsError("failed-precondition", `Participant entity ${eType} ${eId} not found.`);
       }
+      if (docSnap.data()?.ownerId !== ownerId) {
+        throw new HttpsError("permission-denied", `Participant entity ${eType} ${eId} does not belong to you.`);
+      }
+    }
+
+    // subject Association read
+    if (factType === "association") {
+      const operation = payloadData.operation;
+      const subjectAssociationId = payloadData.subjectAssociationId;
+
 
       // Check subject association
       if (operation === "detach" || operation === "replace") {
@@ -191,7 +198,7 @@ export const submitFactCommand = onCall(async (request) => {
 
         if (operation === "detach") {
           const subjectKeys = subjectData?.participantKeys || [];
-          const incomingKeys = participantKeys;
+          const incomingKeys = firestoreFact.participantKeys || [];
           const keysMatch = subjectKeys.length === incomingKeys.length && subjectKeys.every((val: string, index: number) => val === incomingKeys[index]);
           if (!keysMatch) {
             throw new HttpsError("failed-precondition", "Participants of the detach command must exactly match those of the subject association.");

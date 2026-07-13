@@ -32,13 +32,15 @@ function serializeToCanonicalJson(value: any): string {
   if (typeof value === "undefined" || typeof value === "symbol" || typeof value === "function" || typeof value === "bigint") {
     throw new Error(`Unsupported type: ${typeof value}`);
   }
-
   if (Array.isArray(value)) {
     const arr = value.map(item => serializeToCanonicalJson(item));
     return "[" + arr.join(",") + "]";
   }
-
   if (typeof value === "object") {
+    const proto = Object.getPrototypeOf(value);
+    if (proto !== Object.prototype && proto !== null) {
+      throw new Error(`Unsupported object type. Only plain objects are allowed.`);
+    }
     const keys = Object.keys(value).sort();
     const props = keys.map(key => {
       const v = serializeToCanonicalJson(value[key]);
@@ -46,6 +48,6 @@ function serializeToCanonicalJson(value: any): string {
     });
     return "{" + props.join(",") + "}";
   }
-
   throw new Error(`Unknown value type: ${typeof value}`);
 }
+

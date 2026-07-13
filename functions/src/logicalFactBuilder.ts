@@ -4,11 +4,24 @@ import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import { buildFactIndexFields } from "@scan/efp-model";
 
-const ajv = new Ajv({ allErrors: true, strict: false });
-addFormats(ajv);
+const ajvInstances: Record<string, Ajv> = {};
+const apiValidatorsMap: Record<string, any> = {};
+const efpValidatorsMap: Record<string, any> = {};
 
-let efpValidators: Record<string, any> | null = null;
-let apiValidators: Record<string, any> | null = null;
+export function resetValidatorsCache() {
+  for (const key of Object.keys(ajvInstances)) delete ajvInstances[key];
+  for (const key of Object.keys(apiValidatorsMap)) delete apiValidatorsMap[key];
+  for (const key of Object.keys(efpValidatorsMap)) delete efpValidatorsMap[key];
+}
+
+function getAjvInstance(cacheKey: string) {
+  if (!ajvInstances[cacheKey]) {
+    const ajv = new Ajv({ allErrors: true, strict: false });
+    addFormats(ajv);
+    ajvInstances[cacheKey] = ajv;
+  }
+  return ajvInstances[cacheKey];
+}
 
 function loadAndParseSchema(fileName: string, baseFolder: string) {
   const p1 = path.join(process.cwd(), "contracts/packages", baseFolder, fileName);
@@ -45,7 +58,7 @@ function resolveRefs(schema: any, baseUri: string) {
   return schema;
 }
 
-function addSchemaWithUri(fileName: string, baseFolder: string) {
+function addSchemaWithUri(fileName: string, baseFolder: string, ajv: Ajv) {
    const schema = loadAndParseSchema(fileName, baseFolder);
    resolveRefs(schema, "");
    schema.$id = "http://scan.mw/" + fileName;
@@ -61,37 +74,45 @@ function addSchemaWithUri(fileName: string, baseFolder: string) {
 }
 
 function initValidators(activeApiVersion: string, activeEfpVersion: string) {
-  if (apiValidators && efpValidators) return;
-  
+  const cacheKey = `${activeApiVersion}|${activeEfpVersion}`;
+  if (apiValidatorsMap[cacheKey] && efpValidatorsMap[cacheKey]) return {
+    apiValidators: apiValidatorsMap[cacheKey],
+    efpValidators: efpValidatorsMap[cacheKey]
+  };
+
+  const ajv = getAjvInstance(cacheKey);
   const apiBase = `callable-functions-api/${activeApiVersion}`;
   const efpBase = `efp-model/${activeEfpVersion}`;
 
-  const requestSchema = addSchemaWithUri("submit-fact-command-request.schema.json", apiBase);
-  addSchemaWithUri("association-command-data.schema.json", apiBase);
-  addSchemaWithUri("observation-command-data.schema.json", apiBase);
-  addSchemaWithUri("measurement-command-data.schema.json", apiBase);
-  addSchemaWithUri("event-command-data.schema.json", apiBase);
+  const requestSchema = addSchemaWithUri("submit-fact-command-request.schema.json", apiBase, ajv);
+  addSchemaWithUri("association-command-data.schema.json", apiBase, ajv);
+  addSchemaWithUri("observation-command-data.schema.json", apiBase, ajv);
+  addSchemaWithUri("measurement-command-data.schema.json", apiBase, ajv);
+  addSchemaWithUri("event-command-data.schema.json", apiBase, ajv);
 
-  apiValidators = {
+  const apiValidators = {
     request: ajv.compile(requestSchema)
   };
 
-  addSchemaWithUri("common/entity-reference.schema.json", efpBase);
-  addSchemaWithUri("common/participant.schema.json", efpBase);
-  addSchemaWithUri("common/provenance.schema.json", efpBase);
-  addSchemaWithUri("common/record-metadata.schema.json", efpBase);
+  addSchemaWithUri("common/entity-reference.schema.json", efpBase, ajv);
+  addSchemaWithUri("common/participant.schema.json", efpBase, ajv);
+  addSchemaWithUri("common/provenance.schema.json", efpBase, ajv);
+  addSchemaWithUri("common/record-metadata.schema.json", efpBase, ajv);
+  addSchemaWithUri("facts/association.schema.json", efpBase, ajv);
+  addSchemaWithUri("facts/observation.schema.json", efpBase, ajv);
+  addSchemaWithUri("facts/measurement.schema.json", efpBase, ajv);
+  addSchemaWithUri("facts/event.schema.json", efpBase, ajv);
 
-  addSchemaWithUri("facts/association.schema.json", efpBase);
-  addSchemaWithUri("facts/observation.schema.json", efpBase);
-  addSchemaWithUri("facts/measurement.schema.json", efpBase);
-  addSchemaWithUri("facts/event.schema.json", efpBase);
-
-  efpValidators = {
+  const efpValidators = {
     association: ajv.getSchema("http://scan.mw/facts/association.schema.json")!,
     observation: ajv.getSchema("http://scan.mw/facts/observation.schema.json")!,
     measurement: ajv.getSchema("http://scan.mw/facts/measurement.schema.json")!,
     event: ajv.getSchema("http://scan.mw/facts/event.schema.json")!
   };
+
+  apiValidatorsMap[cacheKey] = apiValidators;
+  efpValidatorsMap[cacheKey] = efpValidators;
+  return { apiValidators, efpValidators };
 }
 
 export function buildLogicalFact(params: {
@@ -104,13 +125,13 @@ export function buildLogicalFact(params: {
   efpModelVersion: string,
   callableApiVersion: string
 }) {
-  initValidators(params.callableApiVersion, params.efpModelVersion);
+  const { apiValidators, efpValidators } = initValidators(params.callableApiVersion, params.efpModelVersion);
 
   const { data, factId, ownerId, receivedAt, recordCreatedAt, actorUid } = params;
 
-  const isReqValid = apiValidators!.request(data);
+  const isReqValid = apiValidators.request(data);
   if (!isReqValid) {
-    throw new Error(`Invalid request format: ${ajv.errorsText(apiValidators!.request.errors)}`);
+    throw new Error(`Invalid request format: ${getAjvInstance(`${params.callableApiVersion}|${params.efpModelVersion}`).errorsText(apiValidators.request.errors)}`);
   }
 
   const factType = data.factType;
@@ -183,9 +204,9 @@ export function buildLogicalFact(params: {
     if (payload.note) logicalFact.note = payload.note;
   }
 
-  const isValid = efpValidators![factType](logicalFact);
+  const isValid = efpValidators[factType](logicalFact);
   if (!isValid) {
-    const errorDetails = ajv.errorsText(efpValidators![factType].errors);
+    const errorDetails = getAjvInstance(`${params.callableApiVersion}|${params.efpModelVersion}`).errorsText(efpValidators[factType].errors);
     console.error(`[EFP Schema Validation Failed] factId=${factId}: ${errorDetails}`);
     throw new Error(`Logical Fact schema validation failed. details: ${errorDetails}`);
   }
