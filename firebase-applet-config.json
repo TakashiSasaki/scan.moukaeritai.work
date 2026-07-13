@@ -1,11 +1,11 @@
 {
   "projectId": "moukaeritaid",
-  "appId": "1:1042140630327:web:f7d95a5a86e741806b9eb2",
+  "appId": "1:1042140630327:web:190d2eb8fd09b7686b9eb2",
   "apiKey": "AIzaSyC-rNdm8sXy3WOUnMA2GelyXLft0Mjebog",
   "authDomain": "moukaeritaid.firebaseapp.com",
   "firestoreDatabaseId": "photo-moukaeritai-work",
-  "storageBucket": "photo-moukaeritai-work",
+  "storageBucket": "moukaeritaid.firebasestorage.app",
   "messagingSenderId": "1042140630327",
   "measurementId": "",
-  "databaseURL": "https://photo-moukaeritai-work.firebaseio.com/"
+  "oAuthClientId": "1042140630327-2qhfiip24i0e5v8chphlocjdfkoqh8fl.apps.googleusercontent.com"
 }

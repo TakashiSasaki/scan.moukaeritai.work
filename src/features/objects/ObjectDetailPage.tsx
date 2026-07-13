@@ -43,7 +43,15 @@ export default function ObjectDetailPage() {
           setState('permission_denied');
         } else {
           setState('error');
-          setErrorMessage(err instanceof Error ? err.message : String(err));
+          let userFriendlyMsg = 'An unexpected error occurred while loading object details.';
+          if (err instanceof Error) {
+            if (err.message.includes('FirestoreErrorInfo') || err.message.startsWith('{')) {
+              userFriendlyMsg = 'Failed to load Object record. Please try again later.';
+            } else {
+              userFriendlyMsg = err.message;
+            }
+          }
+          setErrorMessage(userFriendlyMsg);
         }
       }
     }

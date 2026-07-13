@@ -25,7 +25,7 @@ export const routes: AppRoute[] = [
   // Rebuilt / Pending EFP routes
   { path: '/object/new', label: 'New Object', description: 'Create EFP-native Object record', access: 'authenticated', isActive: true },
   { path: '/object/:id', label: 'Object Detail', description: 'View EFP-native Object record', access: 'authenticated', isActive: true },
-  { path: '/item/:id', label: 'Item Legacy Redirect', description: 'Legacy redirect to object', access: 'authenticated', isActive: true },
+  { path: '/item/:id', label: 'Item Legacy Redirect', description: 'Legacy redirect to object', access: 'authenticated', isActive: false },
   
   // Contained legacy pages
   { path: '/search', label: 'Search (Legacy)', description: 'Search inventory (Contained)', access: 'authenticated', isActive: false },

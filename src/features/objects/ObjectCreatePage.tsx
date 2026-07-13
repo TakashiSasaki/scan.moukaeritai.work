@@ -35,7 +35,15 @@ export default function ObjectCreatePage() {
       navigate(`/object/${newObj.objectId}`);
     } catch (err) {
       console.error('Failed to create object:', err);
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred while saving the Object.');
+      let userFriendlyMsg = 'An unexpected error occurred while saving the Object.';
+      if (err instanceof Error) {
+        if (err.message.includes('FirestoreErrorInfo') || err.message.startsWith('{')) {
+          userFriendlyMsg = 'Failed to save Object record. Please verify your permissions and try again later.';
+        } else {
+          userFriendlyMsg = err.message;
+        }
+      }
+      setError(userFriendlyMsg);
     } finally {
       setLoading(false);
     }

@@ -101,9 +101,18 @@ export function validateAndBuildObjectDoc(params: {
 export async function createObject(params: {
   name: string;
   description?: string;
-  ownerId: string;
+  ownerId?: string;
 }): Promise<ObjectRecord> {
-  const docData = validateAndBuildObjectDoc(params);
+  const currentUserUid = auth.currentUser?.uid;
+  if (!currentUserUid) {
+    throw new Error('User must be authenticated');
+  }
+
+  const docData = validateAndBuildObjectDoc({
+    name: params.name,
+    description: params.description,
+    ownerId: currentUserUid
+  });
   const docPath = `objects/${docData.objectId}`;
 
   try {
@@ -131,12 +140,17 @@ export async function getObject(objectId: string): Promise<ObjectRecord | null> 
   }
 }
 
-export async function listMyObjects(ownerId: string): Promise<ObjectRecord[]> {
+export async function listMyObjects(ownerId?: string): Promise<ObjectRecord[]> {
+  const currentUserUid = auth.currentUser?.uid;
+  if (!currentUserUid) {
+    throw new Error('User must be authenticated');
+  }
+
   const path = 'objects';
   try {
     const q = query(
       collection(db, 'objects'),
-      where('ownerId', '==', ownerId)
+      where('ownerId', '==', currentUserUid)
     );
     const querySnapshot = await getDocs(q);
     const results: ObjectRecord[] = [];

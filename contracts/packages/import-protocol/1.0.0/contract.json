@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "status": "active",
   "title": "Import Protocol",
-  "description": "Phase definitions and schemas for the migration import protocol",
+  "description": "Protocol for Controlled Imported Observation Execution, allowing restricted administrator-initiated imports into identifierObservations.",
   "contractType": "import-protocol",
   "normativeArtifacts": [
     "import-protocol.md"

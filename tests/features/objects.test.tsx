@@ -9,6 +9,7 @@ import * as AuthContext from "../../src/auth/AuthContext";
 import ObjectCreatePage from "../../src/features/objects/ObjectCreatePage";
 import ObjectDetailPage from "../../src/features/objects/ObjectDetailPage";
 import MyObjectsSection from "../../src/features/objects/MyObjectsSection";
+import { doc, setDoc } from "firebase/firestore";
 
 // Mock Firebase
 vi.mock('../../src/lib/firebase', () => ({
@@ -92,6 +93,19 @@ describe("EFP-native Objects Core Logic & Repository", () => {
       description: longDesc,
       ownerId: "test-user-id"
     })).toThrow("Description must be 1024 characters or less");
+  });
+
+  test("createObject derives and overrides ownerId with auth.currentUser.uid to prevent spoofing", async () => {
+    vi.mocked(setDoc).mockResolvedValue(undefined as any);
+    vi.mocked(doc).mockReturnValue({} as any);
+
+    const result = await objectRepository.createObject({
+      name: "Spoofing Attempt",
+      description: "Trying to write other user's ownerId",
+      ownerId: "attacker-user-id"
+    });
+    expect(result.ownerId).toBe("test-user-id");
+    expect(result._meta.recordCreatedBy).toBe("test-user-id");
   });
 });
 

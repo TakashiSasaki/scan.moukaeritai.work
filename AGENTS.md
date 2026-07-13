@@ -33,22 +33,32 @@ Active EFP invariants:
 - Reject the same `commandId` with a different payload.
 - Preserve basic Association attach/detach consistency.
 
-## Legacy data policy
+## Legacy data policy and Controlled Import Exception
 
 Legacy data is an archive, not a migration source.
 
-- Legacy migration: cancelled.
-- Legacy dual-write: cancelled.
-- Legacy backfill: cancelled.
-- Legacy reconciliation: cancelled.
-- Legacy runtime integration: cancelled.
-- Legacy Firestore retention: required.
-- Legacy read-only access: required.
-- Legacy admin browser: required.
-- Legacy JSON export: required.
-- Legacy write prohibition: required.
+- Legacy migration: Cancelled (no automatic or comprehensive migration is performed).
+- Legacy dual-write: Cancelled.
+- Legacy backfill: Cancelled.
+- Legacy reconciliation: Cancelled.
+- Legacy runtime integration: Cancelled.
+- Legacy Firestore retention: Required.
+- Legacy read-only access: Required.
+- Legacy admin browser: Required.
+- Legacy JSON export: Required.
+- Legacy write prohibition: Required.
 
-The new runtime must not create, update, delete, dual-write, shadow-write, backfill, reconcile, or canary-write legacy collections. Existing legacy collections remain in Firestore as read-only records. The only supported legacy export format is JSON.
+The new runtime must not create, update, delete, dual-write, shadow-write, backfill, reconcile, or canary-write legacy collections. Existing legacy collections (e.g., `items`, `identifiers`, `objectIdentifierBindings`) remain in Firestore as read-only records.
+
+### Controlled Imported Observation Exception
+
+As a limited and formal exception:
+- **Controlled imported observation execution**: Only when an administrator explicitly demands execution (`execute` mode), the legacy `identifiers` collection is referenced as a read source to create a deterministic imported baseline observation in the `identifierObservations` collection.
+- This exception **does not** imply:
+  - Any updates or deletions of legacy source documents.
+  - Automatic, background, or scheduled migration.
+  - Dual-write or backfill of all records.
+  - Relational reconciliation frameworks or automatic production execution.
 
 ## Complexity control
 

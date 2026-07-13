@@ -34,3 +34,18 @@ All import operations MUST progress sequentially through the following phases:
 
 ### 9. Post-Import Reconciliation
 - Automatically trigger EFP projection summaries recomputation on the affected entities to verify that live derived summaries match expectations.
+
+## Controlled Administrative Import Exceptions
+
+As a restricted baseline, the system supports Controlled Imported Observation Execution with the following strict constraints:
+
+- **Executor is Admin Only**: Only authenticated users with matching records in `admins/{uid}` can invoke this operation. Unauthenticated or non-admin requests are strictly rejected.
+- **Dry-Run vs. Execute Mode**:
+  - `dryRun` evaluates the import source records, validates shapes, generates deterministic IDs, and reports the results back without writing anything to the database. (Supports up to 20 keys).
+  - `execute` actually performs the creation in the target database. (Supports up to 5 keys).
+- **Confirmation Requirement**: For `execute` mode, `confirmationText` must be exactly `"CREATE_IMPORTED_OBSERVATIONS"`.
+- **Source Read Boundary**: Source data is retrieved strictly as read-only from `identifiers` and `identifierObservations`. No modifications (updates or deletions) are ever made to the legacy collections (`identifiers`, `items`, `objectIdentifierBindings`).
+- **Write Target Boundary**: The ONLY allowed write target is `identifierObservations`. Existing records are never updated or overwritten.
+- **Deterministic Identity**: Generated observation IDs must be deterministic (e.g., using UUIDv5 with a fixed namespace, a hash of the source identifier, and standard canonical JSON payload representation) ensuring dry-run and execute produce identical, reproducible IDs.
+- **Idempotency & Conflict Safety**: Re-running the same input must not create duplicates. If an observation document already exists, the execution must safely skip it or mark it as a conflict/skipped without overwriting the existing data.
+- **Manual Execution Only**: Production executions must never be automated or scheduled; they are manually requested by an authorized administrator via explicit calls.
