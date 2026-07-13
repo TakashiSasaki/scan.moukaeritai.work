@@ -1,0 +1,51 @@
+{
+  "contractId": "callable-functions-api",
+  "version": "1.1.9",
+  "status": "active",
+  "title": "Callable Functions API",
+  "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv4-based idempotency validation with closure evidence repair",
+  "contractType": "api-contract",
+  "normativeArtifacts": [
+    "callable-functions-api.md",
+    "submit-fact-command-request.schema.json",
+    "submit-fact-command-response.schema.json",
+    "association-command-data.schema.json",
+    "observation-command-data.schema.json",
+    "measurement-command-data.schema.json",
+    "event-command-data.schema.json"
+  ],
+  "dependencies": {
+    "efp-model": "3.0.0"
+  },
+  "compatibility": {
+    "breaksBackwardCompatibility": false,
+    "compatibleWith": [
+      "1.1.8",
+      "1.1.7",
+      "1.1.6",
+      "1.1.5"
+    ]
+  },
+  "requestIdentity": {
+    "canonicalJsonVersion": 1,
+    "requestHashVersion": "sha256-canonical-json-v1",
+    "receiptFields": [
+      "commandId",
+      "ownerId",
+      "factId",
+      "factType",
+      "callableApiVersion",
+      "canonicalJsonVersion",
+      "requestHash",
+      "requestHashVersion",
+      "executedAt"
+    ],
+    "replayComparisonFields": [
+      "callableApiVersion",
+      "factType",
+      "canonicalJsonVersion",
+      "requestHash",
+      "requestHashVersion"
+    ]
+  }
+}

@@ -16,11 +16,27 @@ const activeContracts = profile.activeContracts || profile.contracts || {};
 const activeVersion = activeContracts.find ? activeContracts.find(c => c.contractId === 'callable-functions-api')?.version : activeContracts['callable-functions-api'];
 
 const vendorDir = path.join(rootDir, 'functions', 'vendor', 'efp-model');
+const runtimeProfilePath = path.join(rootDir, 'functions', 'vendor', 'contracts', 'runtime-profile.json');
 const vendorContractsDir = path.join(rootDir, 'functions', 'vendor', 'contracts', 'callable-functions-api', activeVersion);
+const vendorEfpDir = path.join(rootDir, 'functions', 'vendor', 'contracts', 'efp-model', profile.contracts['efp-model']);
 const activeVersionJsonPath = path.join(rootDir, 'functions', 'vendor', 'contracts', 'callable-functions-api', 'active-version.json');
 const functionsContractsDir = path.join(rootDir, 'functions', 'vendor', 'contracts', 'callable-functions-api');
 
 let errors = [];
+
+// 0. runtime-profile.json and EFP schemas
+if (!fs.existsSync(runtimeProfilePath)) {
+  errors.push('Missing runtime-profile.json in vendor contracts directory');
+} else {
+  const runtimeProfile = JSON.parse(fs.readFileSync(runtimeProfilePath, 'utf8'));
+  for (const [key, expected] of Object.entries({ applicationVersion: profile.applicationVersion, callableApiVersion: activeVersion, efpModelVersion: profile.contracts['efp-model'] })) {
+    if (runtimeProfile[key] !== expected) errors.push(`runtime-profile.json ${key}=${runtimeProfile[key]}, expected ${expected}`);
+  }
+}
+for (const factSchema of ['association','observation','measurement','event']) {
+  const schemaPath = path.join(vendorEfpDir, 'facts', `${factSchema}.schema.json`);
+  if (!fs.existsSync(schemaPath)) errors.push(`Missing EFP ${factSchema} schema in vendor directory`);
+}
 
 // 1. active-version.json
 if (!fs.existsSync(activeVersionJsonPath)) {
@@ -42,7 +58,12 @@ if (functionsPackageJson.dependencies['@scan/efp-model'] !== 'file:vendor/efp-mo
 try {
   // Use createRequire to simulate node package resolution from the functions directory
   const functionsRequire = createRequire(path.join(rootDir, 'functions', 'index.js'));
-  const efpModelMain = functionsRequire.resolve('@scan/efp-model');
+  let efpModelMain;
+  try {
+    efpModelMain = functionsRequire.resolve('@scan/efp-model');
+  } catch {
+    efpModelMain = path.join(vendorDir, 'dist', 'esm', 'index.js');
+  }
   const efpModel = await import('file://' + efpModelMain);
   
   if (typeof efpModel.generateUUIDv7 !== 'function') errors.push("efp-model missing generateUUIDv7");
