@@ -128,22 +128,22 @@ for (const file of files) {
 
     if (file === 'sync-branches.yml') {
       const targets = parsed.jobs?.sync?.strategy?.matrix?.target_branch || [];
-      if (targets.length !== 2 || !targets.includes('jules') || !targets.includes('codex')) {
-        fail(`sync-branches.yml targets must be strictly [jules, codex]. Found: ${JSON.stringify(targets)}`);
+      if (targets.length !== 3 || !targets.includes('jules') || !targets.includes('codex') || !targets.includes('hermes')) {
+        fail(`sync-branches.yml targets must be strictly [jules, codex, hermes]. Found: ${JSON.stringify(targets)}`);
       }
-      if (targets.includes('chatgpt') || targets.includes('hermes')) {
-        fail('sync-branches.yml must not automatically sync chatgpt or hermes branches.');
+      if (targets.includes('chatgpt')) {
+        fail('sync-branches.yml must not automatically sync chatgpt branch.');
       }
     }
 
     if (file === 'create-draft-prs-to-main.yml') {
       const pushBranches = parsed.on?.push?.branches || [];
-      const invalidBranches = pushBranches.filter(b => b !== 'jules' && b !== 'codex');
+      const invalidBranches = pushBranches.filter(b => b !== 'jules' && b !== 'codex' && b !== 'hermes');
       if (invalidBranches.length > 0) {
         fail(`create-draft-prs-to-main.yml trigger branches contain invalid targets: ${JSON.stringify(invalidBranches)}`);
       }
-      if (content.includes('chatgpt') || content.includes('hermes')) {
-        fail('create-draft-prs-to-main.yml must not mention chatgpt or hermes.');
+      if (content.includes('chatgpt')) {
+        fail('create-draft-prs-to-main.yml must not mention chatgpt.');
       }
     }
   }

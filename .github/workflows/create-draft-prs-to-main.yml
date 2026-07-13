@@ -5,6 +5,7 @@ on:
     branches:
       - jules
       - codex
+      - hermes
   workflow_dispatch:
 
 jobs:
@@ -28,7 +29,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "push" ]]; then
             TARGET_BRANCHES=("${{ github.ref_name }}")
           else
-            TARGET_BRANCHES=("jules" "codex")
+            TARGET_BRANCHES=("jules" "codex" "hermes")
           fi
 
           for BRANCH in "${TARGET_BRANCHES[@]}"; do

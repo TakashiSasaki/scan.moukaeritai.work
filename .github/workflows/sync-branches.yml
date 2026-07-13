@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target_branch: [jules, codex]
+        target_branch: [jules, codex, hermes]
 
     steps:
       - name: Checkout main

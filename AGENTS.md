@@ -10,9 +10,9 @@ This repository uses project-specific agent skills listed in the canonical manif
 Canonical skill directory: `.agents/skills/`
 Before performing a task, check whether a relevant skill exists in the manifest and read its `SKILL.md` before acting.
 
-## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.18)
+## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.19)
 **scan.mw** is a cloud-based item tracking and inventory management application.
-As of version **2.0.18**, the project adheres to a **Contract-First Rebuild Baseline**:
+As of version **2.0.19**, the project adheres to a **Contract-First Rebuild Baseline**:
 
 1. **Canonical Schema Registry**: The `/contracts` directory is the single source of truth for all schemas, semantics, and registries. No runtime data mutations or API changes can occur without updated contracts. The active contract profile is defined in `contracts/profiles/current-application.json`.
 2. **Entity-Fact-Projection (EFP) Model**: 
@@ -78,7 +78,10 @@ As of version **2.0.18**, the project adheres to a **Contract-First Rebuild Base
 - duplicate/out-of-order event safety
 - domain-time/fact-ID watermark
 
-**Deferred to 2.0.19 (Rules, Legacy Runtime and Export Closure)**:
+**Completed in 2.0.19 (Rules, Legacy Runtime and Export Closure)**:
+- closure of Draft PR #1 (hermes branch CI integration)
+
+**Deferred to 2.0.20 (Rules, Legacy Runtime and Export Closure)**:
 - canonical JSON serialization standard
 - rigorous logical Fact validation matching schemas
 - `ownerId` + `subjectAssociationId` composite index
@@ -90,7 +93,6 @@ As of version **2.0.18**, the project adheres to a **Contract-First Rebuild Base
 - client read denial on legacy collections
 - legacy exporter manifest, JSONL, and hash
 - cleanup of remaining migration/dual-write scripts
-- closure of Draft PR #1 (never merge without human authorization)
 
 ### 📅 Stride Roadmap & Backlog
 - **2.0.15**: Transactional Fact and Projection Safety Closure (Completed)
@@ -132,4 +134,4 @@ As of version **2.0.18**, the project adheres to a **Contract-First Rebuild Base
 - **Cloud Functions**: MUST use Gen 2 (`firebase-functions/v2/https`).
 
 ## 7. Branch Workflow
-- Agent workflows are restricted strictly to branches `jules` and `codex`.
+- Agent workflows are restricted strictly to branches `jules`, `codex`, and `hermes`.
