@@ -11,6 +11,6 @@
     {"properties":{"runner":{"const":"participant-index"},"input":{"required":["participants"]},"expected":{"required":["participantKeys"]}}},
     {"properties":{"runner":{"const":"submit-fact-idempotency"},"input":{"required":["case","request"]},"expected":{"required":["result","factWrites","receiptWrites"]}}},
     {"properties":{"runner":{"const":"association-transition"},"input":{"required":["case","documents","request"]},"expected":{"required":["result","factWrites","receiptWrites"]}}},
-    {"properties":{"runner":{"enum":["artifact-isolation-mutation","query-index-mutation","documentation-mutation","version-governance-mutation","stride-manifest-mutation"]},"input":{"type":"object"},"expected":{"type":"object"}}}
+    {"properties":{"runner":{"enum":["query-index-mutation","documentation-mutation","version-governance-mutation","stride-manifest-mutation"]},"input":{"type":"object"},"expected":{"type":"object"}}}
   ]
 }

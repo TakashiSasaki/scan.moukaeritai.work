@@ -78,9 +78,6 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
       // Legacy identifier binding is intentionally disabled. Legacy collections are
       // retained read-only; Marker/Object Association attach is handled by the
       // EFP-native vertical slice instead of writing identifiers or bindings.
-      if (initialIdentifier) {
-        toast.error("Legacy identifier binding is read-only. Use the EFP Marker association workflow.");
-      }
 
       onClose();
     } catch (error) {
