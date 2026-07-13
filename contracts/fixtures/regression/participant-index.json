@@ -2,13 +2,6 @@
   "id": "participant-index",
   "requirementId": "participant-index-regression",
   "runner": "participant-index",
-  "input": {},
-  "expected": {
-    "includes": [
-      "participantKeys",
-      "objectIds",
-      "markerKeys",
-      "placeIds"
-    ]
-  }
+  "input": { "participants": [ { "role": "object", "ref": { "entityType": "object", "id": "object1" } }, { "role": "marker", "ref": { "entityType": "marker", "id": "marker1" } } ] },
+  "expected": { "participantKeys": ["marker:marker1", "object:object1"], "objectIds": ["object1"], "markerKeys": ["marker1"] }
 }

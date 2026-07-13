@@ -121,13 +121,10 @@ function extractRoadmap(text, fileName) {
 const readmeRoadmap = extractRoadmap(readme, 'README.md');
 const agentsRoadmap = extractRoadmap(agents, 'AGENTS.md');
 const requiredRoadmap = [
-  ['2.0.17', 'Fact Command Integrity Closure Repair'],
-  ['2.0.18', 'Fact runtime recovery initial implementation'],
-  ['2.0.19', 'Main branch Hermes integration and branch workflow update'],
-  ['2.0.20', 'Fact Runtime Closure Correction and Version Governance Repair'],
   ['2.0.21', 'Regression Harness and Closure Evidence Repair'],
-  ['2.0.22', 'Projection Reliability and Ordering'],
-  ['2.0.23', 'Rules, Legacy Runtime and Export Closure'],
+  ['2.0.22', 'Behavioral Harness Closure and Merge Readiness'],
+  ['2.0.23', 'Projection Reliability and Ordering'],
+  ['2.0.24', 'Rules, Legacy Runtime and Export Closure'],
   ['2.1.0', 'EFP-native First Vertical Slice']
 ];
 for (const [version, name] of requiredRoadmap) {

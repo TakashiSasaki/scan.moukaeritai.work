@@ -42,7 +42,7 @@ if (process.argv.includes('--self-test')) {
 } else {
   validate({
     indexesContent: JSON.parse(fs.readFileSync(path.join(rootDir, 'firestore.indexes.json'), 'utf8')),
-    sourceContent: fs.readFileSync(path.join(rootDir, 'functions/src/submitFactCommand.ts'), 'utf8')
+    sourceContent: fs.readFileSync(path.join(rootDir, 'functions/src/submitFactCommandCore.ts'), 'utf8')
   });
   console.log('Query index contract check passed.');
 }

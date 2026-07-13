@@ -2,12 +2,6 @@
   "id": "association-transition",
   "requirementId": "association-transition-full-matrix",
   "runner": "association-transition",
-  "input": {},
-  "expected": {
-    "includes": [
-      "subjectAssociationId",
-      "already detached or replaced",
-      "Replace Marker must be different"
-    ]
-  }
+  "input": { "case": "valid-attach", "documents": { "objects/object1": { "ownerId": "fixture-user" }, "markers/marker1": { "ownerId": "fixture-user" } }, "request": { "commandId": "123e4567-e89b-42d3-a456-426614174901", "factType": "association", "data": { "operation": "attach", "effectiveAt": "2026-07-12T05:00:00Z", "provenance": { "source": "user_confirmed", "confidence": "high" }, "participants": [ { "role": "object", "ref": { "entityType": "object", "id": "object1" } }, { "role": "marker", "ref": { "entityType": "marker", "id": "marker1" } } ] } } },
+  "expected": { "result": "success", "factWrites": 1, "receiptWrites": 1 }
 }

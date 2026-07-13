@@ -3,7 +3,7 @@
   "name": "Regression Harness and Closure Evidence Repair",
   "applicationVersion": "2.0.21",
   "callableApiVersion": "1.1.9",
-  "status": "ready-for-codex-pr",
+  "status": "historical",
   "allowedStatuses": [
     "in-progress",
     "ready-for-codex-pr",
@@ -457,5 +457,6 @@
         "legacy export closure"
       ]
     }
-  ]
+  ],
+  "historicalCorrectionNote": "2.0.22 records that behavioral regression runners, shared Firestore harness, idempotency full matrix, Association full matrix, stride scope committed-diff validation, and npm-only lockfile policy remained incomplete in 2.0.21."
 }
