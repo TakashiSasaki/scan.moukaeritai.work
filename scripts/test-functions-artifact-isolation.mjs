@@ -17,6 +17,11 @@ function copyArtifact(targetFunctions) {
     assertExists(src, `functions/${name}`);
     fs.cpSync(src, path.join(targetFunctions, name), { recursive: true, dereference: name === 'node_modules' });
   }
+  const copiedModelPackagePath = path.join(targetFunctions, 'node_modules', '@scan', 'efp-model');
+  if (fs.existsSync(copiedModelPackagePath)) {
+    fs.rmSync(copiedModelPackagePath, { recursive: true, force: true });
+    fs.symlinkSync('../../vendor/efp-model', copiedModelPackagePath, 'dir');
+  }
 }
 const expectedProfile = JSON.parse(fs.readFileSync(path.join(rootDir, 'contracts/profiles/current-application.json'), 'utf8'));
 const expectedVersions = { applicationVersion: expectedProfile.applicationVersion, callableApiVersion: expectedProfile.contracts['callable-functions-api'], efpModelVersion: expectedProfile.contracts['efp-model'] };
