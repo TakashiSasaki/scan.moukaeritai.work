@@ -1,0 +1,43 @@
+{
+  "stride": "2.0.22",
+  "name": "Behavioral Harness Closure and Merge Readiness",
+  "applicationVersion": "2.0.22",
+  "status": "historical",
+  "summary": "Historical record of behavioral harness work. This manifest is not the active roadmap or a normal task closeout gate.",
+  "requirements": [
+    {
+      "id": "behavioral-harness-record",
+      "status": "complete",
+      "evidence": [
+        { "kind": "source", "path": "functions/src/submitFactCommandCore.ts" },
+        { "kind": "test", "path": "functions/test/submitFactCommandAuthority.test.ts" },
+        { "kind": "fixture", "path": "contracts/fixtures/regression/submit-fact-idempotency.json" },
+        { "kind": "fixture", "path": "contracts/fixtures/regression/association-transition.json" }
+      ]
+    },
+    {
+      "id": "simplification-policy-record",
+      "status": "complete",
+      "evidence": [
+        { "kind": "documentation", "path": "README.md" },
+        { "kind": "documentation", "path": "AGENTS.md" },
+        { "kind": "documentation", "path": ".agents/policies/complexity-control.md" }
+      ]
+    }
+  ],
+  "verificationCommands": [
+    "test:regression-fixtures",
+    "test:functions",
+    "test:firestore-policy"
+  ],
+  "nextPriority": {
+    "name": "EFP-native First Vertical Slice",
+    "scope": "Object, Marker, Association attach/detach, current Markers for an Object, and current Object for a Marker"
+  },
+  "deferredNotPrerequisite": [
+    "Projection Reliability and Ordering"
+  ],
+  "cancelled": [
+    "Legacy Runtime and Export Closure"
+  ]
+}
