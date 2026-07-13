@@ -1,7 +1,25 @@
-import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const required=['version-2.0.22','historical-contract-immutability','production-core-dependency-injection','firestore-behavioral-harness','read-before-write-enforcement','test-isolation','idempotency-full-matrix','association-transition-full-matrix','runner-specific-fixture-schema','behavioral-regression-execution','committed-diff-scope-gate','scope-gate-self-tests','npm-only-lockfile-policy','contract-runtime-alignment','compiled-artifact-isolation','documentation-reality','node-only-baseline','codex-target-pr','main-target-ci'];
-const allowedKinds=['source','test','contract','fixture','gate','documentation','workflow']; const allowedStatus=['in-progress','ready-for-codex-pr','ready-for-main-pr','complete','historical']; function fail(m){throw new Error(m)}
-export function validateStrideManifest(m){const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8')); const profile=JSON.parse(fs.readFileSync(path.join(root,'contracts/profiles/current-application.json'),'utf8')); if(m.applicationVersion!==pkg.version) fail('manifest applicationVersion mismatch'); if(m.callableApiVersion!==profile.contracts['callable-functions-api']) fail('manifest Callable API version mismatch'); if(!allowedStatus.includes(m.status)) fail('invalid status'); const ids=m.requirements?.map(r=>r.id)||[]; if(new Set(ids).size!==ids.length) fail('duplicate requirement ID'); for(const id of required) if(!ids.includes(id)) fail(`missing required requirement ${id}`); const scripts=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8')).scripts||{}; for(const c of m.verificationCommands||[]) if(!scripts[c]) fail(`verification command ${c} missing from root package.json scripts`); for(const r of m.requirements){ if(!['pending','complete','ready-for-codex-pr'].includes(r.status)) fail(`invalid requirement status ${r.id}`); if(!r.evidence?.length) fail(`requirement ${r.id} lacks evidence`); const kinds=r.evidence.map(e=>e.kind); for(const e of r.evidence){ if(!allowedKinds.includes(e.kind)) fail(`invalid evidence kind ${e.kind}`); if(!fs.existsSync(path.join(root,e.path))) fail(`missing evidence ${e.path}`); } if(/core|harness|idempotency|association|runtime|isolation/.test(r.id) && !(kinds.includes('source')&&kinds.includes('test'))) fail(`runtime requirement ${r.id} needs source and test evidence`); if(/regression|fixture/.test(r.id)&&!(kinds.includes('fixture')||kinds.includes('contract'))) fail(`regression requirement ${r.id} needs fixture/contract evidence`); } if(m.status==='ready-for-codex-pr'&&m.requirements.find(r=>r.id==='main-target-ci')?.status!=='pending') fail('main-target-ci must remain pending until confirmed');}
-function load(){return JSON.parse(fs.readFileSync(path.join(root,'.agents/strides/2.0.22.json'),'utf8'))}
-if(process.argv.includes('--self-test')){const good=load(); validateStrideManifest(good); const bad=structuredClone(good); bad.requirements=bad.requirements.filter(r=>r.id!=='idempotency-full-matrix'); let ok=false; try{validateStrideManifest(bad)}catch{ok=true} if(!ok) fail('self-test mutation did not fail'); console.log('Stride completion self-test passed.');} else {validateStrideManifest(load()); console.log('Stride completion gate passed.');}
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+function fail(message) { throw new Error(message); }
+export function validateStrideManifest(manifest) {
+  if (manifest.status !== 'historical') fail('2.0.22 stride must be historical, not an active roadmap gate');
+  if (!/Behavioral Harness/.test(manifest.name)) fail('historical stride name drifted');
+  if (manifest.roadmap) fail('historical stride must not carry an active roadmap');
+  if (JSON.stringify(manifest).includes('Legacy Runtime and Export Closure') && !manifest.cancelled?.includes('Legacy Runtime and Export Closure')) fail('legacy runtime closure may only appear as cancelled');
+  if (!/EFP-native First Vertical Slice/i.test(manifest.nextPriority?.name ?? '')) fail('next priority must be the EFP-native first vertical slice');
+  for (const requirement of manifest.requirements ?? []) {
+    for (const evidence of requirement.evidence ?? []) {
+      if (!fs.existsSync(path.join(root, evidence.path))) fail(`missing evidence ${evidence.path}`);
+    }
+  }
+}
+function load() { return JSON.parse(fs.readFileSync(path.join(root, '.agents/strides/2.0.22.json'), 'utf8')); }
+if (process.argv.includes('--self-test')) {
+  validateStrideManifest(load());
+  console.log('Stride completion self-test is deprecated; minimal historical manifest check passed.');
+} else {
+  validateStrideManifest(load());
+  console.log('Stride historical manifest check passed.');
+}

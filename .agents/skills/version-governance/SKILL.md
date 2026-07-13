@@ -6,6 +6,9 @@ Keep release version metadata understandable without forcing every internal chan
 ## Trigger
 Use for release candidates, externally visible compatibility/API changes, or explicit version metadata changes.
 
+## Shared policy
+Refer to `.agents/policies/complexity-control.md` for repository-wide complexity-control non-goals.
+
 ## Non-goals
 - Do not require version bumps for ordinary internal fixes, tests, or docs.
 - Do not synchronize versions across unrelated packages by default.

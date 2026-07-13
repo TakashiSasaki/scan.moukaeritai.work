@@ -6,6 +6,9 @@ Keep changed documentation aligned with implemented behavior and active policy.
 ## Trigger
 Use when editing documentation or when code changes make an existing touched document inaccurate.
 
+## Shared policy
+Refer to `.agents/policies/complexity-control.md` for repository-wide complexity-control non-goals.
+
 ## Non-goals
 - Do not audit every document on every task.
 - Do not update README unconditionally.

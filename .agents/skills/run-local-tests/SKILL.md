@@ -6,6 +6,9 @@ Select and run tests relevant to the files changed by the current task.
 ## Trigger
 Use after edits or when validating a local change.
 
+## Shared policy
+Refer to `.agents/policies/complexity-control.md` for repository-wide complexity-control non-goals.
+
 ## Non-goals
 - Do not run every test for every task.
 - Do not run migration, dual-write, backfill, or reconciliation gates during normal task validation.
