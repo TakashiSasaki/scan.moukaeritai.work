@@ -40,9 +40,9 @@
     {
       "contractId": "import-protocol",
       "version": "1.0.0",
-      "status": "active",
+      "status": "archived",
       "title": "Import Protocol",
-      "description": "Phase definitions and schemas for the migration import protocol",
+      "description": "Historical migration import protocol retained for reference only; not active runtime scope.",
       "contractType": "import-protocol",
       "path": "packages/import-protocol/1.0.0/contract.json"
     },

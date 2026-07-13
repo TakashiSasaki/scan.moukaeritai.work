@@ -1,40 +1,57 @@
 # contract-change
 
-## Purpose
-Manages evolution, serialization, validation, and runtime synchronization of the canonical schema registry inside `/contracts`.
+## Scope
+Maintain contract schemas, active profile mappings, registry entries, and generated types when externally visible data/API formats change.
 
-## When to use
-When updating database structures, Callable API inputs, JSON schemas, or normative contract Markdown files.
+## Trigger
+Use when modifying `contracts/**` or API/database payload formats consumed outside an implementation detail.
 
-## Inputs
-- `/contracts/registry.json`
-- `/contracts/profiles/current-application.json`
-- `/contracts/packages/`
-- Valid & invalid JSON fixtures
+## Non-goals
+- Do not create a new contract version for internal metadata, tests, or documentation-only changes.
+- Do not add new migration phases.
+- Do not add new gates or mutation fixtures.
+- Do not reconnect archived import protocols to the active runtime profile.
+- Do not treat application version and contract version as the same source of truth.
 
-## Procedure
-1. Determine if the active contract version can be overwritten under governance (e.g., patch-level changes) or requires creating a new patch/minor version directory.
-2. Update the contract package registry file `contracts/registry.json`.
-3. Update the active application profile `contracts/profiles/current-application.json`.
-4. Modify the normative contract Markdown file (e.g., `callable-functions-api.md`).
-5. Update or create the schema `.schema.json` files.
-6. Provide or synchronize corresponding valid and invalid JSON test fixtures.
-7. Execute `npm run contracts:validate` to ensure AJV compiles and validates all schemas.
-8. Execute `npm run contracts:check-generated` to verify typescript bindings.
-9. Deploy or copy schemas to the Cloud Functions vendor path as part of the artifact preparation.
-10. Ensure the runtime logic strictly matches the contract boundaries (ignoring/rejecting invalid inputs).
-
-## Stop conditions
-- Schema validation fails or AJV compilation errors occur.
-- Existing contract package directories are overwritten in a backward-incompatible way without a version bump.
-
-## Verification
-- Run `npm run contracts:validate`
-- Run `npm run contracts:check-generated`
-
-## Related scripts
+## Commands
 - `npm run contracts:validate`
 - `npm run contracts:check-generated`
+- Add changed-package tests only when runtime bindings changed.
+
+## Execution class
+fast for affected validation; PR for contract/runtime drift checks; release for full historical compatibility.
+
+## Mutation policy
+may modify files in `contracts/**` and generated bindings when required by the change.
+
+## Stop condition
+Stop if schema validation fails, generated bindings are stale, or a backward-incompatible external change would require a major version without approval.
+
+## Purpose
+See Scope above; this skill is now tiered and bounded by execution class.
+
+## When to use
+See Trigger above.
+
+## Inputs
+- Current task instructions
+- Changed files and relevant canonical sources
+
+
+## Procedure
+Follow the Scope, Trigger, Non-goals, Commands, Execution class, Mutation policy, and Stop condition sections above. Prefer the narrowest relevant command set.
+
+## Stop conditions
+See Stop condition above.
+
+## Verification
+Use only the relevant commands listed above for the current execution class.
+
+## Related scripts
+- `npm run verify:fast`
+- `npm run verify:pr`
+- `npm run verify:release`
+
 
 ## Outputs
-- Updated canonical contracts, schemas, validation fixtures, and generated typescript types.
+A bounded result for the current task without creating unrelated work.

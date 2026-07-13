@@ -1,43 +1,61 @@
 # functions-artifact-verification
 
-## Purpose
-Compiles, prepares, installs dependencies, and runs rigorous integrity verification on the Firebase Cloud Functions deployment artifact.
+## Scope
+Verify Cloud Functions dependency boundaries and deploy artifact structure.
 
-## When to use
-Whenever making changes to Cloud Functions, `@scan/efp-model` packages, or related schemas.
+## Trigger
+Use when changing Functions deployment shape, vendored package boundaries, deploy allowlists, or `@scan/efp-model` packaging used by Functions.
 
-## Inputs
-- `functions/package.json`
-- `packages/efp-model/`
-- Functions source code inside `functions/src/`
+## Non-goals
+- Do not run for every pure function logic edit.
+- Do not run during normal documentation-only tasks.
+- Do not add artifact isolation gates.
+- Do not install all packages unless the artifact boundary changed.
+- Do not deploy production functions.
 
-## Procedure
-1. Build the local `@scan/efp-model` workspace package using `npm --prefix packages/efp-model run build`.
-2. Prepare the local vendor artifact folder inside functions using `npm run prepare:functions-artifact`.
-3. Install dependencies inside the functions directory using `npm ci --prefix functions`.
-4. Verify Functions package resolution using `npm run test:functions-artifact`.
-5. Verify functions-boundary and import isolation using `npm run test:functions-boundary`.
-6. Run the functions runtime gate validation using `npm run test:functions-runtime-gate`.
-7. Execute Functions unit tests using `npm run test:functions`.
-8. Compile and build the Functions code using `npm --prefix functions run build`.
-9. Verify the deploy allowlist file `functions/deploy-functions.allowlist.json` aligns with active callable functions.
-
-## Stop conditions
-- NPM installation or typescript compilation fails.
-- Schema verification inside functions fails.
-- Forbidden import leakage is detected by the boundary checks.
-- Build artifact doesn't match the deploy allowlist.
-
-## Verification
-- Run `npm run test:functions`
-- Run `npm --prefix functions run build`
-
-## Related scripts
+## Commands
+- `npm --prefix packages/efp-model run build`
 - `npm run prepare:functions-artifact`
+- `npm ci --prefix functions`
 - `npm run test:functions-artifact`
 - `npm run test:functions-boundary`
 - `npm run test:functions-runtime-gate`
-- `npm run test:functions`
+- `npm --prefix functions run build`
+
+## Execution class
+PR by default; release when validating deployment readiness.
+
+## Mutation policy
+read-only except generated local artifact preparation required by the commands.
+
+## Stop condition
+Stop if dependency resolution, deploy allowlist, boundary checks, or Functions build fails.
+
+## Purpose
+See Scope above; this skill is now tiered and bounded by execution class.
+
+## When to use
+See Trigger above.
+
+## Inputs
+- Current task instructions
+- Changed files and relevant canonical sources
+
+
+## Procedure
+Follow the Scope, Trigger, Non-goals, Commands, Execution class, Mutation policy, and Stop condition sections above. Prefer the narrowest relevant command set.
+
+## Stop conditions
+See Stop condition above.
+
+## Verification
+Use only the relevant commands listed above for the current execution class.
+
+## Related scripts
+- `npm run verify:fast`
+- `npm run verify:pr`
+- `npm run verify:release`
+
 
 ## Outputs
-- Verified, compiled, and production-ready Cloud Functions build artifacts.
+A bounded result for the current task without creating unrelated work.

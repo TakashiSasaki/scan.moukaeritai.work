@@ -1,31 +1,56 @@
 # documentation-reality-check
 
+## Scope
+Keep changed documentation aligned with implemented behavior and active policy.
+
+## Trigger
+Use when editing documentation or when code changes make an existing touched document inaccurate.
+
+## Non-goals
+- Do not audit every document on every task.
+- Do not update README unconditionally.
+- Do not duplicate version strings already available from canonical sources.
+- Do not turn archived migration plans into active work.
+- Do not run release documentation consistency for normal tasks.
+
+## Commands
+- Review the changed docs and directly related canonical files.
+- `npm run test:documentation-state` only for PR/release or broad documentation changes.
+
+## Execution class
+fast for affected docs; PR/release for full documentation checks.
+
+## Mutation policy
+may modify documentation directly related to the current change.
+
+## Stop condition
+Stop if documentation claims completion or active scope that the implementation/tests do not support.
+
 ## Purpose
-Prevents false claims, over-promising, or misleading documentation by auditing project files against the actual, tested, and implemented reality of the runtime.
+See Scope above; this skill is now tiered and bounded by execution class.
 
 ## When to use
-Before finishing any task, when writing README updates, and during milestone reporting.
+See Trigger above.
 
 ## Inputs
-- `README.md`
-- `AGENTS.md`
-- Test files under `tests/` and `functions/test/`
+- Current task instructions
+- Changed files and relevant canonical sources
+
 
 ## Procedure
-1. Audit all claims of "complete" or "closed" workflows in documentation. Verify there are corresponding, passing tests for each.
-2. Cross-examine version claims. Ensure the current version in package files matches those referred to in doc headers.
-3. Verify that `README.md`, `AGENTS.md`, active contracts, and current runtime files represent exactly the same codebase state.
-4. If a feature is partially implemented or deferred, explicitly label it as such. Do not write unimplemented features as completed.
+Follow the Scope, Trigger, Non-goals, Commands, Execution class, Mutation policy, and Stop condition sections above. Prefer the narrowest relevant command set.
 
 ## Stop conditions
-- Documentation claims a feature is complete, but no passing test or implementation exists.
-- Discrepancy detected between what the contracts declare and what the runtime enforces.
+See Stop condition above.
 
 ## Verification
-- Double check that README/AGENTS files explicitly document handoffs and pending/incomplete features.
+Use only the relevant commands listed above for the current execution class.
 
 ## Related scripts
-- `npm run verify:baseline`
+- `npm run verify:fast`
+- `npm run verify:pr`
+- `npm run verify:release`
+
 
 ## Outputs
-- Accurate, humble, and objective project documentation matching the exact state of code execution.
+A bounded result for the current task without creating unrelated work.

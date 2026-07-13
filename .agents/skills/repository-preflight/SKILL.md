@@ -1,38 +1,58 @@
 # repository-preflight
 
+## Scope
+Confirm the starting state before edits: branch, working tree, base diff, applicable `AGENTS.md`, active profile, and relevant skills.
+
+## Trigger
+Use at the beginning of a change request before modifying files.
+
+## Non-goals
+- Do not audit the whole repository.
+- Do not run release verification.
+- Do not create a contract version.
+- Do not require a version bump for documentation, test, or internal metadata changes.
+- Do not start migration, backfill, reconciliation, or dual-write work.
+
+## Commands
+- `git status --short --branch`
+- `git branch --show-current`
+- `git diff --stat`
+- Read `AGENTS.md`, `.agents/skills/manifest.json`, and `contracts/profiles/current-application.json` only as needed.
+
+## Execution class
+fast
+
+## Mutation policy
+read-only
+
+## Stop condition
+Stop if the working tree contains unrelated user changes, the branch conflicts with instructions, or active instructions contradict each other.
+
 ## Purpose
-Establishes the initial safety baseline and validates the development starting state to prevent out-of-sync edits.
+See Scope above; this skill is now tiered and bounded by execution class.
 
 ## When to use
-At the very beginning of every task or stride prior to modifying any file.
+See Trigger above.
 
 ## Inputs
-- `AGENTS.md`
-- `.agents/skills/manifest.json`
-- `contracts/profiles/current-application.json`
-- Current git tree state (`git status`)
+- Current task instructions
+- Changed files and relevant canonical sources
+
 
 ## Procedure
-1. Read the developer and agent guidelines in `AGENTS.md`.
-2. Read the active skills manifest in `.agents/skills/manifest.json`.
-3. Read the active current application contract profile in `contracts/profiles/current-application.json`.
-4. Validate active contract schemas in `/contracts/packages/`.
-5. Check current repository git status and record the base branch/commit HEAD.
-6. Explicitly identify files that will be modified and files that must remain untouched.
-7. Audit whether changes require a major, minor, or patch version bump.
+Follow the Scope, Trigger, Non-goals, Commands, Execution class, Mutation policy, and Stop condition sections above. Prefer the narrowest relevant command set.
 
 ## Stop conditions
-- Git working tree is dirty (has uncommitted changes) prior to task initiation.
-- Active contracts cannot be uniquely resolved or identified.
-- Proposed changes require a major version bump (which is strictly forbidden without explicit human approval).
-- User requests or direct instructions contradict architectural constraints set in `AGENTS.md`.
+See Stop condition above.
 
 ## Verification
-- Run `npm run version:verify` to inspect current baseline alignment.
-- Run `git status` to ensure working directory starts clean.
+Use only the relevant commands listed above for the current execution class.
 
 ## Related scripts
-- `npm run version:verify`
+- `npm run verify:fast`
+- `npm run verify:pr`
+- `npm run verify:release`
+
 
 ## Outputs
-- Accurate preflight assessment in agent internal chain-of-thought.
+A bounded result for the current task without creating unrelated work.
