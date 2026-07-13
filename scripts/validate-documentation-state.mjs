@@ -95,6 +95,57 @@ if (profile.applicationVersion !== currentVersion) {
   fail(`contracts/profiles/current-application.json version (${profile.applicationVersion}) does not match package.json version (${currentVersion})`);
 }
 
+
+function extractRoadmap(text, fileName) {
+  const lines = text.split('\n').filter(line => line.trim().startsWith('- **2.'));
+  const entries = [];
+  for (const line of lines) {
+    const match = line.match(/\*\*(2\.\d+\.\d+)\*\*:\s*(.*?)\s*\((.*?)\)/);
+    if (match) entries.push({ version: match[1], name: match[2], status: match[3], line });
+  }
+  const seen = new Set();
+  for (const entry of entries) {
+    if (seen.has(entry.version)) fail(`${fileName} contains duplicate roadmap entry for ${entry.version}`);
+    seen.add(entry.version);
+  }
+  return entries;
+}
+const readmeRoadmap = extractRoadmap(readme, 'README.md');
+const agentsRoadmap = extractRoadmap(agents, 'AGENTS.md');
+const requiredRoadmap = [
+  ['2.0.17', 'Fact Command Integrity Closure Repair'],
+  ['2.0.18', 'Fact Runtime Recovery and Regression Gate Closure'],
+  ['2.0.19', 'Projection Reliability and Ordering'],
+  ['2.0.20', 'Rules, Legacy Runtime and Export Closure'],
+  ['2.1.0', 'EFP-native First Vertical Slice']
+];
+for (const [version, name] of requiredRoadmap) {
+  for (const [fileName, roadmap] of [['README.md', readmeRoadmap], ['AGENTS.md', agentsRoadmap]]) {
+    const entry = roadmap.find(e => e.version === version);
+    if (!entry) fail(`${fileName} is missing roadmap entry ${version}`);
+    if (!entry.name.includes(name)) fail(`${fileName} roadmap entry ${version} has unexpected name: ${entry.name}`);
+  }
+}
+const readmeCurrent = readmeRoadmap.find(e => /Current/.test(e.status));
+const agentsCurrent = agentsRoadmap.find(e => /Current/.test(e.status));
+if (!readmeCurrent || !agentsCurrent || readmeCurrent.version !== agentsCurrent.version) fail('README and AGENTS current roadmap entries differ');
+if (readmeCurrent.version !== currentVersion) fail(`Current roadmap ${readmeCurrent.version} does not match package version ${currentVersion}`);
+for (const text of [readme, agents]) {
+  const completedLines = text.split('\n').filter(l => /Completed/i.test(l));
+  const deferredLines = text.split('\n').filter(l => /Deferred/i.test(l));
+  for (const c of completedLines) for (const d of deferredLines) if (c.trim() && d.includes(c.replace(/Completed/ig,'').trim())) fail('Same item appears as Completed and Deferred');
+}
+const stridePath = path.join(rootDir, '.agents/strides', `${currentVersion}.json`);
+if (fs.existsSync(stridePath)) {
+  const stride = JSON.parse(fs.readFileSync(stridePath, 'utf8'));
+  if ((stride.requirements || []).some(req => req.status !== 'complete') && /2\.0\.18.*Completed/i.test(readme + agents)) fail('Stride manifest is incomplete but documentation claims Completed');
+} else {
+  fail(`Missing stride manifest for current version: ${currentVersion}`);
+}
+for (const forbidden of ['CI green', 'GitHub Actions passed', 'fully verified in CI']) {
+  if ((readme + agents).includes(forbidden)) fail(`Documentation contains unconfirmed CI claim: ${forbidden}`);
+}
+
 // 5. Verify no premature completed status for uncompleted features
 const incompletePatterns = [
   { name: 'Object/Marker Workflows', regex: /object.*marker.*work.*(complete|done|closed)/i },

@@ -1,0 +1,5 @@
+{
+  "id": "functions-artifact-missing-runtime-profile",
+  "requirementId": "functions-artifact-missing-runtime-profile",
+  "expected": "regression must be rejected or covered by named gate"
+}

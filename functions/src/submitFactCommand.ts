@@ -15,20 +15,30 @@ function getDb() {
   return getFirestore(admin.app(), appletConfig.firestoreDatabaseId);
 }
 
-function getActiveApiVersion(): string {
-  const versionFile = path.join(__dirname, "../vendor/contracts/callable-functions-api/active-version.json");
-  const fallbackVersionFile = path.join(process.cwd(), "vendor/contracts/callable-functions-api/active-version.json");
-  const p = fs.existsSync(versionFile) ? versionFile : fallbackVersionFile;
-  const data = JSON.parse(fs.readFileSync(p, "utf8"));
-  return data.version || data.activeVersion;
+export interface RuntimeProfile {
+  applicationVersion: string;
+  callableApiVersion: string;
+  efpModelVersion: string;
 }
 
-function getActiveEfpVersion(): string {
-  const file = path.join(__dirname, "../../contracts/profiles/current-application.json");
-  const fallbackFile = path.join(process.cwd(), "contracts/profiles/current-application.json");
-  const p = fs.existsSync(file) ? file : fallbackFile;
-  const profile = JSON.parse(fs.readFileSync(p, "utf8"));
-  return profile.contracts["efp-model"];
+const runtimeProfileCandidates = [
+  path.join(__dirname, "../vendor/contracts/runtime-profile.json"),
+  path.join(__dirname, "../../vendor/contracts/runtime-profile.json"),
+  path.join(process.cwd(), "vendor/contracts/runtime-profile.json"),
+];
+
+export function loadRuntimeProfileForSubmitFactCommand(profilePath?: string): RuntimeProfile {
+  const candidates = profilePath ? [profilePath] : runtimeProfileCandidates;
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      const profile = JSON.parse(fs.readFileSync(candidate, "utf8"));
+      if (!profile.applicationVersion || !profile.callableApiVersion || !profile.efpModelVersion) {
+        throw new Error(`Invalid runtime profile: ${candidate}`);
+      }
+      return profile as RuntimeProfile;
+    }
+  }
+  throw new Error(`Missing functions vendor runtime profile. Checked: ${candidates.join(", ")}`);
 }
 
 export const submitFactCommand = onCall(async (request) => {
@@ -69,8 +79,14 @@ export const submitFactCommand = onCall(async (request) => {
     }
   }
 
-  const activeApiVersion = getActiveApiVersion();
-  const activeEfpVersion = getActiveEfpVersion();
+  let runtimeProfile: RuntimeProfile;
+  try {
+    runtimeProfile = loadRuntimeProfileForSubmitFactCommand();
+  } catch (e: any) {
+    throw new HttpsError("internal", e.message);
+  }
+  const activeApiVersion = runtimeProfile.callableApiVersion;
+  const activeEfpVersion = runtimeProfile.efpModelVersion;
 
   let identity;
   try {

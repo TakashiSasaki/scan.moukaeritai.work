@@ -1,7 +1,7 @@
 {
   "name": "scan-mw",
   "private": true,
-  "version": "2.0.19",
+  "version": "2.0.18",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
@@ -24,7 +24,7 @@
     "contracts:check-generated": "node scripts/check-generated-types.mjs",
     "prepare:functions-artifact": "node scripts/prepare-functions-artifact.mjs",
     "test:functions-artifact": "node scripts/test-functions-artifact.mjs",
-    "verify:baseline:node": "npm run test:repository-hygiene:self && npm run test:repository-hygiene && npm run test:agent-skills && npm run test:workflows && npm run version:verify && npm run contracts:validate && npm run contracts:check-generated && npm run test:firestore-policy:self && npm run test:firestore-policy && npm run test:routing-boundary && npm run test:routing && npm --prefix packages/efp-model run build && npm --prefix packages/efp-model run typecheck && npm --prefix packages/efp-model run test && npm --prefix packages/efp-model run test:artifact && npm run prepare:functions-artifact && npm run test:functions-artifact && npm run test:functions-boundary && npm run test:functions-runtime-gate && npm run test:functions && npm --prefix functions run build && npm run test && npm run lint && npm run build && npm run test:documentation-state",
+    "verify:baseline:node": "npm run test:query-index-contract:self && npm run test:stride-completion -- --self-test && npm run test:stride-scope -- --self-test && npm run test:repository-hygiene:self && npm run test:repository-hygiene && npm run test:agent-skills && npm run test:workflows && npm run version:verify && npm run contracts:validate && npm run contracts:check-generated && npm run test:stride-completion && npm run test:stride-scope && npm run test:callable-compatibility && npm run test:regression-fixtures && npm run test:firestore-policy:self && npm run test:firestore-policy && npm run test:query-index-contract && npm run test:routing-boundary && npm run test:routing && npm --prefix packages/efp-model run build && npm --prefix packages/efp-model run typecheck && npm --prefix packages/efp-model run test && npm --prefix packages/efp-model run test:artifact && npm run prepare:functions-artifact && npm run test:functions-artifact && npm run test:functions-artifact:isolation && npm run test:functions-boundary && npm run test:functions-runtime-gate && npm run test:functions && npm --prefix functions run build && npm run test && npm run lint && npm run build && npm run test:documentation-state",
     "verify:baseline": "npm run verify:baseline:node",
     "verify:preflight": "node scripts/verify-preflight.mjs",
     "verify:closeout": "node scripts/verify-closeout.mjs",
@@ -52,7 +52,13 @@
     "test:repository-hygiene": "node scripts/test-repository-hygiene.mjs",
     "test:agent-skills": "node scripts/test-agent-skills.mjs",
     "test:workflows": "node scripts/validate-workflow-yaml.mjs",
-    "test:query-index-contract": "node scripts/test-query-index-contract.mjs"
+    "test:query-index-contract": "node scripts/test-query-index-contract.mjs",
+    "test:functions-artifact:isolation": "node scripts/test-functions-artifact-isolation.mjs",
+    "test:callable-compatibility": "node scripts/test-callable-compatibility.mjs",
+    "test:stride-completion": "node scripts/test-stride-completion.mjs",
+    "test:stride-scope": "node scripts/test-stride-scope.mjs",
+    "test:regression-fixtures": "node scripts/test-regression-fixtures.mjs",
+    "test:query-index-contract:self": "node scripts/test-query-index-contract.mjs --self-test"
   },
   "dependencies": {
     "@google-cloud/monitoring": "^5.3.2",

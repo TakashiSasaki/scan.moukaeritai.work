@@ -1,0 +1,33 @@
+{
+  "stride": "2.0.18",
+  "name": "Fact Runtime Recovery and Regression Gate Closure",
+  "applicationVersion": "2.0.18",
+  "callableApiVersion": "1.1.7",
+  "status": "complete",
+  "allowedDeferrals": [
+    "Projection Reliability and Ordering",
+    "Rules, Legacy Runtime and Export Closure"
+  ],
+  "requirements": [
+    { "id": "version-2.0.18", "status": "complete", "evidence": ["package.json", "contracts/profiles/current-application.json"], "verificationCommands": ["version:verify"] },
+    { "id": "callable-api-1.1.7-active", "status": "complete", "evidence": ["contracts/packages/callable-functions-api/1.1.7/contract.json", "contracts/packages/callable-functions-api/active-version.json"], "verificationCommands": ["contracts:validate", "test:callable-compatibility"] },
+    { "id": "functions-artifact-self-contained", "status": "complete", "evidence": ["scripts/prepare-functions-artifact.mjs", "scripts/test-functions-artifact-isolation.mjs", "functions/src/submitFactCommand.ts"], "verificationCommands": ["prepare:functions-artifact", "test:functions-artifact", "test:functions-artifact:isolation"] },
+    { "id": "derived-index-arrays-required", "status": "complete", "evidence": ["packages/efp-model/src/factParticipants.ts", "functions/test/logicalFactBuilder.test.ts"], "verificationCommands": ["test:functions", "test:regression-fixtures"] },
+    { "id": "participant-owner-validation-all-facts", "status": "complete", "evidence": ["functions/src/submitFactCommand.ts", "functions/test/submitFactCommandAuthority.test.ts"], "verificationCommands": ["test:functions", "test:regression-fixtures"] },
+    { "id": "participant-id-colon-safe", "status": "complete", "evidence": ["functions/src/submitFactCommand.ts", "contracts/fixtures/regressions/participant-id-containing-colon.json"], "verificationCommands": ["test:functions", "test:regression-fixtures"] },
+    { "id": "utf8-sha256-known-vectors", "status": "complete", "evidence": ["packages/efp-model/src/serialization.ts", "contracts/fixtures/regressions/unicode-sha256-known-vectors.json"], "verificationCommands": ["test:regression-fixtures"] },
+    { "id": "uuidv4-command-uuidv7-fact", "status": "complete", "evidence": ["functions/src/submitFactCommand.ts", "packages/efp-model/src/serialization.ts", "contracts/fixtures/regressions/uuidv4-command-accepted.json", "contracts/fixtures/regressions/uuidv7-command-rejected.json"], "verificationCommands": ["test:functions", "test:callable-compatibility"] },
+    { "id": "canonical-request-identity-tests", "status": "complete", "evidence": ["functions/src/canonicalRequestIdentity.ts", "functions/test/canonicalRequestIdentity.test.ts"], "verificationCommands": ["test:functions"] },
+    { "id": "logical-fact-builder-tests", "status": "complete", "evidence": ["functions/src/logicalFactBuilder.ts", "functions/test/logicalFactBuilder.test.ts"], "verificationCommands": ["test:functions"] },
+    { "id": "idempotency-regression-matrix", "status": "complete", "evidence": ["functions/src/submitFactCommand.ts", "functions/test/submitFactCommand.test.ts", "contracts/fixtures/regressions/same-command-different-api-version-rejected.json"], "verificationCommands": ["test:functions", "test:regression-fixtures"] },
+    { "id": "association-transition-matrix", "status": "complete", "evidence": ["functions/src/submitFactCommand.ts", "functions/test/submitFactCommand.test.ts", "contracts/fixtures/regressions/association-replace-same-marker-rejected.json", "contracts/fixtures/regressions/association-replace-object-mismatch-rejected.json"], "verificationCommands": ["test:functions", "test:regression-fixtures"] },
+    { "id": "query-index-baseline", "status": "complete", "evidence": ["firestore.indexes.json", "scripts/test-query-index-contract.mjs", "contracts/fixtures/regressions/missing-association-composite-index.json"], "verificationCommands": ["test:query-index-contract"] },
+    { "id": "stride-gates", "status": "complete", "evidence": [".agents/strides/2.0.18.json", "scripts/test-stride-completion.mjs", "scripts/test-stride-scope.mjs"], "verificationCommands": ["test:stride-completion", "test:stride-scope"] },
+    { "id": "regression-fixtures", "status": "complete", "evidence": ["contracts/fixtures/regressions"], "verificationCommands": ["test:regression-fixtures"] },
+    { "id": "documentation-reality", "status": "complete", "evidence": ["README.md", "AGENTS.md", "scripts/validate-documentation-state.mjs", "contracts/fixtures/regressions/documentation-completed-deferred-conflict.json", "contracts/fixtures/regressions/documentation-duplicate-roadmap-entry.json"], "verificationCommands": ["test:documentation-state"] }
+  ],
+  "deferrals": [
+    { "target": "2.0.19", "scope": "Projection Reliability and Ordering", "items": ["retry-safe handler", "duplicate trigger safety", "out-of-order safety", "deterministic Fact order key", "domain-time/Fact-ID watermark", "conditional summary write", "projection processing receipt", "projection status tracking"] },
+    { "target": "2.0.20", "scope": "Rules, Legacy Runtime and Export Closure", "items": ["strict Entity _meta security rules", "Marker identity immutability rule", "Fact read owner scope", "legacy export closure"] }
+  ]
+}
