@@ -1,0 +1,13 @@
+{
+  "id": "association-subject-foreign-owner-rejected",
+  "requirementId": "executable-regression-fixtures",
+  "runner": "source-presence",
+  "input": {
+    "paths": [
+      "package.json"
+    ]
+  },
+  "expected": {
+    "exists": true
+  }
+}

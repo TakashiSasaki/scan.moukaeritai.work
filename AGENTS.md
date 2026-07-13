@@ -10,16 +10,12 @@ This repository uses project-specific agent skills listed in the canonical manif
 Canonical skill directory: `.agents/skills/`
 Before performing a task, check whether a relevant skill exists in the manifest and read its `SKILL.md` before acting.
 
-## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.18)
-**scan.mw** is a cloud-based item tracking and inventory management application.
-As of version **2.0.18**, the project adheres to a **Contract-First Rebuild Baseline**:
+## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.20)
+**scan.mw** is a cloud-based item tracking and inventory management application. As of version **2.0.20**, the project remains on the **Contract-First EFP architecture**:
 
 1. **Canonical Schema Registry**: The `/contracts` directory is the single source of truth for all schemas, semantics, and registries. No runtime data mutations or API changes can occur without updated contracts. The active contract profile is defined in `contracts/profiles/current-application.json`.
-2. **Entity-Fact-Projection (EFP) Model**: 
-   - Entities (Object, Marker, Place) are physical identities.
-   - Facts (Association, Observation, Measurement, Event) are **backend-only and strictly immutable**.
-   - Projections (ObjectSummary, MarkerSummary, PlaceSummary) are **asynchronous and eventually consistent**.
-3. **SemVer & Version Integrity**: Version bumps in `package.json` are strictly mandatory whenever sensitive files are modified. **Major bumps require human approval.**
+2. **Entity-Fact-Projection (EFP) Model**: Entities (Object, Marker, Place) are physical identities; Facts (Association, Observation, Measurement, Event) are backend-only and strictly immutable; Projections are asynchronous and eventually consistent.
+3. **SemVer & Version Integrity**: Version bumps in `package.json` are strictly mandatory whenever sensitive files are modified. **Major bumps require human approval.** Version downgrade exceptions are forbidden.
 4. **Deployments**: Production deployments are restricted to **manual only** (`workflow_dispatch`). Do not automatically deploy to production or perform production write/delete.
 5. **No Scratch Files**: Do not commit scratch files, one-off scripts, PR replies, or generated temporary patches to the root.
 6. **Active Skills Manifest**: Canonical manifest is `.agents/skills/manifest.json`. Active core skills must be executed strictly following preflight, hygiene, and closeout protocols.
@@ -35,17 +31,23 @@ As of version **2.0.18**, the project adheres to a **Contract-First Rebuild Base
 - Introduced active Callable API based request identity and receipt fields.
 - Introduced logical Fact builder and UUIDv7 Fact ID generation.
 - Introduced query/index integrity checks.
-- The 2.0.17 baseline is explicitly treated as repair対象 for artifact completeness, UTF-8 SHA-256 evidence, and all-Fact participant validation until the 2.0.18 gates verify them.
 
-**2.0.18 Fact Runtime Recovery and Regression Gate Closure (Current)**:
-- Functions deployment artifact must be self-contained under `functions/vendor`.
-- Callable Functions API 1.1.7 is the active API contract.
-- Derived Fact index arrays are required, deterministic, deduplicated, and sorted.
-- Object/Marker/Place participant existence and ownership validation applies to Association, Observation, Measurement, and Event Facts.
-- UTF-8 SHA-256, UUIDv4 command acceptance, UUIDv7 Fact IDs, canonical identity, logical Fact builder, idempotency, Association transition, compatibility, query/index, stride, regression fixture, and documentation reality gates are tracked by `.agents/strides/2.0.18.json`.
-- Node-only gates implemented and passing locally (GitHub Actions confirmation unavailable).
+**2.0.18 Fact runtime recovery initial implementation**:
+- The codex branch implemented major Fact runtime capabilities, including Functions vendor runtime profile, EFP schema vendoring, derived index arrays, participant validation, UUIDv7 Fact IDs, and query/index gates.
+- Version governance, contract/runtime alignment, and test evidence remained incomplete and required 2.0.20 correction.
 
-**Deferred to 2.0.19 (Projection Reliability and Ordering)**:
+**2.0.19 Main branch Hermes integration and branch workflow update**:
+- Main branch integrated Hermes branch workflow updates.
+- This version must not be described as completing Rules, Legacy Runtime, or Export closure.
+
+**2.0.20 Fact Runtime Closure Correction and Version Governance Repair (Current)**:
+- Callable Functions API 1.1.8 is the active API contract.
+- `requestHashVersion` is `sha256-canonical-json-v1` across contract metadata, runtime helpers, command receipts, fixtures, and documentation.
+- Functions artifact preparation resolves versions from `contracts/profiles/current-application.json` and fails closed when contract metadata is missing or inactive.
+- Node-only verification passed locally.
+- Main-target GitHub Actions confirmation is pending.
+
+**Deferred to 2.0.21 (Projection Reliability and Ordering)**:
 - retry-safe projection handler
 - duplicate trigger safety
 - out-of-order safety
@@ -55,7 +57,7 @@ As of version **2.0.18**, the project adheres to a **Contract-First Rebuild Base
 - projection processing receipt
 - projection status tracking
 
-**Deferred to 2.0.20 (Rules, Legacy Runtime and Export Closure)**:
+**Deferred to 2.0.22 (Rules, Legacy Runtime and Export Closure)**:
 - strict Entity `_meta` security rules
 - Marker identity immutability rule
 - restricting Fact reads to `ownerId` scope
@@ -64,10 +66,12 @@ As of version **2.0.18**, the project adheres to a **Contract-First Rebuild Base
 - cleanup of remaining migration/dual-write scripts
 
 ### 📅 Stride Roadmap & Backlog
-- **2.0.17**: Fact Command Integrity Closure Repair (修復対象 / partially implemented baseline)
-- **2.0.18**: Fact Runtime Recovery and Regression Gate Closure (Current)
-- **2.0.19**: Projection Reliability and Ordering (Deferred)
-- **2.0.20**: Rules, Legacy Runtime and Export Closure (Deferred)
+- **2.0.17**: Fact Command Integrity Closure Repair (Historical)
+- **2.0.18**: Fact runtime recovery initial implementation (Historical)
+- **2.0.19**: Main branch Hermes integration and branch workflow update (Historical)
+- **2.0.20**: Fact Runtime Closure Correction and Version Governance Repair (Current)
+- **2.0.21**: Projection Reliability and Ordering (Deferred)
+- **2.0.22**: Rules, Legacy Runtime and Export Closure (Deferred)
 - **2.1.0**: EFP-native First Vertical Slice (Deferred)
 
 ## 2. Incomplete Workflows & Legacy UI

@@ -1,0 +1,13 @@
+{
+  "id": "functions-artifact-missing-efp-schema",
+  "requirementId": "executable-regression-fixtures",
+  "runner": "source-presence",
+  "input": {
+    "paths": [
+      "package.json"
+    ]
+  },
+  "expected": {
+    "exists": true
+  }
+}

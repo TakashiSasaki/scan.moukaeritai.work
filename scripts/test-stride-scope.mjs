@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const manifestPath = path.join(rootDir, '.agents/strides/2.0.18.json');
+const manifestPath = path.join(rootDir, '.agents/strides/2.0.20.json');
 const allowed = ['Projection Reliability and Ordering', 'Rules, Legacy Runtime and Export Closure'];
 function fail(msg){ throw new Error(msg); }
 function validate(manifest){

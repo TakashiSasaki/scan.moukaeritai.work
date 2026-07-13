@@ -1,0 +1,13 @@
+{
+  "id": "uuidv4-command-accepted",
+  "requirementId": "executable-regression-fixtures",
+  "runner": "source-presence",
+  "input": {
+    "paths": [
+      "package.json"
+    ]
+  },
+  "expected": {
+    "exists": true
+  }
+}

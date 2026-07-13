@@ -145,6 +145,9 @@ export const submitFactCommand = onCall(async (request) => {
       if (cmdData?.requestHash !== identity.requestHash) {
         throw new HttpsError("invalid-argument", "Same commandId received with a different payload.");
       }
+      if (cmdData?.canonicalJsonVersion !== identity.canonicalJsonVersion) {
+        throw new HttpsError("invalid-argument", "Same commandId received with a different canonical JSON version.");
+      }
       if (cmdData?.requestHashVersion !== identity.requestHashVersion) {
         throw new HttpsError("invalid-argument", "Same commandId received with a different hash version.");
       }
@@ -249,20 +252,15 @@ export const submitFactCommand = onCall(async (request) => {
              throw new HttpsError("failed-precondition", "Replace Marker must be different from the old marker.");
           }
           
-          // Schema integrity - normatively checking Marker versions since contract 2.0
+          // Marker replacement has no normative contract constraint requiring identityModelVersion or
+          // canonicalizationVersion equality; existence and ownership are validated by participant reads.
           const oldMarkerKey = subMarkerKeys[0];
-          const newMarkerKey = markerKeysArr[0];
           const oldMarkerSnap = await transaction.get(db.collection("markers").doc(oldMarkerKey));
-          const newMarkerSnap = await transaction.get(db.collection("markers").doc(newMarkerKey));
-          if (oldMarkerSnap.exists && newMarkerSnap.exists) {
-            const oldMarkerData = oldMarkerSnap.data();
-            const newMarkerData = newMarkerSnap.data();
-            if (oldMarkerData?.identityModelVersion !== newMarkerData?.identityModelVersion) {
-              throw new HttpsError("failed-precondition", `Marker replacement schema mismatch.`);
-            }
-            if (oldMarkerData?.canonicalizationVersion !== newMarkerData?.canonicalizationVersion) {
-              throw new HttpsError("failed-precondition", `Marker replacement canonicalization mismatch.`);
-            }
+          if (!oldMarkerSnap.exists) {
+            throw new HttpsError("failed-precondition", `Old Marker ${oldMarkerKey} not found.`);
+          }
+          if (oldMarkerSnap.data()?.ownerId !== ownerId) {
+            throw new HttpsError("permission-denied", `Old Marker ${oldMarkerKey} does not belong to you.`);
           }
         }
       }
@@ -287,6 +285,7 @@ export const submitFactCommand = onCall(async (request) => {
       factType,
       callableApiVersion: identity.callableApiVersion,
       requestHash: identity.requestHash,
+      canonicalJsonVersion: identity.canonicalJsonVersion,
       requestHashVersion: identity.requestHashVersion,
       executedAt: Timestamp.now()
     });

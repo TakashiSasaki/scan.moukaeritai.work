@@ -70,19 +70,19 @@ for (const p of prohibitedPhrases) {
 }
 
 // Ensure local-only verification claim exists in README.md
-if (!readme.includes('Node-only gates implemented and passing locally')) {
-  fail('README.md is missing the required local-only verification claim: "Node-only gates implemented and passing locally"');
+if (!readme.includes('Node-only verification passed locally.')) {
+  fail('README.md is missing the required local-only verification claim: "Node-only verification passed locally."');
 }
-if (!readme.includes('GitHub Actions confirmation unavailable')) {
-  fail('README.md is missing the required local-only verification claim: "GitHub Actions confirmation unavailable"');
+if (!readme.includes('Main-target GitHub Actions confirmation is pending.')) {
+  fail('README.md is missing the required local-only verification claim: "Main-target GitHub Actions confirmation is pending."');
 }
 
 // Ensure local-only verification claim exists in AGENTS.md
-if (!agents.includes('Node-only gates implemented and passing locally')) {
-  fail('AGENTS.md is missing the required local-only verification claim: "Node-only gates implemented and passing locally"');
+if (!agents.includes('Node-only verification passed locally.')) {
+  fail('AGENTS.md is missing the required local-only verification claim: "Node-only verification passed locally."');
 }
-if (!agents.includes('GitHub Actions confirmation unavailable')) {
-  fail('AGENTS.md is missing the required local-only verification claim: "GitHub Actions confirmation unavailable"');
+if (!agents.includes('Main-target GitHub Actions confirmation is pending.')) {
+  fail('AGENTS.md is missing the required local-only verification claim: "Main-target GitHub Actions confirmation is pending."');
 }
 
 // 4. Validate current-application.json applicationVersion
@@ -114,9 +114,11 @@ const readmeRoadmap = extractRoadmap(readme, 'README.md');
 const agentsRoadmap = extractRoadmap(agents, 'AGENTS.md');
 const requiredRoadmap = [
   ['2.0.17', 'Fact Command Integrity Closure Repair'],
-  ['2.0.18', 'Fact Runtime Recovery and Regression Gate Closure'],
-  ['2.0.19', 'Projection Reliability and Ordering'],
-  ['2.0.20', 'Rules, Legacy Runtime and Export Closure'],
+  ['2.0.18', 'Fact runtime recovery initial implementation'],
+  ['2.0.19', 'Main branch Hermes integration and branch workflow update'],
+  ['2.0.20', 'Fact Runtime Closure Correction and Version Governance Repair'],
+  ['2.0.21', 'Projection Reliability and Ordering'],
+  ['2.0.22', 'Rules, Legacy Runtime and Export Closure'],
   ['2.1.0', 'EFP-native First Vertical Slice']
 ];
 for (const [version, name] of requiredRoadmap) {
@@ -138,7 +140,7 @@ for (const text of [readme, agents]) {
 const stridePath = path.join(rootDir, '.agents/strides', `${currentVersion}.json`);
 if (fs.existsSync(stridePath)) {
   const stride = JSON.parse(fs.readFileSync(stridePath, 'utf8'));
-  if ((stride.requirements || []).some(req => req.status !== 'complete') && /2\.0\.18.*Completed/i.test(readme + agents)) fail('Stride manifest is incomplete but documentation claims Completed');
+  if ((stride.requirements || []).some(req => req.status !== 'complete') && /2\.0\.20.*Completed/i.test(readme + agents)) fail('Stride manifest is incomplete but documentation claims Completed');
 } else {
   fail(`Missing stride manifest for current version: ${currentVersion}`);
 }

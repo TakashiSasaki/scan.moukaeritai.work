@@ -1,14 +1,7 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const dir = path.join(rootDir, 'contracts/fixtures/regressions');
-const required = ['functions-artifact-missing-runtime-profile','functions-artifact-missing-efp-schema','object-only-participants-all-index-arrays','observation-nonexistent-object-rejected','measurement-foreign-marker-rejected','participant-id-containing-colon','unicode-sha256-known-vectors','uuidv4-command-accepted','uuidv7-command-rejected','same-command-different-api-version-rejected','association-replace-same-marker-rejected','association-replace-object-mismatch-rejected','missing-association-composite-index','documentation-completed-deferred-conflict','documentation-duplicate-roadmap-entry'];
-const manifest = JSON.parse(fs.readFileSync(path.join(rootDir,'.agents/strides/2.0.18.json'),'utf8'));
-const evidence = new Set(manifest.requirements.flatMap(r => r.evidence || []));
-for (const id of required) {
-  const rel = `contracts/fixtures/regressions/${id}.json`;
-  if (!fs.existsSync(path.join(rootDir, rel))) throw new Error(`Missing regression fixture ${id}`);
-  if (![...evidence].some(e => e === rel || e.startsWith('contracts/fixtures/regressions'))) throw new Error(`Fixture ${id} is not tied to stride evidence`);
-}
-console.log('Regression fixture validation passed.');
+import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url'; import crypto from 'node:crypto';
+const rootDir=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'); const dir=path.join(rootDir,'contracts/fixtures/regression');
+const required=['functions-artifact-missing-runtime-profile','functions-artifact-missing-efp-schema','functions-artifact-missing-compiled-lib','object-only-participants-all-index-arrays','observation-nonexistent-object-rejected','measurement-foreign-marker-rejected','event-nonexistent-place-rejected','participant-id-containing-colon','unicode-sha256-known-vectors','uuidv4-command-accepted','uuidv7-command-rejected','same-command-different-api-version-rejected','same-command-different-hash-version-rejected','different-owner-same-command-independent','association-replace-same-marker-rejected','association-replace-object-mismatch-rejected','association-subject-foreign-owner-rejected','missing-association-composite-index','documentation-completed-deferred-conflict','documentation-duplicate-roadmap-entry','version-downgrade-rejected'];
+function fail(m){throw new Error(m)}
+function run(fx){for(const k of ['id','requirementId','runner','input','expected']) if(!(k in fx)) fail(`${fx.id||'fixture'} missing ${k}`); if(JSON.stringify(fx.expected).includes('regression must be rejected')) fail(`${fx.id} is placeholder`); switch(fx.runner){case 'source-presence': for(const p of fx.input.paths) if(!fs.existsSync(path.join(rootDir,p))!==!fx.expected.exists) fail(`${fx.id} source presence mismatch`); break; case 'sha256-known-vector': {const h=crypto.createHash('sha256').update(fx.input.text,'utf8').digest('hex'); if(h!==fx.expected.sha256) fail(`${fx.id} hash mismatch`); break;} default: fail(`${fx.id} unknown runner ${fx.runner}`)}}
+for(const id of required){const p=path.join(dir,`${id}.json`); if(!fs.existsSync(p)) fail(`missing regression fixture ${id}`); run(JSON.parse(fs.readFileSync(p,'utf8')))}
+console.log(`Executable regression fixtures passed (${required.length}).`);

@@ -1,82 +1,35 @@
-# scan.mw (Version 2.0.18)
+# scan.mw (Version 2.0.20)
 
-[![CI](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TakashiSasaki/scan.moukaeritai.work/actions/workflows/ci.yml)
+Welcome to **scan.mw v2.0.20**, a cloud-based item tracking and inventory management application using the Contract-First EFP architecture.
 
-Welcome to **scan.mw v2.0.18**, a cloud-based item tracking and inventory management application rebuilt using a modern **Contract-First Baseline** and EFP architecture.
+## Current stride
 
-This repository enforces backward-incompatible, robust schemas, strict version governance, and a registry-first workflow.
+**2.0.20 Fact Runtime Closure Correction and Version Governance Repair (Current)** corrects the codex branch Fact runtime recovery work so it can move toward main integration without regressing from main's 2.0.19 application version.
 
----
+Node-only verification passed locally.
+Main-target GitHub Actions confirmation is pending.
 
-## 🏗️ Core Architecture & EFP-Native Paradigm
+## Runtime and contract state
 
-- **Contract-First Source of Truth**: All data models, schemas, and API formats are declared and validated within the `/contracts` directory first.
-- **Entity-Fact-Projection (EFP) Model**: 
-  - **Entities** (Timeless identity, e.g., Objects, Markers, Places)
-  - **Facts** (Temporal records of events/observations, e.g., Associations, Observations, Measurements, Events) - **Backend-only and immutable**.
-  - **Projections** (Derived caches optimized for user-facing reads) - **Asynchronous and eventually-consistent**.
+- Application version: **2.0.20**.
+- Active Callable Functions API: **1.1.8**.
+- Active EFP model: **3.0.0**.
+- Request identity is the tuple of `callableApiVersion`, `factType`, and `data`.
+- `canonicalJsonVersion` is `1`.
+- `requestHashVersion` is the string `sha256-canonical-json-v1` in contract metadata, runtime helpers, and command receipts.
+- Command receipts are owner-scoped at `users/{ownerId}/factCommands/{commandId}` and contain `commandId`, `ownerId`, `factId`, `factType`, `callableApiVersion`, `canonicalJsonVersion`, `requestHash`, `requestHashVersion`, and `executedAt`.
+- Receipts created by Callable API 1.1.7 are historical. Replaying the same owner and commandId with a 1.1.8 request is rejected because `callableApiVersion` is part of request identity.
 
----
+## Roadmap and history
 
-## 🚀 Fact Runtime Recovery and Regression Gate Closure (v2.0.18)
+- **2.0.17**: Fact Command Integrity Closure Repair (Historical).
+- **2.0.18**: Fact runtime recovery initial implementation (Historical). The codex branch implemented major runtime capabilities, but version governance, contract/runtime alignment, and test evidence remained incomplete.
+- **2.0.19**: Main branch Hermes integration and branch workflow update (Historical). This is not treated as Rules, Legacy, or Export closure completion.
+- **2.0.20**: Fact Runtime Closure Correction and Version Governance Repair (Current).
+- **2.0.21**: Projection Reliability and Ordering (Deferred).
+- **2.0.22**: Rules, Legacy Runtime and Export Closure (Deferred).
+- **2.1.0**: EFP-native First Vertical Slice (Deferred).
 
-Version 2.0.18 is the current Fact runtime recovery stride. It repairs the deployable Functions artifact boundary, active Callable API 1.1.7 runtime profile usage, required derived index arrays, all-Fact Object/Marker/Place participant validation, UTF-8 SHA-256 evidence, UUIDv4 command acceptance, UUIDv7 Fact ID evidence, canonical request identity tests, logical Fact builder tests, idempotency tests, Association transition tests, compatibility gates, query/index gates, stride gates, regression fixtures, and documentation reality checks.
+## Non-goals in 2.0.20
 
-The previous **2.0.17 Fact Command Integrity Closure Repair** is recorded as a partially implemented baseline / 修復対象, not as proof that UTF-8 SHA-256, artifact completeness, or all-Fact participant validation were fully closed.
-
-- **Object/Marker Active Workflow**: Not yet fully complete.
-- **Production Deployment**: Deployments are strictly **manual only**.
-- **Major Version Bumps**: Require explicit human approval.
-- **Verification status**: Node-only gates implemented and passing locally (GitHub Actions confirmation unavailable).
-
-### 📅 Stride Roadmap & Backlog
-- **2.0.17**: Fact Command Integrity Closure Repair (修復対象 / partially implemented baseline)
-- **2.0.18**: Fact Runtime Recovery and Regression Gate Closure (Current)
-- **2.0.19**: Projection Reliability and Ordering (Deferred)
-- **2.0.20**: Rules, Legacy Runtime and Export Closure (Deferred)
-- **2.1.0**: EFP-native First Vertical Slice (Deferred)
-
-## 🛠️ Local Development & Validation
-
-To ensure extreme contract and baseline reliability, use the single entry point command:
-
-```bash
-# Install dependencies
-npm ci
-
-# Run the fail-closed verification pipeline
-# Node-only gates implemented and passing locally (GitHub Actions confirmation unavailable)
-npm run verify:baseline
-```
-
----
-
-## 📜 Contract Registry Governance
-
-The canonical definition of application state and data structures is managed under:
-
-* `/contracts/registry.json`: Registry list of active contract versions.
-* `/contracts/packages/`: Raw JSON schemas and contract descriptions.
-* `/contracts/profiles/current-application.json`: Profile specifying which contract package versions the current UI deployment actively supports.
-
-### Schema Validation
-
-Any changes to `/contracts` can be dynamically verified locally using:
-
-```bash
-npm run contracts:validate
-```
-
-This tool uses `ajv` to compile all referenced JSON schemas and verify that the application profile perfectly aligns with registered versions.
-
----
-
-## 🔒 Security & Deployment Safety
-
-- **No Push Deployments**: Automatic deployments on code push are completely disabled.
-- **Workflow Dispatch Only**: Deployments to Firebase Hosting and Firebase Functions must be triggered manually via `workflow_dispatch` through GitHub Actions.
-- **Read-Only Legacy Export Tool**: To back up v1 data without risking production mutations, use the locked read-only tool:
-  ```bash
-  npm run ops:export-legacy
-  ```
- 
+Projection ordering, projection watermarking, projection processing receipts, broad security rules rewrites, legacy exporter changes, Object/Marker UI workflows, production deploys, and production data writes/deletes are outside this stride.
