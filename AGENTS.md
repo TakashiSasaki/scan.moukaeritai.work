@@ -10,8 +10,8 @@ This repository uses project-specific agent skills listed in the canonical manif
 Canonical skill directory: `.agents/skills/`
 Before performing a task, check whether a relevant skill exists in the manifest and read its `SKILL.md` before acting.
 
-## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.21)
-**scan.mw** is a cloud-based item tracking and inventory management application. As of version **2.0.21**, the project remains on the **Contract-First EFP architecture**:
+## 1. Project Overview & v2 Contract-First Paradigm (scan.mw 2.0.22)
+**scan.mw** is a cloud-based item tracking and inventory management application. As of version **2.0.22**, the project remains on the **Contract-First EFP architecture**:
 
 1. **Canonical Schema Registry**: The `/contracts` directory is the single source of truth for all schemas, semantics, and registries. No runtime data mutations or API changes can occur without updated contracts. The active contract profile is defined in `contracts/profiles/current-application.json`.
 2. **Entity-Fact-Projection (EFP) Model**: Entities (Object, Marker, Place) are physical identities; Facts (Association, Observation, Measurement, Event) are backend-only and strictly immutable; Projections are asynchronous and eventually consistent.
@@ -22,36 +22,17 @@ Before performing a task, check whether a relevant skill exists in the manifest 
 
 ### 📋 Active & Completed Backend Work Status
 
-**Completed through 2.0.16**:
-- Node-only verification closure and skill consistency.
-- Transactional Fact and Projection Safety Closure.
-- Partial Fact Command Integrity with client-generated UUIDv4 `commandId` compatibility.
+**2.0.21 Regression Harness and Closure Evidence Repair (Historical)**:
+- Initial evidence model was improved, but behavioral harness remained incomplete.
+- Incomplete items recorded by 2.0.22: behavioral regression runners, shared Firestore harness, idempotency full matrix, Association full matrix, stride scope committed-diff validation, and npm-only lockfile policy.
 
-**2.0.17 Fact Command Integrity Closure Repair (修復対象 / partially implemented baseline)**:
-- Introduced active Callable API based request identity and receipt fields.
-- Introduced logical Fact builder and UUIDv7 Fact ID generation.
-- Introduced query/index integrity checks.
-
-**2.0.18 Fact runtime recovery initial implementation**:
-- The codex branch implemented major Fact runtime capabilities, including Functions vendor runtime profile, EFP schema vendoring, derived index arrays, participant validation, UUIDv7 Fact IDs, and query/index gates.
-- Version governance, contract/runtime alignment, and test evidence remained incomplete and required 2.0.20 correction.
-
-**2.0.19 Main branch Hermes integration and branch workflow update**:
-- Main branch integrated Hermes branch workflow updates.
-- This version must not be described as completing Rules, Legacy Runtime, or Export closure.
-
-**2.0.20 Fact Runtime Closure Correction and Version Governance Repair (Historical)**:
-- Callable Functions API 1.1.8 was the active API contract for 2.0.20.
-- Functions artifact preparation resolves versions from `contracts/profiles/current-application.json` and fails closed when contract metadata is missing or inactive.
-
-**2.0.21 Regression Harness and Closure Evidence Repair (Current)**:
-- Callable Functions API 1.1.9 is the active API contract.
-- `canonicalJsonVersion` is `1` and `requestHashVersion` is `sha256-canonical-json-v1` across contract metadata, runtime helpers, command receipts, fixtures, and documentation.
-- Stride evidence now requires typed source/test/contract/fixture/gate/documentation/workflow evidence, existing package scripts, and fail-closed documentation/runtime distinction.
+**2.0.22 Behavioral Harness Closure and Merge Readiness (Current)**:
+- Callable Functions API 1.1.9 remains active.
+- Node-only behavioral harness work targets production-core execution, isolated Fake Firestore transaction state, idempotency and Association matrices, runner-specific regression fixtures, committed-diff stride scope validation, npm-only lockfile policy, and historical contract immutability.
 - Node-only verification passed locally.
 - Main-target GitHub Actions confirmation is pending.
 
-**Deferred to 2.0.22 (Projection Reliability and Ordering)**:
+**Deferred to 2.0.23 (Projection Reliability and Ordering)**:
 - retry-safe projection handler
 - duplicate trigger safety
 - out-of-order safety
@@ -61,7 +42,7 @@ Before performing a task, check whether a relevant skill exists in the manifest 
 - projection processing receipt
 - projection status tracking
 
-**Deferred to 2.0.23 (Rules, Legacy Runtime and Export Closure)**:
+**Deferred to 2.0.24 (Rules, Legacy Runtime and Export Closure)**:
 - strict Entity `_meta` security rules
 - Marker identity immutability rule
 - restricting Fact reads to `ownerId` scope
@@ -70,13 +51,10 @@ Before performing a task, check whether a relevant skill exists in the manifest 
 - cleanup of remaining migration/dual-write scripts
 
 ### 📅 Stride Roadmap & Backlog
-- **2.0.17**: Fact Command Integrity Closure Repair (Historical)
-- **2.0.18**: Fact runtime recovery initial implementation (Historical)
-- **2.0.19**: Main branch Hermes integration and branch workflow update (Historical)
-- **2.0.20**: Fact Runtime Closure Correction and Version Governance Repair (Historical)
-- **2.0.21**: Regression Harness and Closure Evidence Repair (Current)
-- **2.0.22**: Projection Reliability and Ordering (Deferred)
-- **2.0.23**: Rules, Legacy Runtime and Export Closure (Deferred)
+- **2.0.21**: Regression Harness and Closure Evidence Repair (Historical; behavioral harness incomplete)
+- **2.0.22**: Behavioral Harness Closure and Merge Readiness (Current)
+- **2.0.23**: Projection Reliability and Ordering (Deferred)
+- **2.0.24**: Rules, Legacy Runtime and Export Closure (Deferred)
 - **2.1.0**: EFP-native First Vertical Slice (Deferred)
 
 ## 2. Incomplete Workflows & Legacy UI
@@ -111,3 +89,5 @@ Before performing a task, check whether a relevant skill exists in the manifest 
 
 ## 7. Branch Workflow
 - Agent workflows are restricted strictly to branches `jules`, `codex`, and `hermes`.
+
+Runtime identity metadata: canonicalJsonVersion `1`; requestHashVersion `sha256-canonical-json-v1`.

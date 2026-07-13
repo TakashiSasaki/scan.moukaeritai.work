@@ -1,0 +1,381 @@
+{
+  "stride": "2.0.22",
+  "name": "Behavioral Harness Closure and Merge Readiness",
+  "applicationVersion": "2.0.22",
+  "callableApiVersion": "1.1.9",
+  "status": "ready-for-codex-pr",
+  "mainTargetCi": "pending",
+  "nodeOnlyVerification": "passed locally when verify:baseline completes in this branch; main-target GitHub Actions confirmation is pending",
+  "requirements": [
+    {
+      "id": "version-2.0.22",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "source",
+          "path": "package.json"
+        },
+        {
+          "kind": "source",
+          "path": "package-lock.json"
+        },
+        {
+          "kind": "source",
+          "path": "functions/package.json"
+        },
+        {
+          "kind": "source",
+          "path": "functions/package-lock.json"
+        },
+        {
+          "kind": "source",
+          "path": "packages/efp-model/package.json"
+        },
+        {
+          "kind": "source",
+          "path": "packages/efp-model/package-lock.json"
+        },
+        {
+          "kind": "contract",
+          "path": "contracts/profiles/current-application.json"
+        },
+        {
+          "kind": "documentation",
+          "path": "README.md"
+        },
+        {
+          "kind": "documentation",
+          "path": "AGENTS.md"
+        }
+      ]
+    },
+    {
+      "id": "historical-contract-immutability",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "contract",
+          "path": "contracts/packages/callable-functions-api/1.1.8/contract.json"
+        },
+        {
+          "kind": "gate",
+          "path": "scripts/test-historical-contract-immutability.mjs"
+        },
+        {
+          "kind": "test",
+          "path": "package.json"
+        }
+      ]
+    },
+    {
+      "id": "production-core-dependency-injection",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "source",
+          "path": "functions/src/submitFactCommandCore.ts"
+        },
+        {
+          "kind": "source",
+          "path": "functions/src/submitFactCommand.ts"
+        },
+        {
+          "kind": "test",
+          "path": "functions/test/submitFactCommandAuthority.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "firestore-behavioral-harness",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "source",
+          "path": "functions/test/harness/fakeFirestore.ts"
+        },
+        {
+          "kind": "source",
+          "path": "functions/test/harness/submitFactCommandHarness.ts"
+        },
+        {
+          "kind": "test",
+          "path": "functions/test/submitFactCommandAuthority.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "read-before-write-enforcement",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "source",
+          "path": "functions/test/harness/fakeFirestore.ts"
+        },
+        {
+          "kind": "test",
+          "path": "functions/test/submitFactCommandAuthority.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "test-isolation",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "test",
+          "path": "functions/test/submitFactCommandAuthority.test.ts"
+        },
+        {
+          "kind": "source",
+          "path": "functions/test/harness/submitFactCommandHarness.ts"
+        }
+      ]
+    },
+    {
+      "id": "idempotency-full-matrix",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "source",
+          "path": "functions/src/submitFactCommandCore.ts"
+        },
+        {
+          "kind": "test",
+          "path": "functions/test/submitFactCommandAuthority.test.ts"
+        },
+        {
+          "kind": "fixture",
+          "path": "contracts/fixtures/regression/submit-fact-idempotency.json"
+        }
+      ]
+    },
+    {
+      "id": "association-transition-full-matrix",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "source",
+          "path": "functions/src/submitFactCommandCore.ts"
+        },
+        {
+          "kind": "test",
+          "path": "functions/test/submitFactCommandAuthority.test.ts"
+        },
+        {
+          "kind": "fixture",
+          "path": "contracts/fixtures/regression/association-transition.json"
+        }
+      ]
+    },
+    {
+      "id": "runner-specific-fixture-schema",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "contract",
+          "path": "contracts/fixtures/regression/fixture.schema.json"
+        },
+        {
+          "kind": "gate",
+          "path": "scripts/test-regression-fixture-schema.mjs"
+        },
+        {
+          "kind": "fixture",
+          "path": "contracts/fixtures/regression/participant-index.json"
+        }
+      ]
+    },
+    {
+      "id": "behavioral-regression-execution",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "gate",
+          "path": "scripts/test-regression-fixtures.mjs"
+        },
+        {
+          "kind": "gate",
+          "path": "scripts/run-regression-behavior.ts"
+        },
+        {
+          "kind": "fixture",
+          "path": "contracts/fixtures/regression/submit-fact-idempotency.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "contracts/fixtures/regression/association-transition.json"
+        }
+      ]
+    },
+    {
+      "id": "committed-diff-scope-gate",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "gate",
+          "path": "scripts/test-stride-scope.mjs"
+        },
+        {
+          "kind": "test",
+          "path": "package.json"
+        }
+      ]
+    },
+    {
+      "id": "scope-gate-self-tests",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "gate",
+          "path": "scripts/test-stride-scope.mjs"
+        },
+        {
+          "kind": "test",
+          "path": "package.json"
+        }
+      ]
+    },
+    {
+      "id": "npm-only-lockfile-policy",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "gate",
+          "path": "scripts/test-repository-hygiene.mjs"
+        },
+        {
+          "kind": "source",
+          "path": "package.json"
+        },
+        {
+          "kind": "source",
+          "path": "package-lock.json"
+        }
+      ]
+    },
+    {
+      "id": "contract-runtime-alignment",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "gate",
+          "path": "scripts/test-contract-runtime-drift.mjs"
+        },
+        {
+          "kind": "source",
+          "path": "functions/src/submitFactCommandCore.ts"
+        },
+        {
+          "kind": "test",
+          "path": "functions/test/canonicalRequestIdentity.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "compiled-artifact-isolation",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "gate",
+          "path": "scripts/test-functions-artifact-isolation.mjs"
+        },
+        {
+          "kind": "test",
+          "path": "package.json"
+        },
+        {
+          "kind": "source",
+          "path": "scripts/test-functions-artifact-isolation.mjs"
+        }
+      ]
+    },
+    {
+      "id": "documentation-reality",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "documentation",
+          "path": "README.md"
+        },
+        {
+          "kind": "documentation",
+          "path": "AGENTS.md"
+        },
+        {
+          "kind": "gate",
+          "path": "scripts/validate-documentation-state.mjs"
+        }
+      ]
+    },
+    {
+      "id": "node-only-baseline",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "workflow",
+          "path": "package.json"
+        }
+      ]
+    },
+    {
+      "id": "codex-target-pr",
+      "status": "ready-for-codex-pr",
+      "evidence": [
+        {
+          "kind": "documentation",
+          "path": ".agents/strides/2.0.22.json"
+        }
+      ]
+    },
+    {
+      "id": "main-target-ci",
+      "status": "pending",
+      "evidence": [
+        {
+          "kind": "documentation",
+          "path": "README.md"
+        },
+        {
+          "kind": "documentation",
+          "path": "AGENTS.md"
+        }
+      ]
+    }
+  ],
+  "verificationCommands": [
+    "test:repository-hygiene:self",
+    "test:repository-hygiene",
+    "version:verify:self",
+    "version:verify",
+    "test:stride-completion:self",
+    "test:stride-scope:self",
+    "contracts:validate",
+    "contracts:check-generated",
+    "test:historical-contract-immutability",
+    "test:contract-runtime-drift",
+    "test:regression-fixture-schema",
+    "test:regression-fixtures",
+    "test:functions",
+    "test:stride-completion",
+    "test:stride-scope",
+    "verify:baseline",
+    "verify:closeout"
+  ],
+  "roadmap": [
+    {
+      "target": "2.0.23",
+      "name": "Projection Reliability and Ordering",
+      "status": "deferred"
+    },
+    {
+      "target": "2.0.24",
+      "name": "Rules, Legacy Runtime and Export Closure",
+      "status": "deferred"
+    },
+    {
+      "target": "2.1.0",
+      "name": "EFP-native First Vertical Slice",
+      "status": "deferred"
+    }
+  ]
+}
