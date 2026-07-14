@@ -2,74 +2,20 @@ import { describe, expect, test } from "vitest";
 import { SubmitFactCommandCoreError } from "../src/submitFactCommandCore";
 import { createSubmitFactCommandHarness } from "./harness/submitFactCommandHarness";
 
-// Setup hoisted mocks
-const { mockSet, mockGet, mockRunTransaction, mockWhere, idempotencyState, getSetCallCount, resetSetCallCount } = vi.hoisted(() => {
-  const mockSet = vi.fn();
-  
-  let databaseState: any = {
-    'objects/object1': { ownerId: 'test-user' },
-    'objects/object-other': { ownerId: 'other-user' },
-    'markers/marker1': { ownerId: 'test-user', identityModelVersion: 'v2', canonicalizationVersion: 'v1' },
-    'markers/marker2': { ownerId: 'test-user', identityModelVersion: 'v2', canonicalizationVersion: 'v1' },
-    'markers/marker-other': { ownerId: 'other-user', identityModelVersion: 'v2', canonicalizationVersion: 'v1' },
-    'places/place1': { ownerId: 'test-user' },
-    'associations/assoc1': { ownerId: 'test-user', operation: 'attach', participantKeys: ['marker:marker1', 'object:object1'], objectIds: ['object1'], markerKeys: ['marker1'] },
-    'associations/assoc1_already_detached': { ownerId: 'test-user', operation: 'attach', participantKeys: ['marker:marker1', 'object:object1'], objectIds: ['object1'], markerKeys: ['marker1'] },
-    'associations/assoc2': { ownerId: 'test-user', operation: 'detach', participantKeys: ['marker:marker1', 'object:object1'], objectIds: ['object1'], markerKeys: ['marker1'] }
-  };
-  let idempotencyState: any = {};
-  let setCallCount = 0;
-  
-  const mockGet = vi.fn().mockImplementation((ref) => {
-    if (ref && ref.path && databaseState[ref.path]) {
-      return Promise.resolve({ exists: true, data: () => databaseState[ref.path] });
-    }
-    if (ref && ref.path && idempotencyState[ref.path]) {
-      return Promise.resolve({ exists: true, data: () => idempotencyState[ref.path] });
-    }
-    // Handle mock query
-    if (ref && ref._isQuery) {
-      if (ref._duplicateMatch) {
-         return Promise.resolve({ docs: [{ data: () => ({ operation: "detach" }) }] });
-      }
-      return Promise.resolve({ docs: [] });
-    }
-    return Promise.resolve({ exists: false, data: () => null });
-  });
-
-  const mockWhere = vi.fn().mockImplementation(function(this: any, field, op, val) {
-     let query: any = { _isQuery: true, get: mockGet, _duplicateMatch: this?._duplicateMatch };
-     query.where = mockWhere.bind(query);
-     if (field === "subjectAssociationId" && val === "assoc1_already_detached") {
-        query._duplicateMatch = true;
-     }
-     return query;
-  });
-
-  const mockRunTransaction = vi.fn().mockImplementation(async (callback) => {
-    const transaction = {
-      get: mockGet,
-      set: (ref: any, data: any) => {
-         mockSet(ref, data);
-         if (ref && ref.path && ref.path.startsWith('users/test-user/factCommands/')) {
-           idempotencyState[ref.path] = data;
-         } else if (ref && ref.path) {
-           databaseState[ref.path] = data;
-         }
-      }
-    };
-    return callback(transaction);
-  });
-  return { mockSet, mockGet, mockRunTransaction, mockWhere, databaseState, idempotencyState, getSetCallCount: () => setCallCount, resetSetCallCount: () => { setCallCount = 0; } };
-});
-
-vi.mock('firebase-functions/v2/https', () => {
-  return {
-    onCall: (handler: any) => handler,
-    HttpsError: class HttpsError extends Error {
-      constructor(public code: string, message: string) { super(message); }
-    }
-  };
+const owner = "test-user";
+const uuid = (n: number) =>
+  `123e4567-e89b-42d3-a456-426614174${String(n).padStart(3, "0")}`;
+const eventRequest = (commandId = uuid(0), eventType = "test") => ({
+  commandId,
+  factType: "event",
+  data: {
+    eventType,
+    time: { occurredAt: "2026-07-12T05:00:00Z" },
+    provenance: { source: "user_confirmed", confidence: "high" },
+    participants: [
+      { role: "object", ref: { entityType: "object", id: "object1" } },
+    ],
+  },
 });
 const assocRequest = (
   commandId: string,
@@ -91,37 +37,76 @@ const assocRequest = (
     ],
   },
 });
-vi.mock('firebase-admin/firestore', () => {
-  const mockDb = {
-    collection: vi.fn().mockImplementation(function(this: any, colName) {
-      const nextDb: any = Object.assign({}, mockDb);
-      nextDb._colName = colName;
-      nextDb._path = this && this._path ? `${this._path}/${colName}` : colName;
-      return nextDb;
-    }),
-    doc: vi.fn().mockImplementation(function(this: any, id) { 
-      const parentCol = this && this._colName ? this._colName : "unknown";
-      const newPath = this && this._path ? `${this._path}/${id}` : `${parentCol}/${id}`;
-      return { 
-        id, 
-        path: newPath, 
-        collection: (colName: string) => {
-           const nextDb: any = Object.assign({}, mockDb);
-           nextDb._colName = colName;
-           nextDb._path = newPath ? `${newPath}/${colName}` : colName;
-           return nextDb;
-        } 
-      }; 
-    }),
-    get: mockGet,
-    runTransaction: mockRunTransaction,
-    where: mockWhere
-  };
-  class MockTimestamp {
-    constructor(public seconds: number, public nanoseconds: number) {}
-    static now() { return new MockTimestamp(Math.floor(Date.now() / 1000), 0); }
-    static fromDate(date: Date) { return new MockTimestamp(Math.floor(date.getTime() / 1000), 0); }
-    toDate() { return new Date(this.seconds * 1000); }
+const baseDocs = {
+  "objects/object1": { ownerId: owner },
+  "objects/object2": { ownerId: "other" },
+  "objects/object:colon": { ownerId: owner },
+  "markers/marker1": { ownerId: owner },
+  "markers/marker2": { ownerId: owner },
+  "markers/marker-other": { ownerId: "other" },
+  "markers/marker:colon": { ownerId: owner },
+  "associations/assoc1": {
+    ownerId: owner,
+    operation: "attach",
+    participantKeys: ["marker:marker1", "object:object1"],
+    objectIds: ["object1"],
+    markerKeys: ["marker1"],
+  },
+  "associations/assoc-detached": {
+    ownerId: owner,
+    operation: "detach",
+    participantKeys: ["marker:marker1", "object:object1"],
+    objectIds: ["object1"],
+    markerKeys: ["marker1"],
+  },
+  "associations/assoc-replaced": {
+    ownerId: owner,
+    operation: "replace",
+    participantKeys: ["marker:marker1", "object:object1"],
+    objectIds: ["object1"],
+    markerKeys: ["marker1"],
+  },
+  "associations/assoc-foreign": {
+    ownerId: "other",
+    operation: "attach",
+    participantKeys: ["marker:marker1", "object:object1"],
+    objectIds: ["object1"],
+    markerKeys: ["marker1"],
+  },
+  "associations/assoc-old-missing": {
+    ownerId: owner,
+    operation: "attach",
+    participantKeys: ["marker:missing", "object:object1"],
+    objectIds: ["object1"],
+    markerKeys: ["missing"],
+  },
+  "associations/assoc-old-foreign": {
+    ownerId: owner,
+    operation: "attach",
+    participantKeys: ["marker:marker-other", "object:object1"],
+    objectIds: ["object1"],
+    markerKeys: ["marker-other"],
+  },
+  "associations/assoc:colon": {
+    ownerId: owner,
+    operation: "attach",
+    participantKeys: ["marker:marker:colon", "object:object:colon"],
+    objectIds: ["object:colon"],
+    markerKeys: ["marker:colon"],
+  },
+  "associations/duplicate-detach": {
+    ownerId: owner,
+    operation: "detach",
+    subjectAssociationId: "assoc1",
+  },
+};
+async function rejectCode(p: Promise<unknown>) {
+  try {
+    await p;
+    throw new Error("expected rejection");
+  } catch (e: any) {
+    expect(e).toBeInstanceOf(SubmitFactCommandCoreError);
+    return e.code;
   }
 }
 const factWrites = (h: any) =>
@@ -146,46 +131,103 @@ describe("submitFactCommand behavioral harness", () => {
     expect(h2.firestore.writesTo("events/")).toHaveLength(0);
   });
 
-  test('Idempotency logic matrix', async () => {
-    const cmdId = "123e4567-e89b-42d3-a456-426614174000";
-    const payload1 = {
-      commandId: cmdId,
-      factType: "event",
-      data: {
-        eventType: "test",
-        time: { occurredAt: "2026-07-12T05:00:00Z" },
-        provenance: { source: "user_confirmed", confidence: "high" },
-        participants: [{ role: "object", ref: { entityType: "object", id: "object1" } }]
-      }
-    };
-
-    // 1. Initial success
-    const res1 = await submitFactCommand({ auth, data: payload1 });
-    expect(res1.success).toBe(true);
-    expect(mockSet).toHaveBeenCalledTimes(2); // receipt and fact
-
-    mockSet.mockClear();
-
-    // 2. Exact replay -> return same factId, NO write
-    const res2 = await submitFactCommand({ auth, data: payload1 });
-    expect(res2.factId).toBe(res1.factId);
-    expect(mockSet).toHaveBeenCalledTimes(0);
-
-    // 3. Same commandId, different data -> reject
-    const payloadDifferentData = JSON.parse(JSON.stringify(payload1));
-    payloadDifferentData.data.eventType = "other";
-    await expect(submitFactCommand({ auth, data: payloadDifferentData })).rejects.toThrow(/Same commandId received with a different payload/);
-
-    // 4. Same commandId, different factType -> reject
-    const payloadDifferentType = { ...payload1, factType: "measurement", data: { measurementType: "test", time: { measuredAt: "2026-07-12T05:00:00Z" }, provenance: { source: "user_confirmed", confidence: "high" }, participants: [{ role: "object", ref: { entityType: "object", id: "object1" } }] } };
-    await expect(submitFactCommand({ auth, data: payloadDifferentType })).rejects.toThrow(/Same commandId received with a different factType/);
-
-    // 5. Different owner, same commandId -> successful independent insert
-    const otherAuth = { uid: "other-user" };
-    const payloadOther = { ...payload1, data: { ...payload1.data, participants: [{ role: "object", ref: { entityType: "object", id: "object-other" } }] } };
-    const res3 = await submitFactCommand({ auth: otherAuth, data: payloadOther });
-    expect(res3.success).toBe(true);
-    expect(res3.factId).not.toBe(res1.factId);
+  test("idempotency full matrix", async () => {
+    const h = createSubmitFactCommandHarness({
+      initial: baseDocs,
+      uuids: [
+        "01900000-0000-7000-8000-000000000101",
+        "01900000-0000-7000-8000-000000000102",
+      ],
+    });
+    const request = eventRequest(uuid(11));
+    const first = await h.submit(owner, request);
+    expect(factWrites(h)).toBe(1);
+    expect(receiptWrites(h)).toBe(1);
+    h.firestore.operationLog.length = 0;
+    const replay = await h.submit(owner, request);
+    expect(replay.factId).toBe(first.factId);
+    expect(factWrites(h)).toBe(0);
+    expect(receiptWrites(h)).toBe(0);
+    h.firestore.assertReadsBeforeWrites();
+    for (const [name, mutate] of [
+      ["different data", (r: any) => (r.data.eventType = "other")],
+      [
+        "different factType",
+        (r: any) => {
+          r.factType = "measurement";
+          r.data = {
+            measurementType: "m",
+            time: { measuredAt: "2026-07-12T05:00:00Z" },
+            provenance: { source: "user_confirmed", confidence: "high" },
+            participants: r.data.participants,
+          };
+        },
+      ],
+    ] as const) {
+      h.firestore.operationLog.length = 0;
+      const r = JSON.parse(JSON.stringify(request));
+      mutate(r);
+      expect(await rejectCode(h.submit(owner, r))).toBe("invalid-argument");
+      expect(factWrites(h), name).toBe(0);
+      expect(receiptWrites(h), name).toBe(0);
+    }
+    for (const missing of [
+      "callableApiVersion",
+      "canonicalJsonVersion",
+      "requestHashVersion",
+    ] as const) {
+      const legacy = createSubmitFactCommandHarness({
+        initial: {
+          ...baseDocs,
+          [`users/${owner}/factCommands/${uuid(12)}`]: {
+            commandId: uuid(12),
+            ownerId: owner,
+            factId: "legacy",
+            factType: "event",
+            callableApiVersion: "1.1.9",
+            canonicalJsonVersion: 1,
+            requestHashVersion: "sha256-canonical-json-v1",
+            requestHash: "x",
+          },
+        },
+      });
+      delete (
+        legacy.firestore.get(`users/${owner}/factCommands/${uuid(12)}`) as any
+      )?.[missing];
+      legacy.firestore.seed(`users/${owner}/factCommands/${uuid(12)}`, {
+        commandId: uuid(12),
+        ownerId: owner,
+        factId: "legacy",
+        factType: "event",
+        requestHash: "x",
+      });
+      expect(
+        await rejectCode(legacy.submit(owner, eventRequest(uuid(12)))),
+      ).toBe("invalid-argument");
+      expect(factWrites(legacy)).toBe(0);
+      expect(receiptWrites(legacy)).toBe(0);
+    }
+    const hOwners = createSubmitFactCommandHarness({
+      initial: {
+        ...baseDocs,
+        "objects/object-other": { ownerId: "other-user" },
+      },
+      uuids: [
+        "01900000-0000-7000-8000-000000000201",
+        "01900000-0000-7000-8000-000000000202",
+      ],
+    });
+    const a = await hOwners.submit(owner, request);
+    const other = eventRequest(uuid(11));
+    other.data.participants[0].ref.id = "object-other";
+    const b = await hOwners.submit("other-user", other);
+    expect(a.factId).not.toBe(b.factId);
+    expect(
+      hOwners.firestore.get(`users/${owner}/factCommands/${uuid(11)}`),
+    ).toBeTruthy();
+    expect(
+      hOwners.firestore.get(`users/other-user/factCommands/${uuid(11)}`),
+    ).toBeTruthy();
   });
 
   test.each([
