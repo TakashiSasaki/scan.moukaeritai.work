@@ -30,6 +30,9 @@ export const routes: AppRoute[] = [
   
   // Dev
   { path: '/dev', label: 'Developer Docs', description: 'System documentation (Admin Only)', access: 'admin', isActive: true, surface: 'dev' },
+  { path: '/dev/routing', label: 'Developer Docs - Routing', description: 'Routing architecture and rules (Admin Only)', access: 'admin', isActive: true, surface: 'dev' },
+  { path: '/dev/data-model', label: 'Developer Docs - Data Model', description: 'EFP schema and database specs (Admin Only)', access: 'admin', isActive: true, surface: 'dev' },
+  { path: '/dev/security', label: 'Developer Docs - Security', description: 'Access control and auth policy (Admin Only)', access: 'admin', isActive: true, surface: 'dev' },
   { path: '/dev/demo', label: 'Hardware API Demos', description: 'Experimental capabilities', access: 'admin', isActive: true, surface: 'dev' },
   { path: '/dev/library-demo', label: 'Library & AI Demos', description: 'AI & TensorFlow sandbox', access: 'admin', isActive: true, surface: 'dev' },
   
