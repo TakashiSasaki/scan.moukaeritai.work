@@ -9,7 +9,7 @@ export default function SitemapPage({ onClose }: { onClose: () => void }) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black tracking-tight italic">Route Map</h1>
-          <p className="text-[var(--on-surface-variant)] text-sm font-medium">Internal application structure & status (v2.0.5)</p>
+          <p className="text-[var(--on-surface-variant)] text-sm font-medium">Internal application structure & status (v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'unknown'})</p>
         </div>
         <button onClick={onClose} className="bg-[var(--surface-container-highest)] p-2 rounded-xl text-[var(--on-surface-variant)] cursor-pointer">
           <X size={24} />

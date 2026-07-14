@@ -23,8 +23,8 @@ export const routes: AppRoute[] = [
   { path: '/test', label: 'Experimental Sandbox', description: 'UI/UX layout playground', access: 'admin', isActive: true },
 
   // Rebuilt / Pending EFP routes
-  { path: '/object/new', label: 'New Object', description: 'EFP pending placeholder', access: 'authenticated', isActive: false },
-  { path: '/object/:id', label: 'Edit Object', description: 'EFP pending placeholder', access: 'authenticated', isActive: false },
+  { path: '/object/new', label: 'New Object', description: 'Create EFP-native Object record', access: 'authenticated', isActive: true },
+  { path: '/object/:id', label: 'Object Detail', description: 'View EFP-native Object record', access: 'authenticated', isActive: true },
   { path: '/item/:id', label: 'Item Legacy Redirect', description: 'Legacy redirect to object', access: 'authenticated', isActive: false },
   
   // Contained legacy pages

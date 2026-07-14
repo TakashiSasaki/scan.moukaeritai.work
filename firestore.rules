@@ -275,6 +275,11 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /importExecutionReceipts/{executionId} {
+      allow read: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow create, update, delete: if false;
+    }
+
     match /objectIdentifierBindings/{bindingId} {
       allow read: if isOwner(existing().ownerId);
       allow create, update, delete: if false;

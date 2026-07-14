@@ -3,7 +3,7 @@
   "version": "1.1.9",
   "status": "active",
   "title": "Callable Functions API",
-  "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv4-based idempotency validation with closure evidence repair",
+  "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv4-based idempotency validation",
   "contractType": "api-contract",
   "normativeArtifacts": [
     "callable-functions-api.md",
@@ -20,32 +20,8 @@
   "compatibility": {
     "breaksBackwardCompatibility": false,
     "compatibleWith": [
-      "1.1.8",
-      "1.1.7",
       "1.1.6",
       "1.1.5"
-    ]
-  },
-  "requestIdentity": {
-    "canonicalJsonVersion": 1,
-    "requestHashVersion": "sha256-canonical-json-v1",
-    "receiptFields": [
-      "commandId",
-      "ownerId",
-      "factId",
-      "factType",
-      "callableApiVersion",
-      "canonicalJsonVersion",
-      "requestHash",
-      "requestHashVersion",
-      "executedAt"
-    ],
-    "replayComparisonFields": [
-      "callableApiVersion",
-      "factType",
-      "canonicalJsonVersion",
-      "requestHash",
-      "requestHashVersion"
     ]
   }
 }

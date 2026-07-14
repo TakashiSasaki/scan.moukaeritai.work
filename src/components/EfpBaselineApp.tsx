@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { ShieldCheck, BookOpen, Database, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import MyObjectsSection from '../features/objects/MyObjectsSection';
 
 declare const __APP_VERSION__: string;
 
@@ -9,7 +10,7 @@ export default function EfpBaselineApp() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0.5';
+  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'unknown';
 
   return (
     <div className="space-y-8">
@@ -26,7 +27,7 @@ export default function EfpBaselineApp() {
               Welcome back, {user?.displayName || 'User'}
             </h2>
             <p className="text-sm text-[#94a3b8] max-w-xl">
-              Object and Marker workflows are being rebuilt on the EFP model. Direct legacy data mutations are safely contained to ensure data integrity.
+              Object creation and detail views are now active under the EFP model. Marker and Association workflows are currently pending. Direct legacy item writes remain blocked to ensure schema isolation.
             </p>
           </div>
           
@@ -68,7 +69,7 @@ export default function EfpBaselineApp() {
             </div>
             <div className="flex justify-between items-center bg-[var(--surface-container-high)] px-3 py-2 rounded-xl">
               <span className="text-xs font-mono text-[var(--on-surface-variant)]">BACKEND HARNESS:</span>
-              <span className="text-xs font-bold text-[#3b82f6]">ACTIVE (v2.0.5)</span>
+              <span className="text-xs font-bold text-[#3b82f6]">ACTIVE (v{version})</span>
             </div>
           </div>
         </div>
@@ -80,10 +81,10 @@ export default function EfpBaselineApp() {
               <div className="p-3 bg-[#3b82f6]/10 text-[#3b82f6] rounded-xl">
                 <Database size={20} />
               </div>
-              <h3 className="font-bold text-lg">Next Milestone Road</h3>
+              <h3 className="font-bold text-lg">Milestone Roadmap</h3>
             </div>
             <p className="text-xs text-[var(--on-surface-variant)] leading-relaxed">
-              We are moving toward **v2.1.0 EFP-native First Vertical Slice**. Legacy clients and direct Firestore writes are currently blocked. Future append operations will transition completely through backend commands.
+              Object baseline is available and remains under verification. physical Marker binding (QR, NFC) and Association mapping are scheduled for upcoming vertical iterations.
             </p>
           </div>
 
@@ -104,6 +105,11 @@ export default function EfpBaselineApp() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* User's Object List Section */}
+      <div className="pt-4 border-t border-[var(--outline)]/30">
+        <MyObjectsSection />
       </div>
     </div>
   );

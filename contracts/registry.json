@@ -42,7 +42,7 @@
       "version": "1.0.0",
       "status": "archived",
       "title": "Import Protocol",
-      "description": "Historical migration import protocol retained for reference only; not active runtime scope.",
+      "description": "Protocol for Controlled Imported Observation Execution, allowing restricted administrator-initiated imports into identifierObservations.",
       "contractType": "import-protocol",
       "path": "packages/import-protocol/1.0.0/contract.json"
     },
@@ -162,15 +162,6 @@
       "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv4-based idempotency validation and comprehensive regression gates",
       "contractType": "api-contract",
       "path": "packages/callable-functions-api/1.1.7/contract.json"
-    },
-    {
-      "contractId": "callable-functions-api",
-      "version": "1.1.8",
-      "status": "deprecated",
-      "title": "Callable Functions API",
-      "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv4-based idempotency validation and comprehensive regression gates",
-      "contractType": "api-contract",
-      "path": "packages/callable-functions-api/1.1.8/contract.json"
     },
     {
       "contractId": "callable-functions-api",

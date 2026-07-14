@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "status": "archived",
   "title": "Import Protocol",
-  "description": "Historical migration import protocol retained for reference only; legacy import is cancelled and not active runtime scope.",
+  "description": "Protocol for Controlled Imported Observation Execution, allowing restricted administrator-initiated imports into identifierObservations.",
   "contractType": "import-protocol",
   "normativeArtifacts": [
     "import-protocol.md"

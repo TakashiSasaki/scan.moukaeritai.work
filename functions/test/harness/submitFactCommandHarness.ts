@@ -14,7 +14,7 @@ export function createSubmitFactCommandHarness(
 ) {
   const firestore = createFakeFirestoreHarness(options.initial);
   const runtimeProfile = options.runtimeProfile || {
-    applicationVersion: "2.0.22",
+    applicationVersion: "2.1.0",
     callableApiVersion: "1.1.9",
     efpModelVersion: "3.0.0",
   };

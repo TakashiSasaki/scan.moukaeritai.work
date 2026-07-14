@@ -10,7 +10,9 @@ const rootDir = path.resolve(__dirname, '..');
 const profilePath = path.join(rootDir, 'contracts', 'profiles', 'current-application.json');
 const registryPath = path.join(rootDir, 'contracts', 'registry.json');
 const profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
-const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+const callableApiVersion = profile.contracts['callable-functions-api'] || '1.1.7';
+const efpModelVersion = profile.contracts['efp-model'] || '3.0.0';
+const applicationVersion = profile.applicationVersion || '2.0.18';
 
 function requiredString(value, label) {
   if (typeof value !== 'string' || value.length === 0) throw new Error(`Missing required ${label} in current application profile.`);

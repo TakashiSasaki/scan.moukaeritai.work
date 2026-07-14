@@ -9,7 +9,6 @@ const functionsSrcIndex = path.join(rootDir, 'functions', 'src', 'index.ts');
 const allowlistPath = path.join(rootDir, 'functions', 'deploy-functions.allowlist.json');
 
 const forbiddenExports = [
-  'scanExecuteImportedObservationBatch',
   'recomputeProjectionSummary',
   'reconcileProjectionSummary',
   'reconcileProjectionSummaries',

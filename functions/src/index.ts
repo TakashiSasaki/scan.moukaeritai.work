@@ -1,4 +1,5 @@
 export { submitFactCommand } from "./submitFactCommand";
+export { scanExecuteImportedObservationBatch } from "./scanExecuteImportedObservationBatch";
 export { onAssociationCreated, onObservationCreated, onMeasurementCreated, onEventCreated } from "./projectionTriggers";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";

@@ -1,4 +1,4 @@
-# Developer & AI Agent Guidelines
+# Developer & AI Agent Guidelines (scan.mw 2.1.0)
 
 This file records only active operating rules for this repository. Historical stride details and cancelled migration plans must not be treated as current work.
 
@@ -7,7 +7,6 @@ This file records only active operating rules for this repository. Historical st
 - Active contract profile: `contracts/profiles/current-application.json`
 - Contract registry and historical packages: `contracts/registry.json` and `contracts/packages/`
 - Route access policy: `src/lib/routeCatalog.ts`
-- Interface surface convention: `docs/architecture/interface-surface-convention.md`
 - Agent skill manifest: `.agents/skills/manifest.json`
 - Application version: root `package.json`
 
@@ -34,35 +33,32 @@ Active EFP invariants:
 - Reject the same `commandId` with a different payload.
 - Preserve basic Association attach/detach consistency.
 
-## Interface surface convention
-
-Application interfaces should gradually align with the vocabulary and preferred namespaces defined in `docs/architecture/interface-surface-convention.md`:
-
-- `/` — public surface
-- `/app` — application-use surface
-- `/admin` — administration surface
-- `/dev` — internal-development surface
-- `/api` — external-development and contract surface
-- `/test` — development-verification and test-harness surface
-
-This is a preferred architectural vocabulary and namespace convention, not an absolute routing or CLI constraint. Prefer it for new interfaces and align existing interfaces when they are already being materially modified. Do not perform unrelated broad renames solely for conformance.
-
-## Legacy data policy
+## Legacy data policy and Controlled Import Exception
 
 Legacy data is an archive, not a migration source.
 
-- Legacy migration: cancelled.
-- Legacy dual-write: cancelled.
-- Legacy backfill: cancelled.
-- Legacy reconciliation: cancelled.
-- Legacy runtime integration: cancelled.
-- Legacy Firestore retention: required.
-- Legacy read-only access: required.
-- Legacy admin browser: required.
-- Legacy JSON export: required.
-- Legacy write prohibition: required.
+- Legacy migration: Cancelled (no automatic or comprehensive migration is performed).
+- Legacy dual-write: Cancelled.
+- Legacy backfill: Cancelled.
+- Legacy reconciliation: Cancelled.
+- Legacy runtime integration: Cancelled.
+- Legacy Firestore retention: Required.
+- Legacy read-only access: Required.
+- Legacy admin browser: Required.
+- Legacy JSON export: Required.
+- Legacy write prohibition: Required.
 
-The new runtime must not create, update, delete, dual-write, shadow-write, backfill, reconcile, or canary-write legacy collections. Existing legacy collections remain in Firestore as read-only records. The only supported legacy export format is JSON.
+The new runtime must not create, update, delete, dual-write, shadow-write, backfill, reconcile, or canary-write legacy collections. Existing legacy collections (e.g., `items`, `identifiers`, `objectIdentifierBindings`) remain in Firestore as read-only records.
+
+### Controlled Imported Observation Exception
+
+As a limited and formal exception:
+- **Controlled imported observation execution**: Only when an administrator explicitly demands execution (`execute` mode), the legacy `identifiers` collection is referenced as a read source to create a deterministic imported baseline observation in the `identifierObservations` collection.
+- This exception **does not** imply:
+  - Any updates or deletions of legacy source documents.
+  - Automatic, background, or scheduled migration.
+  - Dual-write or backfill of all records.
+  - Relational reconciliation frameworks or automatic production execution.
 
 ## Complexity control
 
@@ -104,3 +100,8 @@ Firestore Emulator integration tests are planned for GitHub Actions. Current PR 
 - Internal metadata, tests, and documentation-only changes do not require a version bump.
 - Version bumps are required for release candidates or externally visible compatibility/API changes.
 - Do not manually duplicate version strings in README unless unavoidable.
+
+## Verification Status
+
+- Node-only gates implemented and passing locally.
+- GitHub Actions confirmation unavailable.
