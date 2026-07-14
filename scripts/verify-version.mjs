@@ -61,25 +61,53 @@ console.log(`Current application version: ${pkg.version}`);
 
 if (!isStatic) {
   let baseRef = 'HEAD~1';
-  if (process.env.GITHUB_BASE_REF) baseRef = `origin/${process.env.GITHUB_BASE_REF}`;
-  else if (process.env.GITHUB_SHA) baseRef = `${process.env.GITHUB_SHA}~1`;
+  if (process.env.GITHUB_BASE_REF) {
+    baseRef = `origin/${process.env.GITHUB_BASE_REF}`;
+  } else if (process.env.GITHUB_SHA) {
+    baseRef = `${process.env.GITHUB_SHA}~1`;
+  } else if (!process.env.VITEST) {
+    try {
+      const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
+      if (currentBranch !== 'main' && execSync('git show-ref --verify refs/heads/main', { stdio: 'pipe' })) {
+        baseRef = 'main';
+      }
+    } catch (_) {}
+  }
   console.log(`Comparing version metadata against base reference: ${baseRef}`);
 
   try {
     if (process.env.GITHUB_BASE_REF) execSync(`git fetch --depth=10 origin ${process.env.GITHUB_BASE_REF}`, { stdio: 'inherit' });
     const basePackage = JSON.parse(execSync(`git show ${baseRef}:package.json`, { encoding: 'utf8', stdio: 'pipe' }));
-    if (basePackage.version && basePackage.version !== pkg.version) {
-      if (!isSemverGreater(pkg.version, basePackage.version)) {
-        fail(`package.json version changed from ${basePackage.version} to ${pkg.version}, but did not monotonically increase.`);
-      }
-      const [currentMajor] = parseSemver(pkg.version);
-      const [baseMajor] = parseSemver(basePackage.version);
-      if (currentMajor > baseMajor) {
-        try {
-          const approval = JSON.parse(execSync(`git show ${baseRef}:contracts/governance/major-bump-approval.json`, { encoding: 'utf8', stdio: 'pipe' }));
-          if (approval.approvedVersion !== pkg.version) fail(`Major version bump requires pre-existing human approval for ${pkg.version} in base branch.`);
-        } catch (error) {
-          fail(`Major version bump detected without valid pre-existing human approval in base branch: ${error.message}`);
+    
+    // Check if there are application-code changes
+    const diffFiles = execSync(`git diff --name-only ${baseRef}`, { encoding: 'utf8', stdio: 'pipe' })
+      .split('\n')
+      .map(f => f.trim())
+      .filter(Boolean);
+
+    const hasCodeChanges = diffFiles.some(file => {
+      const isDoc = /^(README\.md|AGENTS\.md|\.agents\/|docs\/|.*\.md$)/i.test(file);
+      return !isDoc;
+    });
+
+    if (basePackage.version) {
+      if (basePackage.version === pkg.version) {
+        if (hasCodeChanges) {
+          fail(`package.json version is unchanged (${pkg.version}) despite application code changes. Every change modifying application code or contracts must increment the application version.`);
+        }
+      } else {
+        if (!isSemverGreater(pkg.version, basePackage.version)) {
+          fail(`package.json version changed from ${basePackage.version} to ${pkg.version}, but did not monotonically increase.`);
+        }
+        const [currentMajor] = parseSemver(pkg.version);
+        const [baseMajor] = parseSemver(basePackage.version);
+        if (currentMajor > baseMajor) {
+          try {
+            const approval = JSON.parse(execSync(`git show ${baseRef}:contracts/governance/major-bump-approval.json`, { encoding: 'utf8', stdio: 'pipe' }));
+            if (approval.approvedVersion !== pkg.version) fail(`Major version bump requires pre-existing human approval for ${pkg.version} in base branch.`);
+          } catch (error) {
+            fail(`Major version bump detected without valid pre-existing human approval in base branch: ${error.message}`);
+          }
         }
       }
     }

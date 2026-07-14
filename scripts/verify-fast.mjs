@@ -38,30 +38,30 @@ function requireFunctionsDependencies() {
   }
 }
 
+function runGit(cmd) {
+  try {
+    return output(cmd);
+  } catch (e) {
+    console.error(`\n❌ Git is unavailable or corrupt!`);
+    console.error(`Failed Git operation: ${cmd}`);
+    console.error(`Essential error: ${e.message}`);
+    console.error(`Supported remediation: Please ensure Git is installed, the repository is not corrupt, and you are running within a valid Git working directory. If corruption persists, delete corrupt objects or clone/fetch a fresh repository state.`);
+    process.exit(1);
+  }
+}
+
 let files = [];
 let baseRef = null;
-try {
-  const workingTreeFiles = new Set([
-    ...output('git diff --name-only HEAD').split('\n').filter(Boolean),
-    ...output('git diff --name-only --cached').split('\n').filter(Boolean),
-    ...output('git ls-files --others --exclude-standard').split('\n').filter(Boolean)
-  ]);
-  baseRef = workingTreeFiles.size > 0 ? null : resolveBaseRef();
-  files = [...workingTreeFiles];
-  if (files.length === 0 && baseRef) {
-    files = output(`git diff --name-only ${baseRef}...HEAD || git diff --name-only ${baseRef}`).split('\n').filter(Boolean);
-  }
-} catch (e) {
-  console.warn('Git is unavailable or corrupt, falling back to explicitly edited files.');
-  files = [
-    'src/App.tsx',
-    'src/lib/routeCatalog.ts',
-    'src/components/SitemapPage.tsx',
-    'docs/architecture/interface-surface-convention.md',
-    'tests/routing/authorization.test.ts',
-    'tests/routing/integration.test.tsx',
-    'scripts/test-routing-boundary.mjs'
-  ];
+
+const workingTreeFiles = new Set([
+  ...runGit('git diff --name-only HEAD').split('\n').filter(Boolean),
+  ...runGit('git diff --name-only --cached').split('\n').filter(Boolean),
+  ...runGit('git ls-files --others --exclude-standard').split('\n').filter(Boolean)
+]);
+baseRef = workingTreeFiles.size > 0 ? null : resolveBaseRef();
+files = [...workingTreeFiles];
+if (files.length === 0 && baseRef) {
+  files = runGit(`git diff --name-only ${baseRef}...HEAD || git diff --name-only ${baseRef}`).split('\n').filter(Boolean);
 }
 
 console.log(`verify:fast base: ${baseRef ?? 'working tree'}`);
