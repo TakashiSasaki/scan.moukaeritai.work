@@ -341,10 +341,10 @@ describe("Router Integration", () => {
       overviewBtn.click();
       await waitFor(() => { expect(lastLocation.pathname).toBe("/dev"); });
 
-      const buttons = screen.getAllByRole("button");
-      buttons.forEach(btn => {
-        const onclickStr = btn.getAttribute("onclick") || "";
-        expect(onclickStr).not.toContain("/developer");
+      const links = screen.queryAllByRole("link");
+      links.forEach(link => {
+        const href = link.getAttribute("href") || "";
+        expect(href).not.toContain("/developer");
       });
     });
   });

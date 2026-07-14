@@ -151,28 +151,51 @@ for (const path of requiredCanonicalDevRoutes) {
 
 // Validate registry vs App.tsx
 for (const route of routes) {
-  if (route.path === undefined) {
-    errors.push(`A parsed route object is missing 'path' property: ${JSON.stringify(route)}`);
-    continue;
+  // Check if all six required properties are defined
+  const requiredKeys = ['path', 'label', 'description', 'access', 'isActive', 'surface'];
+  for (const key of requiredKeys) {
+    if (route[key] === undefined) {
+      errors.push(`Route is missing required property '${key}': ${JSON.stringify(route)}`);
+    }
   }
 
-  if (!route.access) {
-    errors.push(`Route ${route.path} is missing access policy in registry.`);
+  // 1. isActive must be a boolean
+  if (route.isActive !== undefined && typeof route.isActive !== 'boolean') {
+    errors.push(`Route '${route.path || JSON.stringify(route)}': 'isActive' must be a boolean, got ${typeof route.isActive}.`);
   }
 
-  // Validate surface
+  // 2. access must be a valid access role
+  const validAccessRoles = ['public', 'authenticated', 'admin'];
+  if (route.access !== undefined && !validAccessRoles.includes(route.access)) {
+    errors.push(`Route '${route.path || JSON.stringify(route)}': 'access' must be a valid access role ('public', 'authenticated', 'admin'), got '${route.access}'.`);
+  }
+
+  // 3. surface must be a valid surface name
   const validSurfaces = ['public', 'app', 'admin', 'dev', 'api', 'test'];
-  if (!route.surface || !validSurfaces.includes(route.surface)) {
-    errors.push(`Route ${route.path} has invalid or missing surface '${route.surface}'.`);
+  if (route.surface !== undefined && !validSurfaces.includes(route.surface)) {
+    errors.push(`Route '${route.path || JSON.stringify(route)}': 'surface' must be a valid surface name ('public', 'app', 'admin', 'dev', 'api', 'test'), got '${route.surface}'.`);
+  }
+
+  // 4. path and label must be non-empty strings
+  if (route.path !== undefined && (typeof route.path !== 'string' || route.path.trim() === '')) {
+    errors.push(`Route '${JSON.stringify(route)}': 'path' must be a non-empty string.`);
+  }
+  if (route.label !== undefined && (typeof route.label !== 'string' || route.label.trim() === '')) {
+    errors.push(`Route '${route.path || JSON.stringify(route)}': 'label' must be a non-empty string.`);
+  }
+
+  // 5. description must be a non-empty string
+  if (route.description !== undefined && (typeof route.description !== 'string' || route.description.trim() === '')) {
+    errors.push(`Route '${route.path || JSON.stringify(route)}': 'description' must be a non-empty string.`);
   }
 
   // legacy route check
-  if (['/search', '/overview', '/unassigned'].includes(route.path) && route.isActive) {
+  if (route.path !== undefined && ['/search', '/overview', '/unassigned'].includes(route.path) && route.isActive) {
     errors.push(`Legacy route ${route.path} must be inactive.`);
   }
 
   // Admin route check - for listed paths, access must be 'admin'
-  if (['/admin', '/admin/sitemap', '/dev', '/dev/routing', '/dev/data-model', '/dev/security', '/dev/demo', '/dev/library-demo', '/test'].includes(route.path) && route.access !== 'admin') {
+  if (route.path !== undefined && ['/admin', '/admin/sitemap', '/dev', '/dev/routing', '/dev/data-model', '/dev/security', '/dev/demo', '/dev/library-demo', '/test'].includes(route.path) && route.access !== 'admin') {
     errors.push(`Route ${route.path} must be admin in registry.`);
   }
 

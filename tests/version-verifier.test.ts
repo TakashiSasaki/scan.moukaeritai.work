@@ -57,11 +57,12 @@ describe("version-verifier integration tests", () => {
     }
   };
 
-  test("internal code change + version unchanged -> pass", () => {
+  test("internal code change + version unchanged -> fail", () => {
     fs.writeFileSync('src/index.ts', 'console.log("changed");');
     execSync('git commit -am "change src"');
     const res = runVerifier();
-    expect(res.success).toBe(true);
+    expect(res.success).toBe(false);
+    expect(res.error).toContain("version is unchanged");
     execSync('git reset --hard HEAD~1'); // revert
   });
 
