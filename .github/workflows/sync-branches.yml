@@ -1,59 +1,99 @@
-name: Sync Branches
+name: Sync Source Branches to Hub
 
 on:
   push:
     branches:
       - main
+      - jules
+      - codex
+      - hermes
+      - chatgpt
   workflow_dispatch:
+    inputs:
+      source_branch:
+        description: Source branch to merge into scan.moukaeritai.work
+        required: true
+        type: choice
+        options:
+          - main
+          - jules
+          - codex
+          - hermes
+          - chatgpt
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-source-branches-to-scan-moukaeritai-work
+  cancel-in-progress: false
 
 jobs:
-  sync:
+  sync-to-hub:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        target_branch: [jules, codex, hermes]
+    env:
+      HUB_BRANCH: scan.moukaeritai.work
+      SOURCE_BRANCH: ${{ github.event_name == 'workflow_dispatch' && inputs.source_branch || github.ref_name }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - name: Checkout main
+      - name: Check out hub branch
         uses: actions/checkout@v4
         with:
+          ref: scan.moukaeritai.work
           fetch-depth: 0
 
-      - name: Sync branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TARGET_BRANCH: ${{ matrix.target_branch }}
+      - name: Merge source branch into hub
+        shell: bash
         run: |
+          set -euo pipefail
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          echo "Checking if branch $TARGET_BRANCH exists..."
-          if ! git show-ref --verify --quiet refs/remotes/origin/$TARGET_BRANCH; then
-            echo "Branch $TARGET_BRANCH does not exist. Creating it from main."
-            git checkout -b $TARGET_BRANCH
-            git push origin $TARGET_BRANCH
-          else
-            echo "Branch $TARGET_BRANCH exists. Attempting merge from main."
-            git checkout $TARGET_BRANCH
-            git pull origin $TARGET_BRANCH
-            
-            if git merge main; then
-              echo "Merge successful. Pushing changes to $TARGET_BRANCH."
-              git push origin $TARGET_BRANCH
-            else
-              echo "Merge conflict detected. Aborting merge and creating Pull Request."
-              git merge --abort
-              
-              # Attempt to create a PR. If one already exists, gh pr create will fail gracefully with || true.
-              gh pr create \
-                --base $TARGET_BRANCH \
-                --head main \
-                --title "Sync: Merge main into $TARGET_BRANCH" \
-                --body "Automated PR to resolve conflicts encountered while syncing main into $TARGET_BRANCH." || echo "Pull Request already exists or could not be created."
-            fi
+          case "$SOURCE_BRANCH" in
+            main|jules|codex|hermes|chatgpt) ;;
+            *)
+              echo "Unsupported source branch: $SOURCE_BRANCH" >&2
+              exit 1
+              ;;
+          esac
+
+          git fetch origin \
+            "+refs/heads/$HUB_BRANCH:refs/remotes/origin/$HUB_BRANCH" \
+            "+refs/heads/$SOURCE_BRANCH:refs/remotes/origin/$SOURCE_BRANCH"
+          git checkout -B "$HUB_BRANCH" "origin/$HUB_BRANCH"
+
+          if git merge-base --is-ancestor "origin/$SOURCE_BRANCH" HEAD; then
+            echo "$SOURCE_BRANCH is already contained in $HUB_BRANCH. Nothing to do."
+            exit 0
           fi
+
+          if git merge --no-edit "origin/$SOURCE_BRANCH"; then
+            echo "Merged $SOURCE_BRANCH into $HUB_BRANCH."
+            git push origin "HEAD:$HUB_BRANCH"
+            exit 0
+          fi
+
+          echo "Merge conflict detected between $SOURCE_BRANCH and $HUB_BRANCH."
+          git merge --abort
+
+          existing_pr=$(gh pr list \
+            --head "$SOURCE_BRANCH" \
+            --base "$HUB_BRANCH" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
+
+          if [[ -n "$existing_pr" ]]; then
+            echo "Open PR #$existing_pr already exists for $SOURCE_BRANCH -> $HUB_BRANCH."
+            exit 0
+          fi
+
+          gh pr create \
+            --base "$HUB_BRANCH" \
+            --head "$SOURCE_BRANCH" \
+            --title "Sync: Merge $SOURCE_BRANCH into $HUB_BRANCH" \
+            --body "Automated draft PR created because merging \`$SOURCE_BRANCH\` into \`$HUB_BRANCH\` produced conflicts." \
+            --draft
