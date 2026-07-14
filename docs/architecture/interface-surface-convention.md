@@ -94,7 +94,7 @@ tool api
 tool test
 ```
 
-The correspondence is semantic rather than mechanically mandatory. For example, frequent application commands may remain at the CLI top level, a domain-specific web route may remain outside `/app`, and one implementation module may support more than one surface.
+The correspondence is semantic rather than mechanically mandatory. Frequent application commands may remain at the CLI top level, a domain-specific web route may remain outside `/app`, and one implementation module may support more than one surface.
 
 ## Security and environment policy
 
@@ -130,5 +130,5 @@ For this repository:
 
 - this document is the canonical statement of the interface-surface convention;
 - `src/lib/routeCatalog.ts` remains the canonical statement of currently implemented routes and route access policy;
-- the two sources have different roles: this document describes the preferred architecture, while the route catalog describes current implementation state;
+- this document describes preferred architecture, while the route catalog describes current implementation state;
 - future development should move toward this convention incrementally, without treating conformance alone as sufficient reason for unrelated refactoring.

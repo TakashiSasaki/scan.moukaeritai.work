@@ -61,6 +61,7 @@ Firestore Emulator integration tests are planned for GitHub Actions. Current PR 
 - Active contract profile: `contracts/profiles/current-application.json`
 - Contract registry: `contracts/registry.json`
 - Route access policy: `src/lib/routeCatalog.ts`
+- Interface surface convention: `docs/architecture/interface-surface-convention.md`
 - Agent rules: `AGENTS.md`
 - Agent skills: `.agents/skills/manifest.json`
 - Complexity control policy: `.agents/policies/complexity-control.md`
