@@ -1,4 +1,4 @@
-# Developer & AI Agent Guidelines
+# Developer & AI Agent Guidelines (scan.mw 2.1.0)
 
 This file records only active operating rules for this repository. Historical stride details and cancelled migration plans must not be treated as current work.
 
@@ -7,6 +7,7 @@ This file records only active operating rules for this repository. Historical st
 - Active contract profile: `contracts/profiles/current-application.json`
 - Contract registry and historical packages: `contracts/registry.json` and `contracts/packages/`
 - Route access policy: `src/lib/routeCatalog.ts`
+- Interface surface convention: `docs/architecture/interface-surface-convention.md`
 - Agent skill manifest: `.agents/skills/manifest.json`
 - Application version: root `package.json`
 
@@ -32,6 +33,19 @@ Active EFP invariants:
 - Preserve idempotency for the same `commandId` and payload.
 - Reject the same `commandId` with a different payload.
 - Preserve basic Association attach/detach consistency.
+
+## Interface surface convention
+
+Application interfaces should gradually align with the vocabulary and preferred namespaces defined in `docs/architecture/interface-surface-convention.md`:
+
+- `/` — public surface
+- `/app` — application-use surface
+- `/admin` — administration surface
+- `/dev` — internal-development surface
+- `/api` — external-development and contract surface
+- `/test` — development-verification and test-harness surface
+
+This is a preferred architectural vocabulary and namespace convention, not an absolute routing or CLI constraint. Prefer it for new interfaces and align existing interfaces when they are already being materially modified. Do not perform unrelated broad renames solely for conformance.
 
 ## Legacy data policy and Controlled Import Exception
 
@@ -100,3 +114,8 @@ Firestore Emulator integration tests are planned for GitHub Actions. Current PR 
 - Internal metadata, tests, and documentation-only changes do not require a version bump.
 - Version bumps are required for release candidates or externally visible compatibility/API changes.
 - Do not manually duplicate version strings in README unless unavoidable.
+
+## Verification Status
+
+- Node-only gates implemented and passing locally.
+- GitHub Actions confirmation unavailable.

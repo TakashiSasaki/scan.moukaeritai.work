@@ -1,4 +1,4 @@
-# scan.mw
+# scan.mw (v2.1.0)
 
 Cloud-based item tracking and inventory management built on Firebase, React, TypeScript, and the Contract-First Entity-Fact-Projection (EFP) model.
 
@@ -52,12 +52,16 @@ npm run verify:release
 
 Firestore Emulator integration tests are planned for GitHub Actions. Current PR verification uses Node-based static policy checks only; do not add a local pseudo-emulator.
 
+- Node-only gates implemented and passing locally.
+- GitHub Actions confirmation unavailable.
+
 ## Canonical references
 
 - Application version: `package.json`
 - Active contract profile: `contracts/profiles/current-application.json`
 - Contract registry: `contracts/registry.json`
 - Route access policy: `src/lib/routeCatalog.ts`
+- Interface surface convention: `docs/architecture/interface-surface-convention.md`
 - Agent rules: `AGENTS.md`
 - Agent skills: `.agents/skills/manifest.json`
 - Complexity control policy: `.agents/policies/complexity-control.md`

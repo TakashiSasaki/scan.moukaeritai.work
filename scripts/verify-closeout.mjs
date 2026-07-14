@@ -15,12 +15,12 @@ function fail(msg) {
 }
 
 // 1. Run full node baseline verification
-console.log('🔹 Running Node-only verification baseline (verify:baseline:node)...');
+console.log('🔹 Running release verification (verify:release)...');
 try {
-  execSync('npm run verify:baseline:node', { stdio: 'inherit', cwd: rootDir });
+  execSync('npm run verify:release', { stdio: 'inherit', cwd: rootDir });
   console.log('✅ Node-only baseline passed successfully!');
 } catch (e) {
-  fail('Node-only verification baseline failed.');
+  fail('release verification failed.');
 }
 
 // 2. Git diff check (whitespace issues or conflict markers)
