@@ -32,6 +32,23 @@ const efpModelVersion = requiredString(profile.contracts?.['efp-model'], 'contra
 requireActiveContract('callable-functions-api', callableApiVersion);
 requireActiveContract('efp-model', efpModelVersion);
 
+function requiredString(value, label) {
+  if (typeof value !== 'string' || value.length === 0) throw new Error(`Missing required ${label} in current application profile.`);
+  return value;
+}
+function requireActiveContract(contractId, version) {
+  const entry = registry.contracts.find((c) => c.contractId === contractId && c.version === version);
+  if (!entry) throw new Error(`Registry entry not found for ${contractId}@${version}.`);
+  if (entry.status !== 'active') throw new Error(`Registry entry ${contractId}@${version} must be active, got ${entry.status}.`);
+  return entry;
+}
+
+const applicationVersion = requiredString(profile.applicationVersion, 'applicationVersion');
+const callableApiVersion = requiredString(profile.contracts?.['callable-functions-api'], 'contracts["callable-functions-api"]');
+const efpModelVersion = requiredString(profile.contracts?.['efp-model'], 'contracts["efp-model"]');
+requireActiveContract('callable-functions-api', callableApiVersion);
+requireActiveContract('efp-model', efpModelVersion);
+
 const packageDir = path.join(rootDir, 'packages', 'efp-model');
 const vendorDir = path.join(rootDir, 'functions', 'vendor', 'efp-model');
 const vendorContractsRoot = path.join(rootDir, 'functions', 'vendor', 'contracts');
