@@ -32,6 +32,9 @@ export default function SitemapPage({ onClose }: { onClose: () => void }) {
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-bold text-[var(--on-surface)]">{route.label}</span>
+                <span className="text-[9px] font-bold bg-[#3b82f6]/10 text-[#3b82f6] px-2 py-0.5 rounded-full uppercase font-mono">
+                  {route.surface}
+                </span>
                 {route.access === 'admin' && (
                   <span className="text-[9px] font-bold bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full uppercase font-mono">
                     Admin Only
@@ -44,6 +47,11 @@ export default function SitemapPage({ onClose }: { onClose: () => void }) {
                 ) : (
                   <span className="text-[9px] font-bold bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full uppercase font-mono">
                     Contained / Pending Rebuild
+                  </span>
+                )}
+                {route.canonicalPath && (
+                  <span className="text-[9px] font-bold bg-[var(--surface-container-highest)] text-[var(--on-surface-variant)] px-2 py-0.5 rounded-full uppercase font-mono">
+                    Alias → {route.canonicalPath}
                   </span>
                 )}
               </div>

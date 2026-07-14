@@ -70,6 +70,21 @@ function ItemRedirectWrapper() {
   return <Navigate to={`/object/${id}${location.search}`} replace />;
 }
 
+// Redirect wrapper for developer wildcards preserving params and query string
+function DeveloperWildcardRedirect() {
+  const params = useParams();
+  const location = useLocation();
+  const rest = params['*'] || '';
+  const newPath = rest ? `/dev/${rest}` : '/dev';
+  return <Navigate to={`${newPath}${location.search}${location.hash}`} replace />;
+}
+
+// Simple compatibility redirect wrapper preserving params and query string
+function CompatibilityRedirect({ to }: { to: string }) {
+  const location = useLocation();
+  return <Navigate to={`${to}${location.search}${location.hash}`} replace />;
+}
+
 // Public Landing & Login page
 function LandingPage() {
   const [utcTime, setUtcTime] = useState<string>('');
@@ -289,7 +304,7 @@ function AppShell() {
                     </button>
 
                     <button 
-                      onClick={() => { setShowProfileMenu(false); navigate('/developer'); }}
+                      onClick={() => { setShowProfileMenu(false); navigate('/dev'); }}
                       className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-emerald-500 hover:bg-[var(--surface-container-highest)] rounded-xl transition-all cursor-pointer"
                     >
                       <BookOpen size={16} /> Developer Docs
@@ -375,7 +390,17 @@ export function AppRoutes() {
       {/* Dedicated Sub-pages */}
       <Route path="/admin" element={<AdminRoute><AdminPanel onClose={() => window.location.href = '/app'} /></AdminRoute>} />
       <Route path="/settings" element={<ProtectedRoute><UserSettingsPanel onClose={() => window.location.href = '/app'} /></ProtectedRoute>} />
-      <Route path="/developer/*" element={<AdminRoute><DeveloperDocsPage /></AdminRoute>} />
+      
+      {/* Dev canonical */}
+      <Route path="/dev/*" element={<AdminRoute><DeveloperDocsPage /></AdminRoute>} />
+      <Route path="/dev/demo" element={<AdminRoute><DemoScreen /></AdminRoute>} />
+      <Route path="/dev/library-demo" element={<AdminRoute><LibraryDemoScreen /></AdminRoute>} />
+
+      {/* Dev compatibility aliases */}
+      <Route path="/developer" element={<AdminRoute><CompatibilityRedirect to="/dev" /></AdminRoute>} />
+      <Route path="/developer/*" element={<AdminRoute><DeveloperWildcardRedirect /></AdminRoute>} />
+      <Route path="/demo" element={<AdminRoute><CompatibilityRedirect to="/dev/demo" /></AdminRoute>} />
+      <Route path="/library-demo" element={<AdminRoute><CompatibilityRedirect to="/dev/library-demo" /></AdminRoute>} />
       
       {/* Object management */}
       <Route path="/object/new" element={<ProtectedRoute><ObjectCreatePage /></ProtectedRoute>} />
@@ -385,8 +410,6 @@ export function AppRoutes() {
       <Route path="/item/:id" element={<ProtectedRoute><ItemRedirectWrapper /></ProtectedRoute>} />
       
       {/* Demos and beta tools */}
-      <Route path="/demo" element={<AdminRoute><DemoScreen /></AdminRoute>} />
-      <Route path="/library-demo" element={<AdminRoute><LibraryDemoScreen /></AdminRoute>} />
       <Route path="/test" element={<AdminRoute><TestScreen /></AdminRoute>} />
       <Route path="/admin/sitemap" element={<AdminRoute><SitemapPage onClose={() => window.location.href = '/app'} /></AdminRoute>} />
       

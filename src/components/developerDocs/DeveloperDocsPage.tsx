@@ -9,10 +9,10 @@ export default function DeveloperDocsPage() {
   const location = useLocation();
 
   const sections = [
-    { id: 'overview', label: 'Overview', icon: <Book size={18} />, path: '/developer' },
-    { id: 'routing', label: 'Routing', icon: <FileText size={18} />, path: '/developer/routing' },
-    { id: 'data-model', label: 'Data Model', icon: <Database size={18} />, path: '/developer/data-model' },
-    { id: 'security', label: 'Security', icon: <Shield size={18} />, path: '/developer/security' },
+    { id: 'overview', label: 'Overview', icon: <Book size={18} />, path: '/dev' },
+    { id: 'routing', label: 'Routing', icon: <FileText size={18} />, path: '/dev/routing' },
+    { id: 'data-model', label: 'Data Model', icon: <Database size={18} />, path: '/dev/data-model' },
+    { id: 'security', label: 'Security', icon: <Shield size={18} />, path: '/dev/security' },
   ];
 
   const currentSection = sections.find(s => s.path === location.pathname) || sections[0];
