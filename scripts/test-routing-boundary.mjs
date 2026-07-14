@@ -150,8 +150,10 @@ for (const path of requiredCanonicalDevRoutes) {
 }
 
 // Validate registry vs App.tsx
+const authorizedDynamicPaths = ['/object/:id', '/item/:id'];
+
 for (const route of routes) {
-  // Check if all six required properties are defined
+  // Check if all six required properties are defined in the catalog
   const requiredKeys = ['path', 'label', 'description', 'access', 'isActive', 'surface'];
   for (const key of requiredKeys) {
     if (route[key] === undefined) {
@@ -159,34 +161,66 @@ for (const route of routes) {
     }
   }
 
+  // Map to the Interface Surface Convention parameters
+  const role = route.access === 'public' ? 'unauthenticated' : 'authenticated';
+  const surfaceMap = {
+    'public': '/',
+    'app': '/app',
+    'admin': '/admin',
+    'dev': '/dev',
+    'api': '/api',
+    'test': '/test'
+  };
+  const mappedSurface = surfaceMap[route.surface];
+
+  // 1. Every route must have: path, role, surface, label
+  if (typeof route.path !== 'string' || route.path.trim() === '') {
+    errors.push(`Route path must be a non-empty string, got ${typeof route.path}`);
+  }
+  if (role !== 'unauthenticated' && role !== 'authenticated') {
+    errors.push(`Route '${route.path}': role must be 'unauthenticated' or 'authenticated', got '${role}'`);
+  }
+  if (!['/', '/app', '/admin', '/dev', '/api', '/test'].includes(mappedSurface)) {
+    errors.push(`Route '${route.path}': surface must be one of: "/", "/app", "/admin", "/dev", "/api", "/test", got '${mappedSurface}'`);
+  }
+  if (typeof route.label !== 'string' || route.label.trim() === '') {
+    errors.push(`Route '${route.path}': label must be a non-empty string.`);
+  }
+
+  // 2. Every path must align with its declared surface prefix
+  const pathPrefixAlignment = {
+    '/dev': (p) => p.startsWith('/dev'),
+    '/admin': (p) => p.startsWith('/admin'),
+    '/test': (p) => p.startsWith('/test'),
+    '/api': (p) => p.startsWith('/api'),
+    '/app': (p) => p.startsWith('/app') || p.startsWith('/settings') || p.startsWith('/object') || p.startsWith('/item') || p.startsWith('/search') || p.startsWith('/overview') || p.startsWith('/unassigned'),
+    '/': (p) => p === '/' || p.startsWith('/forbidden')
+  };
+
+  if (pathPrefixAlignment[mappedSurface]) {
+    if (!pathPrefixAlignment[mappedSurface](route.path)) {
+      errors.push(`Route path '${route.path}' does not align with its declared surface prefix '${mappedSurface}'.`);
+    }
+  } else {
+    errors.push(`Route '${route.path}' has an unmapped or invalid surface prefix: '${mappedSurface}'`);
+  }
+
+  // 3. Ensure no unrequested paths or aliases remain (such as /developer, /demo, /library-demo)
+  const forbiddenPaths = ['/developer', '/developer/*', '/demo', '/library-demo'];
+  if (route.path !== undefined && forbiddenPaths.includes(route.path)) {
+    errors.push(`Route '${route.path}' is forbidden by routing policy.`);
+  }
+
+  // 4. Do not allow paths that contain wildcards, dynamic segments, or parameter strings to be registered without explicit authorization
+  if (route.path !== undefined && (route.path.includes(':') || route.path.includes('*') || route.path.includes('?'))) {
+    if (!authorizedDynamicPaths.includes(route.path)) {
+      errors.push(`Route path '${route.path}' contains unauthorized wildcards, dynamic segments, or parameters.`);
+    }
+  }
+
   // 1. isActive must be a boolean
   if (route.isActive !== undefined && typeof route.isActive !== 'boolean') {
     errors.push(`Route '${route.path || JSON.stringify(route)}': 'isActive' must be a boolean, got ${typeof route.isActive}.`);
-  }
-
-  // 2. access must be a valid access role
-  const validAccessRoles = ['public', 'authenticated', 'admin'];
-  if (route.access !== undefined && !validAccessRoles.includes(route.access)) {
-    errors.push(`Route '${route.path || JSON.stringify(route)}': 'access' must be a valid access role ('public', 'authenticated', 'admin'), got '${route.access}'.`);
-  }
-
-  // 3. surface must be a valid surface name
-  const validSurfaces = ['public', 'app', 'admin', 'dev', 'api', 'test'];
-  if (route.surface !== undefined && !validSurfaces.includes(route.surface)) {
-    errors.push(`Route '${route.path || JSON.stringify(route)}': 'surface' must be a valid surface name ('public', 'app', 'admin', 'dev', 'api', 'test'), got '${route.surface}'.`);
-  }
-
-  // 4. path and label must be non-empty strings
-  if (route.path !== undefined && (typeof route.path !== 'string' || route.path.trim() === '')) {
-    errors.push(`Route '${JSON.stringify(route)}': 'path' must be a non-empty string.`);
-  }
-  if (route.label !== undefined && (typeof route.label !== 'string' || route.label.trim() === '')) {
-    errors.push(`Route '${route.path || JSON.stringify(route)}': 'label' must be a non-empty string.`);
-  }
-
-  // 5. description must be a non-empty string
-  if (route.description !== undefined && (typeof route.description !== 'string' || route.description.trim() === '')) {
-    errors.push(`Route '${route.path || JSON.stringify(route)}': 'description' must be a non-empty string.`);
   }
 
   // legacy route check

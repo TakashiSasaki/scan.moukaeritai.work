@@ -59,21 +59,79 @@ if (!pkg.version) fail('Missing version in package.json');
 try { parseSemver(pkg.version); } catch (error) { fail(error.message); }
 console.log(`Current application version: ${pkg.version}`);
 
+// UNCONDITIONAL workspace version synchronization checks
+const targetVersion = pkg.version;
+const checkEquals = (val, expected, label) => {
+  if (val !== expected) {
+    fail(`Workspace synchronization mismatch in ${label}: expected ${expected}, got ${val}`);
+  }
+};
+
+try {
+  const funPkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'functions/package.json'), 'utf8'));
+  checkEquals(funPkg.version, targetVersion, 'functions/package.json version');
+} catch (error) {
+  fail(`Failed to validate functions/package.json: ${error.message}`);
+}
+
+try {
+  const efpPkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'packages/efp-model/package.json'), 'utf8'));
+  checkEquals(efpPkg.version, targetVersion, 'packages/efp-model/package.json version');
+} catch (error) {
+  fail(`Failed to validate packages/efp-model/package.json: ${error.message}`);
+}
+
+try {
+  const profile = JSON.parse(fs.readFileSync(path.join(rootDir, 'contracts/profiles/current-application.json'), 'utf8'));
+  checkEquals(profile.applicationVersion, targetVersion, 'contracts/profiles/current-application.json applicationVersion');
+} catch (error) {
+  fail(`Failed to validate contracts/profiles/current-application.json: ${error.message}`);
+}
+
+try {
+  const lock = JSON.parse(fs.readFileSync(path.join(rootDir, 'package-lock.json'), 'utf8'));
+  checkEquals(lock.version, targetVersion, 'package-lock.json root version');
+  checkEquals(lock.packages?.[""]?.version, targetVersion, 'package-lock.json packages[""].version');
+} catch (error) {
+  fail(`Failed to validate package-lock.json: ${error.message}`);
+}
+
+try {
+  const funLock = JSON.parse(fs.readFileSync(path.join(rootDir, 'functions/package-lock.json'), 'utf8'));
+  checkEquals(funLock.version, targetVersion, 'functions/package-lock.json root version');
+  checkEquals(funLock.packages?.[""]?.version, targetVersion, 'functions/package-lock.json packages[""].version');
+} catch (error) {
+  fail(`Failed to validate functions/package-lock.json: ${error.message}`);
+}
+
+try {
+  const efpLock = JSON.parse(fs.readFileSync(path.join(rootDir, 'packages/efp-model/package-lock.json'), 'utf8'));
+  checkEquals(efpLock.version, targetVersion, 'packages/efp-model/package-lock.json root version');
+  checkEquals(efpLock.packages?.[""]?.version, targetVersion, 'packages/efp-model/package-lock.json packages[""].version');
+} catch (error) {
+  fail(`Failed to validate packages/efp-model/package-lock.json: ${error.message}`);
+}
+
 if (!isStatic) {
-  let baseRef = 'HEAD~1';
-  if (process.env.GITHUB_BASE_REF) {
+  let baseRef = null;
+  if (process.env.VERIFY_VERSION_BASE_REF) {
+    baseRef = process.env.VERIFY_VERSION_BASE_REF;
+  } else if (process.env.VERIFY_FAST_BASE_REF) {
+    baseRef = process.env.VERIFY_FAST_BASE_REF;
+  } else if (process.env.GITHUB_BASE_REF) {
     baseRef = `origin/${process.env.GITHUB_BASE_REF}`;
   } else if (process.env.GITHUB_SHA) {
     baseRef = `${process.env.GITHUB_SHA}~1`;
-  } else if (!process.env.VITEST) {
-    try {
-      const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
-      if (currentBranch !== 'main' && execSync('git show-ref --verify refs/heads/main', { stdio: 'pipe' })) {
-        baseRef = 'main';
-      }
-    } catch (_) {}
+  } else {
+    baseRef = 'HEAD~1';
   }
   console.log(`Comparing version metadata against base reference: ${baseRef}`);
+
+  try {
+    execSync(`git rev-parse --verify ${baseRef}`, { stdio: 'ignore' });
+  } catch (_) {
+    fail(`Base reference "${baseRef}" cannot be resolved in Git.`);
+  }
 
   try {
     if (process.env.GITHUB_BASE_REF) execSync(`git fetch --depth=10 origin ${process.env.GITHUB_BASE_REF}`, { stdio: 'inherit' });
@@ -125,4 +183,4 @@ if (process.env.RELEASE_TASK === 'true') {
   if (!profile.applicationVersion) fail('Release task requires applicationVersion metadata in current-application.json.');
 }
 
-console.log('✅ Version verification passed.');
+console.log('• Version verification passed.');
