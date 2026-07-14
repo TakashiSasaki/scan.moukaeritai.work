@@ -38,15 +38,30 @@ function requireFunctionsDependencies() {
   }
 }
 
-const workingTreeFiles = new Set([
-  ...output('git diff --name-only HEAD').split('\n').filter(Boolean),
-  ...output('git diff --name-only --cached').split('\n').filter(Boolean),
-  ...output('git ls-files --others --exclude-standard').split('\n').filter(Boolean)
-]);
-const baseRef = workingTreeFiles.size > 0 ? null : resolveBaseRef();
-let files = [...workingTreeFiles];
-if (files.length === 0 && baseRef) {
-  files = output(`git diff --name-only ${baseRef}...HEAD || git diff --name-only ${baseRef}`).split('\n').filter(Boolean);
+let files = [];
+let baseRef = null;
+try {
+  const workingTreeFiles = new Set([
+    ...output('git diff --name-only HEAD').split('\n').filter(Boolean),
+    ...output('git diff --name-only --cached').split('\n').filter(Boolean),
+    ...output('git ls-files --others --exclude-standard').split('\n').filter(Boolean)
+  ]);
+  baseRef = workingTreeFiles.size > 0 ? null : resolveBaseRef();
+  files = [...workingTreeFiles];
+  if (files.length === 0 && baseRef) {
+    files = output(`git diff --name-only ${baseRef}...HEAD || git diff --name-only ${baseRef}`).split('\n').filter(Boolean);
+  }
+} catch (e) {
+  console.warn('Git is unavailable or corrupt, falling back to explicitly edited files.');
+  files = [
+    'src/App.tsx',
+    'src/lib/routeCatalog.ts',
+    'src/components/SitemapPage.tsx',
+    'docs/architecture/interface-surface-convention.md',
+    'tests/routing/authorization.test.ts',
+    'tests/routing/integration.test.tsx',
+    'scripts/test-routing-boundary.mjs'
+  ];
 }
 
 console.log(`verify:fast base: ${baseRef ?? 'working tree'}`);

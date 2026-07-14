@@ -128,8 +128,7 @@ describe("Router Integration", () => {
       );
     }
 
-    test("1-4: Canonical route access by auth state", async () => {
-      // 1. Unauthenticated -> "/dev" redirects to "/" (login landing)
+    test("1. Unauthenticated user opening /dev is redirected to /", async () => {
       vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: null,
         isAuthenticated: false,
@@ -142,8 +141,9 @@ describe("Router Integration", () => {
       await waitFor(() => {
         expect(lastLocation.pathname).toBe("/");
       });
+    });
 
-      // 2. Authenticated non-admin -> "/dev" redirects to "/forbidden"
+    test("2. Authenticated non-administrator opening /dev is redirected to /forbidden", async () => {
       vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: { uid: '123' } as any,
         isAuthenticated: true,
@@ -156,8 +156,9 @@ describe("Router Integration", () => {
       await waitFor(() => {
         expect(lastLocation.pathname).toBe("/forbidden");
       });
+    });
 
-      // 3. Authenticated admin -> "/dev" is allowed
+    test("3. Authenticated administrator can open /dev", async () => {
       vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: { uid: '123' } as any,
         isAuthenticated: true,
@@ -170,18 +171,30 @@ describe("Router Integration", () => {
       await waitFor(() => {
         expect(lastLocation.pathname).toBe("/dev");
       });
+      expect(screen.getByText("System Overview")).toBeDefined();
+    });
 
-      // 4. Authenticated admin can open other dev subpages
+    test("4-8. Authenticated administrator can open /dev subpaths", async () => {
+      vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        user: { uid: '123' } as any,
+        isAuthenticated: true,
+        authLoading: false,
+        authorizationLoading: false,
+        isAdmin: true,
+        authorizationError: null,
+      });
+
       const subpages = ["/dev/routing", "/dev/data-model", "/dev/security", "/dev/demo", "/dev/library-demo"];
       for (const page of subpages) {
-        renderWithLocation(page);
+        const { unmount } = renderWithLocation(page);
         await waitFor(() => {
           expect(lastLocation.pathname).toBe(page);
         });
+        unmount();
       }
     });
 
-    test("5-10: Compatibility redirects for admins", async () => {
+    test("9. /dev/demo renders DemoScreen, not DeveloperDocsPage", async () => {
       vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: { uid: '123' } as any,
         isAuthenticated: true,
@@ -190,131 +203,98 @@ describe("Router Integration", () => {
         isAdmin: true,
         authorizationError: null,
       });
-
-      // 5. "/developer" -> "/dev"
-      renderWithLocation("/developer");
-      await waitFor(() => { expect(lastLocation.pathname).toBe("/dev"); });
-
-      // 6. "/developer/routing" -> "/dev/routing"
-      renderWithLocation("/developer/routing");
-      await waitFor(() => { expect(lastLocation.pathname).toBe("/dev/routing"); });
-
-      // 7. "/developer/data-model" -> "/dev/data-model"
-      renderWithLocation("/developer/data-model");
-      await waitFor(() => { expect(lastLocation.pathname).toBe("/dev/data-model"); });
-
-      // 8. "/developer/security" -> "/dev/security"
-      renderWithLocation("/developer/security");
-      await waitFor(() => { expect(lastLocation.pathname).toBe("/dev/security"); });
-
-      // 9. "/demo" -> "/dev/demo"
-      renderWithLocation("/demo");
-      await waitFor(() => { expect(lastLocation.pathname).toBe("/dev/demo"); });
-
-      // 10. "/library-demo" -> "/dev/library-demo"
-      renderWithLocation("/library-demo");
-      await waitFor(() => { expect(lastLocation.pathname).toBe("/dev/library-demo"); });
-    });
-
-    test("11-15: URL preservation (suffix, query, hash)", async () => {
-      vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
-        user: { uid: '123' } as any,
-        isAuthenticated: true,
-        authLoading: false,
-        authorizationLoading: false,
-        isAdmin: true,
-        authorizationError: null,
-      });
-
-      // 11. Wildcard suffix is preserved
-      renderWithLocation("/developer/routing");
-      await waitFor(() => { expect(lastLocation.pathname).toBe("/dev/routing"); });
-
-      // 12. Query string is preserved
-      renderWithLocation("/developer/routing?mode=debug");
-      await waitFor(() => {
-        expect(lastLocation.pathname).toBe("/dev/routing");
-        expect(lastLocation.search).toBe("?mode=debug");
-      });
-
-      // 13. Hash fragment is preserved
-      renderWithLocation("/developer/routing#authorization");
-      await waitFor(() => {
-        expect(lastLocation.pathname).toBe("/dev/routing");
-        expect(lastLocation.hash).toBe("#authorization");
-      });
-
-      // 14. Query and hash preserved together
-      renderWithLocation("/developer/routing?mode=debug#authorization");
-      await waitFor(() => {
-        expect(lastLocation.pathname).toBe("/dev/routing");
-        expect(lastLocation.search).toBe("?mode=debug");
-        expect(lastLocation.hash).toBe("#authorization");
-      });
-
-      // 15. "/demo" and "/library-demo" preserve query and hash
-      renderWithLocation("/demo?abc=123#xyz");
+      renderWithLocation("/dev/demo");
       await waitFor(() => {
         expect(lastLocation.pathname).toBe("/dev/demo");
-        expect(lastLocation.search).toBe("?abc=123");
-        expect(lastLocation.hash).toBe("#xyz");
       });
-
-      renderWithLocation("/library-demo?foo=bar#baz");
-      await waitFor(() => {
-        expect(lastLocation.pathname).toBe("/dev/library-demo");
-        expect(lastLocation.search).toBe("?foo=bar");
-        expect(lastLocation.hash).toBe("#baz");
-      });
+      expect(screen.getByText("API Demos")).toBeDefined();
+      expect(screen.queryByText("System Overview")).toBeNull();
     });
 
-    test("16-18: Access-control preservation on aliases", async () => {
-      // 16. Unauthenticated cannot bypass via alias
+    test("10. /dev/library-demo renders LibraryDemoScreen, not DeveloperDocsPage", async () => {
       vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
-        user: null,
-        isAuthenticated: false,
+        user: { uid: '123' } as any,
+        isAuthenticated: true,
         authLoading: false,
         authorizationLoading: false,
-        isAdmin: false,
+        isAdmin: true,
         authorizationError: null,
       });
-      renderWithLocation("/developer/routing?mode=debug#auth");
+      renderWithLocation("/dev/library-demo");
+      await waitFor(() => {
+        expect(lastLocation.pathname).toBe("/dev/library-demo");
+      });
+      expect(screen.getByText("Library Demos")).toBeDefined();
+      expect(screen.queryByText("System Overview")).toBeNull();
+    });
+
+    test("11. /dev/routing, /dev/data-model, and /dev/security render the intended sections", async () => {
+      vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        user: { uid: '123' } as any,
+        isAuthenticated: true,
+        authLoading: false,
+        authorizationLoading: false,
+        isAdmin: true,
+        authorizationError: null,
+      });
+
+      const { unmount: unmount1 } = renderWithLocation("/dev/routing");
+      await waitFor(() => {
+        expect(screen.getByText("Routing documentation coming soon...")).toBeDefined();
+      });
+      unmount1();
+
+      const { unmount: unmount2 } = renderWithLocation("/dev/data-model");
+      await waitFor(() => {
+        expect(screen.getByText("Data model documentation coming soon...")).toBeDefined();
+      });
+      unmount2();
+
+      const { unmount: unmount3 } = renderWithLocation("/dev/security");
+      await waitFor(() => {
+        expect(screen.getByText("Security documentation coming soon...")).toBeDefined();
+      });
+      unmount3();
+    });
+
+    test("12. Unmatched path like /developer/routing follows normal unmatched-route fallback to /", async () => {
+      vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        user: { uid: '123' } as any,
+        isAuthenticated: true,
+        authLoading: false,
+        authorizationLoading: false,
+        isAdmin: true,
+        authorizationError: null,
+      });
+      renderWithLocation("/developer/routing");
       await waitFor(() => {
         expect(lastLocation.pathname).toBe("/");
       });
+    });
 
-      // 17. Authenticated non-admin cannot bypass via alias
+    test("13. Application navigation link in profile menu uses /dev", async () => {
       vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
-        user: { uid: '123' } as any,
-        isAuthenticated: true,
-        authLoading: false,
-        authorizationLoading: false,
-        isAdmin: false,
-        authorizationError: null,
-      });
-      renderWithLocation("/developer/routing?mode=debug#auth");
-      await waitFor(() => {
-        expect(lastLocation.pathname).toBe("/forbidden");
-      });
-
-      // 18. Authenticated admin is redirected to canonical route
-      vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
-        user: { uid: '123' } as any,
+        user: { uid: '123', displayName: "Takashi" } as any,
         isAuthenticated: true,
         authLoading: false,
         authorizationLoading: false,
         isAdmin: true,
         authorizationError: null,
       });
-      renderWithLocation("/developer/routing?mode=debug#auth");
+      renderWithLocation("/app");
+      
+      const profileBtn = screen.getByText("Takashi");
+      profileBtn.click();
+
+      const devDocsBtn = await screen.findByText("Developer Docs");
+      devDocsBtn.click();
+
       await waitFor(() => {
-        expect(lastLocation.pathname).toBe("/dev/routing");
-        expect(lastLocation.search).toBe("?mode=debug");
-        expect(lastLocation.hash).toBe("#auth");
+        expect(lastLocation.pathname).toBe("/dev");
       });
     });
 
-    test("19-20: App and developer docs navigation uses canonical /dev paths", () => {
+    test("14. EFP baseline navigation Read Developer Docs action uses /dev", async () => {
       vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: { uid: '123' } as any,
         isAuthenticated: true,
@@ -323,14 +303,49 @@ describe("Router Integration", () => {
         isAdmin: true,
         authorizationError: null,
       });
+      renderWithLocation("/app");
 
-      const { unmount } = renderWithLocation("/dev/demo");
-      expect(screen.getByText(/API Demos/i)).toBeDefined();
-      unmount();
+      const readDocsBtn = screen.getByText("Read Developer Docs");
+      readDocsBtn.click();
 
-      const { unmount: unmountLib } = renderWithLocation("/dev/library-demo");
-      expect(screen.getByText(/Library Demos/i)).toBeDefined();
-      unmountLib();
+      await waitFor(() => {
+        expect(lastLocation.pathname).toBe("/dev");
+      });
+    });
+
+    test("15. Developer Docs sidebar navigation uses only /dev canonical paths and contains no /developer", async () => {
+      vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        user: { uid: '123' } as any,
+        isAuthenticated: true,
+        authLoading: false,
+        authorizationLoading: false,
+        isAdmin: true,
+        authorizationError: null,
+      });
+      renderWithLocation("/dev");
+
+      const routingBtn = screen.getByText("Routing");
+      const dataModelBtn = screen.getByText("Data Model");
+      const securityBtn = screen.getByText("Security");
+      const overviewBtn = screen.getByText("Overview");
+
+      routingBtn.click();
+      await waitFor(() => { expect(lastLocation.pathname).toBe("/dev/routing"); });
+
+      dataModelBtn.click();
+      await waitFor(() => { expect(lastLocation.pathname).toBe("/dev/data-model"); });
+
+      securityBtn.click();
+      await waitFor(() => { expect(lastLocation.pathname).toBe("/dev/security"); });
+
+      overviewBtn.click();
+      await waitFor(() => { expect(lastLocation.pathname).toBe("/dev"); });
+
+      const buttons = screen.getAllByRole("button");
+      buttons.forEach(btn => {
+        const onclickStr = btn.getAttribute("onclick") || "";
+        expect(onclickStr).not.toContain("/developer");
+      });
     });
   });
 });

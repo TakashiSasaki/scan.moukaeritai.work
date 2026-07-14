@@ -136,7 +136,8 @@ For this repository:
 ## Current adoption
 
 - `/`, `/app`, `/admin`, and `/test` are currently adopted surface roots.
-- `/dev` is the canonical namespace for internal-development interfaces.
-- `/developer` (and `/developer/*`), `/demo`, and `/library-demo` remain active as compatibility aliases redirecting to their canonical `/dev` counterparts (`/dev`, `/dev/demo`, and `/dev/library-demo` respectively).
-- Domain-specific application routes such as `/settings` and `/object/*` belong to the `app` surface but maintain their distinct URLs.
+- `/dev` is the sole canonical namespace for internal-development interfaces.
+- Canonical development routes include documentation, hardware demo, and library demo paths under `/dev`.
+- The former `/developer/*`, `/demo`, and `/library-demo` routes are no longer retained as compatibility aliases.
+- Domain-specific application routes such as `/settings` and `/object/*` remain semantically classified as `app` routes without being moved.
 - The `api` surface remains unimplemented until an actual external integration interface is designed.

@@ -70,21 +70,6 @@ function ItemRedirectWrapper() {
   return <Navigate to={`/object/${id}${location.search}`} replace />;
 }
 
-// Redirect wrapper for developer wildcards preserving params and query string
-function DeveloperWildcardRedirect() {
-  const params = useParams();
-  const location = useLocation();
-  const rest = params['*'] || '';
-  const newPath = rest ? `/dev/${rest}` : '/dev';
-  return <Navigate to={`${newPath}${location.search}${location.hash}`} replace />;
-}
-
-// Simple compatibility redirect wrapper preserving params and query string
-function CompatibilityRedirect({ to }: { to: string }) {
-  const location = useLocation();
-  return <Navigate to={`${to}${location.search}${location.hash}`} replace />;
-}
-
 // Public Landing & Login page
 function LandingPage() {
   const [utcTime, setUtcTime] = useState<string>('');
@@ -395,12 +380,6 @@ export function AppRoutes() {
       <Route path="/dev/*" element={<AdminRoute><DeveloperDocsPage /></AdminRoute>} />
       <Route path="/dev/demo" element={<AdminRoute><DemoScreen /></AdminRoute>} />
       <Route path="/dev/library-demo" element={<AdminRoute><LibraryDemoScreen /></AdminRoute>} />
-
-      {/* Dev compatibility aliases */}
-      <Route path="/developer" element={<AdminRoute><CompatibilityRedirect to="/dev" /></AdminRoute>} />
-      <Route path="/developer/*" element={<AdminRoute><DeveloperWildcardRedirect /></AdminRoute>} />
-      <Route path="/demo" element={<AdminRoute><CompatibilityRedirect to="/dev/demo" /></AdminRoute>} />
-      <Route path="/library-demo" element={<AdminRoute><CompatibilityRedirect to="/dev/library-demo" /></AdminRoute>} />
       
       {/* Object management */}
       <Route path="/object/new" element={<ProtectedRoute><ObjectCreatePage /></ProtectedRoute>} />

@@ -15,7 +15,6 @@ export interface AppRoute {
   access: RouteAccessPolicy;
   isActive: boolean;
   surface: InterfaceSurface;
-  canonicalPath?: string;
 }
 
 export const routes: AppRoute[] = [
@@ -35,12 +34,6 @@ export const routes: AppRoute[] = [
   { path: '/dev/security', label: 'Developer Docs - Security', description: 'Access control and auth policy (Admin Only)', access: 'admin', isActive: true, surface: 'dev' },
   { path: '/dev/demo', label: 'Hardware API Demos', description: 'Experimental capabilities', access: 'admin', isActive: true, surface: 'dev' },
   { path: '/dev/library-demo', label: 'Library & AI Demos', description: 'AI & TensorFlow sandbox', access: 'admin', isActive: true, surface: 'dev' },
-  
-  // Dev compatibility aliases
-  { path: '/developer', label: 'Developer Docs (Alias)', description: 'Compatibility alias', access: 'admin', isActive: true, surface: 'dev', canonicalPath: '/dev' },
-  { path: '/developer/*', label: 'Developer Docs Subpages (Alias)', description: 'Compatibility alias', access: 'admin', isActive: true, surface: 'dev', canonicalPath: '/dev' },
-  { path: '/demo', label: 'Hardware API Demos (Alias)', description: 'Compatibility alias', access: 'admin', isActive: true, surface: 'dev', canonicalPath: '/dev/demo' },
-  { path: '/library-demo', label: 'Library & AI Demos (Alias)', description: 'Compatibility alias', access: 'admin', isActive: true, surface: 'dev', canonicalPath: '/dev/library-demo' },
 
   { path: '/test', label: 'Experimental Sandbox', description: 'UI/UX layout playground', access: 'admin', isActive: true, surface: 'test' },
 
