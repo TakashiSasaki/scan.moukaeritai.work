@@ -107,41 +107,21 @@ while ((match = routeTagRegex.exec(appEntryContent)) !== null) {
   }
 }
 
-// Check compatibility aliases mapping
-const expectedDevAliases = {
-  '/developer': '/dev',
-  '/developer/*': '/dev',
-  '/demo': '/dev/demo',
-  '/library-demo': '/dev/library-demo',
-};
-
-// Validate expected aliases exist with correct targets
-for (const [alias, canonical] of Object.entries(expectedDevAliases)) {
-  const route = routes.find(r => r.path === alias);
-  if (!route) {
-    errors.push(`Required compatibility alias '${alias}' is missing from catalog.`);
-  } else {
-    if (route.canonicalPath !== canonical) {
-      errors.push(`Alias '${alias}' must map to canonical target '${canonical}', but found '${route.canonicalPath}'.`);
-    }
-    if (route.surface !== 'dev') {
-      errors.push(`Alias route ${alias} must be 'dev' surface.`);
-    }
-    if (route.access !== 'admin') {
-      errors.push(`Alias route ${alias} must have 'admin' access.`);
-    }
+// Ensure removed routes are not registered in route catalog or App.tsx
+const removedPaths = ['/developer', '/developer/*', '/demo', '/library-demo'];
+for (const path of removedPaths) {
+  if (routes.some(r => r.path === path)) {
+    errors.push(`Removed route '${path}' must not be registered in the route catalog.`);
+  }
+  if (foundGuards[path] !== undefined) {
+    errors.push(`Removed route '${path}' must not exist in App.tsx runtime routes.`);
   }
 }
 
-// Validate that there are no unexpected or incorrect aliases in catalog
+// Validate that no route object in the catalog has a "canonicalPath" property
 for (const route of routes) {
   if (route.canonicalPath !== undefined) {
-    const expectedTarget = expectedDevAliases[route.path];
-    if (expectedTarget === undefined) {
-      errors.push(`Unexpected compatibility alias route '${route.path}' found in catalog.`);
-    } else if (route.canonicalPath !== expectedTarget) {
-      errors.push(`Alias route '${route.path}' has incorrect mapping in catalog: expected '${expectedTarget}', found '${route.canonicalPath}'.`);
-    }
+    errors.push(`Route '${route.path}' must not have a 'canonicalPath' property, as compatibility aliases are removed.`);
   }
 }
 
@@ -192,7 +172,7 @@ for (const route of routes) {
   }
 
   // Admin route check - for listed paths, access must be 'admin'
-  if (['/admin', '/admin/sitemap', '/dev', '/dev/routing', '/dev/data-model', '/dev/security', '/dev/demo', '/dev/library-demo', '/developer', '/developer/*', '/demo', '/library-demo', '/test'].includes(route.path) && route.access !== 'admin') {
+  if (['/admin', '/admin/sitemap', '/dev', '/dev/routing', '/dev/data-model', '/dev/security', '/dev/demo', '/dev/library-demo', '/test'].includes(route.path) && route.access !== 'admin') {
     errors.push(`Route ${route.path} must be admin in registry.`);
   }
 

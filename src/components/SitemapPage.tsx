@@ -49,11 +49,6 @@ export default function SitemapPage({ onClose }: { onClose: () => void }) {
                     Contained / Pending Rebuild
                   </span>
                 )}
-                {route.canonicalPath && (
-                  <span className="text-[9px] font-bold bg-[var(--surface-container-highest)] text-[var(--on-surface-variant)] px-2 py-0.5 rounded-full uppercase font-mono">
-                    Alias → {route.canonicalPath}
-                  </span>
-                )}
               </div>
               <div className="text-xs font-mono text-[var(--on-surface-variant)] mt-1">{route.path}</div>
             </div>
