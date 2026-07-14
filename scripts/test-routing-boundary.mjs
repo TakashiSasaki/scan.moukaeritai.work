@@ -47,13 +47,17 @@ if (appEntryContent.includes('objectIdentifierBindings') || appEntryContent.incl
 
 // Parse routeCatalog
 const routes = [];
-const routeBlockRegex = /\{\s*path:\s*['"]([^'"]+)['"]\s*,\s*label:\s*['"][^'"]+['"]\s*,\s*description:\s*['"][^'"]+['"]\s*,\s*access:\s*['"]([^'"]+)['"]\s*,\s*isActive:\s*(true|false)\s*\}/g;
+// This regex will capture path, label, description, access, isActive, surface, and optionally canonicalPath.
+// To keep it simple and robust, we can use a more flexible regex or just execute the TS file if it were JS, but let's stick to parsing.
+const routeBlockRegex = /\{\s*path:\s*['"]([^'"]+)['"]\s*,\s*label:\s*['"][^'"]+['"]\s*,\s*description:\s*['"][^'"]+['"]\s*,\s*access:\s*['"]([^'"]+)['"]\s*,\s*isActive:\s*(true|false)\s*,\s*surface:\s*['"]([^'"]+)['"](?:,\s*canonicalPath:\s*['"]([^'"]+)['"])?\s*\}/g;
 let match;
 while ((match = routeBlockRegex.exec(routeCatalogContent)) !== null) {
   routes.push({
     path: match[1],
     access: match[2],
-    isActive: match[3] === 'true'
+    isActive: match[3] === 'true',
+    surface: match[4],
+    canonicalPath: match[5]
   });
 }
 
@@ -79,21 +83,40 @@ for (const route of routes) {
     errors.push(`Route ${route.path} is missing access policy in registry.`);
   }
 
+  // Validate surface
+  const validSurfaces = ['public', 'app', 'admin', 'dev', 'api', 'test'];
+  if (!route.surface || !validSurfaces.includes(route.surface)) {
+    errors.push(`Route ${route.path} has invalid or missing surface '${route.surface}'.`);
+  }
+
+  // Validate specific canonical mappings
+  if (route.path.startsWith('/dev') && route.path !== '/developer' && route.path !== '/developer/*') {
+    if (route.surface !== 'dev') {
+      errors.push(`Canonical dev route ${route.path} must have 'dev' surface.`);
+    }
+  }
+
+  if (['/developer', '/demo', '/library-demo'].includes(route.path)) {
+    if (route.surface !== 'dev') {
+       errors.push(`Alias route ${route.path} must be 'dev' surface.`);
+    }
+    if (!route.canonicalPath) {
+       errors.push(`Alias route ${route.path} must have canonicalPath.`);
+    }
+  }
+
   // legacy route check
   if (['/search', '/overview', '/unassigned'].includes(route.path) && route.isActive) {
     errors.push(`Legacy route ${route.path} must be inactive.`);
   }
 
   // Admin route check
-  if (['/admin', '/admin/sitemap', '/developer', '/demo', '/library-demo', '/test'].includes(route.path) && route.access !== 'admin') {
+  if (['/admin', '/admin/sitemap', '/dev', '/dev/demo', '/dev/library-demo', '/developer', '/demo', '/library-demo', '/test'].includes(route.path) && route.access !== 'admin') {
     errors.push(`Route ${route.path} must be admin in registry.`);
   }
 
   // Exists in App.tsx?
-  // We need to account for /* suffixes
   let searchPath = route.path;
-  if (searchPath === '/developer') searchPath = '/developer/*'; // Hardcode known differences or check generic. Let's just check both.
-  
   if (route.isActive) {
     if (!foundGuards[route.path] && !foundGuards[route.path + '/*']) {
       errors.push(`Active route ${route.path} not found in App.tsx runtime routes.`);

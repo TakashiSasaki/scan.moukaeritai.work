@@ -91,7 +91,7 @@ export default function EfpBaselineApp() {
           <div className="flex flex-col gap-2 pt-2">
             {isAdmin && (
               <button
-                onClick={() => navigate('/developer')}
+                onClick={() => navigate('/dev')}
                 className="w-full py-3 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-xl font-bold text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <BookOpen size={16} /> Read Developer Docs
