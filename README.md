@@ -1,4 +1,4 @@
-# scan.mw
+# scan.mw (v2.1.0)
 
 Cloud-based item tracking and inventory management built on Firebase, React, TypeScript, and the Contract-First Entity-Fact-Projection (EFP) model.
 
@@ -51,6 +51,9 @@ npm run verify:release
 - `verify:baseline` is kept as an alias for `verify:release` for compatibility.
 
 Firestore Emulator integration tests are planned for GitHub Actions. Current PR verification uses Node-based static policy checks only; do not add a local pseudo-emulator.
+
+- Node-only gates implemented and passing locally.
+- GitHub Actions confirmation unavailable.
 
 ## Canonical references
 

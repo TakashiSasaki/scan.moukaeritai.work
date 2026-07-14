@@ -165,15 +165,6 @@
     },
     {
       "contractId": "callable-functions-api",
-      "version": "1.1.8",
-      "status": "deprecated",
-      "title": "Callable Functions API",
-      "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv4-based idempotency validation and comprehensive regression gates",
-      "contractType": "api-contract",
-      "path": "packages/callable-functions-api/1.1.8/contract.json"
-    },
-    {
-      "contractId": "callable-functions-api",
       "version": "1.1.9",
       "status": "active",
       "description": "API contract for regression harness and closure evidence repair",

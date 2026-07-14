@@ -27,8 +27,8 @@ if (!fs.existsSync(activeVersionJsonPath)) {
   errors.push("Missing active-version.json in vendor directory");
 } else {
   const av = JSON.parse(fs.readFileSync(activeVersionJsonPath, 'utf8'));
-  if (av.version !== activeVersion) {
-    errors.push(`active-version.json has version ${av.version}, expected ${activeVersion}`);
+  if (av.activeVersion !== activeVersion) {
+    errors.push(`active-version.json has version ${av.activeVersion}, expected ${activeVersion}`);
   }
 }
 
