@@ -2,6 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "CommonJS",
+    /* "moduleResolution": "node" is required because the base tsconfig uses "Bundler" */
+    /* which is incompatible with compiling to CommonJS (CJS) target under standard tsc. */
     "moduleResolution": "node",
     "outDir": "dist/cjs",
     "declaration": false,

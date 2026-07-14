@@ -58,9 +58,14 @@ const workingTreeFiles = new Set([
   ...runGit('git diff --name-only --cached').split('\n').filter(Boolean),
   ...runGit('git ls-files --others --exclude-standard').split('\n').filter(Boolean)
 ]);
-baseRef = workingTreeFiles.size > 0 ? null : resolveBaseRef();
+
 files = [...workingTreeFiles];
-if (files.length === 0 && baseRef) {
+if (files.length === 0) {
+  baseRef = resolveBaseRef();
+  if (!baseRef) {
+    console.error('❌ Base revision resolution failed! Could not resolve any valid base git reference, and no working tree changes exist.');
+    process.exit(1);
+  }
   files = runGit(`git diff --name-only ${baseRef}...HEAD || git diff --name-only ${baseRef}`).split('\n').filter(Boolean);
 }
 
