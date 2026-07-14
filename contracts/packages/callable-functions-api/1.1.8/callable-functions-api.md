@@ -1,8 +1,8 @@
-# Callable Functions API Contract (v1.1.7)
+# Callable Functions API Contract (v1.1.8)
 
-Metadata: `contractId=callable-functions-api`, `version=1.1.7`, `status=active`, `canonicalJsonVersion=1`, `requestHashVersion=sha256-canonical-json-v1`.
+Metadata: `contractId=callable-functions-api`, `version=1.1.8`, `status=active`, `canonicalJsonVersion=1`, `requestHashVersion=sha256-canonical-json-v1`.
 
-This contract defines the strict Firebase Gen 2 Callable API for backend-only immutable Fact creation in **scan.mw 2.0.18**.
+This contract defines the strict Firebase Gen 2 Callable API for backend-only immutable Fact creation in **scan.mw 2.0.20**.
 
 ## `submitFactCommand`
 
@@ -20,4 +20,9 @@ This contract defines the strict Firebase Gen 2 Callable API for backend-only im
 
 ## Fact lifecycle and projection boundary
 
-Facts are backend-only and immutable. Projection ordering, watermarking, processing receipts, retry-safe projection handlers, and conditional summary writes are outside this contract version and remain deferred to scan.mw 2.0.19.
+Facts are backend-only and immutable. Projection ordering, watermarking, processing receipts, retry-safe projection handlers, and conditional summary writes are outside this contract version and remain deferred to scan.mw 2.0.21.
+
+
+## 1.1.7 Receipt Replay Policy
+
+Receipts created under Callable API 1.1.7 are not retroactively rewritten. A replay of a 1.1.7 receipt with a 1.1.8 request for the same owner and commandId is rejected because `callableApiVersion` is part of request identity.
