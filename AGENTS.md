@@ -1,4 +1,4 @@
-# Developer & AI Agent Guidelines
+# Developer & AI Agent Guidelines (scan.mw 2.1.0)
 
 This file records only active operating rules for this repository. Historical stride details and cancelled migration plans must not be treated as current work.
 
@@ -114,3 +114,8 @@ Firestore Emulator integration tests are planned for GitHub Actions. Current PR 
 - Internal metadata, tests, and documentation-only changes do not require a version bump.
 - Version bumps are required for release candidates or externally visible compatibility/API changes.
 - Do not manually duplicate version strings in README unless unavoidable.
+
+## Verification Status
+
+- Node-only gates implemented and passing locally.
+- GitHub Actions confirmation unavailable.

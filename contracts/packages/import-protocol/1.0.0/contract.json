@@ -1,7 +1,7 @@
 {
   "contractId": "import-protocol",
   "version": "1.0.0",
-  "status": "active",
+  "status": "archived",
   "title": "Import Protocol",
   "description": "Protocol for Controlled Imported Observation Execution, allowing restricted administrator-initiated imports into identifierObservations.",
   "contractType": "import-protocol",

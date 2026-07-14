@@ -10,7 +10,7 @@ export default function EfpBaselineApp() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0.5';
+  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'unknown';
 
   return (
     <div className="space-y-8">
@@ -69,7 +69,7 @@ export default function EfpBaselineApp() {
             </div>
             <div className="flex justify-between items-center bg-[var(--surface-container-high)] px-3 py-2 rounded-xl">
               <span className="text-xs font-mono text-[var(--on-surface-variant)]">BACKEND HARNESS:</span>
-              <span className="text-xs font-bold text-[#3b82f6]">ACTIVE (v2.0.5)</span>
+              <span className="text-xs font-bold text-[#3b82f6]">ACTIVE (v{version})</span>
             </div>
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function EfpBaselineApp() {
               <h3 className="font-bold text-lg">Milestone Roadmap</h3>
             </div>
             <p className="text-xs text-[var(--on-surface-variant)] leading-relaxed">
-              Object creation and detail retrieval are now fully functional. physical Marker binding (QR, NFC) and Association mapping are scheduled for upcoming vertical iterations.
+              Object baseline is available and remains under verification. physical Marker binding (QR, NFC) and Association mapping are scheduled for upcoming vertical iterations.
             </p>
           </div>
 

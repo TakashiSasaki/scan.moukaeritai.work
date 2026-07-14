@@ -1,7 +1,6 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { Timestamp } from 'firebase-admin/firestore';
-import { submitFactCommand } from '../src/submitFactCommand';
-import { resetValidatorsCache } from '../src/logicalFactBuilder';
+import { describe, expect, test } from "vitest";
+import { SubmitFactCommandCoreError } from "../src/submitFactCommandCore";
+import { createSubmitFactCommandHarness } from "./harness/submitFactCommandHarness";
 
 // Setup hoisted mocks
 const { mockSet, mockGet, mockRunTransaction, mockWhere, idempotencyState, getSetCallCount, resetSetCallCount } = vi.hoisted(() => {
@@ -72,8 +71,25 @@ vi.mock('firebase-functions/v2/https', () => {
     }
   };
 });
-vi.mock('firebase-admin', () => {
-  return { app: vi.fn().mockReturnValue({}), initializeApp: vi.fn() };
+const assocRequest = (
+  commandId: string,
+  operation: string,
+  marker = "marker1",
+  subjectAssociationId?: string,
+  participants?: any[],
+) => ({
+  commandId,
+  factType: "association",
+  data: {
+    operation,
+    ...(subjectAssociationId ? { subjectAssociationId } : {}),
+    effectiveAt: "2026-07-12T05:00:00Z",
+    provenance: { source: "user_confirmed", confidence: "high" },
+    participants: participants || [
+      { role: "object", ref: { entityType: "object", id: "object1" } },
+      { role: "marker", ref: { entityType: "marker", id: marker } },
+    ],
+  },
 });
 vi.mock('firebase-admin/firestore', () => {
   const mockDb = {
@@ -107,38 +123,27 @@ vi.mock('firebase-admin/firestore', () => {
     static fromDate(date: Date) { return new MockTimestamp(Math.floor(date.getTime() / 1000), 0); }
     toDate() { return new Date(this.seconds * 1000); }
   }
-  class MockGeoPoint {
-    constructor(public latitude: number, public longitude: number) {}
-  }
-  return { getFirestore: () => mockDb, Timestamp: MockTimestamp, GeoPoint: MockGeoPoint };
-});
+}
+const factWrites = (h: any) =>
+  h.firestore.operationLog.filter(
+    (op: any) =>
+      op.type === "write" &&
+      /^(associations|events|observations|measurements)\//.test(op.path),
+  ).length;
+const receiptWrites = (h: any) =>
+  h.firestore.operationLog.filter(
+    (op: any) => op.type === "write" && op.path.includes("/factCommands/"),
+  ).length;
 
-beforeEach(() => {
-  resetValidatorsCache();
-  mockSet.mockClear();
-  mockGet.mockClear();
-  // Reset idempotency state
-  for (const key of Object.keys(idempotencyState)) delete idempotencyState[key];
-});
-
-describe('Idempotency and Transitions', () => {
-  const auth = { uid: 'test-user' };
-
-  test('Valid UUIDv4 request is accepted and echoes commandId', async () => {
-    const cmdId = "123e4567-e89b-42d3-a456-426614174000";
-    const payload = {
-      commandId: cmdId,
-      factType: "event",
-      data: {
-        eventType: "test",
-        time: { occurredAt: "2026-07-12T05:00:00Z" },
-        provenance: { source: "user_confirmed", confidence: "high" },
-        participants: [{ role: "object", ref: { entityType: "object", id: "object1" } }]
-      }
-    };
-    const res = await submitFactCommand({ auth, data: payload });
-    expect(res.success).toBe(true);
-    expect(res.commandId).toBe(cmdId);
+describe("submitFactCommand behavioral harness", () => {
+  test("isolates state between harness instances", async () => {
+    const h1 = createSubmitFactCommandHarness({ initial: baseDocs });
+    await h1.submit(owner, eventRequest(uuid(10)));
+    const h2 = createSubmitFactCommandHarness({ initial: baseDocs });
+    expect(
+      h2.firestore.get(`users/${owner}/factCommands/${uuid(10)}`),
+    ).toBeUndefined();
+    expect(h2.firestore.writesTo("events/")).toHaveLength(0);
   });
 
   test('Idempotency logic matrix', async () => {
@@ -183,82 +188,137 @@ describe('Idempotency and Transitions', () => {
     expect(res3.factId).not.toBe(res1.factId);
   });
 
-  test('Association transitions: attach, detach, replace', async () => {
-    const payloadAttach = {
-      commandId: "123e4567-e89b-42d3-a456-426614174001",
-      factType: "association",
-      data: {
-        operation: "attach",
-        effectiveAt: "2026-07-12T05:00:00Z", provenance: { source: "user_confirmed", confidence: "high" },
-        participants: [
-          { role: "object", ref: { entityType: "object", id: "object1" } },
-          { role: "marker", ref: { entityType: "marker", id: "marker1" } }
-        ]
-      }
-    };
-    const resA = await submitFactCommand({ auth, data: payloadAttach });
-    expect(resA.success).toBe(true);
-
-    const payloadDetach = {
-      commandId: "123e4567-e89b-42d3-a456-426614174002",
-      factType: "association",
-      data: {
-        operation: "detach",
-        subjectAssociationId: "assoc1",
-        effectiveAt: "2026-07-12T05:00:00Z", provenance: { source: "user_confirmed", confidence: "high" },
-        participants: [
-          { role: "object", ref: { entityType: "object", id: "object1" } },
-          { role: "marker", ref: { entityType: "marker", id: "marker1" } }
-        ]
-      }
-    };
-    const resD = await submitFactCommand({ auth, data: payloadDetach });
-    expect(resD.success).toBe(true);
-
-    const payloadReplace = {
-      commandId: "123e4567-e89b-42d3-a456-426614174003",
-      factType: "association",
-      data: {
-        operation: "replace",
-        subjectAssociationId: "assoc1",
-        effectiveAt: "2026-07-12T05:00:00Z", provenance: { source: "user_confirmed", confidence: "high" },
-        participants: [
-          { role: "object", ref: { entityType: "object", id: "object1" } },
-          { role: "marker", ref: { entityType: "marker", id: "marker2" } }
-        ]
-      }
-    };
-    const resR = await submitFactCommand({ auth, data: payloadReplace });
-    expect(resR.success).toBe(true);
-
-    // Errors
-    const payloadForeignMarker = {
-      commandId: "123e4567-e89b-42d3-a456-426614174004",
-      factType: "association",
-      data: {
-        operation: "attach",
-        effectiveAt: "2026-07-12T05:00:00Z", provenance: { source: "user_confirmed", confidence: "high" },
-        participants: [
-          { role: "object", ref: { entityType: "object", id: "object1" } },
-          { role: "marker", ref: { entityType: "marker", id: "marker-other" } }
-        ]
-      }
-    };
-    await expect(submitFactCommand({ auth, data: payloadForeignMarker })).rejects.toThrow(/does not belong to you/);
-    
-    const payloadAlreadyDetached = {
-      commandId: "123e4567-e89b-42d3-a456-426614174005",
-      factType: "association",
-      data: {
-        operation: "detach",
-        subjectAssociationId: "assoc1_already_detached", // mock duplicate check returns true
-        effectiveAt: "2026-07-12T05:00:00Z", provenance: { source: "user_confirmed", confidence: "high" },
-        participants: [
-          { role: "object", ref: { entityType: "object", id: "object1" } },
-          { role: "marker", ref: { entityType: "marker", id: "marker1" } }
-        ]
-      }
-    };
-    await expect(submitFactCommand({ auth, data: payloadAlreadyDetached })).rejects.toThrow(/already detached or replaced/);
+  test.each([
+    ["valid attach", assocRequest(uuid(20), "attach"), true, undefined],
+    [
+      "valid detach",
+      assocRequest(uuid(21), "detach", "marker1", "assoc1"),
+      true,
+      undefined,
+    ],
+    [
+      "valid replace",
+      assocRequest(uuid(22), "replace", "marker2", "assoc1"),
+      true,
+      undefined,
+    ],
+    [
+      "subject missing",
+      assocRequest(uuid(23), "detach", "marker1", "missing"),
+      false,
+      "failed-precondition",
+    ],
+    [
+      "subject foreign",
+      assocRequest(uuid(24), "detach", "marker1", "assoc-foreign"),
+      false,
+      "permission-denied",
+    ],
+    [
+      "subject detach",
+      assocRequest(uuid(25), "detach", "marker1", "assoc-detached"),
+      false,
+      "failed-precondition",
+    ],
+    [
+      "subject replace",
+      assocRequest(uuid(26), "detach", "marker1", "assoc-replaced"),
+      false,
+      "failed-precondition",
+    ],
+    [
+      "object mismatch",
+      assocRequest(uuid(27), "detach", "marker1", "assoc1", [
+        { role: "object", ref: { entityType: "object", id: "object2" } },
+        { role: "marker", ref: { entityType: "marker", id: "marker1" } },
+      ]),
+      false,
+      "permission-denied",
+    ],
+    [
+      "detach marker mismatch",
+      assocRequest(uuid(28), "detach", "marker2", "assoc1"),
+      false,
+      "failed-precondition",
+    ],
+    [
+      "replace same marker",
+      assocRequest(uuid(29), "replace", "marker1", "assoc1"),
+      false,
+      "failed-precondition",
+    ],
+    [
+      "replace marker missing",
+      assocRequest(uuid(30), "replace", "missing", "assoc1"),
+      false,
+      "failed-precondition",
+    ],
+    [
+      "replace multiple markers",
+      assocRequest(uuid(31), "replace", "marker2", "assoc1", [
+        { role: "object", ref: { entityType: "object", id: "object1" } },
+        { role: "marker", ref: { entityType: "marker", id: "marker2" } },
+        { role: "marker", ref: { entityType: "marker", id: "marker1" } },
+      ]),
+      false,
+      "failed-precondition",
+    ],
+    [
+      "existing detach",
+      assocRequest(uuid(32), "detach", "marker1", "assoc1"),
+      false,
+      "failed-precondition",
+    ],
+    [
+      "old marker missing",
+      assocRequest(uuid(33), "replace", "marker2", "assoc-old-missing"),
+      false,
+      "failed-precondition",
+    ],
+    [
+      "old marker foreign",
+      assocRequest(uuid(34), "replace", "marker2", "assoc-old-foreign"),
+      false,
+      "permission-denied",
+    ],
+    [
+      "new marker foreign",
+      assocRequest(uuid(35), "replace", "marker-other", "assoc1"),
+      false,
+      "permission-denied",
+    ],
+    [
+      "participant order valid detach",
+      assocRequest(uuid(36), "detach", "marker1", "assoc1", [
+        { role: "marker", ref: { entityType: "marker", id: "marker1" } },
+        { role: "object", ref: { entityType: "object", id: "object1" } },
+      ]),
+      true,
+      undefined,
+    ],
+    [
+      "colon ids",
+      assocRequest(uuid(37), "detach", "marker:colon", "assoc:colon", [
+        { role: "marker", ref: { entityType: "marker", id: "marker:colon" } },
+        { role: "object", ref: { entityType: "object", id: "object:colon" } },
+      ]),
+      true,
+      undefined,
+    ],
+  ])("association transition matrix: %s", async (_name, request, ok, code) => {
+    const initial = { ...baseDocs } as Record<string, unknown>;
+    if (!_name.startsWith("existing"))
+      delete initial["associations/duplicate-detach"];
+    const h = createSubmitFactCommandHarness({ initial });
+    if (ok) {
+      await h.submit(owner, request);
+      expect(factWrites(h)).toBe(1);
+      expect(receiptWrites(h)).toBe(1);
+    } else {
+      expect(await rejectCode(h.submit(owner, request))).toBe(code);
+      expect(factWrites(h)).toBe(0);
+      expect(receiptWrites(h)).toBe(0);
+    }
+    h.firestore.assertReadsBeforeWrites();
   });
 });

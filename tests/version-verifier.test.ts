@@ -57,12 +57,11 @@ describe("version-verifier integration tests", () => {
     }
   };
 
-  test("sensitive code change + version unchanged -> fail", () => {
+  test("internal code change + version unchanged -> pass", () => {
     fs.writeFileSync('src/index.ts', 'console.log("changed");');
     execSync('git commit -am "change src"');
     const res = runVerifier();
-    expect(res.success).toBe(false);
-    expect(res.error).toContain("must be bumped");
+    expect(res.success).toBe(true);
     execSync('git reset --hard HEAD~1'); // revert
   });
 
@@ -86,7 +85,7 @@ describe("version-verifier integration tests", () => {
     execSync('git commit -am "decrease version"');
     const res = runVerifier();
     expect(res.success).toBe(false);
-    expect(res.error).toContain("is not greater than base version");
+    expect(res.error).toContain("did not monotonically increase");
     execSync('git reset --hard HEAD~1');
   });
 
@@ -112,32 +111,17 @@ describe("version-verifier integration tests", () => {
     
     const res = runVerifier();
     expect(res.success).toBe(false);
-    expect(res.error).toContain("Could not retrieve or parse package.json from base ref");
+    expect(res.error).toContain("Git comparison failed");
     execSync('git checkout main');
+    execSync('git branch -D no-base-pkg');
   });
 
-  test("profile version不一致 -> fail", () => {
+  test("profile, README, and package version duplication are not required", () => {
     writeJson('package.json', { version: '2.0.9' });
-    writeJson('functions/package.json', { version: '2.0.9' });
-    writeJson('packages/efp-model/package.json', { version: '2.0.9' });
-    // Don't update profile
-    execSync('git commit -am "bump pkg only"');
+    // Deliberately leave functions/package.json, efp-model package.json, profile, and README at 2.0.8.
+    execSync('git commit -am "bump root app version only"');
     const res = runVerifier();
-    expect(res.success).toBe(false);
-    expect(res.error).toContain("Version mismatch in current-application.json");
-    execSync('git reset --hard HEAD~1');
-  });
-
-  test("README version不一致 -> fail", () => {
-    writeJson('package.json', { version: "2.0.9" });
-    writeJson('functions/package.json', { version: "2.0.9" });
-    writeJson('packages/efp-model/package.json', { version: "2.0.9" });
-    writeJson('contracts/profiles/current-application.json', { applicationVersion: "2.0.9" });
-    // Don't update README
-    execSync('git commit -am "bump pkgs only"');
-    const res = runVerifier();
-    expect(res.success).toBe(false);
-    expect(res.error).toContain("README.md does not contain the current version");
+    expect(res.success).toBe(true);
     execSync('git reset --hard HEAD~1');
   });
 
@@ -150,7 +134,7 @@ describe("version-verifier integration tests", () => {
     execSync('git commit -am "major bump without approval"');
     const res = runVerifier();
     expect(res.success).toBe(false);
-    expect(res.error).toContain("Major version bump detected without a valid pre-existing human approval record");
+    expect(res.error).toContain("Major version bump detected without valid pre-existing human approval");
     execSync('git reset --hard HEAD~1');
   });
 
@@ -167,7 +151,7 @@ describe("version-verifier integration tests", () => {
     // The approval was added in the same commit, so it doesn't exist in baseRef
     const res = runVerifier();
     expect(res.success).toBe(false);
-    expect(res.error).toContain("Major version bump detected without a valid pre-existing human approval record");
+    expect(res.error).toContain("Major version bump detected without valid pre-existing human approval");
     execSync('git reset --hard HEAD~1');
   });
 

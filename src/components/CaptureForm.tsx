@@ -75,28 +75,9 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
         toast.success("Object updated successfully");
       }
 
-      // If there was an initial identifier (from a scan), bind it
-      if (initialIdentifier) {
-        const identifierKey = initialIdentifier.identifierKey;
-        await setDoc(doc(db, 'identifiers', identifierKey), {
-          ...initialIdentifier,
-          objectId: id,
-          status: 'active',
-          updatedAt: new Date().toISOString()
-        }, { merge: true });
-        
-        await setDoc(doc(db, 'objectIdentifierBindings', `${id}__${identifierKey}__active`), {
-          bindingId: `${id}__${identifierKey}__active`,
-          objectId: id,
-          identifierKey,
-          status: 'active',
-          ownerId: auth.currentUser.uid,
-          attachedAt: new Date().toISOString(),
-          attachedBy: auth.currentUser.uid,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-      }
+      // Legacy identifier binding is intentionally disabled. Legacy collections are
+      // retained read-only; Marker/Object Association attach is handled by the
+      // EFP-native vertical slice instead of writing identifiers or bindings.
 
       onClose();
     } catch (error) {
@@ -210,7 +191,7 @@ export default function CaptureForm({ objectId, initialIdentifier, onClose }: Ca
             <div>
               <div className="text-xs font-bold text-amber-500 uppercase tracking-widest">New Tag Detected</div>
               <div className="text-sm font-bold text-[var(--on-surface)]">{initialIdentifier.identifierKey}</div>
-              <div className="text-[10px] text-[var(--on-surface-variant)] font-medium">This tag will be bound to the new object.</div>
+              <div className="text-[10px] text-[var(--on-surface-variant)] font-medium">This legacy tag is read-only and will not be bound. Use the EFP Marker association workflow after creating the Object.</div>
             </div>
           </div>
         )}

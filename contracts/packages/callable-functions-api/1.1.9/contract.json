@@ -1,6 +1,6 @@
 {
   "contractId": "callable-functions-api",
-  "version": "1.1.7",
+  "version": "1.1.9",
   "status": "active",
   "title": "Callable Functions API",
   "description": "API contract for the EFP-native backend fact creation pipeline with strict UUIDv4-based idempotency validation",
