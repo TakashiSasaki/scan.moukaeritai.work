@@ -23,5 +23,27 @@
       "1.1.6",
       "1.1.5"
     ]
+  },
+  "requestIdentity": {
+    "canonicalJsonVersion": 1,
+    "requestHashVersion": "sha256-canonical-json-v1",
+    "receiptFields": [
+      "commandId",
+      "ownerId",
+      "factId",
+      "factType",
+      "callableApiVersion",
+      "canonicalJsonVersion",
+      "requestHash",
+      "requestHashVersion",
+      "executedAt"
+    ],
+    "replayComparisonFields": [
+      "callableApiVersion",
+      "factType",
+      "canonicalJsonVersion",
+      "requestHash",
+      "requestHashVersion"
+    ]
   }
 }
