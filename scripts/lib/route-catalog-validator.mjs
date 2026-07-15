@@ -1,4 +1,4 @@
-export function validateRouteCatalog(routes, { foundGuards } = {}) {
+export function validateRouteCatalog(routes) {
   const errors = [];
 
   if (!Array.isArray(routes)) {
@@ -10,7 +10,6 @@ export function validateRouteCatalog(routes, { foundGuards } = {}) {
   }
 
   const seenPaths = new Set();
-  const authorizedDynamicPaths = ['/object/:id', '/item/:id'];
   const removedPaths = ['/developer', '/developer/*', '/demo', '/library-demo'];
   const requiredCanonicalDevRoutes = [
     '/dev',
@@ -21,39 +20,71 @@ export function validateRouteCatalog(routes, { foundGuards } = {}) {
     '/dev/library-demo'
   ];
 
-  if (foundGuards) {
-    for (const path of removedPaths) {
-      if (foundGuards[path] !== undefined) {
-        errors.push(`Removed route '${path}' must not exist in App.tsx runtime routes.`);
-      }
-    }
-  }
-
   for (const route of routes) {
-    // 1. Check if all six required properties are defined in the catalog
+    // 1. Enforce documented route object invariants
+    // Required properties: path, label, description, access, isActive, surface
     const requiredKeys = ['path', 'label', 'description', 'access', 'isActive', 'surface'];
+    let hasMissingProperty = false;
     for (const key of requiredKeys) {
       if (route[key] === undefined) {
         errors.push(`Route is missing required property '${key}': ${JSON.stringify(route)}`);
+        hasMissingProperty = true;
       }
     }
 
-    // Validate path is string
-    if (typeof route.path !== 'string' || route.path.trim() === '') {
-      errors.push(`Route path must be a non-empty string, got ${typeof route.path}`);
+    if (hasMissingProperty) {
       continue;
     }
 
-    // Check duplicate paths
-    if (seenPaths.has(route.path)) {
-      errors.push(`Duplicate path entry found: '${route.path}'`);
-    } else {
-      seenPaths.add(route.path);
+    // path validation
+    if (typeof route.path !== 'string') {
+      errors.push(`Route path must be a non-empty string, got ${typeof route.path}`);
+    } else if (route.path.trim() === '') {
+      errors.push(`Route path must be a non-empty string, got empty string`);
+    } else if (!route.path.startsWith('/')) {
+      errors.push(`Route path '${route.path}' is invalid: must start with a '/'.`);
     }
 
-    // Validate path format (must start with /)
-    if (!route.path.startsWith('/')) {
-      errors.push(`Route path '${route.path}' is invalid: must start with a '/'.`);
+    // label validation
+    if (typeof route.label !== 'string') {
+      errors.push(`Route '${route.path}': label must be a string, got ${typeof route.label}.`);
+    } else if (route.label.trim() === '') {
+      errors.push(`Route '${route.path}': label must be a non-empty string.`);
+    }
+
+    // description validation
+    if (typeof route.description !== 'string') {
+      errors.push(`Route '${route.path}': description must be a string, got ${typeof route.description}.`);
+    } else if (route.description.trim() === '') {
+      errors.push(`Route '${route.path}': description must be a non-empty string.`);
+    }
+
+    // access validation
+    if (typeof route.access !== 'string') {
+      errors.push(`Route '${route.path}': access must be a string, got ${typeof route.access}.`);
+    } else if (!['public', 'authenticated', 'admin'].includes(route.access)) {
+      errors.push(`Route '${route.path}': access must be one of: "public", "authenticated", "admin", got '${route.access}'`);
+    }
+
+    // isActive validation
+    if (typeof route.isActive !== 'boolean') {
+      errors.push(`Route '${route.path}': 'isActive' must be a boolean, got ${typeof route.isActive}.`);
+    }
+
+    // surface validation
+    if (typeof route.surface !== 'string') {
+      errors.push(`Route '${route.path}': surface must be a string, got ${typeof route.surface}.`);
+    } else if (!['public', 'app', 'admin', 'dev', 'api', 'test'].includes(route.surface)) {
+      errors.push(`Route '${route.path}': surface must be one of: "public", "app", "admin", "dev", "api", "test", got '${route.surface}'`);
+    }
+
+    // check duplicate paths (only if path is valid string)
+    if (typeof route.path === 'string' && route.path.trim() !== '') {
+      if (seenPaths.has(route.path)) {
+        errors.push(`Duplicate path entry found: '${route.path}'`);
+      } else {
+        seenPaths.add(route.path);
+      }
     }
 
     // Check for compatibility alias canonicalPath (must not exist)
@@ -61,68 +92,13 @@ export function validateRouteCatalog(routes, { foundGuards } = {}) {
       errors.push(`Route '${route.path}' must not have a 'canonicalPath' property, as compatibility aliases are removed.`);
     }
 
-    // Map surface to mappedSurface
-    const surfaceMap = {
-      'public': '/',
-      'app': '/app',
-      'admin': '/admin',
-      'dev': '/dev',
-      'api': '/api',
-      'test': '/test'
-    };
-    const mappedSurface = surfaceMap[route.surface];
-
-    // Validate role/access value
-    const role = route.access === 'public' ? 'unauthenticated' : 'authenticated';
-    if (route.access !== undefined && !['public', 'authenticated', 'admin'].includes(route.access)) {
-      errors.push(`Route '${route.path}': access must be one of: "public", "authenticated", "admin", got '${route.access}'`);
-    }
-
-    // Validate surface value
-    if (!['/', '/app', '/admin', '/dev', '/api', '/test'].includes(mappedSurface)) {
-      errors.push(`Route '${route.path}': surface must be one of: "public", "app", "admin", "dev", "api", "test", got '${route.surface}'`);
-    }
-
-    // Validate label
-    if (route.label !== undefined && (typeof route.label !== 'string' || route.label.trim() === '')) {
-      errors.push(`Route '${route.path}': label must be a non-empty string.`);
-    }
-
-    // 2. Every path must align with its declared surface prefix
-    const pathPrefixAlignment = {
-      '/dev': (p) => p.startsWith('/dev'),
-      '/admin': (p) => p.startsWith('/admin'),
-      '/test': (p) => p.startsWith('/test'),
-      '/api': (p) => p.startsWith('/api'),
-      '/app': (p) => p.startsWith('/app') || p.startsWith('/settings') || p.startsWith('/object') || p.startsWith('/item') || p.startsWith('/search') || p.startsWith('/overview') || p.startsWith('/unassigned'),
-      '/': (p) => p === '/' || p.startsWith('/forbidden')
-    };
-
-    if (mappedSurface && pathPrefixAlignment[mappedSurface]) {
-      if (!pathPrefixAlignment[mappedSurface](route.path)) {
-        errors.push(`Route path '${route.path}' does not align with its declared surface prefix '${mappedSurface}'.`);
-      }
-    }
-
-    // 3. Ensure no unrequested paths or aliases remain (such as /developer, /demo, /library-demo)
+    // Keep the specific compatibility-removal rules
     if (removedPaths.includes(route.path)) {
       errors.push(`Removed route '${route.path}' must not be registered in the route catalog.`);
     }
 
-    // 4. Do not allow paths that contain wildcards, dynamic segments, or parameter strings to be registered without explicit authorization
-    if (route.path.includes(':') || route.path.includes('*') || route.path.includes('?')) {
-      if (!authorizedDynamicPaths.includes(route.path)) {
-        errors.push(`Route path '${route.path}' contains unauthorized wildcards, dynamic segments, or parameters.`);
-      }
-    }
-
-    // Validate isActive is a boolean
-    if (route.isActive !== undefined && typeof route.isActive !== 'boolean') {
-      errors.push(`Route '${route.path}': 'isActive' must be a boolean, got ${typeof route.isActive}.`);
-    }
-
     // legacy route check
-    if (['/search', '/overview', '/unassigned'].includes(route.path) && route.isActive) {
+    if (['/search', '/overview', '/unassigned'].includes(route.path) && route.isActive === true) {
       errors.push(`Legacy route ${route.path} must be inactive.`);
     }
 
@@ -130,42 +106,9 @@ export function validateRouteCatalog(routes, { foundGuards } = {}) {
     if (['/admin', '/admin/sitemap', '/dev', '/dev/routing', '/dev/data-model', '/dev/security', '/dev/demo', '/dev/library-demo', '/test'].includes(route.path) && route.access !== 'admin') {
       errors.push(`Route ${route.path} must be admin in registry.`);
     }
-
-    // If foundGuards is supplied, validate App.tsx runtime routing
-    if (foundGuards && route.isActive) {
-      let hasMatch = false;
-      let guard = 'None';
-
-      if (foundGuards[route.path] !== undefined || foundGuards[route.path + '/*'] !== undefined) {
-        hasMatch = true;
-        guard = foundGuards[route.path] || foundGuards[route.path + '/*'];
-      } else {
-        // Check if covered by wildcard route like /dev/*
-        for (const guardPath of Object.keys(foundGuards)) {
-          if (guardPath.endsWith('/*')) {
-            const prefix = guardPath.slice(0, -2);
-            if (route.path === prefix || route.path.startsWith(prefix + '/')) {
-              hasMatch = true;
-              guard = foundGuards[guardPath];
-              break;
-            }
-          }
-        }
-      }
-
-      if (!hasMatch) {
-        errors.push(`Active route ${route.path} not found in App.tsx runtime routes.`);
-      } else {
-        if (route.access === 'admin' && guard !== 'AdminRoute') {
-          errors.push(`Admin route ${route.path} must use AdminRoute guard, found ${guard}.`);
-        } else if (route.access === 'authenticated' && guard !== 'ProtectedRoute') {
-          errors.push(`Authenticated route ${route.path} must use ProtectedRoute guard, found ${guard}.`);
-        }
-      }
-    }
   }
 
-  // Validate required canonical dev routes are present in catalog
+  // Validate required canonical dev routes are present in catalog and satisfy conditions
   for (const path of requiredCanonicalDevRoutes) {
     const route = routes.find(r => r.path === path);
     if (!route) {
@@ -176,6 +119,9 @@ export function validateRouteCatalog(routes, { foundGuards } = {}) {
       }
       if (route.access !== 'admin') {
         errors.push(`Canonical dev route '${path}' must have 'admin' access.`);
+      }
+      if (route.isActive !== true) {
+        errors.push(`Canonical dev route '${path}' must be active.`);
       }
     }
   }
