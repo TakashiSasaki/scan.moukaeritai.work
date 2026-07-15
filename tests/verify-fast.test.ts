@@ -3,46 +3,11 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import os from "os";
-
-// We mirror the classification regexes from verify-fast.mjs to ensure synchronization
-function classifyFiles(files: string[]) {
-  const needs = {
-    docs: files.length === 0,
-    frontend: false,
-    routing: false,
-    functionsSource: false,
-    functionsPackaging: false,
-    efpBuild: false,
-    efpTypecheck: false,
-    efpTest: false,
-    contracts: false,
-    firestorePolicy: false,
-    versionStatic: false,
-  };
-
-  for (const file of files) {
-    if (/^(README\.md|AGENTS\.md|\.agents\/|docs\/|.*\.md$)/.test(file)) needs.docs = true;
-    if (/^(src\/components\/|src\/lib\/|src\/App|src\/main|src\/routing\/)/.test(file)) needs.frontend = true;
-    if (/^(src\/routing\/|src\/lib\/routeCatalog\.ts$)/.test(file)) needs.routing = true;
-    if (/^functions\/(src|test)\//.test(file)) needs.functionsSource = true;
-    if (/^functions\/(package(-lock)?\.json|vendor\/|deploy-functions\.allowlist\.json|deploy-allowlist|\.npmignore)/.test(file) || /^scripts\/(prepare-functions-artifact|test-functions-artifact)/.test(file)) needs.functionsPackaging = true;
-    if (/^packages\/efp-model\//.test(file)) {
-      needs.efpBuild = true;
-      needs.efpTypecheck = true;
-      needs.efpTest = true;
-    }
-    if (/^contracts\//.test(file)) {
-      needs.efpBuild = true;
-      needs.contracts = true;
-    }
-    if (file === 'firestore.rules') needs.firestorePolicy = true;
-    if (/^scripts\/(validate-documentation-state|verify-version|verify-fast)\.mjs$/.test(file) || file === 'package.json') {
-      needs.docs = true;
-      needs.versionStatic = true;
-    }
-  }
-  return needs;
-}
+import {
+  classifyChangedFiles as classifyFiles,
+  isVerificationInfrastructureFile,
+  buildVerificationPlan
+} from "../scripts/lib/verify-fast-classifier.mjs";
 
 describe("verify-fast integration and unit tests", () => {
   let originalCwd: string;
@@ -131,6 +96,192 @@ describe("verify-fast integration and unit tests", () => {
       expect(failed).toBe(true);
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  test("explicit base resolution behavior", () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "verify-fast-git-"));
+    try {
+      execSync("git init", { cwd: tempDir, stdio: "pipe" });
+      execSync("git config user.name 'Test'", { cwd: tempDir, stdio: "pipe" });
+      execSync("git config user.email 'test@example.com'", { cwd: tempDir, stdio: "pipe" });
+
+      const testPkg = {
+        name: "test-repo",
+        scripts: {
+          "test:documentation-state": "echo ok",
+          "version:verify": "echo ok",
+          "test:routing": "echo ok",
+          "test:routing-boundary": "echo ok",
+          "lint": "echo ok",
+          "test": "echo ok",
+          "build": "echo ok"
+        }
+      };
+
+      fs.writeFileSync(path.join(tempDir, "package.json"), JSON.stringify(testPkg, null, 2));
+      execSync("git add package.json && git commit -m 'first'", { cwd: tempDir, stdio: "pipe" });
+
+      fs.mkdirSync(path.join(tempDir, "scripts"));
+      fs.mkdirSync(path.join(tempDir, "scripts", "lib"));
+
+      fs.writeFileSync(path.join(tempDir, "scripts", "verify-version.mjs"), "console.log('verify-version ok');");
+      fs.writeFileSync(path.join(tempDir, "scripts", "validate-repository-bootstrap.mjs"), "console.log('bootstrap ok');");
+
+      fs.copyFileSync(
+        path.join(originalCwd, "scripts", "verify-fast.mjs"),
+        path.join(tempDir, "scripts", "verify-fast.mjs")
+      );
+      fs.copyFileSync(
+        path.join(originalCwd, "scripts", "lib", "verify-fast-classifier.mjs"),
+        path.join(tempDir, "scripts", "lib", "verify-fast-classifier.mjs")
+      );
+
+      execSync("git add . && git commit -m 'add scripts and files'", { cwd: tempDir, stdio: "pipe" });
+
+      // 1. valid explicit base -> selected (should pass, let's use HEAD)
+      let out1 = execSync("node scripts/verify-fast.mjs", {
+        cwd: tempDir,
+        stdio: "pipe",
+        env: { ...process.env, VERIFY_FAST_BASE_REF: "HEAD" }
+      }).toString();
+      expect(out1).toContain("base: HEAD");
+
+      // 2. invalid explicit base -> failure
+      let failed2 = false;
+      try {
+        execSync("node scripts/verify-fast.mjs", {
+          cwd: tempDir,
+          stdio: "pipe",
+          env: { ...process.env, VERIFY_FAST_BASE_REF: "nonexistent_ref_123" }
+        });
+      } catch (e) {
+        failed2 = true;
+      }
+      expect(failed2).toBe(true);
+
+      // 3. no explicit base and valid HEAD~1 -> selected
+      // We need a second commit to have HEAD~1
+      execSync("git commit --allow-empty -m 'second'", { cwd: tempDir, stdio: "pipe" });
+      let out3 = execSync("node scripts/verify-fast.mjs", {
+        cwd: tempDir,
+        stdio: "pipe",
+        env: { ...process.env, VERIFY_FAST_BASE_REF: "" }
+      }).toString();
+      expect(out3).toContain("base: HEAD~1");
+
+      // 4. no valid base -> failure
+      // We can mock this by running in a fresh single-commit repo with no working tree changes and no HEAD~1
+      const freshRepo = fs.mkdtempSync(path.join(os.tmpdir(), "verify-fast-freshrepo-"));
+      execSync("git init", { cwd: freshRepo, stdio: "pipe" });
+      execSync("git config user.name 'Test'", { cwd: freshRepo, stdio: "pipe" });
+      execSync("git config user.email 'test@example.com'", { cwd: freshRepo, stdio: "pipe" });
+      fs.writeFileSync(path.join(freshRepo, "package.json"), JSON.stringify(testPkg, null, 2));
+      fs.mkdirSync(path.join(freshRepo, "scripts"));
+      fs.mkdirSync(path.join(freshRepo, "scripts", "lib"));
+
+      fs.writeFileSync(path.join(freshRepo, "scripts", "verify-version.mjs"), "console.log('verify-version ok');");
+      fs.writeFileSync(path.join(freshRepo, "scripts", "validate-repository-bootstrap.mjs"), "console.log('bootstrap ok');");
+
+      fs.copyFileSync(
+        path.join(originalCwd, "scripts", "verify-fast.mjs"),
+        path.join(freshRepo, "scripts", "verify-fast.mjs")
+      );
+      fs.copyFileSync(
+        path.join(originalCwd, "scripts", "lib", "verify-fast-classifier.mjs"),
+        path.join(freshRepo, "scripts", "lib", "verify-fast-classifier.mjs")
+      );
+      execSync("git add -A && git commit -m 'committed all'", { cwd: freshRepo, stdio: "pipe" });
+
+      let failed4 = false;
+      try {
+        execSync("node scripts/verify-fast.mjs", {
+          cwd: freshRepo,
+          stdio: "pipe",
+          env: { ...process.env, VERIFY_FAST_BASE_REF: "", GITHUB_BASE_REF: "" }
+        });
+      } catch (e) {
+        failed4 = true;
+      }
+      expect(failed4).toBe(true);
+      fs.rmSync(freshRepo, { recursive: true, force: true });
+
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  test("classification rules - routing plus frontend mapping", () => {
+    const files = [
+      "src/App.tsx",
+      "src/routing/example.ts",
+      "src/lib/routeCatalog.ts",
+      "scripts/test-routing-boundary.mjs",
+      "scripts/lib/route-catalog-validator.mjs",
+      "tests/routing/integration.test.tsx",
+      "tests/routing/authorization.test.ts",
+      "tests/route-catalog-validator.test.ts"
+    ];
+
+    for (const file of files) {
+      const needs = classifyFiles([file]);
+      expect(needs.routing).toBe(true);
+      expect(needs.frontend).toBe(true);
+
+      const plan = buildVerificationPlan([file]);
+      expect(plan).toContain("npm run test:routing");
+      expect(plan).toContain("npm run test:routing-boundary");
+      expect(plan).toContain("npm run lint");
+      expect(plan).toContain("npm run test");
+      expect(plan).toContain("npm run build");
+    }
+  });
+
+  test("conservative verification-infrastructure rule", () => {
+    const infraFiles = [
+      "scripts/verify-fast.mjs",
+      "scripts/lib/verify-fast-classifier.mjs",
+      "scripts/verify-version.mjs",
+      "scripts/validate-repository-bootstrap.mjs",
+      "scripts/test-routing-boundary.mjs",
+      "scripts/lib/route-catalog-validator.mjs",
+      "tests/verify-fast.test.ts",
+      "tests/version-verifier.test.ts",
+      "tests/route-catalog-validator.test.ts",
+      "package.json",
+      "package-lock.json"
+    ];
+
+    for (const file of infraFiles) {
+      const plan = buildVerificationPlan([file]);
+      expect(plan).toContain("node scripts/validate-repository-bootstrap.mjs");
+      expect(plan).toContain("node scripts/verify-version.mjs");
+      expect(plan).toContain("npm run test:routing");
+      expect(plan).toContain("npm run test:routing-boundary");
+      expect(plan).toContain("npm run lint");
+      expect(plan).toContain("npm run test");
+      expect(plan).toContain("npm run build");
+    }
+  });
+
+  test("version and bootstrap files map to version check", () => {
+    const files = [
+      "scripts/verify-version.mjs",
+      "scripts/validate-repository-bootstrap.mjs",
+      "tests/version-verifier.test.ts",
+      "package.json",
+      "package-lock.json",
+      "functions/package.json",
+      "functions/package-lock.json",
+      "packages/efp-model/package.json",
+      "packages/efp-model/package-lock.json",
+      "contracts/profiles/current-application.json"
+    ];
+
+    for (const file of files) {
+      const plan = buildVerificationPlan([file]);
+      expect(plan).toContain("node scripts/validate-repository-bootstrap.mjs");
+      expect(plan).toContain("node scripts/verify-version.mjs");
     }
   });
 });
