@@ -1,4 +1,4 @@
-# Developer & AI Agent Guidelines (scan.mw 2.1.2)
+# Developer & AI Agent Guidelines (scan.mw 2.1.4)
 
 This file records only active operating rules for this repository. Historical stride details and cancelled migration plans must not be treated as current work.
 

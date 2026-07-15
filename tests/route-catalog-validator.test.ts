@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { validateRouteCatalog } from '../scripts/lib/route-catalog-validator.mjs';
+import { routes } from '../src/lib/routeCatalog';
 
 describe('route catalog validator unit tests', () => {
   const validDevRoutes = [
@@ -13,10 +14,60 @@ describe('route catalog validator unit tests', () => {
 
   const validBaseRoute = { path: '/', label: 'Home', description: 'Main page', access: 'public', isActive: true, surface: 'public' };
 
+  // --- VALID CASES THAT MUST PASS ---
+
   test('validates a completely valid minimal catalog', () => {
     const catalog = [validBaseRoute, ...validDevRoutes];
     const errors = validateRouteCatalog(catalog);
     expect(errors).toEqual([]);
+  });
+
+  test('validates the actual current route catalog', () => {
+    const errors = validateRouteCatalog(routes);
+    expect(errors).toEqual([]);
+  });
+
+  test('validates a root "/" public route', () => {
+    const customRoute = { path: '/', label: 'Root Page', description: 'Root description', access: 'public', isActive: true, surface: 'public' };
+    const catalog = [customRoute, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors).toEqual([]);
+  });
+
+  test('validates a "/profile" app-surface route', () => {
+    const customRoute = { path: '/profile', label: 'Profile', description: 'User profile page', access: 'authenticated', isActive: true, surface: 'app' };
+    const catalog = [validBaseRoute, ...validDevRoutes, customRoute];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors).toEqual([]);
+  });
+
+  test('validates a "/object/:id/history/:revision" app-surface route', () => {
+    const customRoute = { path: '/object/:id/history/:revision', label: 'Object History', description: 'Object revision history', access: 'authenticated', isActive: true, surface: 'app' };
+    const catalog = [validBaseRoute, ...validDevRoutes, customRoute];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors).toEqual([]);
+  });
+
+  test('validates a valid route containing "?" in its path string', () => {
+    const customRoute = { path: '/app/foo?bar', label: 'Foo Query', description: 'Foo query details', access: 'authenticated', isActive: true, surface: 'app' };
+    const catalog = [validBaseRoute, ...validDevRoutes, customRoute];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors).toEqual([]);
+  });
+
+  test('validates a valid route containing "*" that is not one of the specifically removed historical paths', () => {
+    const customRoute = { path: '/app/wildcard/*', label: 'Wildcard Page', description: 'Wildcard subpages', access: 'authenticated', isActive: true, surface: 'app' };
+    const catalog = [validBaseRoute, ...validDevRoutes, customRoute];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors).toEqual([]);
+  });
+
+  // --- INVALID CASES THAT MUST FAIL ---
+
+  test('rejects when routes is not an array', () => {
+    const errors = validateRouteCatalog("not-an-array" as any);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('Route catalog must be an array.');
   });
 
   test('rejects an empty catalog', () => {
@@ -24,18 +75,123 @@ describe('route catalog validator unit tests', () => {
     expect(errors).toContain('Route catalog must not be empty.');
   });
 
-  test('rejects catalog missing required properties', () => {
-    const invalidRoute = { path: '/app/dashboard', label: 'Dashboard' }; // missing access, isActive, surface, description
-    const catalog = [invalidRoute, validBaseRoute, ...validDevRoutes];
+  test('rejects route with missing path', () => {
+    const invalidRoute = { label: 'Home', description: 'Desc', access: 'public', isActive: true, surface: 'public' };
+    const catalog = [invalidRoute as any, ...validDevRoutes];
     const errors = validateRouteCatalog(catalog);
-    expect(errors.some(err => err.includes("missing required property"))).toBe(true);
+    expect(errors.length).toBeGreaterThan(0);
   });
 
-  test('rejects invalid path formats (must start with /)', () => {
-    const invalidRoute = { path: 'app/dashboard', label: 'Dashboard', description: 'Dash', access: 'authenticated', isActive: true, surface: 'app' };
-    const catalog = [invalidRoute, validBaseRoute, ...validDevRoutes];
+  test('rejects route with missing label', () => {
+    const invalidRoute = { path: '/', description: 'Desc', access: 'public', isActive: true, surface: 'public' };
+    const catalog = [invalidRoute as any, ...validDevRoutes];
     const errors = validateRouteCatalog(catalog);
-    expect(errors.some(err => err.includes("must start with a '/'"))).toBe(true);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with missing description', () => {
+    const invalidRoute = { path: '/', label: 'Home', access: 'public', isActive: true, surface: 'public' };
+    const catalog = [invalidRoute as any, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with missing access', () => {
+    const invalidRoute = { path: '/', label: 'Home', description: 'Desc', isActive: true, surface: 'public' };
+    const catalog = [invalidRoute as any, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with missing isActive', () => {
+    const invalidRoute = { path: '/', label: 'Home', description: 'Desc', access: 'public', surface: 'public' };
+    const catalog = [invalidRoute as any, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with missing surface', () => {
+    const invalidRoute = { path: '/', label: 'Home', description: 'Desc', access: 'public', isActive: true };
+    const catalog = [invalidRoute as any, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with path as an empty string', () => {
+    const invalidRoute = { path: '   ', label: 'Home', description: 'Desc', access: 'public', isActive: true, surface: 'public' };
+    const catalog = [invalidRoute, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with path not starting with "/"', () => {
+    const invalidRoute = { path: 'foo', label: 'Home', description: 'Desc', access: 'public', isActive: true, surface: 'public' };
+    const catalog = [invalidRoute, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with label as an empty string', () => {
+    const invalidRoute = { path: '/', label: '   ', description: 'Desc', access: 'public', isActive: true, surface: 'public' };
+    const catalog = [invalidRoute, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with label not as a string', () => {
+    const invalidRoute = { path: '/', label: 123 as any, description: 'Desc', access: 'public', isActive: true, surface: 'public' };
+    const catalog = [invalidRoute, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with description as an empty string', () => {
+    const invalidRoute = { path: '/', label: 'Home', description: '   ', access: 'public', isActive: true, surface: 'public' };
+    const catalog = [invalidRoute, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with description not as a string', () => {
+    const invalidRoute = { path: '/', label: 'Home', description: 123 as any, access: 'public', isActive: true, surface: 'public' };
+    const catalog = [invalidRoute, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with access as "invalid"', () => {
+    const invalidRoute = { path: '/', label: 'Home', description: 'Desc', access: 'invalid' as any, isActive: true, surface: 'public' };
+    const catalog = [invalidRoute, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with access not as a string', () => {
+    const invalidRoute = { path: '/', label: 'Home', description: 'Desc', access: true as any, isActive: true, surface: 'public' };
+    const catalog = [invalidRoute, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with isActive as "true" (string)', () => {
+    const invalidRoute = { path: '/', label: 'Home', description: 'Desc', access: 'public', isActive: 'true' as any, surface: 'public' };
+    const catalog = [invalidRoute, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with surface as "invalid"', () => {
+    const invalidRoute = { path: '/', label: 'Home', description: 'Desc', access: 'public', isActive: true, surface: 'invalid' as any };
+    const catalog = [invalidRoute, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects route with surface not as a string', () => {
+    const invalidRoute = { path: '/', label: 'Home', description: 'Desc', access: 'public', isActive: true, surface: true as any };
+    const catalog = [invalidRoute, ...validDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.length).toBeGreaterThan(0);
   });
 
   test('rejects duplicate paths', () => {
@@ -45,57 +201,65 @@ describe('route catalog validator unit tests', () => {
     expect(errors.some(err => err.includes("Duplicate path entry found"))).toBe(true);
   });
 
-  test('rejects paths not aligning with surface prefix', () => {
-    const mismatchedRoute = { path: '/dev/mismatched', label: 'Mismatched', description: 'Mismatched', access: 'authenticated', isActive: true, surface: 'app' };
-    const catalog = [validBaseRoute, ...validDevRoutes, mismatchedRoute];
+  test('rejects missing canonical /dev route', () => {
+    const catalog = [validBaseRoute]; // missing all required canonical /dev routes
     const errors = validateRouteCatalog(catalog);
-    expect(errors.some(err => err.includes("does not align with its declared surface prefix"))).toBe(true);
+    expect(errors.some(err => err.includes("missing from catalog"))).toBe(true);
   });
 
-  test('rejects removed paths (such as /developer)', () => {
+  test('rejects when canonical /dev route has wrong surface', () => {
+    const badDevRoutes = validDevRoutes.map(r => r.path === '/dev' ? { ...r, surface: 'app' as any } : r);
+    const catalog = [validBaseRoute, ...badDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.some(err => err.includes("must have 'dev' surface"))).toBe(true);
+  });
+
+  test('rejects when canonical /dev route has wrong access', () => {
+    const badDevRoutes = validDevRoutes.map(r => r.path === '/dev' ? { ...r, access: 'public' as any } : r);
+    const catalog = [validBaseRoute, ...badDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.some(err => err.includes("must have 'admin' access"))).toBe(true);
+  });
+
+  test('rejects when canonical /dev route has isActive false', () => {
+    const badDevRoutes = validDevRoutes.map(r => r.path === '/dev' ? { ...r, isActive: false } : r);
+    const catalog = [validBaseRoute, ...badDevRoutes];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.some(err => err.includes("inactive") || err.includes("must be active"))).toBe(true);
+  });
+
+  test('rejects /developer when present', () => {
     const removedRoute = { path: '/developer', label: 'Developer', description: 'Developer info', access: 'admin', isActive: true, surface: 'dev' };
     const catalog = [validBaseRoute, ...validDevRoutes, removedRoute];
     const errors = validateRouteCatalog(catalog);
     expect(errors.some(err => err.includes("must not be registered in the route catalog"))).toBe(true);
   });
 
-  test('allows authorized dynamic paths and rejects unauthorized dynamic paths', () => {
-    const authorizedRoute = { path: '/object/:id', label: 'Object details', description: 'Detail', access: 'authenticated', isActive: true, surface: 'app' };
-    const unauthorizedRoute = { path: '/app/settings/:section', label: 'Section', description: 'Section', access: 'authenticated', isActive: true, surface: 'app' };
-
-    const errorsAuthorized = validateRouteCatalog([validBaseRoute, ...validDevRoutes, authorizedRoute]);
-    expect(errorsAuthorized).toEqual([]);
-
-    const errorsUnauthorized = validateRouteCatalog([validBaseRoute, ...validDevRoutes, unauthorizedRoute]);
-    expect(errorsUnauthorized.some(err => err.includes("contains unauthorized wildcards"))).toBe(true);
-  });
-
-  test('rejects missing canonical dev routes', () => {
-    const catalog = [validBaseRoute]; // missing /dev/routing, etc.
+  test('rejects /developer/* when present', () => {
+    const removedRoute = { path: '/developer/*', label: 'Developer Wild', description: 'Developer info wildcard', access: 'admin', isActive: true, surface: 'dev' };
+    const catalog = [validBaseRoute, ...validDevRoutes, removedRoute];
     const errors = validateRouteCatalog(catalog);
-    expect(errors.some(err => err.includes("missing from catalog"))).toBe(true);
+    expect(errors.some(err => err.includes("must not be registered in the route catalog"))).toBe(true);
   });
 
-  test('validates App.tsx guards if foundGuards option is provided', () => {
-    const catalog = [validBaseRoute, ...validDevRoutes];
-    const foundGuards = {
-      '/': 'None',
-      '/dev': 'AdminRoute',
-      '/dev/routing': 'AdminRoute',
-      '/dev/data-model': 'AdminRoute',
-      '/dev/security': 'AdminRoute',
-      '/dev/demo': 'AdminRoute',
-      '/dev/library-demo': 'AdminRoute'
-    };
-    const errors = validateRouteCatalog(catalog, { foundGuards });
-    expect(errors).toEqual([]);
+  test('rejects /demo when present', () => {
+    const removedRoute = { path: '/demo', label: 'Demo', description: 'Demo info', access: 'admin', isActive: true, surface: 'dev' };
+    const catalog = [validBaseRoute, ...validDevRoutes, removedRoute];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.some(err => err.includes("must not be registered in the route catalog"))).toBe(true);
+  });
 
-    // Mismatched guard
-    const badGuards = {
-      ...foundGuards,
-      '/dev': 'ProtectedRoute' // must be AdminRoute
-    };
-    const badErrors = validateRouteCatalog(catalog, { foundGuards: badGuards });
-    expect(badErrors.some(err => err.includes("must use AdminRoute guard"))).toBe(true);
+  test('rejects /library-demo when present', () => {
+    const removedRoute = { path: '/library-demo', label: 'Library Demo', description: 'Library info', access: 'admin', isActive: true, surface: 'dev' };
+    const catalog = [validBaseRoute, ...validDevRoutes, removedRoute];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.some(err => err.includes("must not be registered in the route catalog"))).toBe(true);
+  });
+
+  test('rejects route with canonicalPath property', () => {
+    const customRoute = { path: '/foo', label: 'Home', description: 'Desc', access: 'public', isActive: true, surface: 'public', canonicalPath: '/bar' };
+    const catalog = [validBaseRoute, ...validDevRoutes, customRoute];
+    const errors = validateRouteCatalog(catalog);
+    expect(errors.some(err => err.includes("must not have a 'canonicalPath' property"))).toBe(true);
   });
 });

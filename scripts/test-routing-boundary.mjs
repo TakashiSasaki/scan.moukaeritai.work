@@ -108,9 +108,51 @@ while ((match = routeTagRegex.exec(appEntryContent)) !== null) {
   }
 }
 
-// Ensure removed routes are not registered in route catalog or App.tsx
-const catalogErrors = validateRouteCatalog(routes, { foundGuards });
+// Validate route catalog statically
+const catalogErrors = validateRouteCatalog(routes);
 errors.push(...catalogErrors);
+
+// Runtime guard checks (separated from catalog validator)
+const removedPaths = ['/developer', '/developer/*', '/demo', '/library-demo'];
+for (const path of removedPaths) {
+  if (foundGuards[path] !== undefined) {
+    errors.push(`Removed route '${path}' must not exist in App.tsx runtime routes.`);
+  }
+}
+
+for (const route of routes) {
+  if (route.isActive) {
+    let hasMatch = false;
+    let guard = 'None';
+
+    if (foundGuards[route.path] !== undefined || foundGuards[route.path + '/*'] !== undefined) {
+      hasMatch = true;
+      guard = foundGuards[route.path] || foundGuards[route.path + '/*'];
+    } else {
+      // Check if covered by wildcard route like /dev/*
+      for (const guardPath of Object.keys(foundGuards)) {
+        if (guardPath.endsWith('/*')) {
+          const prefix = guardPath.slice(0, -2);
+          if (route.path === prefix || route.path.startsWith(prefix + '/')) {
+            hasMatch = true;
+            guard = foundGuards[guardPath];
+            break;
+          }
+        }
+      }
+    }
+
+    if (!hasMatch) {
+      errors.push(`Active route ${route.path} not found in App.tsx runtime routes.`);
+    } else {
+      if (route.access === 'admin' && guard !== 'AdminRoute') {
+        errors.push(`Admin route ${route.path} must use AdminRoute guard, found ${guard}.`);
+      } else if (route.access === 'authenticated' && guard !== 'ProtectedRoute') {
+        errors.push(`Authenticated route ${route.path} must use ProtectedRoute guard, found ${guard}.`);
+      }
+    }
+  }
+}
 
 if (errors.length > 0) {
   console.error("Routing boundary validation failed:");
