@@ -132,3 +132,12 @@ For this repository:
 - `src/lib/routeCatalog.ts` remains the canonical statement of currently implemented routes and route access policy;
 - this document describes preferred architecture, while the route catalog describes current implementation state;
 - future development should move toward this convention incrementally, without treating conformance alone as sufficient reason for unrelated refactoring.
+
+## Current adoption
+
+- `/`, `/app`, `/admin`, and `/test` are currently adopted surface roots.
+- `/dev` is the sole canonical namespace for internal-development interfaces.
+- Canonical development routes include documentation, hardware demo, and library demo paths under `/dev`.
+- The former `/developer/*`, `/demo`, and `/library-demo` routes are no longer retained as compatibility aliases.
+- Domain-specific application routes such as `/settings` and `/object/*` remain semantically classified as `app` routes without being moved.
+- The `api` surface remains unimplemented until an actual external integration interface is designed.

@@ -59,27 +59,113 @@ if (!pkg.version) fail('Missing version in package.json');
 try { parseSemver(pkg.version); } catch (error) { fail(error.message); }
 console.log(`Current application version: ${pkg.version}`);
 
+// UNCONDITIONAL workspace version synchronization checks
+const targetVersion = pkg.version;
+const checkEquals = (val, expected, label) => {
+  if (val !== expected) {
+    fail(`Workspace synchronization mismatch in ${label}: expected ${expected}, got ${val}`);
+  }
+};
+
+try {
+  const funPkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'functions/package.json'), 'utf8'));
+  checkEquals(funPkg.version, targetVersion, 'functions/package.json version');
+} catch (error) {
+  fail(`Failed to validate functions/package.json: ${error.message}`);
+}
+
+try {
+  const efpPkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'packages/efp-model/package.json'), 'utf8'));
+  checkEquals(efpPkg.version, targetVersion, 'packages/efp-model/package.json version');
+} catch (error) {
+  fail(`Failed to validate packages/efp-model/package.json: ${error.message}`);
+}
+
+try {
+  const profile = JSON.parse(fs.readFileSync(path.join(rootDir, 'contracts/profiles/current-application.json'), 'utf8'));
+  checkEquals(profile.applicationVersion, targetVersion, 'contracts/profiles/current-application.json applicationVersion');
+} catch (error) {
+  fail(`Failed to validate contracts/profiles/current-application.json: ${error.message}`);
+}
+
+try {
+  const lock = JSON.parse(fs.readFileSync(path.join(rootDir, 'package-lock.json'), 'utf8'));
+  checkEquals(lock.version, targetVersion, 'package-lock.json root version');
+  checkEquals(lock.packages?.[""]?.version, targetVersion, 'package-lock.json packages[""].version');
+} catch (error) {
+  fail(`Failed to validate package-lock.json: ${error.message}`);
+}
+
+try {
+  const funLock = JSON.parse(fs.readFileSync(path.join(rootDir, 'functions/package-lock.json'), 'utf8'));
+  checkEquals(funLock.version, targetVersion, 'functions/package-lock.json root version');
+  checkEquals(funLock.packages?.[""]?.version, targetVersion, 'functions/package-lock.json packages[""].version');
+} catch (error) {
+  fail(`Failed to validate functions/package-lock.json: ${error.message}`);
+}
+
+try {
+  const efpLock = JSON.parse(fs.readFileSync(path.join(rootDir, 'packages/efp-model/package-lock.json'), 'utf8'));
+  checkEquals(efpLock.version, targetVersion, 'packages/efp-model/package-lock.json root version');
+  checkEquals(efpLock.packages?.[""]?.version, targetVersion, 'packages/efp-model/package-lock.json packages[""].version');
+} catch (error) {
+  fail(`Failed to validate packages/efp-model/package-lock.json: ${error.message}`);
+}
+
 if (!isStatic) {
-  let baseRef = 'HEAD~1';
-  if (process.env.GITHUB_BASE_REF) baseRef = `origin/${process.env.GITHUB_BASE_REF}`;
-  else if (process.env.GITHUB_SHA) baseRef = `${process.env.GITHUB_SHA}~1`;
+  let baseRef = null;
+  if (process.env.VERIFY_VERSION_BASE_REF) {
+    baseRef = process.env.VERIFY_VERSION_BASE_REF;
+  } else if (process.env.VERIFY_FAST_BASE_REF) {
+    baseRef = process.env.VERIFY_FAST_BASE_REF;
+  } else if (process.env.GITHUB_BASE_REF) {
+    baseRef = `origin/${process.env.GITHUB_BASE_REF}`;
+  } else if (process.env.GITHUB_SHA) {
+    baseRef = `${process.env.GITHUB_SHA}~1`;
+  } else {
+    baseRef = 'HEAD~1';
+  }
   console.log(`Comparing version metadata against base reference: ${baseRef}`);
+
+  try {
+    execSync(`git rev-parse --verify ${baseRef}`, { stdio: 'ignore' });
+  } catch (_) {
+    fail(`Base reference "${baseRef}" cannot be resolved in Git.`);
+  }
 
   try {
     if (process.env.GITHUB_BASE_REF) execSync(`git fetch --depth=10 origin ${process.env.GITHUB_BASE_REF}`, { stdio: 'inherit' });
     const basePackage = JSON.parse(execSync(`git show ${baseRef}:package.json`, { encoding: 'utf8', stdio: 'pipe' }));
-    if (basePackage.version && basePackage.version !== pkg.version) {
-      if (!isSemverGreater(pkg.version, basePackage.version)) {
-        fail(`package.json version changed from ${basePackage.version} to ${pkg.version}, but did not monotonically increase.`);
-      }
-      const [currentMajor] = parseSemver(pkg.version);
-      const [baseMajor] = parseSemver(basePackage.version);
-      if (currentMajor > baseMajor) {
-        try {
-          const approval = JSON.parse(execSync(`git show ${baseRef}:contracts/governance/major-bump-approval.json`, { encoding: 'utf8', stdio: 'pipe' }));
-          if (approval.approvedVersion !== pkg.version) fail(`Major version bump requires pre-existing human approval for ${pkg.version} in base branch.`);
-        } catch (error) {
-          fail(`Major version bump detected without valid pre-existing human approval in base branch: ${error.message}`);
+    
+    // Check if there are application-code changes
+    const diffFiles = execSync(`git diff --name-only ${baseRef}`, { encoding: 'utf8', stdio: 'pipe' })
+      .split('\n')
+      .map(f => f.trim())
+      .filter(Boolean);
+
+    const hasCodeChanges = diffFiles.some(file => {
+      const isDoc = /^(README\.md|AGENTS\.md|\.agents\/|docs\/|.*\.md$)/i.test(file);
+      return !isDoc;
+    });
+
+    if (basePackage.version) {
+      if (basePackage.version === pkg.version) {
+        if (hasCodeChanges) {
+          fail(`package.json version is unchanged (${pkg.version}) despite application code changes. Every change modifying application code or contracts must increment the application version.`);
+        }
+      } else {
+        if (!isSemverGreater(pkg.version, basePackage.version)) {
+          fail(`package.json version changed from ${basePackage.version} to ${pkg.version}, but did not monotonically increase.`);
+        }
+        const [currentMajor] = parseSemver(pkg.version);
+        const [baseMajor] = parseSemver(basePackage.version);
+        if (currentMajor > baseMajor) {
+          try {
+            const approval = JSON.parse(execSync(`git show ${baseRef}:contracts/governance/major-bump-approval.json`, { encoding: 'utf8', stdio: 'pipe' }));
+            if (approval.approvedVersion !== pkg.version) fail(`Major version bump requires pre-existing human approval for ${pkg.version} in base branch.`);
+          } catch (error) {
+            fail(`Major version bump detected without valid pre-existing human approval in base branch: ${error.message}`);
+          }
         }
       }
     }
@@ -97,4 +183,4 @@ if (process.env.RELEASE_TASK === 'true') {
   if (!profile.applicationVersion) fail('Release task requires applicationVersion metadata in current-application.json.');
 }
 
-console.log('✅ Version verification passed.');
+console.log('• Version verification passed.');

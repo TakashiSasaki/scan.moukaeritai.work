@@ -31,8 +31,11 @@ describe("version-verifier integration tests", () => {
 
     // Create initial state
     writeJson('package.json', { version: "2.0.8" });
+    writeJson('package-lock.json', { name: "scan-mw", version: "2.0.8", lockfileVersion: 3, packages: { "": { name: "scan-mw", version: "2.0.8" } } });
     writeJson('functions/package.json', { version: "2.0.8" });
+    writeJson('functions/package-lock.json', { name: "functions", version: "2.0.8", lockfileVersion: 3, packages: { "": { name: "functions", version: "2.0.8" } } });
     writeJson('packages/efp-model/package.json', { version: "2.0.8" });
+    writeJson('packages/efp-model/package-lock.json', { name: "@scan/efp-model", version: "2.0.8", lockfileVersion: 3, packages: { "": { name: "@scan/efp-model", version: "2.0.8" } } });
     writeJson('contracts/profiles/current-application.json', { applicationVersion: "2.0.8" });
     fs.writeFileSync('README.md', 'Version 2.0.8');
     fs.writeFileSync('src/index.ts', 'console.log("hello");');
@@ -50,26 +53,39 @@ describe("version-verifier integration tests", () => {
 
   const runVerifier = () => {
     try {
-      execSync('node scripts/verify-version.mjs', { stdio: 'pipe', env: { ...process.env, GITHUB_BASE_REF: '', GITHUB_SHA: '' } });
+      execSync('node scripts/verify-version.mjs', { 
+        stdio: 'pipe', 
+        env: { 
+          ...process.env, 
+          GITHUB_BASE_REF: '', 
+          GITHUB_SHA: '',
+          VERIFY_VERSION_BASE_REF: '',
+          VERIFY_FAST_BASE_REF: ''
+        } 
+      });
       return { success: true };
     } catch (e: any) {
       return { success: false, error: e.stderr?.toString() || e.message };
     }
   };
 
-  test("internal code change + version unchanged -> pass", () => {
+  test("internal code change + version unchanged -> fail", () => {
     fs.writeFileSync('src/index.ts', 'console.log("changed");');
     execSync('git commit -am "change src"');
     const res = runVerifier();
-    expect(res.success).toBe(true);
+    expect(res.success).toBe(false);
+    expect(res.error).toContain("version is unchanged");
     execSync('git reset --hard HEAD~1'); // revert
   });
 
   test("version増加 -> pass", () => {
     fs.writeFileSync('src/index.ts', 'console.log("changed");');
     writeJson('package.json', { version: "2.0.9" });
+    writeJson('package-lock.json', { name: "scan-mw", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "scan-mw", version: "2.0.9" } } });
     writeJson('functions/package.json', { version: "2.0.9" });
-    writeJson('packages/efp-model/package.json', { version: "2.0.9" });
+    writeJson('functions/package-lock.json', { name: "functions", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "functions", version: "2.0.9" } } });
+    writeJson('packages/efp-model/package.json', { name: "@scan/efp-model", version: "2.0.9" });
+    writeJson('packages/efp-model/package-lock.json', { name: "@scan/efp-model", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "@scan/efp-model", version: "2.0.9" } } });
     writeJson('contracts/profiles/current-application.json', { applicationVersion: "2.0.9" });
     fs.writeFileSync('README.md', 'Version 2.0.9');
     execSync('git commit -am "bump version"');
@@ -82,6 +98,12 @@ describe("version-verifier integration tests", () => {
   test("version減少 -> fail", () => {
     fs.writeFileSync('src/index.ts', 'console.log("changed");');
     writeJson('package.json', { version: "2.0.7" });
+    writeJson('package-lock.json', { name: "scan-mw", version: "2.0.7", lockfileVersion: 3, packages: { "": { name: "scan-mw", version: "2.0.7" } } });
+    writeJson('functions/package.json', { version: "2.0.7" });
+    writeJson('functions/package-lock.json', { name: "functions", version: "2.0.7", lockfileVersion: 3, packages: { "": { name: "functions", version: "2.0.7" } } });
+    writeJson('packages/efp-model/package.json', { name: "@scan/efp-model", version: "2.0.7" });
+    writeJson('packages/efp-model/package-lock.json', { name: "@scan/efp-model", version: "2.0.7", lockfileVersion: 3, packages: { "": { name: "@scan/efp-model", version: "2.0.7" } } });
+    writeJson('contracts/profiles/current-application.json', { applicationVersion: "2.0.7" });
     execSync('git commit -am "decrease version"');
     const res = runVerifier();
     expect(res.success).toBe(false);
@@ -106,8 +128,14 @@ describe("version-verifier integration tests", () => {
     
     // Create a new commit on top where we pretend we bumped
     writeJson('package.json', { version: "2.0.9" });
-    execSync('git add package.json');
-    execSync('git commit -m "add back package.json"');
+    writeJson('package-lock.json', { name: "scan-mw", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "scan-mw", version: "2.0.9" } } });
+    writeJson('functions/package.json', { version: "2.0.9" });
+    writeJson('functions/package-lock.json', { name: "functions", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "functions", version: "2.0.9" } } });
+    writeJson('packages/efp-model/package.json', { name: "@scan/efp-model", version: "2.0.9" });
+    writeJson('packages/efp-model/package-lock.json', { name: "@scan/efp-model", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "@scan/efp-model", version: "2.0.9" } } });
+    writeJson('contracts/profiles/current-application.json', { applicationVersion: "2.0.9" });
+    execSync('git add -A');
+    execSync('git commit -m "add back package.json with workspace alignment"');
     
     const res = runVerifier();
     expect(res.success).toBe(false);
@@ -116,19 +144,89 @@ describe("version-verifier integration tests", () => {
     execSync('git branch -D no-base-pkg');
   });
 
-  test("profile, README, and package version duplication are not required", () => {
+  test("Root version increased but Functions version unchanged fails", () => {
     writeJson('package.json', { version: '2.0.9' });
-    // Deliberately leave functions/package.json, efp-model package.json, profile, and README at 2.0.8.
-    execSync('git commit -am "bump root app version only"');
+    writeJson('package-lock.json', { name: "scan-mw", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "scan-mw", version: "2.0.9" } } });
+    execSync('git commit -am "bump root app version and lockfile only"');
     const res = runVerifier();
-    expect(res.success).toBe(true);
+    expect(res.success).toBe(false);
+    expect(res.error).toContain("functions/package.json version");
+    execSync('git reset --hard HEAD~1');
+  });
+
+  test("Root version increased but EFP model version unchanged fails", () => {
+    writeJson('package.json', { version: '2.0.9' });
+    writeJson('package-lock.json', { name: "scan-mw", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "scan-mw", version: "2.0.9" } } });
+    writeJson('functions/package.json', { version: "2.0.9" });
+    writeJson('functions/package-lock.json', { name: "functions", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "functions", version: "2.0.9" } } });
+    execSync('git commit -am "bump root and functions only"');
+    const res = runVerifier();
+    expect(res.success).toBe(false);
+    expect(res.error).toContain("packages/efp-model/package.json version");
+    execSync('git reset --hard HEAD~1');
+  });
+
+  test("Root version increased but current application profile unchanged fails", () => {
+    writeJson('package.json', { version: '2.0.9' });
+    writeJson('package-lock.json', { name: "scan-mw", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "scan-mw", version: "2.0.9" } } });
+    writeJson('functions/package.json', { version: "2.0.9" });
+    writeJson('functions/package-lock.json', { name: "functions", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "functions", version: "2.0.9" } } });
+    writeJson('packages/efp-model/package.json', { name: "@scan/efp-model", version: "2.0.9" });
+    writeJson('packages/efp-model/package-lock.json', { name: "@scan/efp-model", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "@scan/efp-model", version: "2.0.9" } } });
+    execSync('git commit -am "bump workspace pkgs but not profile"');
+    const res = runVerifier();
+    expect(res.success).toBe(false);
+    expect(res.error).toContain("current-application.json applicationVersion");
+    execSync('git reset --hard HEAD~1');
+  });
+
+  test("Root manifest and root lockfile version mismatch fails", () => {
+    writeJson('package.json', { version: '2.0.9' });
+    writeJson('functions/package.json', { version: "2.0.9" });
+    writeJson('packages/efp-model/package.json', { name: "@scan/efp-model", version: "2.0.9" });
+    writeJson('contracts/profiles/current-application.json', { applicationVersion: "2.0.9" });
+    execSync('git commit -am "mismatch root manifest and lockfile"');
+    const res = runVerifier();
+    expect(res.success).toBe(false);
+    expect(res.error).toContain("package-lock.json root version");
+    execSync('git reset --hard HEAD~1');
+  });
+
+  test("Functions manifest and Functions lockfile mismatch fails", () => {
+    writeJson('package.json', { version: '2.0.9' });
+    writeJson('package-lock.json', { name: "scan-mw", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "scan-mw", version: "2.0.9" } } });
+    writeJson('functions/package.json', { version: "2.0.9" });
+    writeJson('packages/efp-model/package.json', { name: "@scan/efp-model", version: "2.0.9" });
+    writeJson('packages/efp-model/package-lock.json', { name: "@scan/efp-model", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "@scan/efp-model", version: "2.0.9" } } });
+    writeJson('contracts/profiles/current-application.json', { applicationVersion: "2.0.9" });
+    execSync('git commit -am "mismatch functions manifest and lockfile"');
+    const res = runVerifier();
+    expect(res.success).toBe(false);
+    expect(res.error).toContain("functions/package-lock.json root version");
+    execSync('git reset --hard HEAD~1');
+  });
+
+  test("EFP model manifest and EFP model lockfile mismatch fails", () => {
+    writeJson('package.json', { version: '2.0.9' });
+    writeJson('package-lock.json', { name: "scan-mw", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "scan-mw", version: "2.0.9" } } });
+    writeJson('functions/package.json', { version: "2.0.9" });
+    writeJson('functions/package-lock.json', { name: "functions", version: "2.0.9", lockfileVersion: 3, packages: { "": { name: "functions", version: "2.0.9" } } });
+    writeJson('packages/efp-model/package.json', { name: "@scan/efp-model", version: "2.0.9" });
+    writeJson('contracts/profiles/current-application.json', { applicationVersion: "2.0.9" });
+    execSync('git commit -am "mismatch efp manifest and lockfile"');
+    const res = runVerifier();
+    expect(res.success).toBe(false);
+    expect(res.error).toContain("packages/efp-model/package-lock.json root version");
     execSync('git reset --hard HEAD~1');
   });
 
   test("major bump + approval recordなし -> fail", () => {
     writeJson('package.json', { version: "3.0.0" });
+    writeJson('package-lock.json', { name: "scan-mw", version: "3.0.0", lockfileVersion: 3, packages: { "": { name: "scan-mw", version: "3.0.0" } } });
     writeJson('functions/package.json', { version: "3.0.0" });
+    writeJson('functions/package-lock.json', { name: "functions", version: "3.0.0", lockfileVersion: 3, packages: { "": { name: "functions", version: "3.0.0" } } });
     writeJson('packages/efp-model/package.json', { version: "3.0.0" });
+    writeJson('packages/efp-model/package-lock.json', { name: "@scan/efp-model", version: "3.0.0", lockfileVersion: 3, packages: { "": { name: "@scan/efp-model", version: "3.0.0" } } });
     writeJson('contracts/profiles/current-application.json', { applicationVersion: "3.0.0" });
     fs.writeFileSync('README.md', 'Version 3.0.0');
     execSync('git commit -am "major bump without approval"');
@@ -140,8 +238,11 @@ describe("version-verifier integration tests", () => {
 
   test("major bump +同じ変更内だけのapproval record -> fail", () => {
     writeJson('package.json', { version: "3.0.0" });
+    writeJson('package-lock.json', { name: "scan-mw", version: "3.0.0", lockfileVersion: 3, packages: { "": { name: "scan-mw", version: "3.0.0" } } });
     writeJson('functions/package.json', { version: "3.0.0" });
+    writeJson('functions/package-lock.json', { name: "functions", version: "3.0.0", lockfileVersion: 3, packages: { "": { name: "functions", version: "3.0.0" } } });
     writeJson('packages/efp-model/package.json', { version: "3.0.0" });
+    writeJson('packages/efp-model/package-lock.json', { name: "@scan/efp-model", version: "3.0.0", lockfileVersion: 3, packages: { "": { name: "@scan/efp-model", version: "3.0.0" } } });
     writeJson('contracts/profiles/current-application.json', { applicationVersion: "3.0.0" });
     fs.writeFileSync('README.md', 'Version 3.0.0');
     writeJson('contracts/governance/major-bump-approval.json', { approvedVersion: "3.0.0" });
@@ -163,8 +264,11 @@ describe("version-verifier integration tests", () => {
     
     // Now do the bump
     writeJson('package.json', { version: "3.0.0" });
+    writeJson('package-lock.json', { name: "scan-mw", version: "3.0.0", lockfileVersion: 3, packages: { "": { name: "scan-mw", version: "3.0.0" } } });
     writeJson('functions/package.json', { version: "3.0.0" });
+    writeJson('functions/package-lock.json', { name: "functions", version: "3.0.0", lockfileVersion: 3, packages: { "": { name: "functions", version: "3.0.0" } } });
     writeJson('packages/efp-model/package.json', { version: "3.0.0" });
+    writeJson('packages/efp-model/package-lock.json', { name: "@scan/efp-model", version: "3.0.0", lockfileVersion: 3, packages: { "": { name: "@scan/efp-model", version: "3.0.0" } } });
     writeJson('contracts/profiles/current-application.json', { applicationVersion: "3.0.0" });
     fs.writeFileSync('README.md', 'Version 3.0.0');
     execSync('git commit -am "major bump"');
@@ -184,8 +288,11 @@ describe("version-verifier integration tests", () => {
       fs.mkdirSync(path.join(nonGitDir, 'contracts/profiles'), { recursive: true });
       fs.copyFileSync(path.join(originalCwd, 'scripts', 'verify-version.mjs'), path.join(nonGitDir, 'scripts', 'verify-version.mjs'));
       fs.writeFileSync(path.join(nonGitDir, 'package.json'), JSON.stringify({ version: "2.0.13" }));
+      fs.writeFileSync(path.join(nonGitDir, 'package-lock.json'), JSON.stringify({ name: "scan-mw", version: "2.0.13", lockfileVersion: 3, packages: { "": { name: "scan-mw", version: "2.0.13" } } }));
       fs.writeFileSync(path.join(nonGitDir, 'functions', 'package.json'), JSON.stringify({ version: "2.0.13" }));
+      fs.writeFileSync(path.join(nonGitDir, 'functions', 'package-lock.json'), JSON.stringify({ name: "functions", version: "2.0.13", lockfileVersion: 3, packages: { "": { name: "functions", version: "2.0.13" } } }));
       fs.writeFileSync(path.join(nonGitDir, 'packages/efp-model/package.json'), JSON.stringify({ version: "2.0.13" }));
+      fs.writeFileSync(path.join(nonGitDir, 'packages/efp-model/package-lock.json'), JSON.stringify({ name: "@scan/efp-model", version: "2.0.13", lockfileVersion: 3, packages: { "": { name: "@scan/efp-model", version: "2.0.13" } } }));
       fs.writeFileSync(path.join(nonGitDir, 'contracts/profiles/current-application.json'), JSON.stringify({ applicationVersion: "2.0.13" }));
       fs.writeFileSync(path.join(nonGitDir, 'README.md'), "Version 2.0.13");
 

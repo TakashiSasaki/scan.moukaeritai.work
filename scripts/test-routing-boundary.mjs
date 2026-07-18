@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { validateRouteCatalog } from './lib/route-catalog-validator.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,19 +48,53 @@ if (appEntryContent.includes('objectIdentifierBindings') || appEntryContent.incl
 
 // Parse routeCatalog
 const routes = [];
-const routeBlockRegex = /\{\s*path:\s*['"]([^'"]+)['"]\s*,\s*label:\s*['"][^'"]+['"]\s*,\s*description:\s*['"][^'"]+['"]\s*,\s*access:\s*['"]([^'"]+)['"]\s*,\s*isActive:\s*(true|false)\s*\}/g;
-let match;
-while ((match = routeBlockRegex.exec(routeCatalogContent)) !== null) {
-  routes.push({
-    path: match[1],
-    access: match[2],
-    isActive: match[3] === 'true'
-  });
+
+const arrayStart = routeCatalogContent.indexOf('const routes');
+if (arrayStart === -1) {
+  errors.push("Failed to locate 'const routes' in routeCatalog.ts");
+} else {
+  const openBracket = routeCatalogContent.indexOf('[', arrayStart);
+  const closeBracket = routeCatalogContent.indexOf('];', openBracket);
+  if (openBracket === -1 || closeBracket === -1) {
+    errors.push("Failed to locate routes array boundaries in routeCatalog.ts");
+  } else {
+    const routesArrayStr = routeCatalogContent.slice(openBracket + 1, closeBracket);
+    const rawObjectCount = (routesArrayStr.match(/\{/g) || []).length;
+
+    const objectRegex = /\{([^}]+)\}/g;
+    let objMatch;
+    while ((objMatch = objectRegex.exec(routesArrayStr)) !== null) {
+      const objContent = objMatch[1];
+      const obj = {};
+      const kvRegex = /(\w+)\s*:\s*(['"]([^'"]*)['"]|true|false)/g;
+      let kvMatch;
+      while ((kvMatch = kvRegex.exec(objContent)) !== null) {
+        const key = kvMatch[1];
+        let value = kvMatch[2];
+        if (value === 'true') {
+          value = true;
+        } else if (value === 'false') {
+          value = false;
+        } else {
+          value = kvMatch[3];
+        }
+        obj[key] = value;
+      }
+      routes.push(obj);
+    }
+
+    if (routes.length === 0) {
+      errors.push("Failed to parse any routes from catalog.");
+    } else if (routes.length !== rawObjectCount) {
+      errors.push(`Route count mismatch: Parsed ${routes.length} routes, but found ${rawObjectCount} raw objects in catalog.`);
+    }
+  }
 }
 
 // Parse App.tsx routes
 const routeRegex = /<Route\s+path=["']([^"']+)["']\s+element=\{<\s*([A-Za-z]+)/g;
 const foundGuards = {};
+let match;
 while ((match = routeRegex.exec(appEntryContent)) !== null) {
   const routePath = match[1];
   const guardComponent = match[2];
@@ -73,32 +108,43 @@ while ((match = routeTagRegex.exec(appEntryContent)) !== null) {
   }
 }
 
-// Validate registry vs App.tsx
+// Validate route catalog statically
+const catalogErrors = validateRouteCatalog(routes);
+errors.push(...catalogErrors);
+
+// Runtime guard checks (separated from catalog validator)
+const removedPaths = ['/developer', '/developer/*', '/demo', '/library-demo'];
+for (const path of removedPaths) {
+  if (foundGuards[path] !== undefined) {
+    errors.push(`Removed route '${path}' must not exist in App.tsx runtime routes.`);
+  }
+}
+
 for (const route of routes) {
-  if (!route.access) {
-    errors.push(`Route ${route.path} is missing access policy in registry.`);
-  }
-
-  // legacy route check
-  if (['/search', '/overview', '/unassigned'].includes(route.path) && route.isActive) {
-    errors.push(`Legacy route ${route.path} must be inactive.`);
-  }
-
-  // Admin route check
-  if (['/admin', '/admin/sitemap', '/developer', '/demo', '/library-demo', '/test'].includes(route.path) && route.access !== 'admin') {
-    errors.push(`Route ${route.path} must be admin in registry.`);
-  }
-
-  // Exists in App.tsx?
-  // We need to account for /* suffixes
-  let searchPath = route.path;
-  if (searchPath === '/developer') searchPath = '/developer/*'; // Hardcode known differences or check generic. Let's just check both.
-  
   if (route.isActive) {
-    if (!foundGuards[route.path] && !foundGuards[route.path + '/*']) {
+    let hasMatch = false;
+    let guard = 'None';
+
+    if (foundGuards[route.path] !== undefined || foundGuards[route.path + '/*'] !== undefined) {
+      hasMatch = true;
+      guard = foundGuards[route.path] || foundGuards[route.path + '/*'];
+    } else {
+      // Check if covered by wildcard route like /dev/*
+      for (const guardPath of Object.keys(foundGuards)) {
+        if (guardPath.endsWith('/*')) {
+          const prefix = guardPath.slice(0, -2);
+          if (route.path === prefix || route.path.startsWith(prefix + '/')) {
+            hasMatch = true;
+            guard = foundGuards[guardPath];
+            break;
+          }
+        }
+      }
+    }
+
+    if (!hasMatch) {
       errors.push(`Active route ${route.path} not found in App.tsx runtime routes.`);
     } else {
-      const guard = foundGuards[route.path] || foundGuards[route.path + '/*'];
       if (route.access === 'admin' && guard !== 'AdminRoute') {
         errors.push(`Admin route ${route.path} must use AdminRoute guard, found ${guard}.`);
       } else if (route.access === 'authenticated' && guard !== 'ProtectedRoute') {

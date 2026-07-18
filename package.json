@@ -1,7 +1,7 @@
 {
   "name": "scan-mw",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.1.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -21,11 +21,11 @@
     "test:functions-artifact": "node scripts/test-functions-artifact.mjs",
     "test:functions-boundary": "node scripts/validate-functions-import-boundary.mjs",
     "test:functions-runtime-gate": "node scripts/validate-functions-runtime-gate.mjs",
-    "test:functions-artifact:isolation": "node scripts/validate-local-artifact-path.mjs",
+    "test:functions-artifact:isolation": "node scripts/validate-local-artifact-path.mjs functions/vendor/efp-model/package.json",
     "verify:fast": "node scripts/verify-fast.mjs",
-    "verify:pr": "node scripts/validate-repository-bootstrap.mjs && node scripts/validate-documentation-state.mjs && node scripts/verify-version.mjs --static && npm run contracts:validate && npm run contracts:check-generated && npm run test:firestore-policy && npm run test:routing && npm run test && npm run lint && npm run build && npm --prefix packages/efp-model run build && npm --prefix packages/efp-model run typecheck && npm --prefix packages/efp-model run test && npm run prepare:functions-artifact && npm ci --prefix functions && npm --prefix functions run build && npm --prefix functions run test && npm run test:functions-artifact && npm run test:functions-boundary",
-    "verify:release": "npm run verify:pr && node scripts/verify-version.mjs --static",
-    "version:verify": "node scripts/verify-version.mjs --static"
+    "verify:pr": "node scripts/validate-repository-bootstrap.mjs && node scripts/validate-documentation-state.mjs && node scripts/verify-version.mjs && npm run contracts:validate && npm run contracts:check-generated && npm run test:firestore-policy && npm run test:routing && npm run test && npm run lint && npm run build && npm --prefix packages/efp-model run build && npm --prefix packages/efp-model run typecheck && npm --prefix packages/efp-model run test && npm run prepare:functions-artifact && npm ci --prefix functions && npm --prefix functions run build && npm --prefix functions run test && npm run test:functions-artifact && npm run test:functions-boundary",
+    "verify:release": "npm run verify:pr && node scripts/verify-version.mjs",
+    "version:verify": "node scripts/verify-version.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

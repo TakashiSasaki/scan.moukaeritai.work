@@ -27,9 +27,10 @@ try {
   check(false, 'package-lock.json is readable');
 }
 
+const targetVersion = pkg?.version;
 if (pkg) {
   check(pkg.private === true, 'package.json.private is true');
-  check(pkg.version === '2.1.0', 'package.json.version is 2.1.0');
+  check(!!pkg.version, 'package.json.version exists');
   
   const requiredScripts = ['build', 'lint', 'test', 'verify:fast', 'verify:pr', 'verify:release'];
   for (const script of requiredScripts) {
@@ -40,29 +41,46 @@ if (pkg) {
   check(!pkg.scripts?.build?.includes('server.ts'), 'build script does not reference server.ts');
 }
 
-if (lock) {
-  check(lock.version === '2.1.0', 'package-lock.json root version is 2.1.0');
+if (lock && targetVersion) {
+  check(lock.version === targetVersion, `package-lock.json root version is ${targetVersion}`);
+  check(lock.packages?.[""]?.version === targetVersion, `package-lock.json packages[""].version is ${targetVersion}`);
 }
 
 try {
   const funPkg = JSON.parse(fs.readFileSync('functions/package.json', 'utf8'));
-  check(funPkg.version === '2.1.0', 'functions/package.json version is 2.1.0');
+  check(funPkg.version === targetVersion, `functions/package.json version is ${targetVersion}`);
 } catch (e) {
-  check(false, 'functions/package.json is readable');
+  check(false, 'functions/package.json is readable and valid');
+}
+
+try {
+  const funLock = JSON.parse(fs.readFileSync('functions/package-lock.json', 'utf8'));
+  check(funLock.version === targetVersion, `functions/package-lock.json root version is ${targetVersion}`);
+  check(funLock.packages?.[""]?.version === targetVersion, `functions/package-lock.json packages[""].version is ${targetVersion}`);
+} catch (e) {
+  check(false, 'functions/package-lock.json is readable and valid');
 }
 
 try {
   const efpPkg = JSON.parse(fs.readFileSync('packages/efp-model/package.json', 'utf8'));
-  check(efpPkg.version === '2.1.0', 'packages/efp-model/package.json version is 2.1.0');
+  check(efpPkg.version === targetVersion, `packages/efp-model/package.json version is ${targetVersion}`);
 } catch (e) {
-  check(false, 'packages/efp-model/package.json is readable');
+  check(false, 'packages/efp-model/package.json is readable and valid');
+}
+
+try {
+  const efpLock = JSON.parse(fs.readFileSync('packages/efp-model/package-lock.json', 'utf8'));
+  check(efpLock.version === targetVersion, `packages/efp-model/package-lock.json root version is ${targetVersion}`);
+  check(efpLock.packages?.[""]?.version === targetVersion, `packages/efp-model/package-lock.json packages[""].version is ${targetVersion}`);
+} catch (e) {
+  check(false, 'packages/efp-model/package-lock.json is readable and valid');
 }
 
 try {
   const profile = JSON.parse(fs.readFileSync('contracts/profiles/current-application.json', 'utf8'));
-  check(profile.applicationVersion === '2.1.0', 'current application profile is 2.1.0');
+  check(profile.applicationVersion === targetVersion, `current application profile is ${targetVersion}`);
 } catch (e) {
-  check(false, 'contracts/profiles/current-application.json is readable');
+  check(false, 'contracts/profiles/current-application.json is readable and valid');
 }
 
 check(!fs.existsSync('pnpm-lock.yaml'), 'pnpm-lock.yaml does not exist');

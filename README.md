@@ -1,4 +1,4 @@
-# scan.mw (v2.1.0)
+# scan.mw (v2.1.4)
 
 Cloud-based item tracking and inventory management built on Firebase, React, TypeScript, and the Contract-First Entity-Fact-Projection (EFP) model.
 
