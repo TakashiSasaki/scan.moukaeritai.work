@@ -19,7 +19,7 @@ Treat these files as the authoritative sources for their respective concerns:
 - `.agents/skills/manifest.json`: repository-local skill registry.
 - root `package.json`: application version.
 
-Do not reconstruct these facts from duplicated documentation when an authoritative source is available.
+Do not reconstruct these facts from duplicated documentation when an authoritative source is available. Treat historical stride records, superseded verification status, and cancelled plans as non-normative context unless a current authoritative source explicitly reactivates them.
 
 ### Branch, synchronization, and deployment
 
