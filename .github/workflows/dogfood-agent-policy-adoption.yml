@@ -1,22 +1,53 @@
-name: Dogfood agent-policy adoption
+name: Finalize agent-policy adoption
 
 on:
   pull_request:
+    types:
+      - synchronize
     branches:
       - scan.moukaeritai.work
-  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  preview:
+  finalize:
+    if: github.head_ref == 'chatgpt-agent-policy-adoption'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout product repository
+      - name: Checkout authorized head branch
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
+
+      - name: Revalidate revision and prepared state
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          state = json.loads(Path('.agent-policy/adoption.json').read_text(encoding='utf-8'))
+          assert state['status'] == 'prepared', state['status']
+          assert state['primary_instructions'] == 'AGENTS.md'
+          assert state['preview_output'] == '.agent-policy/preview/AGENTS.md'
+          assert state['verification_command'] == 'npm run verify:pr'
+          assert state['backup_path'] is None
+          assert state['final_output'] is None
+          assert not Path('.agent-policy/adoption/original/AGENTS.md').exists()
+
+          expected = next(
+              item['sha256'] for item in state['sources'] if item['path'] == 'AGENTS.md'
+          )
+          actual = hashlib.sha256(Path('AGENTS.md').read_bytes()).hexdigest()
+          assert actual == expected, (actual, expected)
+          PY
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -28,37 +59,46 @@ jobs:
           python -m pip install --disable-pip-version-check
           "git+https://github.com/TakashiSasaki/agent-policy.git@848923054e168eb2f8c696e73e2273ba8bf09501"
 
-      - name: Regenerate and check adoption preview
+      - name: Revalidate preview before finalization
+        run: agent-policy --repository "$GITHUB_WORKSPACE" adopt preview
+
+      - name: Apply finalization transaction
         shell: bash
         run: |
-          set -o pipefail
-          agent-policy --repository "$GITHUB_WORKSPACE" adopt preview \
-            | tee agent-policy-adoption-preview.txt
-
-      - name: Validate prepared configuration
-        run: agent-policy --repository "$GITHUB_WORKSPACE" validate
-
-      - name: Verify adoption inputs and generated outputs are synchronized
-        run: >-
-          git diff --exit-code --
-          AGENTS.md
-          .github/copilot-instructions.md
-          .agents/policies
-          .agent-policy.yml
-          .agent-policy/adoption.json
-          policy/project.md
-          policy/current-priority.md
-          .agent-policy.lock
-          .agent-policy/preview/AGENTS.md
-          .agents/skills/validate-agent-policy/SKILL.md
-
-      - name: Validate finalization plan without applying
-        shell: bash
-        run: |
-          set -o pipefail
+          set -euo pipefail
           agent-policy --repository "$GITHUB_WORKSPACE" adopt finalize \
             --backup-path .agent-policy/adoption/original/AGENTS.md \
-            | tee agent-policy-finalize-dry-run.txt
+            --apply \
+            | tee agent-policy-finalize-apply.txt
+
+      - name: Verify finalized state and backup integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          state = json.loads(Path('.agent-policy/adoption.json').read_text(encoding='utf-8'))
+          assert state['status'] == 'finalized', state['status']
+          assert state['backup_path'] == '.agent-policy/adoption/original/AGENTS.md'
+          assert state['final_output'] == 'AGENTS.md'
+          assert not Path('.agent-policy/preview/AGENTS.md').exists()
+
+          backup = Path(state['backup_path'])
+          expected = next(
+              item['sha256'] for item in state['sources'] if item['path'] == 'AGENTS.md'
+          )
+          actual = hashlib.sha256(backup.read_bytes()).hexdigest()
+          assert actual == expected, (actual, expected)
+
+          generated = Path('AGENTS.md').read_text(encoding='utf-8')
+          assert 'agent-policy-generated: true' in generated
+          assert 'DO NOT EDIT DIRECTLY' in generated
+          PY
+          agent-policy --repository "$GITHUB_WORKSPACE" validate
+          agent-policy --repository "$GITHUB_WORKSPACE" check
 
       - name: Set up Node.js 22
         uses: actions/setup-node@v4
@@ -84,23 +124,36 @@ jobs:
           set -o pipefail
           npm run verify:pr 2>&1 | tee product-verify-pr.txt
 
-      - name: Record regenerated paths
+      - name: Record finalization evidence
         if: always()
         shell: bash
-        run: git status --short | tee agent-policy-preview-status.txt
+        run: git status --short | tee agent-policy-finalize-status.txt
 
-      - name: Upload adoption verification evidence
+      - name: Upload finalization evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: agent-policy-adoption-preview
+          name: agent-policy-adoption-finalized
           path: |
+            AGENTS.md
+            .agent-policy.yml
             .agent-policy.lock
-            .agent-policy/preview/AGENTS.md
+            .agent-policy/adoption.json
+            .agent-policy/adoption/original/AGENTS.md
             .agents/skills/validate-agent-policy/SKILL.md
-            agent-policy-adoption-preview.txt
-            agent-policy-finalize-dry-run.txt
-            agent-policy-preview-status.txt
+            agent-policy-finalize-apply.txt
+            agent-policy-finalize-status.txt
             product-verify-pr.txt
           include-hidden-files: true
           if-no-files-found: warn
+
+      - name: Remove one-shot workflow and commit finalized state
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/dogfood-agent-policy-adoption.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "Finalize agent-policy adoption"
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
