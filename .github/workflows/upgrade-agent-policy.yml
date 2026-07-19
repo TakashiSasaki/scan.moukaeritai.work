@@ -14,6 +14,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: upgrade-agent-policy-chatgpt-agent-policy-adoption
+  cancel-in-progress: true
+
 jobs:
   upgrade:
     if: github.actor != 'github-actions[bot]'
@@ -76,8 +80,62 @@ jobs:
       - name: Install repository dependencies
         run: npm ci
 
-      - name: Run complete repository verification
-        run: npm run verify:pr
+      - name: Validate repository bootstrap
+        run: node scripts/validate-repository-bootstrap.mjs
+
+      - name: Validate documentation state
+        run: node scripts/validate-documentation-state.mjs
+
+      - name: Verify version governance
+        run: node scripts/verify-version.mjs
+
+      - name: Validate contracts
+        run: npm run contracts:validate
+
+      - name: Check generated contract types
+        run: npm run contracts:check-generated
+
+      - name: Test Firestore policy
+        run: npm run test:firestore-policy
+
+      - name: Test routing
+        run: npm run test:routing
+
+      - name: Run root tests
+        run: npm run test
+
+      - name: Typecheck root application
+        run: npm run lint
+
+      - name: Build root application
+        run: npm run build
+
+      - name: Build EFP model package
+        run: npm --prefix packages/efp-model run build
+
+      - name: Typecheck EFP model package
+        run: npm --prefix packages/efp-model run typecheck
+
+      - name: Test EFP model package
+        run: npm --prefix packages/efp-model run test
+
+      - name: Prepare Functions artifact
+        run: npm run prepare:functions-artifact
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions
+
+      - name: Build Functions
+        run: npm --prefix functions run build
+
+      - name: Test Functions
+        run: npm --prefix functions run test
+
+      - name: Test Functions artifact
+        run: npm run test:functions-artifact
+
+      - name: Test Functions boundary
+        run: npm run test:functions-boundary
 
       - name: Commit verified generated state
         env:
