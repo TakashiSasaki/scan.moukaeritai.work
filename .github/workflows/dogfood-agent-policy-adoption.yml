@@ -1,13 +1,66 @@
 name: Dogfood agent-policy adoption
 
 on:
+  pull_request:
+    branches:
+      - scan.moukaeritai.work
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  hold:
+  preview:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Prepared adoption files are being assembled on the branch."
+      - name: Checkout product repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned agent-policy toolchain
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "git+https://github.com/TakashiSasaki/agent-policy.git@848923054e168eb2f8c696e73e2273ba8bf09501"
+
+      - name: Regenerate and check adoption preview
+        shell: bash
+        run: |
+          set -o pipefail
+          agent-policy --repository "$GITHUB_WORKSPACE" adopt preview \
+            | tee agent-policy-adoption-preview.txt
+
+      - name: Validate prepared configuration
+        run: agent-policy --repository "$GITHUB_WORKSPACE" validate
+
+      - name: Verify immutable adoption inputs were preserved
+        run: >-
+          git diff --exit-code --
+          AGENTS.md
+          .github/copilot-instructions.md
+          .agents/policies
+          .agent-policy.yml
+          .agent-policy/adoption.json
+          policy/project.md
+
+      - name: Record regenerated paths
+        shell: bash
+        run: git status --short | tee agent-policy-preview-status.txt
+
+      - name: Upload regenerated adoption preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-policy-adoption-preview
+          path: |
+            .agent-policy.lock
+            .agent-policy/preview/AGENTS.md
+            .agents/skills/validate-agent-policy/SKILL.md
+            agent-policy-adoption-preview.txt
+            agent-policy-preview-status.txt
+          include-hidden-files: true
+          if-no-files-found: error
