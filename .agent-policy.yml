@@ -1,7 +1,7 @@
 schema_version: 1
 toolchain:
   repository: TakashiSasaki/agent-policy
-  revision: 848923054e168eb2f8c696e73e2273ba8bf09501
+  revision: a951b3ba55083152f3fe0040fd3f307a33d66410
 profiles:
 - core
 - security-baseline

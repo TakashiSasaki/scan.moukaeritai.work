@@ -8,75 +8,87 @@ DO NOT EDIT DIRECTLY
 
 These instructions were generated from shared policy profiles and repository-specific policy files.
 
+## Policy system
+
+- Semantic configuration: `.agent-policy.yml`
+- Pinned shared toolchain: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410`
+- Repository policy inputs:
+  - `policy/project.md`
+  - `policy/current-priority.md`
+- Generated operational skills:
+  - `.agents/skills/validate-agent-policy/SKILL.md`
+
+Do not edit this generated file directly. Change `.agent-policy.yml` or its repository policy inputs, then regenerate with the pinned toolchain. Before editing repository files, inspect any repository-local skill catalog that exists and read the relevant generated or handwritten skills.
+
 
 ## Define the change contract before editing
 
 Before editing, identify the requested outcome, the allowed change surface, the existing behavior and invariants that must be preserved, explicit non-goals, and the evidence required for acceptance. Treat unspecified behavior as preserved unless the requested change necessarily alters it; do not silently broaden the contract to resolve ambiguity or implementation difficulty.
 
-_Source: `policy/core/change-contract.md`; rule ID: `changes.define-contract`; severity: `mandatory`._
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/change-contract.md`; rule ID: `changes.define-contract`; severity: `mandatory`._
 
 
 ## Keep changes within the requested scope
 
 Do not modify files, behavior, dependencies, formatting, or architecture that are unrelated to the requested change. Inspect the final diff and remove incidental changes before reporting completion.
 
-_Source: `policy/core/change-scope.md`; rule ID: `changes.minimize-scope`; severity: `mandatory`._
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/change-scope.md`; rule ID: `changes.minimize-scope`; severity: `mandatory`._
 
 
 ## Do not weaken existing tests
 
 Do not delete, skip, narrow, or relax an existing test merely to make a change pass. For a bug fix, add a regression test that fails before the fix and passes afterward whenever the failure can be reproduced deterministically.
 
-_Source: `policy/core/regression-safety.md`; rule ID: `regression.no-weaken-tests`; severity: `mandatory`._
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/regression-safety.md`; rule ID: `regression.no-weaken-tests`; severity: `mandatory`._
 
 
 ## Run the repository's required verification
 
 Use the verification command declared by the repository and add focused checks needed for the changed behavior or failure mode. Confirm that the executed checks cover the changed surface and the current revision; a check that is pending, skipped, not triggered, stale, blocked, or merely inspected is not a passing result. Report every required check that was not run or did not pass.
 
-_Source: `policy/core/testing.md`; rule ID: `testing.run-required-checks`; severity: `mandatory`._
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/testing.md`; rule ID: `testing.run-required-checks`; severity: `mandatory`._
 
 
 ## Keep derived artifacts synchronized
 
 When a change affects generated, mirrored, compiled, or otherwise derived artifacts, update them from their declared source of truth using the repository's documented process and verify that no stale or missing output remains. Do not hand-edit generated artifacts unless the repository explicitly designates that operation as authoritative.
 
-_Source: `policy/core/generated-artifacts.md`; rule ID: `consistency.synchronize-derived-artifacts`; severity: `mandatory`._
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/generated-artifacts.md`; rule ID: `consistency.synchronize-derived-artifacts`; severity: `mandatory`._
 
 
 ## Preserve externally observable contracts
 
 Do not break public APIs, serialized data, configuration formats, command-line interfaces, or migration paths unless the requested change explicitly authorizes the incompatibility and documents its consequences.
 
-_Source: `policy/core/compatibility.md`; rule ID: `compatibility.preserve-contracts`; severity: `mandatory`._
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/compatibility.md`; rule ID: `compatibility.preserve-contracts`; severity: `mandatory`._
 
 
 ## Revalidate destructive actions against current state
 
 Immediately before deleting, overwriting, migrating, deploying, publishing, force-updating, or otherwise making an irreversible or externally visible change, re-read the target's current state and revalidate its identity, scope, version or revision, protections, and conflicting uses. Prefer dry-run, least-scope, and idempotent operations; do not authorize the action solely from stale observations made earlier in the task.
 
-_Source: `policy/core/destructive-actions.md`; rule ID: `safety.revalidate-destructive-actions`; severity: `mandatory`._
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/destructive-actions.md`; rule ID: `safety.revalidate-destructive-actions`; severity: `mandatory`._
 
 
 ## Report actual state and residual uncertainty
 
 Distinguish implemented, generated, executed, verified, and merely inferred results. State unresolved failures and unverified assumptions explicitly.
 
-_Source: `policy/core/truthful-reporting.md`; rule ID: `reporting.truthful-status`; severity: `mandatory`._
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/truthful-reporting.md`; rule ID: `reporting.truthful-status`; severity: `mandatory`._
 
 
 ## Do not expose or commit secrets
 
 Do not print, persist, or commit credentials, private keys, access tokens, session material, or unredacted sensitive configuration. Use established secret-management mechanisms.
 
-_Source: `policy/security/secrets.md`; rule ID: `security.no-secrets`; severity: `mandatory`._
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/security/secrets.md`; rule ID: `security.no-secrets`; severity: `mandatory`._
 
 
 ## Validate data at trust boundaries
 
 Validate untrusted input before it reaches privileged operations, persistence, command execution, or external requests. Preserve existing authentication and authorization checks.
 
-_Source: `policy/security/input-validation.md`; rule ID: `security.validate-boundaries`; severity: `mandatory`._
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/security/input-validation.md`; rule ID: `security.validate-boundaries`; severity: `mandatory`._
 
 
 ## Preserve scan.mw repository invariants
@@ -164,7 +176,7 @@ Do not require release verification for ordinary changes. Firestore Emulator int
 
 The root `package.json` is the canonical application-version source. Contract versions are independent from the application version. Internal metadata, tests, and documentation-only changes do not require an application-version bump. Version bumps are required for release candidates and externally visible compatibility or API changes. Do not manually duplicate version strings in README files unless unavoidable.
 
-_Source: `policy/project.md`; rule ID: `project.product-invariants`; severity: `mandatory`._
+_Source: `policy/project.md` in this repository; rule ID: `project.product-invariants`; severity: `mandatory`._
 
 
 ## Follow the current EFP vertical-slice priority
@@ -183,7 +195,7 @@ Complete the first usable EFP-native Object/Marker/Association slice in this ord
 
 The critical path consists of Object and Marker Entities, Association attach and detach Facts, current Markers for an Object, and the current Object for a Marker. Do not expand Place, Observation, Measurement, Event, projection backfill, generic watermarks, processing receipts, migration phases, or future abstractions unless directly required by this slice.
 
-_Source: `policy/current-priority.md`; rule ID: `project.current-vertical-slice`; severity: `mandatory`._
+_Source: `policy/current-priority.md` in this repository; rule ID: `project.current-vertical-slice`; severity: `mandatory`._
 
 
 
