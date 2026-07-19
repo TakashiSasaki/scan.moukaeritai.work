@@ -4,8 +4,9 @@ on:
   push:
     branches:
       - chatgpt
-    paths:
-      - .github/workflows/dogfood-agent-policy-adoption.yml
+  pull_request:
+    branches:
+      - scan.moukaeritai.work
   workflow_dispatch:
 
 permissions:
