@@ -27,6 +27,23 @@ export function isSemverGreater(current, base) {
   return false;
 }
 
+export function isApplicationCodePath(file) {
+  const normalized = file.replaceAll('\\', '/');
+  const isDocumentation = /^(README\.md|AGENTS\.md|\.agents\/|docs\/|.*\.md$)/i.test(normalized);
+  const isAgentPolicyMetadata = /^(\.agent-policy(?:\.yml|\.lock|\/))/i.test(normalized);
+  const isRepositoryAutomation = /^\.github\//i.test(normalized);
+  const isTest = /(^|\/)(__tests__|tests?)\//i.test(normalized)
+    || /\.(test|spec)\.[cm]?[jt]sx?$/i.test(normalized);
+  const isVersionGovernanceTooling = normalized === 'scripts/verify-version.mjs';
+  return !(
+    isDocumentation
+    || isAgentPolicyMetadata
+    || isRepositoryAutomation
+    || isTest
+    || isVersionGovernanceTooling
+  );
+}
+
 function verifyTransition({ baseVersion, currentVersion, approval, approvalInBase = true }) {
   if (!isSemverGreater(currentVersion, baseVersion)) return false;
   const [currentMajor] = parseSemver(currentVersion);
@@ -48,6 +65,23 @@ if (process.argv.includes('--self-test')) {
   for (const [name, input, expected] of cases) {
     if (verifyTransition(input) !== expected) fail(`Self-test failed for ${name}`);
   }
+
+  const pathCases = [
+    ['application source', 'src/App.tsx', true],
+    ['contract data', 'contracts/profiles/current-application.json', true],
+    ['agent-policy config', '.agent-policy.yml', false],
+    ['agent-policy lock', '.agent-policy.lock', false],
+    ['agent-policy state', '.agent-policy/adoption.json', false],
+    ['repository workflow', '.github/workflows/ci.yml', false],
+    ['repository policy', 'policy/project.md', false],
+    ['top-level tests', 'tests/routing/catalog.test.ts', false],
+    ['nested test file', 'src/lib/routeCatalog.spec.ts', false],
+    ['version governance tooling', 'scripts/verify-version.mjs', false]
+  ];
+  for (const [name, file, expected] of pathCases) {
+    if (isApplicationCodePath(file) !== expected) fail(`Path classification self-test failed for ${name}: ${file}`);
+  }
+
   console.log('✅ Version governance self-test passed.');
   process.exit(0);
 }
@@ -106,7 +140,7 @@ try {
 
 try {
   const efpLock = JSON.parse(fs.readFileSync(path.join(rootDir, 'packages/efp-model/package-lock.json'), 'utf8'));
-  checkEquals(efpLock.version, targetVersion, 'packages/efp-model/package-lock.json root version');
+  checkEquals(efpLock.version, targetVersion, 'packages/efp-model/package.json root version');
   checkEquals(efpLock.packages?.[""]?.version, targetVersion, 'packages/efp-model/package-lock.json packages[""].version');
 } catch (error) {
   fail(`Failed to validate packages/efp-model/package-lock.json: ${error.message}`);
@@ -136,17 +170,14 @@ if (!isStatic) {
   try {
     if (process.env.GITHUB_BASE_REF) execSync(`git fetch --depth=10 origin ${process.env.GITHUB_BASE_REF}`, { stdio: 'inherit' });
     const basePackage = JSON.parse(execSync(`git show ${baseRef}:package.json`, { encoding: 'utf8', stdio: 'pipe' }));
-    
+
     // Check if there are application-code changes
     const diffFiles = execSync(`git diff --name-only ${baseRef}`, { encoding: 'utf8', stdio: 'pipe' })
       .split('\n')
       .map(f => f.trim())
       .filter(Boolean);
 
-    const hasCodeChanges = diffFiles.some(file => {
-      const isDoc = /^(README\.md|AGENTS\.md|\.agents\/|docs\/|.*\.md$)/i.test(file);
-      return !isDoc;
-    });
+    const hasCodeChanges = diffFiles.some(isApplicationCodePath);
 
     if (basePackage.version) {
       if (basePackage.version === pkg.version) {
