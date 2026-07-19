@@ -1,7 +1,7 @@
 {
-  "backup_path": null,
+  "backup_path": ".agent-policy/adoption/original/AGENTS.md",
   "config_path": ".agent-policy.yml",
-  "final_output": null,
+  "final_output": "AGENTS.md",
   "generated_skills": [
     "validate-agent-policy"
   ],
@@ -89,7 +89,7 @@
     }
   ],
   "state_path": ".agent-policy/adoption.json",
-  "status": "prepared",
+  "status": "finalized",
   "toolchain": {
     "repository": "TakashiSasaki/agent-policy",
     "revision": "848923054e168eb2f8c696e73e2273ba8bf09501"

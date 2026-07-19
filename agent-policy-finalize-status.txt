@@ -1,0 +1,9 @@
+ M .agent-policy.lock
+ M .agent-policy.yml
+ M .agent-policy/adoption.json
+ D .agent-policy/preview/AGENTS.md
+ M AGENTS.md
+?? .agent-policy/adoption/
+?? agent-policy-finalize-apply.txt
+?? agent-policy-finalize-status.txt
+?? product-verify-pr.txt

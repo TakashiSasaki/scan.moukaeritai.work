@@ -9,12 +9,12 @@ project_policy:
   files:
   - policy/project.md
   - policy/current-priority.md
-verification:
-  command: npm run verify:pr
 outputs:
   agents:
     enabled: true
-    path: .agent-policy/preview/AGENTS.md
+    path: AGENTS.md
 skills:
   enabled:
   - validate-agent-policy
+verification:
+  command: npm run verify:pr
