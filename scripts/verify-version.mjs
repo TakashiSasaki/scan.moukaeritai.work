@@ -140,7 +140,7 @@ try {
 
 try {
   const efpLock = JSON.parse(fs.readFileSync(path.join(rootDir, 'packages/efp-model/package-lock.json'), 'utf8'));
-  checkEquals(efpLock.version, targetVersion, 'packages/efp-model/package.json root version');
+  checkEquals(efpLock.version, targetVersion, 'packages/efp-model/package-lock.json root version');
   checkEquals(efpLock.packages?.[""]?.version, targetVersion, 'packages/efp-model/package-lock.json packages[""].version');
 } catch (error) {
   fail(`Failed to validate packages/efp-model/package-lock.json: ${error.message}`);
