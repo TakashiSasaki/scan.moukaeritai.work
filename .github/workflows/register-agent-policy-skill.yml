@@ -116,6 +116,16 @@ jobs:
           skill_test = skill_test.replace(section_marker, generated_guard + section_marker)
           skill_test_path.write_text(skill_test, encoding='utf-8')
 
+          hygiene_path = Path('.agents/skills/repository-hygiene/SKILL.md')
+          hygiene = hygiene_path.read_text(encoding='utf-8')
+          old_hygiene = '- `npm run test:repository-hygiene` for PR/release or when root files changed.'
+          new_hygiene = """- `npm run verify:fast` for normal task closeout.
+          - `npm run verify:pr` for PR closeout or when root files changed.
+          - `npm run verify:release` for release preparation."""
+          if hygiene.count(old_hygiene) != 1:
+              raise SystemExit('repository hygiene command did not match exactly once')
+          hygiene_path.write_text(hygiene.replace(old_hygiene, new_hygiene), encoding='utf-8')
+
           version_path = Path('scripts/verify-version.mjs')
           version_test = version_path.read_text(encoding='utf-8')
           old_tooling = "const isVersionGovernanceTooling = normalized === 'scripts/verify-version.mjs';"
@@ -177,9 +187,12 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
             .agents/skills/manifest.json \
+            .agents/skills/repository-hygiene/SKILL.md \
             scripts/test-agent-skills.mjs \
             scripts/verify-version.mjs
-          git rm .github/workflows/register-agent-policy-skill.yml
+          git rm \
+            .github/workflows/register-agent-policy-skill.yml \
+            .github/workflows/diagnose-agent-policy-skill.yml
           git diff --cached --check
           git commit -m 'Register generated agent-policy skill'
           git push origin "HEAD:${BRANCH}"
