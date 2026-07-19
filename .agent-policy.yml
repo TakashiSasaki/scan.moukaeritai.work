@@ -1,0 +1,17 @@
+schema_version: 1
+toolchain:
+  repository: TakashiSasaki/agent-policy
+  revision: 848923054e168eb2f8c696e73e2273ba8bf09501
+profiles:
+- core
+- security-baseline
+project_policy:
+  files:
+  - policy/project.md
+outputs:
+  agents:
+    enabled: true
+    path: .agent-policy/preview/AGENTS.md
+skills:
+  enabled:
+  - validate-agent-policy
