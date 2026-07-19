@@ -1,0 +1,107 @@
+name: Diagnose agent-policy skill registration
+
+on:
+  pull_request:
+    branches:
+      - scan.moukaeritai.work
+    types:
+      - reopened
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.event.pull_request.head.ref == 'chatgpt-agent-policy-adoption'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          ref: chatgpt-agent-policy-adoption
+
+      - name: Apply proposed registration in workspace
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest_path = Path('.agents/skills/manifest.json')
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          skills = manifest['skills']
+          preflight_index = next(
+              index for index, skill in enumerate(skills)
+              if skill.get('id') == 'repository-preflight'
+          )
+          skills.insert(preflight_index + 1, {
+              'id': 'validate-agent-policy',
+              'path': '.agents/skills/validate-agent-policy/SKILL.md',
+              'status': 'active',
+              'description': 'Validates managed agent-policy configuration, lock state, and generated outputs with the pinned toolchain.',
+              'requiredFor': [
+                  'Changes to agent-policy configuration, repository policy inputs, generated instructions, generated skills, the lock file, or policy CI'
+              ],
+              'executionClass': 'fast/PR',
+              'mutationPolicy': 'read-only unless synchronization is explicitly requested',
+              'managedBy': '.agent-policy.yml'
+          })
+          manifest_path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+
+          path = Path('scripts/test-agent-skills.mjs')
+          text = path.read_text(encoding='utf-8')
+          status_marker = '  // Validate status\n'
+          text = text.replace(status_marker, """  if (entry.managedBy !== undefined) {
+            if (typeof entry.managedBy !== 'string' || entry.managedBy.length === 0) {
+              fail(`Manifest entry has invalid field \"managedBy\" for skill \"${entry.id}\"`);
+            }
+            const managerPath = path.join(rootDir, entry.managedBy);
+            if (!fs.existsSync(managerPath)) {
+              fail(`Skill \"${entry.id}\" references missing manager \"${entry.managedBy}\"`);
+            }
+          }
+
+          """ + status_marker)
+          text = text.replace(
+              "  'repository-preflight',\n  'version-governance',",
+              "  'repository-preflight',\n  'validate-agent-policy',\n  'version-governance',"
+          )
+          section_marker = '  // Verify sections\n'
+          guard = """  if (skill.managedBy === '.agent-policy.yml') {
+            const requiredMarkers = [
+              'agent-policy-generated: true',
+              `source-skill: ${skillId}`,
+              'DO NOT EDIT DIRECTLY',
+              `name: ${skillId}`
+            ];
+            for (const marker of requiredMarkers) {
+              if (!content.includes(marker)) {
+                fail(`Managed skill \"${skillId}\" is missing generated marker: \"${marker}\"`);
+              }
+            }
+            continue;
+          }
+
+          """
+          text = text.replace(section_marker, guard + section_marker)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Run focused integrity gate
+        shell: bash
+        run: |
+          set +e
+          node scripts/test-agent-skills.mjs > skill-integrity.log 2>&1
+          status=$?
+          cat skill-integrity.log
+          echo "$status" > skill-integrity.status
+          exit 0
+
+      - name: Upload diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-integrity-diagnostics
+          path: |
+            skill-integrity.log
+            skill-integrity.status
+            .agents/skills/manifest.json
+            scripts/test-agent-skills.mjs
