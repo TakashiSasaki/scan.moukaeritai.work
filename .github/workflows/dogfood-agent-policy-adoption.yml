@@ -1,66 +1,13 @@
 name: Dogfood agent-policy adoption
 
 on:
-  pull_request:
-    branches:
-      - scan.moukaeritai.work
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  prepare:
+  hold:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout product repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Checkout bootstrap skill
-        uses: actions/checkout@v4
-        with:
-          repository: TakashiSasaki/agent-policy
-          ref: bootstrap-agent-policy
-          path: .agent-policy-bootstrap
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Apply adoption preparation and preview
-        shell: bash
-        run: |
-          set -o pipefail
-          python .agent-policy-bootstrap/scripts/bootstrap.py \
-            --repository "$GITHUB_WORKSPACE" \
-            --route adopt \
-            --primary-instructions AGENTS.md \
-            --apply \
-            | tee agent-policy-adoption-prepare.txt
-
-      - name: Verify primary instructions were preserved
-        run: git diff --exit-code -- AGENTS.md
-
-      - name: Record generated paths
-        shell: bash
-        run: |
-          git status --short | tee agent-policy-generated-status.txt
-
-      - name: Upload prepared adoption state
-        uses: actions/upload-artifact@v4
-        with:
-          name: agent-policy-adoption-prepared
-          path: |
-            .agent-policy.yml
-            .agent-policy.lock
-            .agent-policy/adoption.json
-            .agent-policy/preview/AGENTS.md
-            policy/project.md
-            .agents/skills/validate-agent-policy/SKILL.md
-            agent-policy-adoption-prepare.txt
-            agent-policy-generated-status.txt
-          include-hidden-files: true
-          if-no-files-found: error
+      - run: echo "Prepared adoption files are being assembled on the branch."
