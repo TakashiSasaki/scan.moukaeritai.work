@@ -60,11 +60,14 @@ jobs:
       - name: Install product dependencies
         run: npm ci
 
+      - name: Test version-governance classification
+        run: node scripts/verify-version.mjs --self-test
+
       - name: Run product PR verification
         shell: bash
         run: |
           set -o pipefail
-          npm run verify:pr | tee product-verify-pr.txt
+          npm run verify:pr 2>&1 | tee product-verify-pr.txt
 
       - name: Record regenerated paths
         if: always()
