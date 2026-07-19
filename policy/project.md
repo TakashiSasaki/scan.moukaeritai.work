@@ -8,7 +8,7 @@ order: 1000
 
 Apply the following repository-specific rules in addition to the shared policy profiles.
 
-## Canonical sources
+### Canonical sources
 
 Treat these files as the authoritative sources for their respective concerns:
 
@@ -21,7 +21,7 @@ Treat these files as the authoritative sources for their respective concerns:
 
 Do not reconstruct these facts from duplicated documentation when an authoritative source is available.
 
-## Branch, synchronization, and deployment
+### Branch, synchronization, and deployment
 
 `scan.moukaeritai.work` is the integration hub branch. `main` is reserved for Google AI Studio. The named agent source branches are `jules`, `codex`, `hermes`, and `chatgpt`; use only the branch authorized for the current agent or an explicitly authorized isolated test branch.
 
@@ -29,7 +29,7 @@ Pushes to the exact named source branches may be merged automatically into the h
 
 Production deployment is manual through `workflow_dispatch`. Do not perform production writes, deletes, or automatic production deployments. Do not change the source-branch-to-hub synchronization model unless the request explicitly requires it. Do not commit scratch files, one-off scripts, PR replies, downloaded artifacts, or temporary patches to the repository root.
 
-## EFP architecture and access invariants
+### EFP architecture and access invariants
 
 `scan.mw` is a Firebase-backed inventory application using the Contract-First Entity-Fact-Projection model. Preserve all of the following invariants:
 
@@ -45,7 +45,7 @@ Production deployment is manual through `workflow_dispatch`. Do not perform prod
 
 Do not weaken authentication, authorization, ownership, immutability, idempotency, or projection boundaries while implementing unrelated changes.
 
-## Interface-surface convention
+### Interface-surface convention
 
 Use the following vocabulary and preferred namespaces for new or materially modified application interfaces:
 
@@ -58,7 +58,7 @@ Use the following vocabulary and preferred namespaces for new or materially modi
 
 This is a preferred architectural vocabulary and namespace convention, not an unconditional routing or CLI constraint. Do not perform unrelated broad renames solely for conformance.
 
-## Legacy data and controlled import exception
+### Legacy data and controlled import exception
 
 Legacy data is an archive, not a general migration source. Automatic or comprehensive legacy migration, dual-write, backfill, reconciliation, and runtime integration remain cancelled. Existing legacy Firestore collections must be retained, remain read-only, remain available through the legacy administration browser, and remain exportable as JSON.
 
@@ -66,7 +66,7 @@ The new runtime must not create, update, delete, dual-write, shadow-write, backf
 
 The only controlled exception is an administrator-explicit `execute` operation that reads the legacy `identifiers` collection and creates a deterministic imported baseline observation in `identifierObservations`. This exception does not authorize modification or deletion of source documents, automatic or scheduled migration, comprehensive backfill, dual-write, relational reconciliation, or automatic production execution.
 
-## Complexity control
+### Complexity control
 
 Prioritize the EFP-native Object/Marker/Association vertical slice. Normal work must not add new mandatory gates, mutation fixtures, contract versions for internal changes, migration phases, broad reconciliation systems, or unrelated foundation abstractions.
 
@@ -74,7 +74,7 @@ Validation, hardening, and verification work must not invent new architectural, 
 
 Record unrelated findings in the backlog rather than expanding the active task. Complexity-increasing changes require explicit human approval.
 
-## Current vertical-slice priority
+### Current vertical-slice priority
 
 The current product priority is the first usable EFP-native Object/Marker/Association slice:
 
@@ -88,7 +88,7 @@ The current product priority is the first usable EFP-native Object/Marker/Associ
 
 The critical path consists of Object and Marker Entities, Association attach and detach Facts, current Markers for an Object, and the current Object for a Marker. Do not expand Place, Observation, Measurement, Event, projection backfill, generic watermarks, processing receipts, migration phases, or future abstractions unless directly required by this slice.
 
-## Verification tiers
+### Verification tiers
 
 Select verification according to the change surface:
 
@@ -99,6 +99,6 @@ Select verification according to the change surface:
 
 Do not require release verification for ordinary changes. Firestore Emulator integration in GitHub Actions remains planned; do not add a local pseudo-emulator as a substitute.
 
-## Version and contract governance
+### Version and contract governance
 
 The root `package.json` is the canonical application-version source. Contract versions are independent from the application version. Internal metadata, tests, and documentation-only changes do not require an application-version bump. Version bumps are required for release candidates and externally visible compatibility or API changes. Do not manually duplicate version strings in README files unless unavoidable.
