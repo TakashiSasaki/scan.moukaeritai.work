@@ -6,7 +6,7 @@ order: 1000
 ---
 # Preserve scan.mw repository invariants
 
-Apply the following repository-specific rules in addition to the shared policy profiles.
+Apply the following durable repository-specific rules in addition to the shared policy profiles.
 
 ### Canonical sources
 
@@ -68,25 +68,11 @@ The only controlled exception is an administrator-explicit `execute` operation t
 
 ### Complexity control
 
-Prioritize the EFP-native Object/Marker/Association vertical slice. Normal work must not add new mandatory gates, mutation fixtures, contract versions for internal changes, migration phases, broad reconciliation systems, or unrelated foundation abstractions.
+Normal work must not add new mandatory gates, mutation fixtures, contract versions for internal changes, migration phases, broad reconciliation systems, or unrelated foundation abstractions.
 
 Validation, hardening, and verification work must not invent new architectural, routing, naming, access-control, compatibility, or migration constraints. In particular, do not infer path-prefix requirements from surface classification, dynamic-route allowlists, role taxonomies from access values, or closed lists of otherwise valid future routes. Tests for extracted validation or classification logic must import the production implementation instead of duplicating its rules.
 
 Record unrelated findings in the backlog rather than expanding the active task. Complexity-increasing changes require explicit human approval.
-
-### Current vertical-slice priority
-
-The current product priority is the first usable EFP-native Object/Marker/Association slice:
-
-1. create an Object;
-2. create a Marker;
-3. attach the Marker to the Object;
-4. read the Marker;
-5. display its associated Object;
-6. detach the Association;
-7. treat the detached Marker as unassigned.
-
-The critical path consists of Object and Marker Entities, Association attach and detach Facts, current Markers for an Object, and the current Object for a Marker. Do not expand Place, Observation, Measurement, Event, projection backfill, generic watermarks, processing receipts, migration phases, or future abstractions unless directly required by this slice.
 
 ### Verification tiers
 
