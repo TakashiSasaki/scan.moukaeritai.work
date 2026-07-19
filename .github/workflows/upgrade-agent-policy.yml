@@ -90,6 +90,12 @@ jobs:
       - name: Prepare EFP model artifact
         run: npm --prefix packages/efp-model run build
 
+      - name: Prepare Functions prerequisite artifact
+        run: npm run prepare:functions-artifact
+
+      - name: Install Functions prerequisite dependencies
+        run: npm ci --prefix functions
+
       - name: Validate repository bootstrap
         run: node scripts/validate-repository-bootstrap.mjs
 
