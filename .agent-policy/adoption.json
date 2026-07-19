@@ -8,7 +8,8 @@
   "preview_output": ".agent-policy/preview/AGENTS.md",
   "primary_instructions": "AGENTS.md",
   "project_policy_files": [
-    "policy/project.md"
+    "policy/project.md",
+    "policy/current-priority.md"
   ],
   "schema_version": 1,
   "selected_profiles": [
@@ -93,5 +94,5 @@
     "repository": "TakashiSasaki/agent-policy",
     "revision": "848923054e168eb2f8c696e73e2273ba8bf09501"
   },
-  "verification_command": null
+  "verification_command": "npm run verify:pr"
 }
