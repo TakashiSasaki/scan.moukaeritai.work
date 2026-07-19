@@ -62,4 +62,5 @@ jobs:
             .agents/skills/validate-agent-policy/SKILL.md
             agent-policy-adoption-prepare.txt
             agent-policy-generated-status.txt
+          include-hidden-files: true
           if-no-files-found: error
