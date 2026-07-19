@@ -8,9 +8,9 @@ inputs:
   policy/current-priority.md:
     sha256: eb3b619aaa4d4b31760e0ba3fb4edd16d721e5eb316774f66775f0e22f4523c1
   policy/project.md:
-    sha256: ef5d5f83b3d28a20ceac24f1fc57a02c83459bd101646f2b5eeda6dc3b8cb36c
+    sha256: a932f40e92b968f49cad92de59d2a9e777a32b58f2e3c46e715161125513c62d
 outputs:
   .agent-policy/preview/AGENTS.md:
-    sha256: 490949e612ffe9c6b48aa31b91975db3890f3ab753bcba2274cbb9103a7445d4
+    sha256: ac9109526b7efd210b35d129a69e95bed9adc1a73ff75420d41cc35c6d995a91
   .agents/skills/validate-agent-policy/SKILL.md:
     sha256: b13d4d83664ac336ee4ab9a29481a9868ec02b2b03fb718e424e27c6b2843fdd
