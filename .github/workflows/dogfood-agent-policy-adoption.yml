@@ -47,6 +47,7 @@ jobs:
           .agent-policy.yml
           .agent-policy/adoption.json
           policy/project.md
+          policy/current-priority.md
           .agent-policy.lock
           .agent-policy/preview/AGENTS.md
           .agents/skills/validate-agent-policy/SKILL.md
