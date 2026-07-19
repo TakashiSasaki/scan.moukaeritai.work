@@ -20,7 +20,7 @@ Use during task closeout and release verification.
 - `npm run verify:release` for release preparation.
 
 ## Execution class
-fast for status/diff; PR or release for the full hygiene script.
+fast for status/diff; use the corresponding PR or release verification tier when required.
 
 ## Mutation policy
 read-only by default; may remove only clearly generated scratch files after review.

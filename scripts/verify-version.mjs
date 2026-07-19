@@ -35,7 +35,7 @@ export function isApplicationCodePath(file) {
   const isTest = /(^|\/)(__tests__|tests?)\//i.test(normalized)
     || /\.(test|spec)\.[cm]?[jt]sx?$/i.test(normalized);
   const isVersionGovernanceTooling = normalized === 'scripts/verify-version.mjs'
-  || normalized === 'scripts/test-agent-skills.mjs';
+    || normalized === 'scripts/test-agent-skills.mjs';
   return !(
     isDocumentation
     || isAgentPolicyMetadata
@@ -78,7 +78,7 @@ if (process.argv.includes('--self-test')) {
     ['top-level tests', 'tests/routing/catalog.test.ts', false],
     ['nested test file', 'src/lib/routeCatalog.spec.ts', false],
     ['version governance tooling', 'scripts/verify-version.mjs', false],
-  ['agent skill integrity tooling', 'scripts/test-agent-skills.mjs', false]
+    ['agent skill integrity tooling', 'scripts/test-agent-skills.mjs', false]
   ];
   for (const [name, file, expected] of pathCases) {
     if (isApplicationCodePath(file) !== expected) fail(`Path classification self-test failed for ${name}: ${file}`);
