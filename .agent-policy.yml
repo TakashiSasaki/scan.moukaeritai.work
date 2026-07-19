@@ -8,6 +8,9 @@ profiles:
 project_policy:
   files:
   - policy/project.md
+  - policy/current-priority.md
+verification:
+  command: npm run verify:pr
 outputs:
   agents:
     enabled: true
