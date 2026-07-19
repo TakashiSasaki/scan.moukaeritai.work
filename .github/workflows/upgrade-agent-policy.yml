@@ -77,6 +77,13 @@ jobs:
           grep -F 'agent-policy --repository . validate --config .agent-policy.yml' .agents/skills/validate-agent-policy/SKILL.md
           grep -F 'revision: a951b3ba55083152f3fe0040fd3f307a33d66410' .agent-policy.lock
 
+      - name: Remove transient adoption logs
+        run: |
+          git rm -- \
+            agent-policy-finalize-apply.txt \
+            agent-policy-finalize-status.txt \
+            product-verify-pr.txt
+
       - name: Install repository dependencies
         run: npm ci
 
