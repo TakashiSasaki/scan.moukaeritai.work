@@ -57,14 +57,17 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install product dependencies
+      - name: Install root dependencies
         run: npm ci
 
       - name: Test version-governance classification
         run: node scripts/verify-version.mjs --self-test
 
-      - name: Build EFP model prerequisite
-        run: npm --prefix packages/efp-model run build
+      - name: Prepare Functions artifact prerequisites
+        run: npm run prepare:functions-artifact
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions
 
       - name: Run product PR verification
         shell: bash
