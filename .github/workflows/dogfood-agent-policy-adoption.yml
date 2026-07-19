@@ -61,13 +61,18 @@ jobs:
         run: npm ci
 
       - name: Run product PR verification
-        run: npm run verify:pr
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run verify:pr | tee product-verify-pr.txt
 
       - name: Record regenerated paths
+        if: always()
         shell: bash
         run: git status --short | tee agent-policy-preview-status.txt
 
-      - name: Upload regenerated adoption preview
+      - name: Upload adoption verification evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: agent-policy-adoption-preview
@@ -77,5 +82,6 @@ jobs:
             .agents/skills/validate-agent-policy/SKILL.md
             agent-policy-adoption-preview.txt
             agent-policy-preview-status.txt
+            product-verify-pr.txt
           include-hidden-files: true
-          if-no-files-found: error
+          if-no-files-found: warn
