@@ -72,16 +72,10 @@ jobs:
           skill_test_path = Path('scripts/test-agent-skills.mjs')
           skill_test = skill_test_path.read_text(encoding='utf-8')
 
-          old_required = """  if (!entry.requiredFor || !Array.isArray(entry.requiredFor) || entry.requiredFor.length === 0) {
-            fail(`Manifest entry missing or empty array \"requiredFor\" for skill \"${entry.id}\"`);
-          }
-
-          // Validate status
-          """
-          new_required = """  if (!entry.requiredFor || !Array.isArray(entry.requiredFor) || entry.requiredFor.length === 0) {
-            fail(`Manifest entry missing or empty array \"requiredFor\" for skill \"${entry.id}\"`);
-          }
-          if (entry.managedBy !== undefined) {
+          status_marker = '  // Validate status\n'
+          if skill_test.count(status_marker) != 1:
+              raise SystemExit('status validation marker did not match exactly once')
+          managed_validation = """  if (entry.managedBy !== undefined) {
             if (typeof entry.managedBy !== 'string' || entry.managedBy.length === 0) {
               fail(`Manifest entry has invalid field \"managedBy\" for skill \"${entry.id}\"`);
             }
@@ -91,34 +85,24 @@ jobs:
             }
           }
 
-          // Validate status
           """
-          if skill_test.count(old_required) != 1:
-              raise SystemExit('requiredFor insertion point did not match exactly once')
-          skill_test = skill_test.replace(old_required, new_required)
+          skill_test = skill_test.replace(status_marker, managed_validation + status_marker)
 
-          old_core = """const REQUIRED_CORE_SKILLS = [
-            'repository-preflight',
-            'version-governance',
-          """
-          new_core = """const REQUIRED_CORE_SKILLS = [
-            'repository-preflight',
-            'validate-agent-policy',
-            'version-governance',
-          """
-          if skill_test.count(old_core) != 1:
-              raise SystemExit('required core skill insertion point did not match exactly once')
-          skill_test = skill_test.replace(old_core, new_core)
+          core_marker = "  'repository-preflight',\n  'version-governance',"
+          core_replacement = "  'repository-preflight',\n  'validate-agent-policy',\n  'version-governance',"
+          if skill_test.count(core_marker) != 1:
+              raise SystemExit('required core skill marker did not match exactly once')
+          skill_test = skill_test.replace(core_marker, core_replacement)
 
-          old_sections = """  // Verify sections
-            for (const section of REQUIRED_SECTIONS) {
-              const headerPattern = new RegExp(`^#+\\\\s+${section}\\\\s*$`, 'im');
-              if (!headerPattern.test(content)) {
-                fail(`Skill \"${skillId}\" SKILL.md is missing required section header: \"${section}\"`);
-              }
-            }
-          """
-          new_sections = """  // Verify the declared format. Handwritten skills use the repository section contract;
+          section_start_marker = '  // Verify sections\n'
+          section_end_marker = '\n\n  // Scan for inline code blocks'
+          start = skill_test.find(section_start_marker)
+          if start < 0:
+              raise SystemExit('section validation start marker was not found')
+          end = skill_test.find(section_end_marker, start)
+          if end < 0:
+              raise SystemExit('section validation end marker was not found')
+          generated_validation = r"""  // Verify the declared format. Handwritten skills use the repository section contract;
             // agent-policy-managed skills use generated provenance markers instead.
             if (skill.managedBy === '.agent-policy.yml') {
               const requiredMarkers = [
@@ -129,21 +113,18 @@ jobs:
               ];
               for (const marker of requiredMarkers) {
                 if (!content.includes(marker)) {
-                  fail(`Managed skill \"${skillId}\" is missing generated marker: \"${marker}\"`);
+                  fail(`Managed skill "${skillId}" is missing generated marker: "${marker}"`);
                 }
               }
             } else {
               for (const section of REQUIRED_SECTIONS) {
-                const headerPattern = new RegExp(`^#+\\\\s+${section}\\\\s*$`, 'im');
+                const headerPattern = new RegExp(`^#+\s+${section}\s*$`, 'im');
                 if (!headerPattern.test(content)) {
-                  fail(`Skill \"${skillId}\" SKILL.md is missing required section header: \"${section}\"`);
+                  fail(`Skill "${skillId}" SKILL.md is missing required section header: "${section}"`);
                 }
               }
-            }
-          """
-          if skill_test.count(old_sections) != 1:
-              raise SystemExit('section validation block did not match exactly once')
-          skill_test = skill_test.replace(old_sections, new_sections)
+            }"""
+          skill_test = skill_test[:start] + generated_validation + skill_test[end:]
           skill_test_path.write_text(skill_test, encoding='utf-8')
 
           version_path = Path('scripts/verify-version.mjs')
