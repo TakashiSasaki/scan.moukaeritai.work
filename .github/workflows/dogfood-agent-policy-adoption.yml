@@ -52,6 +52,14 @@ jobs:
           .agent-policy/preview/AGENTS.md
           .agents/skills/validate-agent-policy/SKILL.md
 
+      - name: Validate finalization plan without applying
+        shell: bash
+        run: |
+          set -o pipefail
+          agent-policy --repository "$GITHUB_WORKSPACE" adopt finalize \
+            --backup-path .agent-policy/adoption/original/AGENTS.md \
+            | tee agent-policy-finalize-dry-run.txt
+
       - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -91,6 +99,7 @@ jobs:
             .agent-policy/preview/AGENTS.md
             .agents/skills/validate-agent-policy/SKILL.md
             agent-policy-adoption-preview.txt
+            agent-policy-finalize-dry-run.txt
             agent-policy-preview-status.txt
             product-verify-pr.txt
           include-hidden-files: true
