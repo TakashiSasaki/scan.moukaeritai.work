@@ -1,0 +1,38 @@
+name: Dogfood agent-policy adoption
+
+on:
+  push:
+    branches:
+      - chatgpt
+    paths:
+      - .github/workflows/dogfood-agent-policy-adoption.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout product repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout bootstrap skill
+        uses: actions/checkout@v4
+        with:
+          repository: TakashiSasaki/agent-policy
+          ref: bootstrap-agent-policy
+          path: .agent-policy-bootstrap
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Inspect and dry-run recommended route
+        run: >-
+          python .agent-policy-bootstrap/scripts/bootstrap.py
+          --repository "$GITHUB_WORKSPACE"
