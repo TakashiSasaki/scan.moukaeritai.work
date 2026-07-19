@@ -4,11 +4,13 @@ toolchain:
   revision: 848923054e168eb2f8c696e73e2273ba8bf09501
 inputs:
   .agent-policy.yml:
-    sha256: f476656c661b7aae5c2537af6d60049f1b63a2569b3dbf535e048d00ab65ecd0
+    sha256: 012a2118337d440fe140fdddd134ea92ea8b49579a17397698df6958877455ce
+  policy/current-priority.md:
+    sha256: eb3b619aaa4d4b31760e0ba3fb4edd16d721e5eb316774f66775f0e22f4523c1
   policy/project.md:
-    sha256: ed464707133c322fa032de108b75dc26dc902cd8737b009bbf11fd06fe8937a8
+    sha256: ef5d5f83b3d28a20ceac24f1fc57a02c83459bd101646f2b5eeda6dc3b8cb36c
 outputs:
   .agent-policy/preview/AGENTS.md:
-    sha256: a1f1b37d663580a1363c483eea63b824dae2aa63109b7f90f13844c1d7f52d48
+    sha256: 490949e612ffe9c6b48aa31b91975db3890f3ab753bcba2274cbb9103a7445d4
   .agents/skills/validate-agent-policy/SKILL.md:
     sha256: b13d4d83664ac336ee4ab9a29481a9868ec02b2b03fb718e424e27c6b2843fdd
