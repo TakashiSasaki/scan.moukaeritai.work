@@ -38,7 +38,7 @@ jobs:
       - name: Validate prepared configuration
         run: agent-policy --repository "$GITHUB_WORKSPACE" validate
 
-      - name: Verify immutable adoption inputs were preserved
+      - name: Verify adoption inputs and generated outputs are synchronized
         run: >-
           git diff --exit-code --
           AGENTS.md
@@ -47,6 +47,21 @@ jobs:
           .agent-policy.yml
           .agent-policy/adoption.json
           policy/project.md
+          .agent-policy.lock
+          .agent-policy/preview/AGENTS.md
+          .agents/skills/validate-agent-policy/SKILL.md
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install product dependencies
+        run: npm ci
+
+      - name: Run product PR verification
+        run: npm run verify:pr
 
       - name: Record regenerated paths
         shell: bash
