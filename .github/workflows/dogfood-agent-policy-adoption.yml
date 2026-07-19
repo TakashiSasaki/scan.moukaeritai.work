@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  inspect:
+  prepare:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout product repository
@@ -30,18 +30,36 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Inspect and dry-run recommended route
+      - name: Apply adoption preparation and preview
         shell: bash
         run: |
           set -o pipefail
           python .agent-policy-bootstrap/scripts/bootstrap.py \
             --repository "$GITHUB_WORKSPACE" \
-            | tee agent-policy-dry-run.txt
+            --route adopt \
+            --primary-instructions AGENTS.md \
+            --apply \
+            | tee agent-policy-adoption-prepare.txt
 
-      - name: Upload dry-run report
-        if: always()
+      - name: Verify primary instructions were preserved
+        run: git diff --exit-code -- AGENTS.md
+
+      - name: Record generated paths
+        shell: bash
+        run: |
+          git status --short | tee agent-policy-generated-status.txt
+
+      - name: Upload prepared adoption state
         uses: actions/upload-artifact@v4
         with:
-          name: agent-policy-dry-run
-          path: agent-policy-dry-run.txt
+          name: agent-policy-adoption-prepared
+          path: |
+            .agent-policy.yml
+            .agent-policy.lock
+            .agent-policy/adoption.json
+            .agent-policy/preview/AGENTS.md
+            policy/project.md
+            .agents/skills/validate-agent-policy/SKILL.md
+            agent-policy-adoption-prepare.txt
+            agent-policy-generated-status.txt
           if-no-files-found: error
