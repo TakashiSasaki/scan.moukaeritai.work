@@ -63,6 +63,9 @@ jobs:
       - name: Test version-governance classification
         run: node scripts/verify-version.mjs --self-test
 
+      - name: Build EFP model prerequisite
+        run: npm --prefix packages/efp-model run build
+
       - name: Run product PR verification
         shell: bash
         run: |
