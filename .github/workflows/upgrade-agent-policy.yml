@@ -87,6 +87,12 @@ jobs:
       - name: Install repository dependencies
         run: npm ci
 
+      - name: Install EFP model dependencies
+        run: npm ci --prefix packages/efp-model
+
+      - name: Prepare EFP model artifact
+        run: npm --prefix packages/efp-model run build
+
       - name: Validate repository bootstrap
         run: node scripts/validate-repository-bootstrap.mjs
 
