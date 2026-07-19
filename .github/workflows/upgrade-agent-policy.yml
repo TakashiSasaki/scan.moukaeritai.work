@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - chatgpt-agent-policy-adoption
+  pull_request:
+    branches:
+      - scan.moukaeritai.work
+    types:
+      - synchronize
+      - reopened
 
 permissions:
   contents: write
@@ -76,10 +82,11 @@ jobs:
       - name: Commit verified generated state
         env:
           BRANCH: chatgpt-agent-policy-adoption
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           remote_head="$(git ls-remote origin "refs/heads/${BRANCH}" | cut -f1)"
-          if [ "$remote_head" != "$GITHUB_SHA" ]; then
-            echo "Branch moved during verification: expected $GITHUB_SHA, found $remote_head" >&2
+          if [ "$remote_head" != "$EXPECTED_HEAD" ]; then
+            echo "Branch moved during verification: expected $EXPECTED_HEAD, found $remote_head" >&2
             exit 1
           fi
 
