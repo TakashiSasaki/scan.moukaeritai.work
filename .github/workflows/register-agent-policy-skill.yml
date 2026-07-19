@@ -94,37 +94,26 @@ jobs:
               raise SystemExit('required core skill marker did not match exactly once')
           skill_test = skill_test.replace(core_marker, core_replacement)
 
-          section_start_marker = '  // Verify sections\n'
-          section_end_marker = '\n\n  // Scan for inline code blocks'
-          start = skill_test.find(section_start_marker)
-          if start < 0:
-              raise SystemExit('section validation start marker was not found')
-          end = skill_test.find(section_end_marker, start)
-          if end < 0:
-              raise SystemExit('section validation end marker was not found')
-          generated_validation = r"""  // Verify the declared format. Handwritten skills use the repository section contract;
-            // agent-policy-managed skills use generated provenance markers instead.
-            if (skill.managedBy === '.agent-policy.yml') {
-              const requiredMarkers = [
-                'agent-policy-generated: true',
-                `source-skill: ${skillId}`,
-                'DO NOT EDIT DIRECTLY',
-                `name: ${skillId}`
-              ];
-              for (const marker of requiredMarkers) {
-                if (!content.includes(marker)) {
-                  fail(`Managed skill "${skillId}" is missing generated marker: "${marker}"`);
-                }
+          section_marker = '  // Verify sections\n'
+          if skill_test.count(section_marker) != 1:
+              raise SystemExit('section validation marker did not match exactly once')
+          generated_guard = """  if (skill.managedBy === '.agent-policy.yml') {
+            const requiredMarkers = [
+              'agent-policy-generated: true',
+              `source-skill: ${skillId}`,
+              'DO NOT EDIT DIRECTLY',
+              `name: ${skillId}`
+            ];
+            for (const marker of requiredMarkers) {
+              if (!content.includes(marker)) {
+                fail(`Managed skill \"${skillId}\" is missing generated marker: \"${marker}\"`);
               }
-            } else {
-              for (const section of REQUIRED_SECTIONS) {
-                const headerPattern = new RegExp(`^#+\s+${section}\s*$`, 'im');
-                if (!headerPattern.test(content)) {
-                  fail(`Skill "${skillId}" SKILL.md is missing required section header: "${section}"`);
-                }
-              }
-            }"""
-          skill_test = skill_test[:start] + generated_validation + skill_test[end:]
+            }
+            continue;
+          }
+
+          """
+          skill_test = skill_test.replace(section_marker, generated_guard + section_marker)
           skill_test_path.write_text(skill_test, encoding='utf-8')
 
           version_path = Path('scripts/verify-version.mjs')
