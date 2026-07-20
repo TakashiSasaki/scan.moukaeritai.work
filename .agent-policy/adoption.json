@@ -1,0 +1,98 @@
+{
+  "backup_path": ".agent-policy/adoption/original/AGENTS.md",
+  "config_path": ".agent-policy.yml",
+  "final_output": "AGENTS.md",
+  "generated_skills": [
+    "validate-agent-policy"
+  ],
+  "preview_output": ".agent-policy/preview/AGENTS.md",
+  "primary_instructions": "AGENTS.md",
+  "project_policy_files": [
+    "policy/project.md",
+    "policy/current-priority.md"
+  ],
+  "schema_version": 1,
+  "selected_profiles": [
+    "core",
+    "security-baseline"
+  ],
+  "sources": [
+    {
+      "generated": false,
+      "path": ".agents/policies/complexity-control.md",
+      "sha256": "72805b903852cc067d00f5b39a3d2ee58073cad2192af4c2d0a5ab9da3c2a8d2"
+    },
+    {
+      "generated": false,
+      "path": ".agents/skills/contract-change/SKILL.md",
+      "sha256": "ccf75e81d8b1b195836ada2551e4f7c414294beffda8c454c156e5778180936d"
+    },
+    {
+      "generated": false,
+      "path": ".agents/skills/documentation-reality-check/SKILL.md",
+      "sha256": "d54a21c46969769dab95de41dab389cb2beb552dea93a2cfe5baf79f4be28381"
+    },
+    {
+      "generated": false,
+      "path": ".agents/skills/functions-artifact-verification/SKILL.md",
+      "sha256": "658ae99c28dfbdb9748cc436838dafdb40d99e6d73a7a3c098f4f86e31d6c3ca"
+    },
+    {
+      "generated": false,
+      "path": ".agents/skills/generate-efu-catalog/SKILL.md",
+      "sha256": "30dfdf145dfb235543e49eff992c69595bb471affffc01465426a288019da28f"
+    },
+    {
+      "generated": false,
+      "path": ".agents/skills/generate-efu-catalog/scripts/generate.js",
+      "sha256": "b3804a9c317003d998cec4bef9100d811983a812ec5537c266461f3cada823a4"
+    },
+    {
+      "generated": false,
+      "path": ".agents/skills/manifest.json",
+      "sha256": "880aa1d9923218a49a8599a872248880a43c3342ca4e1adc4f6b2afcc48e889a"
+    },
+    {
+      "generated": false,
+      "path": ".agents/skills/repository-hygiene/SKILL.md",
+      "sha256": "b268a0fe1630673ea1b16a0a3bb7e162d287ea1ca8f15603f70a3bf527409fa6"
+    },
+    {
+      "generated": false,
+      "path": ".agents/skills/repository-preflight/SKILL.md",
+      "sha256": "8afd8e84e1048c07c2aa6f2b5ebf1401b72e444377a16d83730ec871a84069b1"
+    },
+    {
+      "generated": false,
+      "path": ".agents/skills/run-local-tests/SKILL.md",
+      "sha256": "295a5175b7fc24bb118cd8e13ba7c62765faf17306059064d1c9fbe0cd4c71a8"
+    },
+    {
+      "generated": false,
+      "path": ".agents/skills/stride-closeout/SKILL.md",
+      "sha256": "f4e934c8874cd6f16fe8d20941909a3e530e15b9afd17ae4d8faf15465fcf023"
+    },
+    {
+      "generated": false,
+      "path": ".agents/skills/version-governance/SKILL.md",
+      "sha256": "c566d82e8a5551d414d035f9f1d64a43f9649dc90f8e122a25331be49223be21"
+    },
+    {
+      "generated": false,
+      "path": ".github/copilot-instructions.md",
+      "sha256": "9bc58cbe8a179bff45bcbf67046765765e7ee7c5d2763ae72b7e301eaf071ab1"
+    },
+    {
+      "generated": false,
+      "path": "AGENTS.md",
+      "sha256": "419ac4f363709f67aeaac4a82b1043b74309c2afa059fc58c2fb5db7be6a5c1e"
+    }
+  ],
+  "state_path": ".agent-policy/adoption.json",
+  "status": "finalized",
+  "toolchain": {
+    "repository": "TakashiSasaki/agent-policy",
+    "revision": "848923054e168eb2f8c696e73e2273ba8bf09501"
+  },
+  "verification_command": "npm run verify:pr"
+}

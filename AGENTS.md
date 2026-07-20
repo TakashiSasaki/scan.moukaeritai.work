@@ -1,121 +1,208 @@
-# Developer & AI Agent Guidelines (scan.mw 2.1.4)
+<!--
+agent-policy-generated: true
+configuration: .agent-policy.yml
+DO NOT EDIT DIRECTLY
+-->
 
-This file records only active operating rules for this repository. Historical stride details and cancelled migration plans must not be treated as current work.
+# Repository agent instructions
 
-## Canonical sources
+These instructions were generated from shared policy profiles and repository-specific policy files.
 
-- Active contract profile: `contracts/profiles/current-application.json`
-- Contract registry and historical packages: `contracts/registry.json` and `contracts/packages/`
-- Route access policy: `src/lib/routeCatalog.ts`
-- Interface surface convention: `docs/architecture/interface-surface-convention.md`
-- Agent skill manifest: `.agents/skills/manifest.json`
-- Application version: root `package.json`
+## Policy system
 
-## Branch and deployment rules
+- Semantic configuration: `.agent-policy.yml`
+- Pinned shared toolchain: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410`
+- Repository policy inputs:
+  - `policy/project.md`
+  - `policy/current-priority.md`
+- Generated operational skills:
+  - `.agents/skills/validate-agent-policy/SKILL.md`
 
-- Agent workflows are restricted to `jules`, `codex`, and `hermes` unless a higher-priority instruction explicitly provides another branch.
-- Production deploys are manual only (`workflow_dispatch`). Do not perform production writes, deletes, or automatic production deploys.
-- `main` remains administrator-controlled; do not change the main-to-agent-branch synchronization model.
-- Do not commit scratch files, one-off scripts, PR replies, or generated temporary patches to the repository root.
+Do not edit this generated file directly. Change `.agent-policy.yml` or its repository policy inputs, then regenerate with the pinned toolchain. Before editing repository files, inspect any repository-local skill catalog that exists and read the relevant generated or handwritten skills.
 
-## Active architecture
 
-`scan.mw` is a Firebase-backed inventory application using the Contract-First Entity-Fact-Projection (EFP) model.
+## Define the change contract before editing
 
-Active EFP invariants:
+Before editing, identify the requested outcome, the allowed change surface, the existing behavior and invariants that must be preserved, explicit non-goals, and the evidence required for acceptance. Treat unspecified behavior as preserved unless the requested change necessarily alters it; do not silently broaden the contract to resolve ambiguity or implementation difficulty.
 
-- Reject writes by unauthenticated users.
-- Prevent access to other users' Entities and Facts.
-- Prevent `ownerId` spoofing.
-- Prohibit client direct writes to Facts.
-- Prohibit client direct writes to Projections.
-- Preserve Fact immutability.
-- Preserve idempotency for the same `commandId` and payload.
-- Reject the same `commandId` with a different payload.
-- Preserve basic Association attach/detach consistency.
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/change-contract.md`; rule ID: `changes.define-contract`; severity: `mandatory`._
 
-## Interface surface convention
 
-Application interfaces should gradually align with the vocabulary and preferred namespaces defined in `docs/architecture/interface-surface-convention.md`:
+## Keep changes within the requested scope
 
-- `/` — public surface
-- `/app` — application-use surface
-- `/admin` — administration surface
-- `/dev` — internal-development surface
-- `/api` — external-development and contract surface
-- `/test` — development-verification and test-harness surface
+Do not modify files, behavior, dependencies, formatting, or architecture that are unrelated to the requested change. Inspect the final diff and remove incidental changes before reporting completion.
 
-This is a preferred architectural vocabulary and namespace convention, not an absolute routing or CLI constraint. Prefer it for new interfaces and align existing interfaces when they are already being materially modified. Do not perform unrelated broad renames solely for conformance.
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/change-scope.md`; rule ID: `changes.minimize-scope`; severity: `mandatory`._
 
-## Legacy data policy and Controlled Import Exception
 
-Legacy data is an archive, not a migration source.
+## Do not weaken existing tests
 
-- Legacy migration: Cancelled (no automatic or comprehensive migration is performed).
-- Legacy dual-write: Cancelled.
-- Legacy backfill: Cancelled.
-- Legacy reconciliation: Cancelled.
-- Legacy runtime integration: Cancelled.
-- Legacy Firestore retention: Required.
-- Legacy read-only access: Required.
-- Legacy admin browser: Required.
-- Legacy JSON export: Required.
-- Legacy write prohibition: Required.
+Do not delete, skip, narrow, or relax an existing test merely to make a change pass. For a bug fix, add a regression test that fails before the fix and passes afterward whenever the failure can be reproduced deterministically.
 
-The new runtime must not create, update, delete, dual-write, shadow-write, backfill, reconcile, or canary-write legacy collections. Existing legacy collections (e.g., `items`, `identifiers`, `objectIdentifierBindings`) remain in Firestore as read-only records.
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/regression-safety.md`; rule ID: `regression.no-weaken-tests`; severity: `mandatory`._
 
-### Controlled Imported Observation Exception
 
-As a limited and formal exception:
-- **Controlled imported observation execution**: Only when an administrator explicitly demands execution (`execute` mode), the legacy `identifiers` collection is referenced as a read source to create a deterministic imported baseline observation in the `identifierObservations` collection.
-- This exception **does not** imply:
-  - Any updates or deletions of legacy source documents.
-  - Automatic, background, or scheduled migration.
-  - Dual-write or backfill of all records.
-  - Relational reconciliation frameworks or automatic production execution.
+## Run the repository's required verification
 
-## Complexity control
+Use the verification command declared by the repository and add focused checks needed for the changed behavior or failure mode. Confirm that the executed checks cover the changed surface and the current revision; a check that is pending, skipped, not triggered, stale, blocked, or merely inspected is not a passing result. Report every required check that was not run or did not pass.
 
-Shared simplification rules live in `.agents/policies/complexity-control.md`. Do not add new gates, mutation fixtures, contract versions, or unrelated foundation work for normal internal tasks.
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/testing.md`; rule ID: `testing.run-required-checks`; severity: `mandatory`._
 
-## Current vertical slice priority
 
-The next product priority is the first usable EFP-native Object/Marker/Association slice:
+## Keep derived artifacts synchronized
 
-1. Create Object.
-2. Create Marker.
-3. Attach Marker to Object.
-4. Read Marker.
-5. Display the associated Object.
-6. Detach Association.
-7. Treat the detached Marker as unassigned.
+When a change affects generated, mirrored, compiled, or otherwise derived artifacts, update them from their declared source of truth using the repository's documented process and verify that no stale or missing output remains. Do not hand-edit generated artifacts unless the repository explicitly designates that operation as authoritative.
 
-Critical-path scope:
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/generated-artifacts.md`; rule ID: `consistency.synchronize-derived-artifacts`; severity: `mandatory`._
 
-- Entity: Object and Marker.
-- Fact: Association attach and detach.
-- Read model: current Markers for an Object and current Object for a Marker.
 
-Do not expand Place, Observation, Measurement, Event, projection backfill, generic watermarks, processing receipts, migration phases, or future abstractions unless they are directly required for this slice.
+## Preserve externally observable contracts
 
-## Verification tiers
+Do not break public APIs, serialized data, configuration formats, command-line interfaces, or migration paths unless the requested change explicitly authorizes the incompatibility and documents its consequences.
 
-- `npm run verify:fast`: daily local checks for changed work.
-- `npm run verify:pr`: PR/CI checks, including security-sensitive and integration coverage that is safe for CI.
-- `npm run verify:release`: release-only full baseline, compatibility, artifact isolation, full documentation consistency, and version consistency.
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/compatibility.md`; rule ID: `compatibility.preserve-contracts`; severity: `mandatory`._
+
+
+## Revalidate destructive actions against current state
+
+Immediately before deleting, overwriting, migrating, deploying, publishing, force-updating, or otherwise making an irreversible or externally visible change, re-read the target's current state and revalidate its identity, scope, version or revision, protections, and conflicting uses. Prefer dry-run, least-scope, and idempotent operations; do not authorize the action solely from stale observations made earlier in the task.
+
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/destructive-actions.md`; rule ID: `safety.revalidate-destructive-actions`; severity: `mandatory`._
+
+
+## Report actual state and residual uncertainty
+
+Distinguish implemented, generated, executed, verified, and merely inferred results. State unresolved failures and unverified assumptions explicitly.
+
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/core/truthful-reporting.md`; rule ID: `reporting.truthful-status`; severity: `mandatory`._
+
+
+## Do not expose or commit secrets
+
+Do not print, persist, or commit credentials, private keys, access tokens, session material, or unredacted sensitive configuration. Use established secret-management mechanisms.
+
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/security/secrets.md`; rule ID: `security.no-secrets`; severity: `mandatory`._
+
+
+## Validate data at trust boundaries
+
+Validate untrusted input before it reaches privileged operations, persistence, command execution, or external requests. Preserve existing authentication and authorization checks.
+
+_Source: `TakashiSasaki/agent-policy@a951b3ba55083152f3fe0040fd3f307a33d66410:policy/security/input-validation.md`; rule ID: `security.validate-boundaries`; severity: `mandatory`._
+
+
+## Preserve scan.mw repository invariants
+
+Apply the following durable repository-specific rules in addition to the shared policy profiles.
+
+### Canonical sources
+
+Treat these files as the authoritative sources for their respective concerns:
+
+- `contracts/profiles/current-application.json`: active contract profile.
+- `contracts/registry.json` and `contracts/packages/`: contract registry and historical packages.
+- `src/lib/routeCatalog.ts`: route access policy.
+- `docs/architecture/interface-surface-convention.md`: interface-surface vocabulary and namespace convention.
+- `.agents/skills/manifest.json`: repository-local skill registry.
+- root `package.json`: application version.
+
+Do not reconstruct these facts from duplicated documentation when an authoritative source is available. Treat historical stride records, superseded verification status, and cancelled plans as non-normative context unless a current authoritative source explicitly reactivates them.
+
+### Branch, synchronization, and deployment
+
+`scan.moukaeritai.work` is the integration hub branch. `main` is reserved for Google AI Studio. The named agent source branches are `jules`, `codex`, `hermes`, and `chatgpt`; use only the branch authorized for the current agent or an explicitly authorized isolated test branch.
+
+Pushes to the exact named source branches may be merged automatically into the hub by `.github/workflows/sync-branches.yml`. Do not place incomplete experiments or prepared migration states on an automatically synchronized source branch. Use a separately authorized non-synchronized branch and a pull request when intermediate review is required.
+
+Production deployment is manual through `workflow_dispatch`. Do not perform production writes, deletes, or automatic production deployments. Do not change the source-branch-to-hub synchronization model unless the request explicitly requires it. Do not commit scratch files, one-off scripts, PR replies, downloaded artifacts, or temporary patches to the repository root.
+
+### EFP architecture and access invariants
+
+`scan.mw` is a Firebase-backed inventory application using the Contract-First Entity-Fact-Projection model. Preserve all of the following invariants:
+
+- unauthenticated writes are rejected;
+- users cannot access another user's Entities or Facts;
+- `ownerId` spoofing is rejected;
+- clients do not write Facts directly;
+- clients do not write Projections directly;
+- Facts are immutable;
+- repeating the same `commandId` with the same payload is idempotent;
+- reusing the same `commandId` with a different payload is rejected;
+- Association attach and detach behavior remains consistent.
+
+Do not weaken authentication, authorization, ownership, immutability, idempotency, or projection boundaries while implementing unrelated changes.
+
+### Interface-surface convention
+
+Use the following vocabulary and preferred namespaces for new or materially modified application interfaces:
+
+- `/`: public surface;
+- `/app`: application-use surface;
+- `/admin`: administration surface;
+- `/dev`: internal-development surface;
+- `/api`: external-development and contract surface;
+- `/test`: development-verification and test-harness surface.
+
+This is a preferred architectural vocabulary and namespace convention, not an unconditional routing or CLI constraint. Do not perform unrelated broad renames solely for conformance.
+
+### Legacy data and controlled import exception
+
+Legacy data is an archive, not a general migration source. Automatic or comprehensive legacy migration, dual-write, backfill, reconciliation, and runtime integration remain cancelled. Existing legacy Firestore collections must be retained, remain read-only, remain available through the legacy administration browser, and remain exportable as JSON.
+
+The new runtime must not create, update, delete, dual-write, shadow-write, backfill, reconcile, or canary-write legacy collections such as `items`, `identifiers`, and `objectIdentifierBindings`.
+
+The only controlled exception is an administrator-explicit `execute` operation that reads the legacy `identifiers` collection and creates a deterministic imported baseline observation in `identifierObservations`. This exception does not authorize modification or deletion of source documents, automatic or scheduled migration, comprehensive backfill, dual-write, relational reconciliation, or automatic production execution.
+
+### Complexity control
+
+Normal work must not add new mandatory gates, mutation fixtures, contract versions for internal changes, migration phases, broad reconciliation systems, or unrelated foundation abstractions.
+
+Validation, hardening, and verification work must not invent new architectural, routing, naming, access-control, compatibility, or migration constraints. In particular, do not infer path-prefix requirements from surface classification, dynamic-route allowlists, role taxonomies from access values, or closed lists of otherwise valid future routes. Tests for extracted validation or classification logic must import the production implementation instead of duplicating its rules.
+
+Record unrelated findings in the backlog rather than expanding the active task. Complexity-increasing changes require explicit human approval.
+
+### Verification tiers
+
+Select verification according to the change surface:
+
+- `npm run verify:fast`: normal local checks for changed work;
+- `npm run verify:pr`: pull-request and CI verification, including security-sensitive and CI-safe integration coverage;
+- `npm run verify:release`: release-only full baseline, compatibility, artifact-isolation, documentation-consistency, and version-consistency verification;
 - `npm run verify:baseline`: backward-compatible alias for `verify:release`.
 
-Firestore Emulator integration tests are planned for GitHub Actions. Current PR verification uses Node-based static policy checks only; do not add a local pseudo-emulator.
+Do not require release verification for ordinary changes. Firestore Emulator integration in GitHub Actions remains planned; do not add a local pseudo-emulator as a substitute.
 
-## Version and contract governance
+### Version and contract governance
 
-- Root `package.json` is the canonical application version source.
-- Contract versions are independent from the application version.
-- Internal metadata, tests, and documentation-only changes do not require a version bump.
-- Version bumps are required for release candidates or externally visible compatibility/API changes.
-- Do not manually duplicate version strings in README unless unavoidable.
+The root `package.json` is the canonical application-version source. Contract versions are independent from the application version. Internal metadata, tests, and documentation-only changes do not require an application-version bump. Version bumps are required for release candidates and externally visible compatibility or API changes. Do not manually duplicate version strings in README files unless unavoidable.
 
-## Verification Status
+_Source: `policy/project.md` in this repository; rule ID: `project.product-invariants`; severity: `mandatory`._
 
-- Node-only gates implemented and passing locally.
-- GitHub Actions confirmation unavailable.
+
+## Follow the current EFP vertical-slice priority
+
+This module records the current product priority rather than a permanent architectural invariant. Update or replace it when the authorized product priority changes.
+
+Complete the first usable EFP-native Object/Marker/Association slice in this order:
+
+1. create an Object;
+2. create a Marker;
+3. attach the Marker to the Object;
+4. read the Marker;
+5. display its associated Object;
+6. detach the Association;
+7. treat the detached Marker as unassigned.
+
+The critical path consists of Object and Marker Entities, Association attach and detach Facts, current Markers for an Object, and the current Object for a Marker. Do not expand Place, Observation, Measurement, Event, projection backfill, generic watermarks, processing receipts, migration phases, or future abstractions unless directly required by this slice.
+
+_Source: `policy/current-priority.md` in this repository; rule ID: `project.current-vertical-slice`; severity: `mandatory`._
+
+
+
+
+## Required verification command
+
+```bash
+npm run verify:pr
+```
+

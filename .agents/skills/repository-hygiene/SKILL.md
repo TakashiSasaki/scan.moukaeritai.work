@@ -15,10 +15,12 @@ Use during task closeout and release verification.
 ## Commands
 - `git status --short`
 - `git diff --stat`
-- `npm run test:repository-hygiene` for PR/release or when root files changed.
+- `npm run verify:fast` for normal task closeout.
+- `npm run verify:pr` for PR closeout or when root files changed.
+- `npm run verify:release` for release preparation.
 
 ## Execution class
-fast for status/diff; PR or release for the full hygiene script.
+fast for status/diff; use the corresponding PR or release verification tier when required.
 
 ## Mutation policy
 read-only by default; may remove only clearly generated scratch files after review.
