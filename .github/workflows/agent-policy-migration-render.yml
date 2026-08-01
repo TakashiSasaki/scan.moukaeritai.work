@@ -54,6 +54,7 @@ jobs:
         with:
           name: migrated-agent-policy-artifacts
           if-no-files-found: error
+          include-hidden-files: true
           path: |
             .agent-policy.lock
             .agent-policy/adoption.json
