@@ -32,5 +32,11 @@ jobs:
       - name: Build EFP model prerequisite with root toolchain
         run: npm --prefix packages/efp-model run build
 
+      - name: Prepare Functions prerequisite artifact
+        run: npm run prepare:functions-artifact
+
+      - name: Install Functions prerequisite dependencies
+        run: npm ci --prefix functions
+
       - name: Run required pull request verification
         run: npm run verify:pr
