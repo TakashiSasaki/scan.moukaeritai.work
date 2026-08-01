@@ -29,5 +29,11 @@ jobs:
       - name: Install root dependencies
         run: npm ci
 
+      - name: Install EFP model dependencies
+        run: npm ci --prefix packages/efp-model
+
+      - name: Build EFP model prerequisite
+        run: npm --prefix packages/efp-model run build
+
       - name: Run required pull request verification
         run: npm run verify:pr
