@@ -1,10 +1,10 @@
 lock_version: 1
 toolchain:
-  repository: TakashiSasaki/agent-policy
-  revision: a951b3ba55083152f3fe0040fd3f307a33d66410
+  repository: TakashiSasaki/templates
+  revision: a21a12f1954d32ddb6574aeb86118e833718c0e5
 inputs:
   .agent-policy.yml:
-    sha256: 34daacdb3ed3842540d526b799bd433bf52906413f236aa712ddc08d38f672e3
+    sha256: dd7f14eee5d3e860b6ea5b1cb4e7b3be3b6bf66a948b2909f66dda4766e02a69
   policy/current-priority.md:
     sha256: eb3b619aaa4d4b31760e0ba3fb4edd16d721e5eb316774f66775f0e22f4523c1
   policy/project.md:
@@ -13,4 +13,4 @@ outputs:
   .agents/skills/validate-agent-policy/SKILL.md:
     sha256: 287d85aea9af84bad991dbbc2a0a6984c4fe8bbb02340b50d59c46506cd712af
   AGENTS.md:
-    sha256: 5a29e30ee430273dbdcec971a679a01feb10346272b68ea59aa29ca6f731c02d
+    sha256: 8c61d31aafd3be601194ab324286bdbe1bf75c622f535c83263ef9db7b6910ef
