@@ -53,32 +53,6 @@ jobs:
           command: validate
           config: .agent-policy.yml
 
-      - name: Install permanent consumer check workflow
-        run: |
-          cat > .github/workflows/check-agent-policy.yml <<'YAML'
-          name: Check agent policy
-
-          on:
-            pull_request: {}
-            workflow_dispatch: {}
-
-          permissions:
-            contents: read
-
-          jobs:
-            check:
-              runs-on: ubuntu-24.04
-              steps:
-                - name: Check out repository
-                  uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-                - name: Check agent policy
-                  uses: TakashiSasaki/templates@a21a12f1954d32ddb6574aeb86118e833718c0e5
-                  with:
-                    command: check
-                    config: .agent-policy.yml
-          YAML
-          rm .github/workflows/agent-policy-migration-render.yml
-
       - name: Verify migration boundary
         run: |
           test "$(grep -RIl 'TakashiSasaki/agent-policy' \
@@ -86,12 +60,9 @@ jobs:
             .agent-policy.lock \
             .agent-policy/adoption.json \
             AGENTS.md \
-            .agents/skills/validate-agent-policy/SKILL.md \
-            .github/workflows/check-agent-policy.yml | wc -l)" -eq 0
+            .agents/skills/validate-agent-policy/SKILL.md | wc -l)" -eq 0
           grep -Fq 'repository: TakashiSasaki/templates' .agent-policy.yml
           grep -Fq 'revision: a21a12f1954d32ddb6574aeb86118e833718c0e5' .agent-policy.yml
-          grep -Fq 'uses: TakashiSasaki/templates@a21a12f1954d32ddb6574aeb86118e833718c0e5' \
-            .github/workflows/check-agent-policy.yml
 
       - name: Commit generated migration result
         env:
@@ -100,13 +71,10 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add \
-            .agent-policy.yml \
             .agent-policy.lock \
             .agent-policy/adoption.json \
             .agents/skills/validate-agent-policy/SKILL.md \
-            AGENTS.md \
-            .github/workflows/check-agent-policy.yml \
-            .github/workflows/agent-policy-migration-render.yml
+            AGENTS.md
           git diff --cached --check
           git commit -m 'Regenerate policy artifacts from templates'
           git push origin "HEAD:${HEAD_BRANCH}"
