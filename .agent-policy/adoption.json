@@ -92,7 +92,7 @@
   "status": "finalized",
   "toolchain": {
     "repository": "TakashiSasaki/templates",
-    "revision": "a21a12f1954d32ddb6574aeb86118e833718c0e5"
+    "revision": "5de32547e68fa15e24ff3b8affadf12e9d730a41"
   },
   "verification_command": "npm run verify:pr"
 }
