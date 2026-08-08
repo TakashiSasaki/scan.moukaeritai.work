@@ -17,6 +17,22 @@
       ]
     },
     {
+      "id": "validate-agent-policy",
+      "path": ".agents/skills/validate-agent-policy/SKILL.md",
+      "status": "active",
+      "description": "Validates managed agent-policy configuration, lock state, and generated outputs with the pinned toolchain.",
+      "requiredFor": [
+        "Changes to agent-policy configuration, repository policy inputs, generated instructions, generated skills, the lock file, or policy CI"
+      ],
+      "executionClass": "fast/PR",
+      "mutationPolicy": "read-only unless synchronization is explicitly requested",
+      "managedBy": ".agent-policy.yml",
+      "nonGoals": [
+        "Do not edit generated AGENTS.md or generated skill files directly.",
+        "Do not substitute a mutable branch or unpinned package release for the configured toolchain revision."
+      ]
+    },
+    {
       "id": "version-governance",
       "path": ".agents/skills/version-governance/SKILL.md",
       "status": "active",
