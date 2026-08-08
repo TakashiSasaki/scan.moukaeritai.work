@@ -91,8 +91,8 @@
   "state_path": ".agent-policy/adoption.json",
   "status": "finalized",
   "toolchain": {
-    "repository": "TakashiSasaki/agent-policy",
-    "revision": "848923054e168eb2f8c696e73e2273ba8bf09501"
+    "repository": "TakashiSasaki/templates",
+    "revision": "5de32547e68fa15e24ff3b8affadf12e9d730a41"
   },
   "verification_command": "npm run verify:pr"
 }
