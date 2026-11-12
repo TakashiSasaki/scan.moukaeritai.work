@@ -1,0 +1,20 @@
+schema_version: 1
+toolchain:
+  repository: TakashiSasaki/templates
+  revision: 5de32547e68fa15e24ff3b8affadf12e9d730a41
+profiles:
+- core
+- security-baseline
+project_policy:
+  files:
+  - policy/project.md
+  - policy/current-priority.md
+outputs:
+  agents:
+    enabled: true
+    path: AGENTS.md
+skills:
+  enabled:
+  - validate-agent-policy
+verification:
+  command: npm run verify:pr

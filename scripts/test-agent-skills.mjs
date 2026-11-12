@@ -76,6 +76,16 @@ for (const entry of manifest.skills) {
     fail(`Manifest entry missing or empty array "requiredFor" for skill "${entry.id}"`);
   }
 
+  if (entry.managedBy !== undefined) {
+  if (typeof entry.managedBy !== 'string' || entry.managedBy.length === 0) {
+    fail(`Manifest entry has invalid field "managedBy" for skill "${entry.id}"`);
+  }
+  const managerPath = path.join(rootDir, entry.managedBy);
+  if (!fs.existsSync(managerPath)) {
+    fail(`Skill "${entry.id}" references missing manager "${entry.managedBy}"`);
+  }
+}
+
   // Validate status
   if (!allowedStatuses.has(entry.status)) {
     fail(`Skill "${entry.id}" has invalid status "${entry.status}". Allowed values: active, legacy, disabled.`);
@@ -108,6 +118,7 @@ for (const entry of manifest.skills) {
 // Required core skills list
 const REQUIRED_CORE_SKILLS = [
   'repository-preflight',
+  'validate-agent-policy',
   'version-governance',
   'contract-change',
   'functions-artifact-verification',
@@ -164,6 +175,21 @@ for (const [skillId, skill] of activeSkillsInManifest.entries()) {
   }
 
   const content = fs.readFileSync(fullPath, 'utf8');
+
+  if (skill.managedBy === '.agent-policy.yml') {
+  const requiredMarkers = [
+    'agent-policy-generated: true',
+    `source-skill: ${skillId}`,
+    'DO NOT EDIT DIRECTLY',
+    `name: ${skillId}`
+  ];
+  for (const marker of requiredMarkers) {
+    if (!content.includes(marker)) {
+      fail(`Managed skill "${skillId}" is missing generated marker: "${marker}"`);
+    }
+  }
+  continue;
+}
 
   // Verify sections
   for (const section of REQUIRED_SECTIONS) {
